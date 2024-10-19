@@ -7,7 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from 'src/auth/auth.module';
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), AuthModule],
+  imports: [TypeOrmModule.forFeature([User]), JwtModule, AuthModule],
   providers: [UserResolver, UserService, DateScalar],
   exports: [UserService],
 })

@@ -1,5 +1,5 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { Role } from 'src/auth/role.model';
+import { Role } from 'src/auth/dto/role.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
 import {
   Entity,

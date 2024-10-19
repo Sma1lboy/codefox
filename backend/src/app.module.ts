@@ -12,11 +12,12 @@ import { AuthModule } from './auth/auth.module';
 import { ProjectModule } from './project/project.module';
 import { TokenModule } from './token/token.module';
 import { ProjectPackages } from './project/project-packages.model';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
@@ -31,17 +32,6 @@ import { JwtModule } from '@nestjs/jwt';
       synchronize: true,
       logging: true,
       entities: [__dirname + '/**/*.model{.ts,.js}'],
-    }),
-    ConfigModule.forRoot({
-      envFilePath: [
-        '.env.development.local',
-        process.cwd() + '.env.development',
-      ],
-      isGlobal: true,
-    }),
-    JwtModule.register({
-      secret: 'your-secret-key-tests',
-      signOptions: { expiresIn: '1h' },
     }),
     UserModule,
     AuthModule,

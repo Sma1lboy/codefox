@@ -8,7 +8,7 @@ import {
   ManyToMany,
   JoinTable,
 } from 'typeorm';
-import { Menu } from './menu/menu.model';
+import { Menu } from '../menu/menu.model';
 
 @Entity()
 @ObjectType()
@@ -26,7 +26,7 @@ export class Role extends SystemBaseModel {
 
   @ManyToMany(() => Menu)
   @JoinTable({
-    name: 'role_menus', // This will be the name of the join table
+    name: 'role_menus',
     joinColumn: {
       name: 'role_id',
       referencedColumnName: 'id',

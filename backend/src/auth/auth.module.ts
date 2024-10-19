@@ -1,17 +1,26 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Role } from './role.model';
 import { Menu } from './menu/menu.model';
 import { JwtModule } from '@nestjs/jwt';
+import { Role } from './dto/role.model';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthService } from './auth.service';
+import { User } from 'src/user/user.model';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Role, Menu]),
-    JwtModule.register({
-      secret: 'your-secret-key-tests',
-      signOptions: { expiresIn: '24h' },
+    ConfigModule,
+    TypeOrmModule.forFeature([Role, Menu, User]),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: { expiresIn: '24h' },
+      }),
+      inject: [ConfigService],
     }),
   ],
-  exports: [JwtModule],
+  providers: [AuthService],
+  exports: [AuthService],
 })
 export class AuthModule {}
