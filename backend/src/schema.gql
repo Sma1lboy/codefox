@@ -2,6 +2,55 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input CheckTokenInput {
+  token: String!
+}
+
+"""Date custom scalar type"""
+scalar Date
+
+type LoginResponse {
+  access_token: String!
+}
+
+input LoginUserInput {
+  password: String!
+  username: String!
+}
+
+type Menu {
+  created_at: Date!
+  id: ID!
+  is_active: Boolean!
+  is_deleted: Boolean!
+  last_updated: Date!
+  name: String!
+  path: String!
+  permission: String!
+}
+
+type Mutation {
+  login(input: LoginUserInput!): LoginResponse!
+  registerUser(input: RegisterUserInput!): User!
+}
+
 type Query {
-  hello: String!
+  checkToken(input: CheckTokenInput!): Boolean!
+  logout: Boolean!
+}
+
+input RegisterUserInput {
+  email: String!
+  password: String!
+  username: String!
+}
+
+type User {
+  created_at: Date!
+  email: String!
+  id: ID!
+  is_active: Boolean!
+  is_deleted: Boolean!
+  last_updated: Date!
+  username: String!
 }
