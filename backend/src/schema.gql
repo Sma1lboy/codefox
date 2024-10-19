@@ -2,6 +2,20 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+"""Date custom scalar type"""
+scalar Date
+
+type Menu {
+  created_at: Date!
+  id: ID!
+  is_active: Boolean!
+  is_deleted: Boolean!
+  last_updated: Date!
+  name: String!
+  path: String!
+  permission: String!
+}
+
 type Query {
   hello: String!
 }

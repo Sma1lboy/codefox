@@ -1,0 +1,17 @@
+{
+  "chats": {
+    "chat": {
+      "model": "ollama",
+      "endpoint": "http://localhost:14451/v1",
+      "token": "${OPENAI_TOKEN}"
+    },
+    "chat": {
+      "model": "SWivid/F5-TTS"
+    }
+  },
+  "embeddings": {
+    "model": "gpt",
+    "endpoint": "http://openai.com/v1",
+    "token": "${OPENAI_TOKEN}"
+  }
+}
