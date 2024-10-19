@@ -11,6 +11,7 @@ import { UserService } from './user.service';
 import { RegisterUserInput } from './dto/register-user.input';
 import { LoginUserInput } from './dto/lgoin-user.input';
 import { AuthService } from 'src/auth/auth.service';
+import { GetAuthToken } from 'src/decorator/get-auth-token';
 
 @Resolver(() => User)
 export class UserResolver {
@@ -35,9 +36,8 @@ export class UserResolver {
 
   //TODO use header authorization
   @Query(() => Boolean)
-  async logout(): Promise<boolean> {
-    this.authService.logout('');
-    return true;
+  async logout(@GetAuthToken() token: string): Promise<Boolean> {
+    return this.authService.logout(token);
   }
 }
 

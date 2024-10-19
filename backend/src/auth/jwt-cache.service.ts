@@ -125,7 +125,6 @@ export class JwtCacheService implements OnModuleInit, OnModuleDestroy {
   }
 
   async removeToken(token: string): Promise<void> {
-    this.logger.debug(`Removing token: ${token.substring(0, 10)}...`);
     return new Promise((resolve, reject) => {
       this.db.run('DELETE FROM jwt_cache WHERE token = ?', [token], (err) => {
         if (err) {

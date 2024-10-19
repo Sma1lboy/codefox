@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -81,7 +82,17 @@ export class AuthService {
     }
   }
   async logout(token: string): Promise<Boolean> {
-    this.jwtCacheService.storeToken(token);
+    Logger.log('logout token', token);
+    try {
+      await this.jwtService.verifyAsync(token);
+    } catch (error) {
+      return false;
+    }
+
+    if (!(await this.jwtCacheService.isTokenStored(token))) {
+      return false;
+    }
+    this.jwtCacheService.removeToken(token);
     return true;
   }
 }
