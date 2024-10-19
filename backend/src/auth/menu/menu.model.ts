@@ -1,7 +1,7 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from 'typeorm';
-import { Role } from '../role.model';
+import { Role } from '../role/role.model';
 
 @Entity()
 @ObjectType()

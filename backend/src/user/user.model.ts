@@ -1,5 +1,5 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { Role } from 'src/auth/role.model';
+import { Role } from 'src/auth/role/role.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
 import {
   Entity,
@@ -20,7 +20,6 @@ export class User extends SystemBaseModel {
   @Column({ unique: true })
   username: string;
 
-  @Field()
   @Column()
   password: string;
 

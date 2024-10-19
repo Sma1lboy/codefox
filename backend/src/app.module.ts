@@ -3,8 +3,6 @@ import { AppService } from './app.service';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
-import { HttpAdapterHost } from '@nestjs/core';
-import { HelloResolver } from './hello.resover';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
 import { User } from './user/user.model';
@@ -12,10 +10,13 @@ import { AuthModule } from './auth/auth.module';
 import { ProjectModule } from './project/project.module';
 import { TokenModule } from './token/token.module';
 import { ProjectPackages } from './project/project-packages.model';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { JwtCacheService } from './auth/jwt-cache.service';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
@@ -31,18 +32,11 @@ import { ConfigModule } from '@nestjs/config';
       logging: true,
       entities: [__dirname + '/**/*.model{.ts,.js}'],
     }),
-    ConfigModule.forRoot({
-      envFilePath: [
-        '.env.development.local',
-        process.cwd() + '.env.development',
-      ],
-      isGlobal: true,
-    }),
     UserModule,
     AuthModule,
     ProjectModule,
     TokenModule,
   ],
-  providers: [AppService, HelloResolver],
+  providers: [AppService],
 })
 export class AppModule {}
