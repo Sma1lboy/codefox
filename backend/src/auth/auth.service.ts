@@ -11,6 +11,7 @@ import { LoginUserInput } from 'src/user/dto/lgoin-user.input';
 import { RegisterUserInput } from 'src/user/dto/register-user.input';
 import { User } from 'src/user/user.model';
 import { Repository } from 'typeorm';
+import { CheckTokenInput } from './dto/check-token.input';
 
 @Injectable()
 export class AuthService {
@@ -67,9 +68,9 @@ export class AuthService {
     return { access_token };
   }
 
-  async validateToken(token: string): Promise<boolean> {
+  async validateToken(params: CheckTokenInput): Promise<boolean> {
     try {
-      const payload = await this.jwtService.verifyAsync(token);
+      const payload = await this.jwtService.verifyAsync(params.token);
       return true;
     } catch (error) {
       console.log(error);

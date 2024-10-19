@@ -2,6 +2,10 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input CheckTokenInput {
+  token: String!
+}
+
 """Date custom scalar type"""
 scalar Date
 
@@ -31,6 +35,7 @@ type Mutation {
 }
 
 type Query {
+  checkToken(input: CheckTokenInput!): Boolean!
   hello: String!
 }
 
