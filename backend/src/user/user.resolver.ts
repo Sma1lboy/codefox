@@ -1,4 +1,11 @@
-import { Args, Field, Mutation, ObjectType, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Field,
+  Mutation,
+  ObjectType,
+  Query,
+  Resolver,
+} from '@nestjs/graphql';
 import { User } from './user.model';
 import { UserService } from './user.service';
 import { RegisterUserInput } from './dto/register-user.input';
@@ -24,6 +31,13 @@ export class UserResolver {
     @Args('input') loginUserInput: LoginUserInput,
   ): Promise<LoginResponse> {
     return this.authService.login(loginUserInput);
+  }
+
+  //TODO use header authorization
+  @Query(() => Boolean)
+  async logout(): Promise<boolean> {
+    this.authService.logout('');
+    return true;
   }
 }
 

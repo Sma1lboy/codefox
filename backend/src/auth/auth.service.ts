@@ -12,6 +12,7 @@ import { RegisterUserInput } from 'src/user/dto/register-user.input';
 import { User } from 'src/user/user.model';
 import { Repository } from 'typeorm';
 import { CheckTokenInput } from './dto/check-token.input';
+import { JwtCacheService } from 'src/auth/jwt-cache.service';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private jwtService: JwtService,
+    private jwtCacheService: JwtCacheService,
     private configService: ConfigService,
   ) {}
 
@@ -64,17 +66,22 @@ export class AuthService {
 
     const payload = { userId: user.id, username: user.username };
     const access_token = this.jwtService.sign(payload);
+    this.jwtCacheService.storeToken(access_token);
 
     return { access_token };
   }
 
   async validateToken(params: CheckTokenInput): Promise<boolean> {
     try {
-      const payload = await this.jwtService.verifyAsync(params.token);
-      return true;
+      await this.jwtService.verifyAsync(params.token);
+      return this.jwtCacheService.isTokenStored(params.token);
     } catch (error) {
       console.log(error);
       return false;
     }
+  }
+  async logout(token: string): Promise<Boolean> {
+    this.jwtCacheService.storeToken(token);
+    return true;
   }
 }

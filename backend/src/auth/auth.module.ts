@@ -7,6 +7,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { User } from 'src/user/user.model';
 import { AuthResolver } from './auth.resolver';
+import { JwtCacheService } from 'src/auth/jwt-cache.service';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { AuthResolver } from './auth.resolver';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, AuthResolver],
+  providers: [AuthService, AuthResolver, JwtCacheService],
   exports: [AuthService],
 })
 export class AuthModule {}

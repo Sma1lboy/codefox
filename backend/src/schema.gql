@@ -36,7 +36,7 @@ type Mutation {
 
 type Query {
   checkToken(input: CheckTokenInput!): Boolean!
-  hello: String!
+  logout: Boolean!
 }
 
 input RegisterUserInput {

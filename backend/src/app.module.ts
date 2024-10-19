@@ -3,8 +3,6 @@ import { AppService } from './app.service';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
-import { HttpAdapterHost } from '@nestjs/core';
-import { HelloResolver } from './hello.resover';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
 import { User } from './user/user.model';
@@ -14,6 +12,7 @@ import { TokenModule } from './token/token.module';
 import { ProjectPackages } from './project/project-packages.model';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { JwtCacheService } from './auth/jwt-cache.service';
 
 @Module({
   imports: [
@@ -38,6 +37,6 @@ import { JwtModule } from '@nestjs/jwt';
     ProjectModule,
     TokenModule,
   ],
-  providers: [AppService, HelloResolver],
+  providers: [AppService],
 })
 export class AppModule {}
