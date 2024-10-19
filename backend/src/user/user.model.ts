@@ -20,7 +20,6 @@ export class User extends SystemBaseModel {
   @Column({ unique: true })
   username: string;
 
-  @Field()
   @Column()
   password: string;
 

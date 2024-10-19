@@ -13,6 +13,7 @@ import { ProjectModule } from './project/project.module';
 import { TokenModule } from './token/token.module';
 import { ProjectPackages } from './project/project-packages.model';
 import { ConfigModule } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -37,6 +38,10 @@ import { ConfigModule } from '@nestjs/config';
         process.cwd() + '.env.development',
       ],
       isGlobal: true,
+    }),
+    JwtModule.register({
+      secret: 'your-secret-key-tests',
+      signOptions: { expiresIn: '1h' },
     }),
     UserModule,
     AuthModule,
