@@ -7,6 +7,8 @@ import { ProjectPackages } from './project-packages.model';
 export class ProjectPackagesResolver {
   constructor(private readonly projectPackagesService: ProjectPackagesService) {}
 
+  // -------- All the code need to extract the user id from the token and verify is the project user's or not
+  // @GetAuthToken() token: string
   @Mutation(() => ProjectPackages)
   async addPackageToProject(
     @Args('projectId') projectId: string,

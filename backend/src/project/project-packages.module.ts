@@ -8,6 +8,5 @@ import { ProjectPackagesResolver } from './project-packages.resolver';
 @Module({
   imports: [TypeOrmModule.forFeature([ProjectPackages])],
   providers: [ProjectPackagesService, ProjectPackagesResolver],
-  exports: [ProjectPackagesService],
 })
 export class ProjectPackagesModule {}
