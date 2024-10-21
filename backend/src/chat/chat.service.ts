@@ -14,7 +14,7 @@ export class ChatProxyService {
     return new Observable<ChatMessage>((observer) => {
       this.httpService
         .post(
-          'http://localhost:3001/chat',
+          'http://localhost:3001/chat/completion',
           {
             content: input,
           },

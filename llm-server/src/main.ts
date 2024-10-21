@@ -15,7 +15,7 @@ export class App {
 
   setupRoutes(): void {
     console.log("Setting up routes...");
-    this.app.post("/chat", this.handleChatRequest.bind(this));
+    this.app.post("/chat/completion", this.handleChatRequest.bind(this));
     console.log("Routes set up successfully.");
   }
 
