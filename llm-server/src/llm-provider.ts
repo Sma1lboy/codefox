@@ -2,6 +2,7 @@ import express, { Express, Request, Response } from "express";
 import { ModelProvider } from "./model/model-provider.js";
 import { OpenAIModelProvider } from "./model/openai-model-provider.js";
 import { LlamaModelProvider } from "./model/llama-model-provider.js";
+import { Logger } from "@nestjs/common";
 
 export interface ChatMessageInput {
   content: string;
@@ -13,6 +14,7 @@ export interface ChatMessage {
 }
 
 export class LLMProvider {
+  private readonly logger = new Logger(LLMProvider.name);
   private modelProvider: ModelProvider;
 
   constructor(modelProviderType: "llama" | "openai" = "llama") {
@@ -24,9 +26,9 @@ export class LLMProvider {
   }
 
   async initialize(): Promise<void> {
-    console.log("Initializing LLM provider...");
+    this.logger.log("Initializing LLM provider...");
     await this.modelProvider.initialize();
-    console.log("LLM provider fully initialized and ready.");
+    this.logger.log("LLM provider fully initialized and ready.");
   }
 
   async generateStreamingResponse(
