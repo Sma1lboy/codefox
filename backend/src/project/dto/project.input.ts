@@ -6,7 +6,6 @@ export class UpsertProjectInput {
   @Field()
   project_name: string;
 
-  @Field()
   path: string;
 
   @Field(() => ID, { nullable: true })
