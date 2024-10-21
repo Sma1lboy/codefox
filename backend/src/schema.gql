@@ -2,6 +2,14 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input ChatInputType {
+  message: String!
+}
+
+type ChatMessageType {
+  content: String!
+}
+
 input CheckTokenInput {
   token: String!
 }
@@ -43,6 +51,10 @@ input RegisterUserInput {
   email: String!
   password: String!
   username: String!
+}
+
+type Subscription {
+  chatStream(input: ChatInputType!): ChatMessageType!
 }
 
 type User {

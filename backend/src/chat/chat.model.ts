@@ -1,10 +1,13 @@
-import { Field, ObjectType } from '@nestjs/graphql';
+import { ObjectType, Field, InputType } from '@nestjs/graphql';
 
-@ObjectType()
+@ObjectType('ChatMessageType')
 export class ChatMessage {
   @Field()
-  role: string;
-
-  @Field()
   content: string;
+}
+
+@InputType('ChatInputType')
+export class ChatInput {
+  @Field()
+  message: string;
 }

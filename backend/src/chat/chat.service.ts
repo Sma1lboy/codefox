@@ -1,44 +1,39 @@
-import {
-  getLlama,
-  LlamaChatSession,
-  LlamaContext,
-  LlamaModel,
-} from 'node-llama-cpp';
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ChatMessageInput } from './chat.input.ts';
-import { ChatMessage } from './chat.model.ts';
+import { Injectable, Logger } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { ChatMessage } from './chat.model';
 
 @Injectable()
-export class ChatService implements OnModuleInit {
-  private model: LlamaModel;
-  private context: LlamaContext;
+export class ChatProxyService {
+  private readonly logger = new Logger('chat-service');
+  constructor(private httpService: HttpService) {}
 
-  async onModuleInit() {
-    await this.initializeModel();
-  }
-
-  private async initializeModel() {
-    const llama = await getLlama();
-    this.model = await llama.loadModel({
-      modelPath:
-        process.cwd() + 'models/LLAMA-3.2-1B-OpenHermes2.5.IQ4_XS.gguf',
+  streamChat(input: string): Observable<ChatMessage> {
+    this.logger.debug('request chat input: ' + input);
+    return new Observable<ChatMessage>((observer) => {
+      this.httpService
+        .post(
+          'http://localhost:3001/chat',
+          {
+            content: input,
+          },
+          {
+            responseType: 'stream',
+          },
+        )
+        .subscribe(
+          (response) => {
+            response.data.on('data', (chunk: Buffer) => {
+              this.logger.debug('chunk: ' + chunk.toString());
+              observer.next({ content: chunk.toString() });
+            });
+            response.data.on('end', () => {
+              observer.complete();
+            });
+          },
+          (error) => observer.error(error),
+        );
     });
-    this.context = await this.model.createContext();
-  }
-
-  async generateResponse(input: ChatMessageInput): Promise<ChatMessage> {
-    const session = new LlamaChatSession({
-      contextSequence: this.context.getSequence(),
-      // promptWrapper: (prompt) => `${prompt.role}: ${prompt.content}`,
-    });
-
-    const response = await session.prompt(input.content);
-
-    const chatResponse: ChatMessage = {
-      role: 'bot',
-      content: response,
-    };
-
-    return chatResponse;
   }
 }

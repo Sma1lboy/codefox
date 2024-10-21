@@ -1,26 +1,16 @@
-import {
-  Resolver,
-  Query,
-  Mutation,
-  Args,
-  ObjectType,
-  Field,
-} from '@nestjs/graphql';
-import { ChatService } from './chat.service.ts';
-import { ChatMessageInput } from './chat.input.ts';
-import { ChatMessage } from './chat.model.ts';
+import { Resolver, Subscription, Args } from '@nestjs/graphql';
+import { ChatProxyService } from './chat.service';
+import { ChatInput, ChatMessage } from './chat.model';
 
 @Resolver()
 export class ChatResolver {
-  constructor(private chatService: ChatService) {}
+  constructor(private chatProxyService: ChatProxyService) {}
 
-  @Mutation(() => ChatResponse)
-  async chat(@Args('input') input: ChatMessageInput): Promise<ChatMessage> {
-    return this.chatService.generateResponse(input);
+  @Subscription(() => ChatMessage, {
+    filter: (payload, variables) => !!payload.content,
+    resolve: (payload) => payload,
+  })
+  chatStream(@Args('input') input: ChatInput) {
+    return this.chatProxyService.streamChat(input.message);
   }
-}
-@ObjectType()
-export class ChatResponse {
-  @Field(() => ChatMessage)
-  content: ChatMessage;
 }

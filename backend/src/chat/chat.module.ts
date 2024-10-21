@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common';
-import { ChatService } from './chat.service.ts';
-import { ChatResolver } from './chat.resolver.ts';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { HttpModule } from '@nestjs/axios';
+import { ChatResolver } from './chat.resolver';
+import { ChatProxyService } from './chat.service';
 
 @Module({
-  providers: [ChatResolver, ChatService],
+  imports: [HttpModule],
+  providers: [ChatResolver, ChatProxyService],
 })
 export class ChatModule {}
