@@ -6,74 +6,67 @@ import {
   LlamaModel,
 } from "node-llama-cpp";
 import path from "path";
+import { ModelProvider } from "./model/model-provider.js";
+import { OpenAIModelProvider } from "./model/openai-model-provider.js";
+import { LlamaModelProvider } from "./model/llama-model-provider.js";
 
-interface ChatMessageInput {
+export interface ChatMessageInput {
   content: string;
 }
 
-interface ChatMessage {
+export interface ChatMessage {
   role: string;
   content: string;
 }
 
-class LLMServer {
+export class LLMServer {
   private app: Express;
-  private model: LlamaModel;
-  private context: LlamaContext;
+  private modelProvider: ModelProvider;
   private readonly PORT: number;
 
-  constructor() {
+  constructor(modelProviderType: "llama" | "openai" = "llama") {
     this.app = express();
     this.app.use(express.json());
     this.PORT = parseInt(process.env.PORT || "3001", 10);
+    console.log(`Server initialized with PORT: ${this.PORT}`);
+
+    if (modelProviderType === "openai") {
+      this.modelProvider = new OpenAIModelProvider();
+    } else {
+      this.modelProvider = new LlamaModelProvider();
+    }
   }
 
   async initialize(): Promise<void> {
-    await this.initializeModel();
+    console.log("Initializing LLM server...");
+    await this.modelProvider.initialize();
     this.setupRoutes();
     await this.startServer();
-  }
-
-  private async initializeModel(): Promise<void> {
-    const llama = await getLlama();
-    this.model = await llama.loadModel({
-      modelPath: path.join(
-        process.cwd(),
-        "..",
-        "models",
-        "LLAMA-3.2-1B-OpenHermes2.5.IQ4_XS.gguf"
-      ),
-    });
-    this.context = await this.model.createContext();
-    console.log("Llama model initialized");
+    console.log("LLM server fully initialized and ready.");
   }
 
   private setupRoutes(): void {
+    console.log("Setting up routes...");
     this.app.post("/chat", this.handleChatRequest.bind(this));
+    console.log("Routes set up successfully.");
   }
 
   private async handleChatRequest(req: Request, res: Response): Promise<void> {
+    console.log("Received chat request.");
     try {
       const { content } = req.body as ChatMessageInput;
-      const response = await this.generateResponse({ content });
-      res.json(response);
+      console.log(`Request content: "${content}"`);
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      console.log("Response headers set for streaming.");
+
+      await this.modelProvider.generateStreamingResponse(content, res);
     } catch (error) {
       console.error("Error in chat endpoint:", error);
       res.status(500).json({ error: "Internal server error" });
     }
-  }
-
-  private async generateResponse(
-    input: ChatMessageInput
-  ): Promise<ChatMessage> {
-    const session = new LlamaChatSession({
-      contextSequence: this.context.getSequence(),
-    });
-    const response = await session.prompt(input.content);
-    return {
-      role: "bot",
-      content: response,
-    };
   }
 
   private async startServer(): Promise<void> {
@@ -82,9 +75,3 @@ class LLMServer {
     });
   }
 }
-
-const server = new LLMServer();
-server.initialize().catch((error) => {
-  console.error("Failed to initialize LLM server:", error);
-  process.exit(1);
-});
