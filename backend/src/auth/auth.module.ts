@@ -23,6 +23,6 @@ import { JwtCacheService } from 'src/auth/jwt-cache.service';
     }),
   ],
   providers: [AuthService, AuthResolver, JwtCacheService],
-  exports: [AuthService],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {}
