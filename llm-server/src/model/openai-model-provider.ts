@@ -10,7 +10,6 @@ export class OpenAIModelProvider extends ModelProvider {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
-    console.log("api key: " + process.env.OPENAI_API_KEY);
     console.log("OpenAI model initialized.");
   }
 
@@ -21,6 +20,13 @@ export class OpenAIModelProvider extends ModelProvider {
     console.log("Generating streaming response with OpenAI...");
     const startTime = Date.now();
 
+    // Set SSE headers
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    });
+
     try {
       const stream = await this.openai.chat.completions.create({
         model: "gpt-3.5-turbo",
@@ -29,22 +35,18 @@ export class OpenAIModelProvider extends ModelProvider {
       });
 
       let chunkCount = 0;
-
       for await (const chunk of stream) {
         const content = chunk.choices[0]?.delta?.content || "";
         if (content) {
           chunkCount++;
           console.log(`Sending chunk #${chunkCount}: "${content}"`);
-          res.write(
-            `data: ${JSON.stringify({ role: "bot", content: content })}\n\n`
-          );
+          res.write(`data: ${JSON.stringify(chunk)}\n\n`);
         }
       }
 
       const endTime = Date.now();
       console.log(`Response generation completed. Total chunks: ${chunkCount}`);
       console.log(`Generation time: ${endTime - startTime}ms`);
-
       res.write(`data: [DONE]\n\n`);
       res.end();
       console.log("Response stream ended.");

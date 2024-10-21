@@ -1,11 +1,4 @@
 import express, { Express, Request, Response } from "express";
-import {
-  getLlama,
-  LlamaChatSession,
-  LlamaContext,
-  LlamaModel,
-} from "node-llama-cpp";
-import path from "path";
 import { ModelProvider } from "./model/model-provider.js";
 import { OpenAIModelProvider } from "./model/openai-model-provider.js";
 import { LlamaModelProvider } from "./model/llama-model-provider.js";
@@ -54,6 +47,7 @@ export class LLMServer {
   private async handleChatRequest(req: Request, res: Response): Promise<void> {
     console.log("Received chat request.");
     try {
+      console.log(JSON.stringify(req.body));
       const { content } = req.body as ChatMessageInput;
       console.log(`Request content: "${content}"`);
 

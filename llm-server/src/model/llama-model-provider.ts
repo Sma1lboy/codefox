@@ -8,6 +8,7 @@ import {
 } from "node-llama-cpp";
 import { ModelProvider } from "./model-provider.js";
 
+//TODO: using protocol class
 export class LlamaModelProvider extends ModelProvider {
   private model: LlamaModel;
   private context: LlamaContext;
