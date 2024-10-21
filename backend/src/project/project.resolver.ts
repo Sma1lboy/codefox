@@ -10,48 +10,56 @@ import {
 import { ProjectsService } from './project.service';
 import { Projects } from './project.model';
 import { UpsertProjectInput } from './dto/project.input';
+import { UseGuards } from '@nestjs/common';
+import { ProjectGuard } from '../guard/project.guard';
+import { GetUserIdFromToken } from '../decorator/get-auth-token';
 
 @Resolver(() => Projects)
 export class ProjectsResolver {
   constructor(
-    private readonly projectsService: ProjectsService
+    private readonly projectsService: ProjectsService,
   ) {}
 
-  // -------- All the code need to extract the user id from the token and verify is the project user's or not
-  // add @GetAuthToken() token: string after test
   @Query(() => [Projects])
-  async getUserProjects(@Args('userId') userId: string): Promise<Projects[]> {
-    // if (userId != token.id) return 401
-
+  async getUserProjects(@GetUserIdFromToken() userId: string): Promise<Projects[]> {
     return this.projectsService.getProjectsByUser(userId);
   }
 
   // @GetAuthToken() token: string
   @Query(() => Projects)
+  @UseGuards(ProjectGuard)
   async getProjectDetails(@Args('projectId') projectId: string): Promise<Projects> {
     return this.projectsService.getProjectById(projectId);
   }
 
-  // @GetAuthToken() token: string
   @Mutation(() => Projects)
-  async upsertProject(
+  async upsertProject(@GetUserIdFromToken() userId: string,
     @Args('upsertProjectInput') upsertProjectInput: UpsertProjectInput
   ): Promise<Projects> {
-    return this.projectsService.upsertProject(upsertProjectInput);
+    return this.projectsService.upsertProject(upsertProjectInput, userId);
   }
 
-  // @GetAuthToken() token: string
   @Mutation(() => Boolean)
+  @UseGuards(ProjectGuard)
   async deleteProject(@Args('projectId') projectId: string): Promise<boolean> {
     return this.projectsService.deleteProject(projectId);
   }
 
-  // @GetAuthToken() token: string
   @Mutation(() => Boolean)
+  @UseGuards(ProjectGuard)
   async updateProjectPath(
     @Args('projectId') projectId: string,
     @Args('newPath') newPath: string
   ): Promise<boolean> {
     return this.projectsService.updateProjectPath(projectId, newPath);
+  }
+
+  @Mutation(() => Boolean)
+  @UseGuards(ProjectGuard)
+  async removePackageFromProject(
+    @Args('projectId') projectId: string,
+    @Args('packageId') packageId: string
+  ): Promise<boolean> {
+    return this.projectsService.removePackageFromProject(projectId, packageId);
   }
 }

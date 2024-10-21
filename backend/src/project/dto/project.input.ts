@@ -9,13 +9,9 @@ export class UpsertProjectInput {
   @Field()
   path: string;
 
-  @Field(() => ID)
-  user_id: string;
-
   @Field(() => ID, { nullable: true })
   project_id: string;
 
-  // may need
-  // @Field(() => [String])
-  // project_packages: string[];
+  @Field(() => [String], { nullable: true })
+  project_packages: string[];
 }
