@@ -9,7 +9,6 @@ import { User } from './user/user.model';
 import { AuthModule } from './auth/auth.module';
 import { ProjectModule } from './project/project.module';
 import { TokenModule } from './token/token.module';
-import { ProjectPackagesModule } from './project/project-packages.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtCacheService } from './auth/jwt-cache.service';
@@ -35,7 +34,6 @@ import { JwtCacheService } from './auth/jwt-cache.service';
     UserModule,
     AuthModule,
     ProjectModule,
-    ProjectPackagesModule,
     TokenModule,
   ],
   providers: [AppService],
