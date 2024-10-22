@@ -52,6 +52,10 @@ type Menu {
   permission: String!
 }
 
+type ModelTags {
+  tags: [String!]!
+}
+
 type Mutation {
   deleteProject(projectId: String!): Boolean!
   login(input: LoginUserInput!): LoginResponse!
@@ -88,6 +92,7 @@ type Query {
   getProjectDetails(projectId: String!): Projects!
   getUserProjects: [Projects!]!
   logout: Boolean!
+  modelTags: ModelTags!
 }
 
 input RegisterUserInput {
