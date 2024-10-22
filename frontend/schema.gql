@@ -53,7 +53,6 @@ type Menu {
 }
 
 type Mutation {
-  addPackageToProject(packageContent: String!, projectId: String!): ProjectPackages!
   deleteProject(projectId: String!): Boolean!
   login(input: LoginUserInput!): LoginResponse!
   registerUser(input: RegisterUserInput!): User!
@@ -87,7 +86,7 @@ type Projects {
 type Query {
   checkToken(input: CheckTokenInput!): Boolean!
   getProjectDetails(projectId: String!): Projects!
-  getUserProjects(userId: String!): [Projects!]!
+  getUserProjects: [Projects!]!
   logout: Boolean!
 }
 
@@ -99,12 +98,12 @@ input RegisterUserInput {
 
 type Subscription {
   chatStream(input: ChatInputType!): ChatCompletionChunkType
+}
 
 input UpsertProjectInput {
-  path: String!
   project_id: ID
   project_name: String!
-  user_id: ID!
+  project_packages: [String!]
 }
 
 type User {
