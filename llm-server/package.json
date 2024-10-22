@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node --experimental-specifier-resolution=node --loader ts-node/esm src/main.ts",
     "start:dev": "nodemon --watch 'src/**/*.ts' --exec 'node --experimental-specifier-resolution=node --loader ts-node/esm' src/main.ts",
+    "dev:backend": "pnpm start:dev",
     "build": "tsc",
     "serve": "node --experimental-specifier-resolution=node dist/main.js"
   },
