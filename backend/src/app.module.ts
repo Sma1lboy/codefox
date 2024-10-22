@@ -12,6 +12,7 @@ import { TokenModule } from './token/token.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtCacheService } from './auth/jwt-cache.service';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { JwtCacheService } from './auth/jwt-cache.service';
     AuthModule,
     ProjectModule,
     TokenModule,
+    ChatModule,
   ],
   providers: [AppService],
 })
