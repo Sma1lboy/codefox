@@ -1,26 +1,26 @@
-"use client";
+'use client';
 
-import { ChatLayout } from "@/components/chat/chat-layout";
-import { Button } from "@/components/ui/button";
+import { ChatLayout } from '@/components/chat/chat-layout';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogContent,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import UsernameForm from "@/components/username-form";
-import { getSelectedModel } from "@/lib/model-helper";
-import { ChatOllama } from "@langchain/community/chat_models/ollama";
-import { AIMessage, HumanMessage } from "@langchain/core/messages";
-import { BytesOutputParser } from "@langchain/core/output_parsers";
-import { Attachment, ChatRequestOptions } from "ai";
-import { Message, useChat } from "ai/react";
-import React, { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
-import { v4 as uuidv4 } from "uuid";
-import useChatStore from "./hooks/useChatStore";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import UsernameForm from '@/components/username-form';
+import { getSelectedModel } from '@/lib/model-helper';
+import { ChatOllama } from '@langchain/community/chat_models/ollama';
+import { AIMessage, HumanMessage } from '@langchain/core/messages';
+import { BytesOutputParser } from '@langchain/core/output_parsers';
+import { Attachment, ChatRequestOptions } from 'ai';
+import { Message, useChat } from 'ai/react';
+import React, { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
+import useChatStore from './hooks/useChatStore';
 
 export default function Home() {
   const {
@@ -42,13 +42,12 @@ export default function Home() {
     },
     onError: (error) => {
       setLoadingSubmit(false);
-      toast.error("An error occurred. Please try again.");
+      toast.error('An error occurred. Please try again.');
     },
   });
-  const [chatId, setChatId] = React.useState<string>("");
-  const [selectedModel, setSelectedModel] = React.useState<string>(
-    getSelectedModel()
-  );
+  const [chatId, setChatId] = React.useState<string>('');
+  const [selectedModel, setSelectedModel] =
+    React.useState<string>(getSelectedModel());
   const [open, setOpen] = React.useState(false);
   const [ollama, setOllama] = useState<ChatOllama>();
   const env = process.env.NODE_ENV;
@@ -60,7 +59,7 @@ export default function Home() {
   useEffect(() => {
     if (messages.length < 1) {
       // Generate a random id for the chat
-      console.log("Generating chat id");
+      console.log('Generating chat id');
       const id = uuidv4();
       setChatId(id);
     }
@@ -71,27 +70,27 @@ export default function Home() {
       // Save messages to local storage
       localStorage.setItem(`chat_${chatId}`, JSON.stringify(messages));
       // Trigger the storage event to update the sidebar component
-      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event('storage'));
     }
   }, [chatId, isLoading, error]);
 
   useEffect(() => {
-    if (env === "production") {
+    if (env === 'production') {
       const newOllama = new ChatOllama({
-        baseUrl: process.env.NEXT_PUBLIC_OLLAMA_URL || "http://localhost:11434",
+        baseUrl: process.env.NEXT_PUBLIC_OLLAMA_URL || 'http://localhost:11434',
         model: selectedModel,
       });
       setOllama(newOllama);
     }
 
-    if (!localStorage.getItem("ollama_user")) {
+    if (!localStorage.getItem('ollama_user')) {
       setOpen(true);
     }
   }, [selectedModel]);
 
   const addMessage = (Message: Message) => {
     messages.push(Message);
-    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new Event('storage'));
     setMessages([...messages]);
   };
 
@@ -101,8 +100,8 @@ export default function Home() {
   ) => {
     e.preventDefault();
 
-    addMessage({ role: "user", content: input, id: chatId });
-    setInput("");
+    addMessage({ role: 'user', content: input, id: chatId });
+    setInput('');
 
     if (ollama) {
       try {
@@ -112,7 +111,7 @@ export default function Home() {
           .pipe(parser)
           .stream(
             (messages as Message[]).map((m) =>
-              m.role == "user"
+              m.role == 'user'
                 ? new HumanMessage(m.content)
                 : new AIMessage(m.content)
             )
@@ -120,24 +119,24 @@ export default function Home() {
 
         const decoder = new TextDecoder();
 
-        let responseMessage = "";
+        let responseMessage = '';
         for await (const chunk of stream) {
           const decodedChunk = decoder.decode(chunk);
           responseMessage += decodedChunk;
           setLoadingSubmit(false);
           setMessages([
             ...messages,
-            { role: "assistant", content: responseMessage, id: chatId },
+            { role: 'assistant', content: responseMessage, id: chatId },
           ]);
         }
-        addMessage({ role: "assistant", content: responseMessage, id: chatId });
+        addMessage({ role: 'assistant', content: responseMessage, id: chatId });
         setMessages([...messages]);
 
         localStorage.setItem(`chat_${chatId}`, JSON.stringify(messages));
         // Trigger the storage event to update the sidebar component
-        window.dispatchEvent(new Event("storage"));
+        window.dispatchEvent(new Event('storage'));
       } catch (error) {
-        toast.error("An error occurred. Please try again.");
+        toast.error('An error occurred. Please try again.');
         setLoadingSubmit(false);
       }
     }
@@ -150,11 +149,11 @@ export default function Home() {
     setMessages([...messages]);
 
     const attachments: Attachment[] = base64Images
-    ? base64Images.map((image) => ({
-        contentType: 'image/base64', // Content type for base64 images
-        url: image, // The base64 image data
-      }))
-    : [];
+      ? base64Images.map((image) => ({
+          contentType: 'image/base64', // Content type for base64 images
+          url: image, // The base64 image data
+        }))
+      : [];
 
     // Prepare the options object with additional body data, to pass the model.
     const requestOptions: ChatRequestOptions = {
@@ -167,32 +166,31 @@ export default function Home() {
         data: {
           images: base64Images,
         },
-        experimental_attachments: attachments
+        experimental_attachments: attachments,
       }),
     };
 
-    messages.slice(0, -1)
-    
+    messages.slice(0, -1);
 
-    if (env === "production") {
+    if (env === 'production') {
       handleSubmitProduction(e);
-      setBase64Images(null)
+      setBase64Images(null);
     } else {
       // Call the handleSubmit function with the options
       handleSubmit(e, requestOptions);
-      setBase64Images(null)
+      setBase64Images(null);
     }
   };
 
-  const onOpenChange = (isOpen: boolean) => { 
-    const username = localStorage.getItem("ollama_user")
-    if (username) return setOpen(isOpen)
+  const onOpenChange = (isOpen: boolean) => {
+    const username = localStorage.getItem('ollama_user');
+    if (username) return setOpen(isOpen);
 
-    localStorage.setItem("ollama_user", "Anonymous")
-    window.dispatchEvent(new Event("storage"))
-    setOpen(isOpen)
-  }
-  
+    localStorage.setItem('ollama_user', 'Anonymous');
+    window.dispatchEvent(new Event('storage'));
+    setOpen(isOpen);
+  };
+
   return (
     <main className="flex h-[calc(100dvh)] flex-col items-center ">
       <Dialog open={open} onOpenChange={onOpenChange}>

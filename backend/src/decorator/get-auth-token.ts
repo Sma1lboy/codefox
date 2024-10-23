@@ -1,4 +1,8 @@
-import { createParamDecorator, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  createParamDecorator,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { JwtService } from '@nestjs/jwt';
 
@@ -15,7 +19,6 @@ export const GetAuthToken = createParamDecorator(
   },
 );
 
-
 export const GetUserIdFromToken = createParamDecorator(
   (data: unknown, context: ExecutionContext) => {
     const ctx = GqlExecutionContext.create(context);
@@ -23,7 +26,9 @@ export const GetUserIdFromToken = createParamDecorator(
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Authorization token is missing or invalid');
+      throw new UnauthorizedException(
+        'Authorization token is missing or invalid',
+      );
     }
 
     const token = authHeader.split(' ')[1];

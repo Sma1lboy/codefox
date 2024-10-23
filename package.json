@@ -1,5 +1,5 @@
 {
-  "name": "GeneratorAI",
+  "name": "codefox",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,6 +8,7 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
+    "format": "turbo format",
     "dev:backend": "turbo dev:backend",
     "test": "turbo test"
   },
@@ -15,6 +16,11 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.0.0",
+    "prettier": "^3.0.0",
     "turbo": "^2.2.3"
   },
   "packageManager": "pnpm@9.1.2",

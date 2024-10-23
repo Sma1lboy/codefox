@@ -33,8 +33,12 @@ export class Projects extends SystemBaseModel {
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user: User;
-  
+
   @Field(() => [ProjectPackages], { nullable: true })
-  @OneToMany(() => ProjectPackages, (projectPackage) => projectPackage.project, { cascade: true })
+  @OneToMany(
+    () => ProjectPackages,
+    (projectPackage) => projectPackage.project,
+    { cascade: true },
+  )
   projectPackages: ProjectPackages[];
 }

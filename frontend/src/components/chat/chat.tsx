@@ -1,10 +1,10 @@
-import React from "react";
-import ChatTopbar from "./chat-topbar";
-import ChatList from "./chat-list";
-import ChatBottombar from "./chat-bottombar";
-import { Message, useChat } from "ai/react";
-import { ChatRequestOptions } from "ai";
-import { v4 as uuidv4 } from "uuid";
+import React from 'react';
+import ChatTopbar from './chat-topbar';
+import ChatList from './chat-list';
+import ChatBottombar from './chat-bottombar';
+import { Message, useChat } from 'ai/react';
+import { ChatRequestOptions } from 'ai';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface ChatProps {
   chatId?: string;
@@ -40,7 +40,7 @@ export default function Chat({
   formRef,
   isMobile,
   setInput,
-  setMessages
+  setMessages,
 }: ChatProps) {
   return (
     <div className="flex flex-col justify-between w-full max-w-3xl h-full ">

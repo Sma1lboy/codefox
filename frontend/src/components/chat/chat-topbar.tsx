@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import React, { useEffect } from "react";
+import React, { useEffect } from 'react';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from '@/components/ui/popover';
 import {
   Sheet,
   SheetContent,
@@ -13,13 +13,13 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
+} from '@/components/ui/sheet';
 
-import { Button } from "../ui/button";
-import { CaretSortIcon, HamburgerMenuIcon } from "@radix-ui/react-icons";
-import { Sidebar } from "../sidebar";
-import { Message } from "ai/react";
-import { getSelectedModel } from "@/lib/model-helper";
+import { Button } from '../ui/button';
+import { CaretSortIcon, HamburgerMenuIcon } from '@radix-ui/react-icons';
+import { Sidebar } from '../sidebar';
+import { Message } from 'ai/react';
+import { getSelectedModel } from '@/lib/model-helper';
 
 interface ChatTopbarProps {
   setSelectedModel: React.Dispatch<React.SetStateAction<string>>;
@@ -34,7 +34,7 @@ export default function ChatTopbar({
   isLoading,
   chatId,
   messages,
-  setMessages
+  setMessages,
 }: ChatTopbarProps) {
   const [models, setModels] = React.useState<string[]>([]);
   const [open, setOpen] = React.useState(false);
@@ -47,19 +47,20 @@ export default function ChatTopbar({
     const env = process.env.NODE_ENV;
 
     const fetchModels = async () => {
-      if (env === "production") {
-        const fetchedModels = await fetch(process.env.NEXT_PUBLIC_OLLAMA_URL + "/api/tags");
+      if (env === 'production') {
+        const fetchedModels = await fetch(
+          process.env.NEXT_PUBLIC_OLLAMA_URL + '/api/tags'
+        );
         const json = await fetchedModels.json();
-        const apiModels = json.models.map((model : any) => model.name);
+        const apiModels = json.models.map((model: any) => model.name);
         setModels([...apiModels]);
-      } 
-      else {
-        const fetchedModels = await fetch("/api/tags") 
+      } else {
+        const fetchedModels = await fetch('/api/tags');
         const json = await fetchedModels.json();
-        const apiModels = json.models.map((model : any) => model.name);
+        const apiModels = json.models.map((model: any) => model.name);
         setModels([...apiModels]);
-    }
-    }
+      }
+    };
     fetchModels();
   }, []);
 
@@ -67,13 +68,13 @@ export default function ChatTopbar({
     setCurrentModel(model);
     setSelectedModel(model);
     if (typeof window !== 'undefined') {
-      localStorage.setItem("selectedModel", model);
+      localStorage.setItem('selectedModel', model);
     }
     setOpen(false);
   };
 
   const handleCloseSidebar = () => {
-    setSheetOpen(false);  // Close the sidebar
+    setSheetOpen(false); // Close the sidebar
   };
 
   return (
@@ -84,12 +85,12 @@ export default function ChatTopbar({
         </SheetTrigger>
         <SheetContent side="left">
           <Sidebar
-            chatId={chatId || ""}
+            chatId={chatId || ''}
             isCollapsed={false}
             isMobile={false}
             messages={messages}
             setMessages={setMessages}
-            closeSidebar={handleCloseSidebar} 
+            closeSidebar={handleCloseSidebar}
           />
         </SheetContent>
       </Sheet>
@@ -103,7 +104,7 @@ export default function ChatTopbar({
             aria-expanded={open}
             className="w-[300px] justify-between"
           >
-            {currentModel || "Select model"}
+            {currentModel || 'Select model'}
             <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>

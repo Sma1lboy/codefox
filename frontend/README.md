@@ -12,7 +12,6 @@
   
 </div>
 
-
 Get up and running with Large Language Models **quickly**, **locally** and even **offline**.
 This project aims to be the easiest way for you to get started with LLMs. No tedious and annoying setup required!
 
@@ -61,7 +60,7 @@ Alternatively you can install from source with the instructions below.
 > If your frontend runs on something other than `http://localhost` or `http://127.0.0.1`, you'll need to set the OLLAMA_ORIGINS to your frontend url.
 >
 > This is also stated in the [documentation](https://github.com/ollama/ollama/blob/main/docs/faq.md#how-do-i-configure-ollama-server):
-> 
+>
 > `Ollama allows cross-origin requests from 127.0.0.1 and 0.0.0.0 by default. Additional origins can be configured with OLLAMA_ORIGINS`
 
 ## Install from source
@@ -107,6 +106,7 @@ npm run dev
 # Upcoming features
 
 This is a to-do list consisting of upcoming features.
+
 - ✅ Voice input support
 - ✅ Code syntax highlighting
 - ✅ Ability to send an image in the prompt to utilize vision language models.
