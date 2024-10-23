@@ -47,7 +47,7 @@ export class ProjectGuard implements CanActivate {
 
     //To do: In the feature when we need allow teams add check here
 
-    if (project.user_id !== user.userId) {
+    if (project.userId !== user.userId) {
       throw new UnauthorizedException('User is not the owner of the project');
     }
 

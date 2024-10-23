@@ -20,7 +20,7 @@ export class Project extends SystemBaseModel {
 
   @Field()
   @Column()
-  project_name: string;
+  projectName: string;
 
   @Field()
   @Column()
@@ -28,7 +28,7 @@ export class Project extends SystemBaseModel {
 
   @Field(() => ID)
   @Column()
-  user_id: string;
+  userId: string;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })

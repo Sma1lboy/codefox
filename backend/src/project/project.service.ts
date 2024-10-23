@@ -21,13 +21,13 @@ export class ProjectService {
 
   async getProjectsByUser(userId: string): Promise<Project[]> {
     const projects = await this.projectsRepository.find({
-      where: { user_id: userId, is_deleted: false },
+      where: { userId: userId, isDeleted: false },
       relations: ['projectPackages'],
     });
     if (projects && projects.length > 0) {
       projects.forEach((project) => {
         project.projectPackages = project.projectPackages.filter(
-          (pkg) => !pkg.is_deleted,
+          (pkg) => !pkg.isDeleted,
         );
       });
     }
@@ -40,12 +40,12 @@ export class ProjectService {
 
   async getProjectById(projectId: string): Promise<Project> {
     const project = await this.projectsRepository.findOne({
-      where: { id: projectId, is_deleted: false },
+      where: { id: projectId, isDeleted: false },
       relations: ['projectPackages'],
     });
     if (project) {
       project.projectPackages = project.projectPackages.filter(
-        (pkg) => !pkg.is_deleted,
+        (pkg) => !pkg.isDeleted,
       );
     }
 
@@ -58,35 +58,35 @@ export class ProjectService {
   async upsertProject(
     upsertProjectInput: UpsertProjectInput,
     user_id: string,
-  ): Promise<Projects> {
-    const { project_id, project_name, path, project_packages } =
+  ): Promise<Project> {
+    const { projectId, projectName, path, projectPackages } =
       upsertProjectInput;
 
     let project;
-    if (project_id) {
+    if (projectId) {
       // only extract the project match the user id
       project = await this.projectsRepository.findOne({
-        where: { id: project_id, is_deleted: false, user_id: user_id },
+        where: { id: projectId, isDeleted: false, userId: user_id },
       });
     }
 
     if (project) {
       // Update existing project
-      if (project_name) project.project_name = project_name;
+      if (projectName) project.project_name = projectName;
       if (path) project.path = path;
     } else {
       // Create a new project if it does not exist
       project = this.projectsRepository.create({
-        project_name,
+        projectName: projectName,
         path,
-        user_id,
+        userId: user_id,
       });
       project = await this.projectsRepository.save(project);
     }
 
     // Add new project packages to existing ones
-    if (project_packages && project_packages.length > 0) {
-      const newPackages = project_packages.map((content) => {
+    if (projectPackages && projectPackages.length > 0) {
+      const newPackages = projectPackages.map((content) => {
         return this.projectPackagesRepository.create({
           project: project,
           content: content,
@@ -98,13 +98,13 @@ export class ProjectService {
     // Return the updated or created project with all packages
     return await this.projectsRepository
       .findOne({
-        where: { id: project.id, is_deleted: false },
+        where: { id: project.id, isDeleted: false },
         relations: ['projectPackages'],
       })
       .then((project) => {
         if (project && project.projectPackages) {
           project.projectPackages = project.projectPackages.filter(
-            (pkg) => !pkg.is_deleted,
+            (pkg) => !pkg.isDeleted,
           );
         }
         return project;
@@ -121,16 +121,16 @@ export class ProjectService {
 
     try {
       // Perform a soft delete by updating is_active and is_deleted fields
-      project.is_active = false;
-      project.is_deleted = true;
+      project.isActive = false;
+      project.isDeleted = true;
       await this.projectsRepository.save(project);
 
       // Perform a soft delete for related project packages
       const projectPackages = project.projectPackages;
       if (projectPackages && projectPackages.length > 0) {
         for (const pkg of projectPackages) {
-          pkg.is_active = false;
-          pkg.is_deleted = true;
+          pkg.isActive = false;
+          pkg.isDeleted = true;
           await this.projectPackagesRepository.save(pkg);
         }
       }
@@ -154,8 +154,8 @@ export class ProjectService {
       );
     }
 
-    packageToRemove.is_active = false;
-    packageToRemove.is_deleted = true;
+    packageToRemove.isActive = false;
+    packageToRemove.isDeleted = true;
     await this.projectPackagesRepository.save(packageToRemove);
 
     return true;
@@ -166,7 +166,7 @@ export class ProjectService {
     newPath: string,
   ): Promise<boolean> {
     const project = await this.projectsRepository.findOne({
-      where: { id: projectId, is_deleted: false },
+      where: { id: projectId, isDeleted: false },
       relations: ['projectPackages'],
     });
     if (!project) {

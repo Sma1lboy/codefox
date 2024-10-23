@@ -44,10 +44,10 @@ describe('SystemBaseModel', () => {
       const savedEntity = await repository.save(entity);
 
       // Assert
-      expect(savedEntity.created_at).toBeDefined();
-      expect(savedEntity.updated_at).toBeDefined();
-      expect(savedEntity.created_at instanceof Date).toBeTruthy();
-      expect(savedEntity.updated_at instanceof Date).toBeTruthy();
+      expect(savedEntity.createdAt).toBeDefined();
+      expect(savedEntity.updatedAt).toBeDefined();
+      expect(savedEntity.createdAt instanceof Date).toBeTruthy();
+      expect(savedEntity.updatedAt instanceof Date).toBeTruthy();
     });
 
     it('should update updated_at on entity update', async () => {
@@ -57,7 +57,7 @@ describe('SystemBaseModel', () => {
       entity.name = 'Test Entity';
 
       const savedEntity = await repository.save(entity);
-      const originalUpdatedAt = savedEntity.updated_at;
+      const originalUpdatedAt = savedEntity.updatedAt;
 
       // Wait a bit to ensure different timestamp
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -67,11 +67,11 @@ describe('SystemBaseModel', () => {
       const updatedEntity = await repository.save(savedEntity);
 
       // Assert
-      expect(updatedEntity.updated_at.getTime()).toBeGreaterThanOrEqual(
+      expect(updatedEntity.updatedAt.getTime()).toBeGreaterThanOrEqual(
         originalUpdatedAt.getTime(),
       );
-      expect(updatedEntity.created_at.getTime()).toBe(
-        savedEntity.created_at.getTime(),
+      expect(updatedEntity.createdAt.getTime()).toBe(
+        savedEntity.createdAt.getTime(),
       );
     });
 
@@ -83,13 +83,13 @@ describe('SystemBaseModel', () => {
 
       // Act
       const savedEntity = await repository.save(entity);
-      const originalCreatedAt = savedEntity.created_at;
+      const originalCreatedAt = savedEntity.createdAt;
 
       savedEntity.name = 'Updated Name';
       const updatedEntity = await repository.save(savedEntity);
 
       // Assert
-      expect(updatedEntity.created_at.getTime()).toBe(
+      expect(updatedEntity.createdAt.getTime()).toBe(
         originalCreatedAt.getTime(),
       );
     });
@@ -106,8 +106,8 @@ describe('SystemBaseModel', () => {
       const savedEntity = await repository.save(entity);
 
       // Assert
-      expect(savedEntity.is_active).toBe(true);
-      expect(savedEntity.is_deleted).toBe(false);
+      expect(savedEntity.isActive).toBe(true);
+      expect(savedEntity.isDeleted).toBe(false);
     });
 
     it('should allow overriding default is_active value', async () => {
@@ -115,13 +115,13 @@ describe('SystemBaseModel', () => {
       const repository = dataSource.getRepository(TestEntity);
       const entity = new TestEntity();
       entity.name = 'Test Entity';
-      entity.is_active = false;
+      entity.isActive = false;
 
       // Act
       const savedEntity = await repository.save(entity);
 
       // Assert
-      expect(savedEntity.is_active).toBe(false);
+      expect(savedEntity.isActive).toBe(false);
     });
 
     it('should allow overriding default is_deleted value', async () => {
@@ -129,13 +129,13 @@ describe('SystemBaseModel', () => {
       const repository = dataSource.getRepository(TestEntity);
       const entity = new TestEntity();
       entity.name = 'Test Entity';
-      entity.is_deleted = true;
+      entity.isDeleted = true;
 
       // Act
       const savedEntity = await repository.save(entity);
 
       // Assert
-      expect(savedEntity.is_deleted).toBe(true);
+      expect(savedEntity.isDeleted).toBe(true);
     });
   });
 
@@ -147,16 +147,16 @@ describe('SystemBaseModel', () => {
       entity.name = 'Test Entity';
 
       const savedEntity = await repository.save(entity);
-      expect(savedEntity.is_deleted).toBe(false);
+      expect(savedEntity.isDeleted).toBe(false);
 
       // Act
-      savedEntity.is_deleted = true;
+      savedEntity.isDeleted = true;
       const deletedEntity = await repository.save(savedEntity);
 
       // Assert
-      expect(deletedEntity.is_deleted).toBe(true);
-      expect(deletedEntity.updated_at.getTime()).toBeGreaterThanOrEqual(
-        savedEntity.updated_at.getTime(),
+      expect(deletedEntity.isDeleted).toBe(true);
+      expect(deletedEntity.updatedAt.getTime()).toBeGreaterThanOrEqual(
+        savedEntity.updatedAt.getTime(),
       );
     });
 
@@ -167,16 +167,16 @@ describe('SystemBaseModel', () => {
       entity.name = 'Test Entity';
 
       const savedEntity = await repository.save(entity);
-      expect(savedEntity.is_active).toBe(true);
+      expect(savedEntity.isActive).toBe(true);
 
       // Act
-      savedEntity.is_active = false;
+      savedEntity.isActive = false;
       const deactivatedEntity = await repository.save(savedEntity);
 
       // Assert
-      expect(deactivatedEntity.is_active).toBe(false);
-      expect(deactivatedEntity.updated_at.getTime()).toBeGreaterThanOrEqual(
-        savedEntity.updated_at.getTime(),
+      expect(deactivatedEntity.isActive).toBe(false);
+      expect(deactivatedEntity.updatedAt.getTime()).toBeGreaterThanOrEqual(
+        savedEntity.updatedAt.getTime(),
       );
     });
   });
@@ -194,10 +194,10 @@ describe('SystemBaseModel', () => {
 
       // Act
       const activeEntities = await repository.find({
-        where: { is_active: true },
+        where: { isActive: true },
       });
       const inactiveEntities = await repository.find({
-        where: { is_active: false },
+        where: { isActive: false },
       });
 
       // Assert
@@ -219,10 +219,10 @@ describe('SystemBaseModel', () => {
 
       // Act
       const nonDeletedEntities = await repository.find({
-        where: { is_deleted: false },
+        where: { isDeleted: false },
       });
       const deletedEntities = await repository.find({
-        where: { is_deleted: true },
+        where: { isDeleted: true },
       });
 
       // Assert

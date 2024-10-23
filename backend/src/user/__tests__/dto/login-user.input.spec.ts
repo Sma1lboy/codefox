@@ -187,10 +187,10 @@ describe('User Model', () => {
       const savedUser = await userRepo.save(user);
 
       // Assert
-      expect(savedUser.created_at).toBeDefined();
-      expect(savedUser.updated_at).toBeDefined();
-      expect(savedUser.created_at instanceof Date).toBeTruthy();
-      expect(savedUser.updated_at instanceof Date).toBeTruthy();
+      expect(savedUser.createdAt).toBeDefined();
+      expect(savedUser.updatedAt).toBeDefined();
+      expect(savedUser.createdAt instanceof Date).toBeTruthy();
+      expect(savedUser.updatedAt instanceof Date).toBeTruthy();
     });
 
     it('should update updated_at on user modification', async () => {
@@ -202,7 +202,7 @@ describe('User Model', () => {
 
       // Act
       const savedUser = await userRepo.save(user);
-      const originalUpdatedAt = savedUser.updated_at;
+      const originalUpdatedAt = savedUser.updatedAt;
 
       // Wait a bit to ensure different timestamp
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -211,7 +211,7 @@ describe('User Model', () => {
       const updatedUser = await userRepo.save(savedUser);
 
       // Assert
-      expect(updatedUser.updated_at.getTime()).toBeGreaterThanOrEqual(
+      expect(updatedUser.updatedAt.getTime()).toBeGreaterThanOrEqual(
         originalUpdatedAt.getTime(),
       );
     });

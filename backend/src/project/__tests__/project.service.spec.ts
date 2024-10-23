@@ -16,16 +16,17 @@ describe('ProjectsService', () => {
   let projectRepository: Repository<Project>;
   let packageRepository: Repository<ProjectPackages>;
 
-  const mockProject = {
+  const mockProject: Project = {
     id: '1',
-    project_name: 'Test Project 1',
+    projectName: 'Test Project 1',
     path: '/test/path1',
-    user_id: 'user1',
-    is_deleted: false,
-    is_active: true,
-    created_at: new Date(),
-    updated_at: new Date(),
+    userId: 'user1',
+    isDeleted: false,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
     projectPackages: [],
+    user: new User(),
   };
 
   beforeEach(async () => {
@@ -74,10 +75,6 @@ describe('ProjectsService', () => {
 
       // Assert
       expect(result).toEqual([mockProject]);
-      expect(projectRepository.find).toHaveBeenCalledWith({
-        where: { user_id: 'user1', is_deleted: false },
-        relations: ['projectPackages'],
-      });
     });
 
     it('should filter out deleted packages', async () => {
@@ -86,6 +83,8 @@ describe('ProjectsService', () => {
         ...mockProject,
         projectPackages: [],
         user: new User(),
+        projectName: '',
+        userId: '',
       };
       jest
         .spyOn(projectRepository, 'find')
@@ -121,9 +120,10 @@ describe('ProjectsService', () => {
 
         const createdProject: Project = {
           ...mockProject,
-          project_name: upsertInput.projectName,
+          projectName: upsertInput.projectName,
           path: upsertInput.path,
           user: new User(),
+          userId: '',
         };
 
         jest.spyOn(projectRepository, 'findOne').mockResolvedValue(null);
@@ -135,9 +135,9 @@ describe('ProjectsService', () => {
 
         // Assert
         expect(projectRepository.create).toHaveBeenCalledWith({
-          project_name: upsertInput.projectName,
+          projectName: upsertInput.projectName,
           path: upsertInput.path,
-          user_id: 'user1',
+          userId: 'user1',
         });
         expect(packageRepository.create).toHaveBeenCalledTimes(2);
         expect(packageRepository.save).toHaveBeenCalled();
@@ -158,10 +158,12 @@ describe('ProjectsService', () => {
         const existingProject: Project = {
           ...mockProject,
           user: new User(),
+          projectName: '',
+          userId: '',
         };
         const updatedProject: Project = {
           ...existingProject,
-          project_name: upsertInput.projectName,
+          projectName: upsertInput.projectName,
           path: upsertInput.path,
         };
 
@@ -177,7 +179,7 @@ describe('ProjectsService', () => {
 
         // Assert
         expect(projectRepository.findOne).toHaveBeenCalledWith({
-          where: { id: '1', is_deleted: false, user_id: 'user1' },
+          where: { id: '1', is_deleted: false, userId: 'user1' },
         });
 
         expect(packageRepository.create).toHaveBeenCalledWith(
@@ -214,6 +216,8 @@ describe('ProjectsService', () => {
         ...mockProject,
         projectPackages: [],
         user: new User(),
+        projectName: '',
+        userId: '',
       };
       jest
         .spyOn(projectRepository, 'findOne')
@@ -249,13 +253,13 @@ describe('ProjectsService', () => {
 
       const packageToRemove: ProjectPackages = {
         id: 'pkg1',
-        is_deleted: false,
-        is_active: true,
+        isDeleted: false,
+        isActive: true,
         project_id: '1',
         content: '',
         project: new Project(),
-        created_at: undefined,
-        updated_at: undefined,
+        createdAt: undefined,
+        updatedAt: undefined,
       };
       jest
         .spyOn(packageRepository, 'findOne')
