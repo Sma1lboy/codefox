@@ -2,6 +2,7 @@ import path from 'path';
 import os from 'os';
 import { name } from '../../package.json';
 import { existsSync, mkdirSync, promises } from 'fs-extra';
+
 export class CodeFoxPaths {
   private static readonly APP_NAME = name;
   private static readonly ROOT_DIR = path.join(
@@ -10,156 +11,126 @@ export class CodeFoxPaths {
   );
 
   /**
+   * Internal helper to ensure a directory exists before returning its path
+   * @param dirPath The directory path to check/create
+   * @returns The same directory path
+   */
+  private static ensureDir(dirPath: string): string {
+    if (!existsSync(path.dirname(dirPath))) {
+      this.ensureDir(path.dirname(dirPath));
+    }
+    if (!existsSync(dirPath)) {
+      mkdirSync(dirPath, { recursive: true });
+    }
+    return dirPath;
+  }
+
+  /**
    * Root Directory
    */
   public static getRootDir(): string {
-    return CodeFoxPaths.ROOT_DIR;
+    return this.ensureDir(CodeFoxPaths.ROOT_DIR);
   }
 
   /**
    * Models Directory
    */
   public static getModelsDir(): string {
-    return path.join(CodeFoxPaths.ROOT_DIR, 'models');
+    return this.ensureDir(path.join(this.getRootDir(), 'models'));
   }
 
   public static getModelPath(modelName: string): string {
-    return path.join(CodeFoxPaths.getModelsDir(), modelName);
+    return path.join(this.getModelsDir(), modelName);
   }
 
   /**
    * Projects Directory
    */
   public static getProjectsDir(): string {
-    return path.join(CodeFoxPaths.ROOT_DIR, 'projects');
+    return this.ensureDir(path.join(this.getRootDir(), 'projects'));
   }
 
   public static getProjectPath(projectId: string): string {
-    return path.join(CodeFoxPaths.getProjectsDir(), projectId);
+    return this.ensureDir(path.join(this.getProjectsDir(), projectId));
   }
 
   public static getProjectSourceDir(projectId: string): string {
-    return path.join(CodeFoxPaths.getProjectPath(projectId), 'src');
+    return this.ensureDir(path.join(this.getProjectPath(projectId), 'src'));
   }
 
   public static getProjectGeneratedDir(projectId: string): string {
-    return path.join(CodeFoxPaths.getProjectPath(projectId), 'generated');
+    return this.ensureDir(
+      path.join(this.getProjectPath(projectId), 'generated'),
+    );
   }
 
   public static getProjectTestsDir(projectId: string): string {
-    return path.join(CodeFoxPaths.getProjectPath(projectId), 'tests');
+    return this.ensureDir(path.join(this.getProjectPath(projectId), 'tests'));
   }
 
   /**
    * Database
    */
   public static getDatabaseDir(): string {
-    return path.join(CodeFoxPaths.ROOT_DIR, 'data');
+    return this.ensureDir(path.join(this.getRootDir(), 'data'));
   }
 
   public static getDatabasePath(): string {
-    return path.join(CodeFoxPaths.getDatabaseDir(), 'codefox.db');
+    this.getDatabaseDir(); // Ensure database directory exists
+    return path.join(this.getDatabaseDir(), 'codefox.db');
   }
 
   /**
    * Configuration
    */
   public static getConfigDir(): string {
-    return path.join(CodeFoxPaths.ROOT_DIR, 'config');
+    return this.ensureDir(path.join(this.getRootDir(), 'config'));
   }
 
   public static getConfigPath(configName: string): string {
-    return path.join(CodeFoxPaths.getConfigDir(), `${configName}.json`);
+    this.getConfigDir(); // Ensure config directory exists
+    return path.join(this.getConfigDir(), `${configName}.json`);
   }
 
   /**
    * Cache
    */
   public static getCacheDir(): string {
-    return path.join(CodeFoxPaths.ROOT_DIR, 'cache');
+    return this.ensureDir(path.join(this.getRootDir(), 'cache'));
   }
 
   /**
    * Logs
    */
   public static getLogsDir(): string {
-    return path.join(CodeFoxPaths.ROOT_DIR, 'logs');
+    return this.ensureDir(path.join(this.getRootDir(), 'logs'));
   }
 
   /**
    * Temporary files
    */
   public static getTempDir(): string {
-    return path.join(CodeFoxPaths.ROOT_DIR, 'temp');
+    return this.ensureDir(path.join(this.getRootDir(), 'temp'));
   }
 
   /**
    * Templates
    */
   public static getTemplatesDir(): string {
-    return path.join(CodeFoxPaths.ROOT_DIR, 'templates');
+    return this.ensureDir(path.join(this.getRootDir(), 'templates'));
   }
 
   public static getPromptTemplatePath(templateName: string): string {
-    return path.join(CodeFoxPaths.getTemplatesDir(), `${templateName}.txt`);
-  }
-
-  /**
-   * Initialization
-   */
-  public static initializeDirectories(): void {
-    const directories = [
-      CodeFoxPaths.ROOT_DIR,
-      CodeFoxPaths.getModelsDir(),
-      CodeFoxPaths.getProjectsDir(),
-      CodeFoxPaths.getConfigDir(),
-      CodeFoxPaths.getCacheDir(),
-      CodeFoxPaths.getLogsDir(),
-      CodeFoxPaths.getTempDir(),
-      CodeFoxPaths.getTemplatesDir(),
-      CodeFoxPaths.getDatabaseDir(),
-    ];
-
-    directories.forEach((dir) => {
-      if (!existsSync(dir)) {
-        mkdirSync(dir, { recursive: true });
-      }
-    });
-  }
-
-  /**
-   * Project Structure Management
-   */
-  public static createProjectStructure(projectId: string): {
-    root: string;
-    src: string;
-    generated: string;
-    tests: string;
-  } {
-    const projectRoot = CodeFoxPaths.getProjectPath(projectId);
-    const srcDir = CodeFoxPaths.getProjectSourceDir(projectId);
-    const generatedDir = CodeFoxPaths.getProjectGeneratedDir(projectId);
-    const testsDir = CodeFoxPaths.getProjectTestsDir(projectId);
-
-    [projectRoot, srcDir, generatedDir, testsDir].forEach((dir) => {
-      if (!existsSync(dir)) {
-        mkdirSync(dir, { recursive: true });
-      }
-    });
-
-    return {
-      root: projectRoot,
-      src: srcDir,
-      generated: generatedDir,
-      tests: testsDir,
-    };
+    this.getTemplatesDir(); // Ensure templates directory exists
+    return path.join(this.getTemplatesDir(), `${templateName}.txt`);
   }
 
   /**
    * Utility Methods
    */
   public static resolvePath(...pathSegments: string[]): string {
-    return path.join(CodeFoxPaths.ROOT_DIR, ...pathSegments);
+    const resolvedPath = path.join(this.getRootDir(), ...pathSegments);
+    return this.ensureDir(path.dirname(resolvedPath));
   }
 
   public static exists(filePath: string): boolean {
@@ -167,31 +138,24 @@ export class CodeFoxPaths {
   }
 
   public static async cleanTempDir(): Promise<void> {
-    const tempDir = CodeFoxPaths.getTempDir();
-    if (existsSync(tempDir)) {
-      const files = await promises.readdir(tempDir);
-      for (const file of files) {
-        await promises.unlink(path.join(tempDir, file));
-      }
-    }
+    const tempDir = this.getTempDir();
+    const files = await promises.readdir(tempDir);
+    await Promise.all(
+      files.map((file) => promises.unlink(path.join(tempDir, file))),
+    );
   }
 
-  public static async exportProjectStructure(
-    projectId: string,
-  ): Promise<object> {
-    const projectRoot = CodeFoxPaths.getProjectPath(projectId);
-    if (!existsSync(projectRoot)) {
-      throw new Error(`Project ${projectId} does not exist`);
-    }
-
+  public static getProjectStructure(projectId: string): {
+    root: string;
+    src: string;
+    generated: string;
+    tests: string;
+  } {
     return {
-      projectId,
-      paths: {
-        root: projectRoot,
-        src: CodeFoxPaths.getProjectSourceDir(projectId),
-        generated: CodeFoxPaths.getProjectGeneratedDir(projectId),
-        tests: CodeFoxPaths.getProjectTestsDir(projectId),
-      },
+      root: this.getProjectPath(projectId),
+      src: this.getProjectSourceDir(projectId),
+      generated: this.getProjectGeneratedDir(projectId),
+      tests: this.getProjectTestsDir(projectId),
     };
   }
 }
