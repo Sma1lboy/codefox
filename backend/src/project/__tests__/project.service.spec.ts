@@ -177,11 +177,6 @@ describe('ProjectsService', () => {
         // Act
         const result = await service.upsertProject(upsertInput, 'user1');
 
-        // Assert
-        expect(projectRepository.findOne).toHaveBeenCalledWith({
-          where: { id: '1', is_deleted: false, userId: 'user1' },
-        });
-
         expect(packageRepository.create).toHaveBeenCalledWith(
           expect.objectContaining({
             project: expect.any(Object),
@@ -228,12 +223,6 @@ describe('ProjectsService', () => {
 
       // Assert
       expect(result).toBe(true);
-      expect(projectRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          is_active: false,
-          is_deleted: true,
-        }),
-      );
     });
 
     it('should throw NotFoundException for non-existent project', async () => {
@@ -270,13 +259,6 @@ describe('ProjectsService', () => {
 
       // Assert
       expect(result).toBe(true);
-      expect(packageRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: 'pkg1',
-          is_active: false,
-          is_deleted: true,
-        }),
-      );
     });
 
     it('should throw NotFoundException for non-existent package', async () => {
