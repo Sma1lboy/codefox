@@ -1,11 +1,11 @@
 // GraphQL Resolvers for Project APIs
 import {
-    Args,
-    Field,
-    Mutation,
-    ObjectType,
-    Query,
-    Resolver,
+  Args,
+  Field,
+  Mutation,
+  ObjectType,
+  Query,
+  Resolver,
 } from '@nestjs/graphql';
 import { ProjectsService } from './project.service';
 import { Projects } from './project.model';
@@ -16,25 +16,28 @@ import { GetUserIdFromToken } from '../decorator/get-auth-token';
 
 @Resolver(() => Projects)
 export class ProjectsResolver {
-  constructor(
-    private readonly projectsService: ProjectsService,
-  ) {}
+  constructor(private readonly projectsService: ProjectsService) {}
 
   @Query(() => [Projects])
-  async getUserProjects(@GetUserIdFromToken() userId: string): Promise<Projects[]> {
+  async getUserProjects(
+    @GetUserIdFromToken() userId: string,
+  ): Promise<Projects[]> {
     return this.projectsService.getProjectsByUser(userId);
   }
 
   // @GetAuthToken() token: string
   @Query(() => Projects)
   @UseGuards(ProjectGuard)
-  async getProjectDetails(@Args('projectId') projectId: string): Promise<Projects> {
+  async getProjectDetails(
+    @Args('projectId') projectId: string,
+  ): Promise<Projects> {
     return this.projectsService.getProjectById(projectId);
   }
 
   @Mutation(() => Projects)
-  async upsertProject(@GetUserIdFromToken() userId: string,
-    @Args('upsertProjectInput') upsertProjectInput: UpsertProjectInput
+  async upsertProject(
+    @GetUserIdFromToken() userId: string,
+    @Args('upsertProjectInput') upsertProjectInput: UpsertProjectInput,
   ): Promise<Projects> {
     return this.projectsService.upsertProject(upsertProjectInput, userId);
   }
@@ -49,7 +52,7 @@ export class ProjectsResolver {
   @UseGuards(ProjectGuard)
   async updateProjectPath(
     @Args('projectId') projectId: string,
-    @Args('newPath') newPath: string
+    @Args('newPath') newPath: string,
   ): Promise<boolean> {
     return this.projectsService.updateProjectPath(projectId, newPath);
   }
@@ -58,7 +61,7 @@ export class ProjectsResolver {
   @UseGuards(ProjectGuard)
   async removePackageFromProject(
     @Args('projectId') projectId: string,
-    @Args('packageId') packageId: string
+    @Args('packageId') packageId: string,
   ): Promise<boolean> {
     return this.projectsService.removePackageFromProject(projectId, packageId);
   }
