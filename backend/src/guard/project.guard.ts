@@ -12,7 +12,6 @@ import { ProjectService } from '../project/project.service';
 @Injectable()
 export class ProjectGuard implements CanActivate {
   constructor(
-
     private readonly projectsService: ProjectService,
     private readonly jwtService: JwtService,
   ) {}

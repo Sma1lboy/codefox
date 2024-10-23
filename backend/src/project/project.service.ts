@@ -62,7 +62,6 @@ export class ProjectService {
     const { project_id, project_name, path, project_packages } =
       upsertProjectInput;
 
-
     let project;
     if (project_id) {
       // only extract the project match the user id
