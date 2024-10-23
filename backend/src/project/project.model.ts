@@ -38,9 +38,7 @@ export class Project extends SystemBaseModel {
   @OneToMany(
     () => ProjectPackages,
     (projectPackage) => projectPackage.project,
-    {
-      cascade: true,
-    },
+    { cascade: true },
   )
   projectPackages: ProjectPackages[];
 }

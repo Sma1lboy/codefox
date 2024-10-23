@@ -58,13 +58,9 @@ export class ProjectService {
   async upsertProject(
     upsertProjectInput: UpsertProjectInput,
     user_id: string,
-  ): Promise<Project> {
-    const {
-      projectId: project_id,
-      projectName: project_name,
-      path,
-      projectPackages: project_packages,
-    } = upsertProjectInput;
+  ): Promise<Projects> {
+    const { project_id, project_name, path, project_packages } =
+      upsertProjectInput;
 
     let project;
     if (project_id) {

@@ -16,12 +16,12 @@ import { GetUserIdFromToken } from '../decorator/get-auth-token';
 
 @Resolver(() => Project)
 export class ProjectsResolver {
-  constructor(private readonly projectsService: ProjectService) {}
+  constructor(private readonly projectsService: ProjectsService) {}
 
-  @Query(() => [Project])
+  @Query(() => [Projects])
   async getUserProjects(
     @GetUserIdFromToken() userId: string,
-  ): Promise<Project[]> {
+  ): Promise<Projects[]> {
     return this.projectsService.getProjectsByUser(userId);
   }
 
@@ -30,15 +30,15 @@ export class ProjectsResolver {
   @UseGuards(ProjectGuard)
   async getProjectDetails(
     @Args('projectId') projectId: string,
-  ): Promise<Project> {
+  ): Promise<Projects> {
     return this.projectsService.getProjectById(projectId);
   }
 
-  @Mutation(() => Project)
+  @Mutation(() => Projects)
   async upsertProject(
     @GetUserIdFromToken() userId: string,
     @Args('upsertProjectInput') upsertProjectInput: UpsertProjectInput,
-  ): Promise<Project> {
+  ): Promise<Projects> {
     return this.projectsService.upsertProject(upsertProjectInput, userId);
   }
 

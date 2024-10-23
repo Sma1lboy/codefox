@@ -5,9 +5,12 @@
   "type": "module",
   "scripts": {
     "start": "node --experimental-specifier-resolution=node --loader ts-node/esm src/main.ts",
-    "start:dev": "nodemon --watch 'src/**/*.ts' --exec 'node --experimental-specifier-resolution=node --loader ts-node/esm' src/main.ts",
+    "dev": "nodemon --watch 'src/**/*.ts' --exec 'node --experimental-specifier-resolution=node --loader ts-node/esm' src/main.ts",
+    "dev:backend": "pnpm dev",
     "build": "tsc",
-    "serve": "node --experimental-specifier-resolution=node dist/main.js"
+    "serve": "node --experimental-specifier-resolution=node dist/main.js",
+    "format": "prettier --write \"src/**/*.ts\" ",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },
   "keywords": [],
   "author": "",
@@ -22,7 +25,13 @@
   "devDependencies": {
     "@types/express": "^4.17.13",
     "@types/node": "^16.11.12",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
     "openai": "^4.68.1",
+    "prettier": "^3.0.0",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.4.0",
     "typescript": "^5.6.3",

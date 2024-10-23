@@ -1,15 +1,15 @@
-import { Message, useChat } from "ai/react";
-import React, { useRef, useEffect } from "react";
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { ChatProps } from "./chat";
-import Image from "next/image";
-import CodeDisplayBlock from "../code-display-block";
-import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { INITIAL_QUESTIONS } from "@/utils/initial-questions";
-import { Button } from "../ui/button";
+import { Message, useChat } from 'ai/react';
+import React, { useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { ChatProps } from './chat';
+import Image from 'next/image';
+import CodeDisplayBlock from '../code-display-block';
+import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { INITIAL_QUESTIONS } from '@/utils/initial-questions';
+import { Button } from '../ui/button';
 
 export default function ChatList({
   messages,
@@ -24,13 +24,13 @@ export default function ChatList({
   isMobile,
 }: ChatProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
-  const [name, setName] = React.useState<string>("");
+  const [name, setName] = React.useState<string>('');
   const [localStorageIsLoading, setLocalStorageIsLoading] =
     React.useState(true);
   const [initialQuestions, setInitialQuestions] = React.useState<Message[]>([]);
 
   const scrollToBottom = () => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   };
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function ChatList({
   }, [messages]);
 
   useEffect(() => {
-    const username = localStorage.getItem("ollama_user");
+    const username = localStorage.getItem('ollama_user');
     if (username) {
       setName(username);
       setLocalStorageIsLoading(false);
@@ -55,8 +55,8 @@ export default function ChatList({
           .slice(0, questionCount)
           .map((message) => {
             return {
-              id: "1",
-              role: "user",
+              id: '1',
+              role: 'user',
               content: message.content,
             };
           })
@@ -73,7 +73,7 @@ export default function ChatList({
 
     setTimeout(() => {
       formRef.current?.dispatchEvent(
-        new Event("submit", {
+        new Event('submit', {
           cancelable: true,
           bubbles: true,
         })
@@ -81,7 +81,7 @@ export default function ChatList({
     }, 1);
   };
 
-  messages.map((m) => console.log(m.experimental_attachments))
+  messages.map((m) => console.log(m.experimental_attachments));
 
   if (messages.length === 0) {
     return (
@@ -115,7 +115,7 @@ export default function ChatList({
                     transition={{
                       opacity: { duration: 0.1, delay },
                       scale: { duration: 0.1, delay },
-                      y: { type: "spring", stiffness: 100, damping: 10, delay },
+                      y: { type: 'spring', stiffness: 100, damping: 10, delay },
                     }}
                     key={message.content}
                   >
@@ -153,30 +153,35 @@ export default function ChatList({
             transition={{
               opacity: { duration: 0.1 },
               layout: {
-                type: "spring",
+                type: 'spring',
                 bounce: 0.3,
                 duration: messages.indexOf(message) * 0.05 + 0.2,
               },
             }}
             className={cn(
-              "flex flex-col gap-2 p-4 whitespace-pre-wrap",
-              message.role === "user" ? "items-end" : "items-start"
+              'flex flex-col gap-2 p-4 whitespace-pre-wrap',
+              message.role === 'user' ? 'items-end' : 'items-start'
             )}
           >
             <div className="flex gap-3 items-center">
-              {message.role === "user" && (
+              {message.role === 'user' && (
                 <div className="flex items-end gap-3">
                   <div className="flex flex-col gap-2 bg-accent p-3 rounded-md max-w-xs sm:max-w-2xl overflow-x-auto">
                     <div className="flex gap-2">
-                    {message.experimental_attachments?.filter(attachment => attachment.contentType?.startsWith('image/'),).map((attachment, index) => (
-                      <Image
-                      key={`${message.id}-${index}`}
-                      src={attachment.url}
-                      width={200}
-                      height={200} alt='attached image'
-                      className="rounded-md object-contain"                
-                      />
-                    ))}
+                      {message.experimental_attachments
+                        ?.filter((attachment) =>
+                          attachment.contentType?.startsWith('image/')
+                        )
+                        .map((attachment, index) => (
+                          <Image
+                            key={`${message.id}-${index}`}
+                            src={attachment.url}
+                            width={200}
+                            height={200}
+                            alt="attached image"
+                            className="rounded-md object-contain"
+                          />
+                        ))}
                     </div>
                     <p className="text-end">{message.content}</p>
                   </div>
@@ -194,7 +199,7 @@ export default function ChatList({
                   </Avatar>
                 </div>
               )}
-              {message.role === "assistant" && (
+              {message.role === 'assistant' && (
                 <div className="flex items-end gap-2">
                   <Avatar className="flex justify-start items-center">
                     <AvatarImage
@@ -207,7 +212,7 @@ export default function ChatList({
                   </Avatar>
                   <span className="bg-accent p-3 rounded-md max-w-xs sm:max-w-2xl overflow-x-auto">
                     {/* Check if the message content contains a code block */}
-                    {message.content.split("```").map((part, index) => {
+                    {message.content.split('```').map((part, index) => {
                       if (index % 2 === 0) {
                         return (
                           <Markdown key={index} remarkPlugins={[remarkGfm]}>

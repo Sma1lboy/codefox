@@ -81,7 +81,7 @@ export class AuthService {
       return false;
     }
   }
-  async logout(token: string): Promise<Boolean> {
+  async logout(token: string): Promise<boolean> {
     Logger.log('logout token', token);
     try {
       await this.jwtService.verifyAsync(token);
