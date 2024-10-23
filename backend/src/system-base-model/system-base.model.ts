@@ -4,7 +4,7 @@ import { CreateDateColumn, UpdateDateColumn, Column } from 'typeorm';
 @ObjectType()
 export class SystemBaseModel {
   @Field()
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'datetime' })
   created_at: Date;
 
   @Field()
