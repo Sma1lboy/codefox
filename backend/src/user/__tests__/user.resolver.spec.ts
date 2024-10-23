@@ -52,10 +52,10 @@ describe('UserResolver', () => {
         ...registerInput,
         password: 'hashedPassword',
         roles: [],
-        created_at: undefined,
-        is_active: false,
-        is_deleted: false,
-        updated_at: undefined,
+        createdAt: undefined,
+        isActive: false,
+        isDeleted: false,
+        updatedAt: undefined,
       };
       jest.spyOn(authService, 'register').mockResolvedValue(mockUser);
 

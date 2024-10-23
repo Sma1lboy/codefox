@@ -5,17 +5,17 @@ import { CreateDateColumn, UpdateDateColumn, Column } from 'typeorm';
 export class SystemBaseModel {
   @Field()
   @CreateDateColumn({ type: 'datetime' })
-  created_at: Date;
+  createdAt: Date;
 
   @Field()
   @UpdateDateColumn()
-  updated_at: Date;
+  updatedAt: Date;
 
   @Field()
   @Column({ default: true })
-  is_active: boolean;
+  isActive: boolean;
 
   @Field()
   @Column({ default: false })
-  is_deleted: boolean;
+  isDeleted: boolean;
 }
