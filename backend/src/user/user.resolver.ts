@@ -9,7 +9,7 @@ import {
 import { User } from './user.model';
 import { UserService } from './user.service';
 import { RegisterUserInput } from './dto/register-user.input';
-import { LoginUserInput } from './dto/lgoin-user.input';
+import { LoginUserInput } from './dto/login-user.input';
 import { AuthService } from 'src/auth/auth.service';
 import { GetAuthToken } from 'src/decorator/get-auth-token';
 

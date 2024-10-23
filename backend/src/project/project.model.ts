@@ -13,7 +13,7 @@ import { ProjectPackages } from './project-packages.model';
 
 @Entity()
 @ObjectType()
-export class Projects extends SystemBaseModel {
+export class Project extends SystemBaseModel {
   @Field(() => ID)
   @PrimaryGeneratedColumn()
   id: string;

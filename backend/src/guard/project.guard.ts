@@ -6,12 +6,14 @@ import {
 } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { JwtService } from '@nestjs/jwt';
-import { ProjectsService } from '../project/project.service';
+
+import { ProjectService } from '../project/project.service';
 
 @Injectable()
 export class ProjectGuard implements CanActivate {
   constructor(
-    private readonly projectsService: ProjectsService,
+
+    private readonly projectsService: ProjectService,
     private readonly jwtService: JwtService,
   ) {}
 

@@ -6,20 +6,20 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Projects } from './project.model';
+import { Project } from './project.model';
 import { ProjectPackages } from './project-packages.model';
 import { UpsertProjectInput } from './dto/project.input';
 
 @Injectable()
-export class ProjectsService {
+export class ProjectService {
   constructor(
-    @InjectRepository(Projects)
-    private projectsRepository: Repository<Projects>,
+    @InjectRepository(Project)
+    private projectsRepository: Repository<Project>,
     @InjectRepository(ProjectPackages)
     private projectPackagesRepository: Repository<ProjectPackages>,
   ) {}
 
-  async getProjectsByUser(userId: string): Promise<Projects[]> {
+  async getProjectsByUser(userId: string): Promise<Project[]> {
     const projects = await this.projectsRepository.find({
       where: { user_id: userId, is_deleted: false },
       relations: ['projectPackages'],
@@ -38,7 +38,7 @@ export class ProjectsService {
     return projects;
   }
 
-  async getProjectById(projectId: string): Promise<Projects> {
+  async getProjectById(projectId: string): Promise<Project> {
     const project = await this.projectsRepository.findOne({
       where: { id: projectId, is_deleted: false },
       relations: ['projectPackages'],
@@ -61,6 +61,7 @@ export class ProjectsService {
   ): Promise<Projects> {
     const { project_id, project_name, path, project_packages } =
       upsertProjectInput;
+
 
     let project;
     if (project_id) {

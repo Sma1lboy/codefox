@@ -7,14 +7,14 @@ import {
   Query,
   Resolver,
 } from '@nestjs/graphql';
-import { ProjectsService } from './project.service';
-import { Projects } from './project.model';
+import { ProjectService } from './project.service';
+import { Project } from './project.model';
 import { UpsertProjectInput } from './dto/project.input';
 import { UseGuards } from '@nestjs/common';
 import { ProjectGuard } from '../guard/project.guard';
 import { GetUserIdFromToken } from '../decorator/get-auth-token';
 
-@Resolver(() => Projects)
+@Resolver(() => Project)
 export class ProjectsResolver {
   constructor(private readonly projectsService: ProjectsService) {}
 
@@ -26,7 +26,7 @@ export class ProjectsResolver {
   }
 
   // @GetAuthToken() token: string
-  @Query(() => Projects)
+  @Query(() => Project)
   @UseGuards(ProjectGuard)
   async getProjectDetails(
     @Args('projectId') projectId: string,
