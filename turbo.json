@@ -15,11 +15,6 @@
         "!.next/cache/**"
       ]
     },
-    "lint": {
-      "dependsOn": [
-        "^lint"
-      ]
-    },
     "dev": {
       "cache": false,
       "persistent": true
@@ -32,6 +27,15 @@
       "dependsOn": [
         "^test"
       ]
+    },
+    "lint": {
+      "outputs": [],
+      "dependsOn": [
+        "^lint"
+      ]
+    },
+    "format": {
+      "outputs": []
     }
   }
 }

@@ -36,7 +36,7 @@ export class UserResolver {
 
   //TODO use header authorization
   @Query(() => Boolean)
-  async logout(@GetAuthToken() token: string): Promise<Boolean> {
+  async logout(@GetAuthToken() token: string): Promise<boolean> {
     return this.authService.logout(token);
   }
 }
