@@ -1,0 +1,69 @@
+name: autofix.ci
+
+on:
+  pull_request:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Format code with Prettier
+        run: |
+          npx prettier --write "**/*.{js,jsx,ts,tsx,json,md}"
+          git add .
+
+      - name: Run ESLint fix
+        run: |
+          npx eslint . --ext .js,.jsx,.ts,.tsx --fix
+          git add .
+
+      - name: Check TypeScript
+        run: |
+          npx tsc --noEmit
+        continue-on-error: true
+
+      - name: Sort package.json
+        run: |
+          npx sort-package-json
+          git add package.json
+
+      - name: Commit changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "style: 🎨 auto format and fix" -m "Co-authored-by: ${{ github.event.pull_request.user.login }} <${{ github.event.pull_request.user.id }}+${{ github.event.pull_request.user.login }}@users.noreply.github.com>"
+          fi
+
+      - uses: autofix-ci/action@dd55f44df8f7cdb7a6bf74c78677eb8acd40cd0a
