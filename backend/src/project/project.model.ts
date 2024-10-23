@@ -13,7 +13,7 @@ import { ProjectPackages } from './project-packages.model';
 
 @Entity()
 @ObjectType()
-export class Projects extends SystemBaseModel {
+export class Project extends SystemBaseModel {
   @Field(() => ID)
   @PrimaryGeneratedColumn()
   id: string;
@@ -33,8 +33,14 @@ export class Projects extends SystemBaseModel {
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user: User;
-  
+
   @Field(() => [ProjectPackages], { nullable: true })
-  @OneToMany(() => ProjectPackages, (projectPackage) => projectPackage.project, { cascade: true })
+  @OneToMany(
+    () => ProjectPackages,
+    (projectPackage) => projectPackage.project,
+    {
+      cascade: true,
+    },
+  )
   projectPackages: ProjectPackages[];
 }
