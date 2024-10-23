@@ -9,7 +9,7 @@ export class SystemBaseModel {
 
   @Field()
   @UpdateDateColumn()
-  last_updated: Date;
+  updated_at: Date;
 
   @Field()
   @Column({ default: true })
