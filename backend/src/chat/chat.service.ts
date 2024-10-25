@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { ChatCompletionChunk } from './chat.model';
+import { ChatCompletionChunk, Chat, Message } from './chat.model';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from 'src/user/user.model';
 
 type CustomAsyncIterableIterator<T> = AsyncIterator<T> & {
   [Symbol.asyncIterator](): AsyncIterableIterator<T>;
@@ -130,5 +133,69 @@ export class ChatProxyService {
       chunk.choices[0].delta &&
       typeof chunk.choices[0].delta.content === 'string'
     );
+  }
+}
+
+@Injectable()
+export class ChatService {
+  constructor(
+    @InjectRepository(Chat)
+    private chatRepository: Repository<Chat>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+  ) {}
+
+  async getChatHistory(chatId: string): Promise<Message[]> {
+    const chat = await this.chatRepository.findOne({
+      where: { id: chatId },
+      relations: ['messages'],
+    });
+    return chat ? chat.messages : [];
+  }
+
+  async getChatDetails(chatId: string): Promise<Chat> {
+    return this.chatRepository.findOne({
+      where: { id: chatId },
+      relations: ['messages'],
+    });
+  }
+
+  async createChat(): Promise<Chat> {
+    const newChat = this.chatRepository.create({
+      title: 'New Chat',
+      messages: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    return await this.chatRepository.save(newChat);
+  }
+
+  async deleteChat(chatId: string): Promise<boolean> {
+    const result = await this.chatRepository.delete(chatId);
+    return result.affected > 0;
+  }
+
+  async clearChatHistory(chatId: string): Promise<boolean> {
+    const chat = await this.chatRepository.findOne({
+      where: { id: chatId },
+      relations: ['messages'],
+    });
+    if (chat) {
+      chat.messages = [];
+      chat.updatedAt = new Date();
+      await this.chatRepository.save(chat);
+      return true;
+    }
+    return false;
+  }
+
+  async updateChatTitle(chatId: string, title: string): Promise<Chat> {
+    const chat = await this.chatRepository.findOne({ where: { id: chatId } });
+    if (chat) {
+      chat.title = title;
+      chat.updatedAt = new Date();
+      return await this.chatRepository.save(chat);
+    }
+    return null;
   }
 }

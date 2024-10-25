@@ -2,6 +2,7 @@ import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { IsEmail } from 'class-validator';
 import { Role } from 'src/auth/role/role.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
+import { Chat } from 'src/chat/chat.model';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -28,6 +29,9 @@ export class User extends SystemBaseModel {
   @Column({ unique: true })
   @IsEmail()
   email: string;
+
+  @Field(() => [Chat])
+  chats: Chat[];
 
   @ManyToMany(() => Role)
   @JoinTable({

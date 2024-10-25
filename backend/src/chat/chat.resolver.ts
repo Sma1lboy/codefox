@@ -1,10 +1,16 @@
-import { Resolver, Subscription, Args } from '@nestjs/graphql';
+import { Resolver, Subscription, Args, Query, Mutation } from '@nestjs/graphql';
 import { ChatCompletionChunk, ChatInput } from './chat.model';
-import { ChatProxyService } from './chat.service';
+import { ChatProxyService, ChatService } from './chat.service';
+import { title } from 'process';
+import { Chat, Message } from './chat.model';
+import { User } from 'src/user/user.model';
 
 @Resolver('Chat')
 export class ChatResolver {
-  constructor(private chatProxyService: ChatProxyService) {}
+  constructor(
+    private chatProxyService: ChatProxyService,
+    private chatService: ChatService,
+  ) {}
 
   @Subscription(() => ChatCompletionChunk, {
     nullable: true,
@@ -23,5 +29,43 @@ export class ChatResolver {
       console.error('Error in chatStream:', error);
       throw new Error('Chat stream failed');
     }
+  }
+
+  @Query(() => [Message])
+  async getChatHistory(@Args('chatId') chatId: string): Promise<Message[]> {
+    return this.chatService.getChatHistory(chatId);
+  }
+
+  @Query(() => Chat, { nullable: true })
+  async getChatDetails(@Args('chatId') chatId: string): Promise<Chat> {
+    return this.chatService.getChatDetails(chatId);
+  }
+
+  // @Query(() => [Message])
+  // getModelTags(@Args('chatId') chatId: string): Message[] {
+  //   return this.chatService.getChatHistory(chatId);
+  // }
+
+  @Mutation(() => Chat)
+  async createChat(): Promise<Chat> {
+    return this.chatService.createChat();
+  }
+
+  @Mutation(() => Boolean)
+  async deleteChat(@Args('chatId') chatId: string): Promise<boolean> {
+    return this.chatService.deleteChat(chatId);
+  }
+
+  @Mutation(() => Boolean)
+  async clearChatHistory(@Args('chatId') chatId: string): Promise<boolean> {
+    return this.chatService.clearChatHistory(chatId);
+  }
+
+  @Mutation(() => Chat, { nullable: true })
+  async updateChatTitle(
+    @Args('chatId') chatId: string,
+    @Args('title') title: string,
+  ): Promise<Chat> {
+    return this.chatService.updateChatTitle(chatId, title);
   }
 }
