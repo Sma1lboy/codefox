@@ -115,7 +115,10 @@ export const REMOVE_PACKAGE_FROM_PROJECT = gql`
   }
 `;
 
-export const removePackageFromProject = async (projectId: string, packageId: string): Promise<boolean> => {
+export const removePackageFromProject = async (
+  projectId: string,
+  packageId: string
+): Promise<boolean> => {
   try {
     const response = await client.mutate({
       mutation: REMOVE_PACKAGE_FROM_PROJECT,
