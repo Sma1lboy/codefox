@@ -1,10 +1,20 @@
-import { Field, InputType, ObjectType, ID } from '@nestjs/graphql';
+import {
+  Field,
+  InputType,
+  ObjectType,
+  ID,
+  registerEnumType,
+} from '@nestjs/graphql';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
 
 export enum Role {
   User = 'User',
-  Model = 'Model'
+  Model = 'Model',
 }
+
+registerEnumType(Role, {
+  name: 'Role',
+});
 
 @ObjectType()
 export class Message extends SystemBaseModel {
