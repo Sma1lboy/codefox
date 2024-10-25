@@ -3,7 +3,7 @@ import { SystemBaseModel } from 'src/system-base-model/system-base.model';
 
 export enum Role {
   User = 'User',
-  Model = 'Model'
+  Model = 'Model',
 }
 
 @ObjectType()
