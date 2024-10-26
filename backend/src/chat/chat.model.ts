@@ -5,6 +5,14 @@ import {
   ID,
   registerEnumType,
 } from '@nestjs/graphql';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
 
 export enum Role {
@@ -16,30 +24,39 @@ registerEnumType(Role, {
   name: 'Role',
 });
 
+@Entity()
 @ObjectType()
 export class Message extends SystemBaseModel {
+  @PrimaryGeneratedColumn('uuid')
   @Field(() => ID)
   id: string;
 
   @Field()
+  @Column()
   content: string;
 
   @Field(() => Role)
+  @Column({ type: 'text' })
   role: Role;
 
   @Field({ nullable: true })
+  @Column({ nullable: true })
   modelId?: string;
 }
 
+@Entity()
 @ObjectType()
 export class Chat extends SystemBaseModel {
+  @PrimaryGeneratedColumn('uuid')
   @Field(() => ID)
   id: string;
 
   @Field({ nullable: true })
+  @Column({ nullable: true })
   title: string;
 
   @Field(() => [Message])
+  @OneToMany(() => Message, (message) => message.id)
   messages: Message[];
 }
 
