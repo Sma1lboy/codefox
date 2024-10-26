@@ -6,7 +6,8 @@ import { ChatResolver } from './chat.resolver';
 import { ChatProxyService, ChatService } from './chat.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/user/user.model';
-import { Chat, Message } from './chat.model';
+import { Chat } from './chat.model';
+import { Message } from 'src/chat/message.model';
 
 @Module({
   imports: [HttpModule, TypeOrmModule.forFeature([Chat, User, Message])],

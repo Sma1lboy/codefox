@@ -1,10 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { ChatCompletionChunk, Chat, Message } from './chat.model';
+import { ChatCompletionChunk, Chat } from './chat.model';
+import { Message, Role } from 'src/chat/message.model';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from 'src/user/user.model';
-import { ChatMessageInput } from 'src/chat/dto/chat.input';
+import { NewChatInput, UpateChatTitleInput } from 'src/chat/dto/chat.input';
 
 type CustomAsyncIterableIterator<T> = AsyncIterator<T> & {
   [Symbol.asyncIterator](): AsyncIterableIterator<T>;
@@ -144,11 +145,14 @@ export class ChatService {
     private chatRepository: Repository<Chat>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Message)
+    private messageRepository: Repository<Message>,
   ) {}
 
   async getChatHistory(chatId: string): Promise<Message[]> {
     const chat = await this.chatRepository.findOne({
       where: { id: chatId },
+      order: { createdAt: 'ASC' },
       relations: ['messages'],
     });
     return chat ? chat.messages : [];
@@ -161,9 +165,9 @@ export class ChatService {
     });
   }
 
-  async createChat(chatMessageInput: ChatMessageInput): Promise<Chat> {
+  async createChat(newChatInput: NewChatInput): Promise<Chat> {
     const newChat = this.chatRepository.create({
-      title: chatMessageInput.title,
+      title: newChatInput.title,
       messages: [],
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -190,13 +194,34 @@ export class ChatService {
     return false;
   }
 
-  async updateChatTitle(chatId: string, title: string): Promise<Chat> {
-    const chat = await this.chatRepository.findOne({ where: { id: chatId } });
+  async updateChatTitle(
+    upateChatTitleInput: UpateChatTitleInput,
+  ): Promise<Chat> {
+    const chat = await this.chatRepository.findOne({
+      where: { id: upateChatTitleInput.id },
+    });
     if (chat) {
-      chat.title = title;
+      chat.title = upateChatTitleInput.title;
       chat.updatedAt = new Date();
       return await this.chatRepository.save(chat);
     }
     return null;
+  }
+
+  async saveMessage(chatId: string, messageContent: string): Promise<Message> {
+    // Find the chat instance
+    const chat = await this.chatRepository.findOne({ where: { id: chatId } });
+    if (!chat) throw new Error('Chat not found');
+
+    // Create a new message associated with the chat
+    const message = this.messageRepository.create({
+      content: messageContent,
+      role: Role.Model,
+      chat,
+      createdAt: new Date(),
+    });
+
+    // Save the message to the database
+    return await this.messageRepository.save(message);
   }
 }

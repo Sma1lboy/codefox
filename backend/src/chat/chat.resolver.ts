@@ -1,8 +1,13 @@
 import { Resolver, Subscription, Args, Query, Mutation } from '@nestjs/graphql';
-import { ChatCompletionChunk, ChatInput } from './chat.model';
+import { ChatCompletionChunk } from './chat.model';
 import { ChatProxyService, ChatService } from './chat.service';
-import { Chat, Message } from './chat.model';
-import { ChatMessageInput } from 'src/chat/dto/chat.input';
+import { Chat } from './chat.model';
+import { Message } from 'src/chat/message.model';
+import {
+  NewChatInput,
+  UpateChatTitleInput,
+  ChatInput,
+} from 'src/chat/dto/chat.input';
 
 @Resolver('Chat')
 export class ChatResolver {
@@ -17,10 +22,13 @@ export class ChatResolver {
   })
   async *chatStream(@Args('input') input: ChatInput) {
     const iterator = this.chatProxyService.streamChat(input.message);
-
     try {
       for await (const chunk of iterator) {
         if (chunk) {
+          await this.chatService.saveMessage(
+            input.id,
+            chunk.choices[0].delta.content,
+          );
           yield chunk;
         }
       }
@@ -47,9 +55,9 @@ export class ChatResolver {
 
   @Mutation(() => Chat)
   async createChat(
-    @Args('chatMessageInput') chatMessageInput: ChatMessageInput,
+    @Args('newChatInput') newChatInput: NewChatInput,
   ): Promise<Chat> {
-    return this.chatService.createChat(chatMessageInput);
+    return this.chatService.createChat(newChatInput);
   }
 
   @Mutation(() => Boolean)
@@ -64,9 +72,8 @@ export class ChatResolver {
 
   @Mutation(() => Chat, { nullable: true })
   async updateChatTitle(
-    @Args('chatId') chatId: string,
-    @Args('title') title: string,
+    @Args('upateChatTitleInput') upateChatTitleInput: UpateChatTitleInput,
   ): Promise<Chat> {
-    return this.chatService.updateChatTitle(chatId, title);
+    return this.chatService.updateChatTitle(upateChatTitleInput);
   }
 }

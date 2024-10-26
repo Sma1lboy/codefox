@@ -13,36 +13,9 @@ import {
   OneToMany,
   JoinColumn,
 } from 'typeorm';
+import { forwardRef } from '@nestjs/common';
+import { Message } from 'src/chat/message.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
-
-export enum Role {
-  User = 'User',
-  Model = 'Model',
-}
-
-registerEnumType(Role, {
-  name: 'Role',
-});
-
-@Entity()
-@ObjectType()
-export class Message extends SystemBaseModel {
-  @PrimaryGeneratedColumn('uuid')
-  @Field(() => ID)
-  id: string;
-
-  @Field()
-  @Column()
-  content: string;
-
-  @Field(() => Role)
-  @Column({ type: 'text' })
-  role: Role;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  modelId?: string;
-}
 
 @Entity()
 @ObjectType()
@@ -55,8 +28,8 @@ export class Chat extends SystemBaseModel {
   @Column({ nullable: true })
   title: string;
 
-  @Field(() => [Message])
-  @OneToMany(() => Message, (message) => message.id)
+  @Field(() => [Message], { nullable: true })
+  @OneToMany(() => Message, (message) => message.chat, { cascade: true })
   messages: Message[];
 }
 
@@ -97,10 +70,4 @@ class ChatCompletionChoice {
 
   @Field({ nullable: true })
   finish_reason: string | null;
-}
-
-@InputType('ChatInputType')
-export class ChatInput {
-  @Field()
-  message: string;
 }
