@@ -225,8 +225,9 @@ export class ChatService {
 
   async saveMessage(
     chatId: string,
-    chunkId: string,
+    chunkId: string | null,
     messageContent: string,
+    role: Role,
   ): Promise<Message> {
     // Find the chat instance
     const chat = await this.chatRepository.findOne({ where: { id: chatId } });
@@ -234,9 +235,9 @@ export class ChatService {
 
     // Create a new message associated with the chat
     const message = this.messageRepository.create({
-      id: chunkId,
+      id: chunkId || null,
       content: messageContent,
-      role: Role.Model,
+      role: role,
       chat,
       createdAt: new Date(),
     });

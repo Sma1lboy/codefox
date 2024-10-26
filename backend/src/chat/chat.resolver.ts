@@ -3,7 +3,7 @@ import { ChatCompletionChunk } from './chat.model';
 import { ChatProxyService, ChatService } from './chat.service';
 import { UserService } from 'src/user/user.service';
 import { Chat } from './chat.model';
-import { Message } from 'src/chat/message.model';
+import { Message, Role } from 'src/chat/message.model';
 import {
   NewChatInput,
   UpateChatTitleInput,
@@ -27,6 +27,7 @@ export class ChatResolver {
   })
   async *chatStream(@Args('input') input: ChatInput) {
     const iterator = this.chatProxyService.streamChat(input.message);
+    this.chatService.saveMessage(input.chatId, null, input.message, Role.User);
     try {
       for await (const chunk of iterator) {
         if (chunk) {
@@ -34,6 +35,7 @@ export class ChatResolver {
             input.chatId,
             chunk.id,
             chunk.choices[0].delta.content,
+            Role.Model,
           );
           yield chunk;
         }
@@ -58,6 +60,7 @@ export class ChatResolver {
     return this.chatService.getMessageById(messageId);
   }
 
+  @UseGuards(ChatGuard)
   @Query(() => [Message])
   async getChatHistory(@Args('chatId') chatId: string): Promise<Message[]> {
     return this.chatService.getChatHistory(chatId);
@@ -70,7 +73,7 @@ export class ChatResolver {
   }
 
   // @Query(() => [Message])
-  // getModelTags(@Args('chatId') chatId: string): Message[] {
+  // getAvailableModelTags(@Args('chatId') chatId: string): Message[] {
   //   return this.chatService.getChatHistory(chatId);
   // }
 
