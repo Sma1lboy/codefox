@@ -19,5 +19,6 @@ module.exports = {
     'no-console': 'warn',
     'prefer-const': 'error',
     'no-var': 'error',
+    '@typescript-eslint/no-explicit-any': 'warn',
   },
 };

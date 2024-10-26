@@ -4,7 +4,7 @@
 
 type ChatCompletionChoiceType {
   delta: ChatCompletionDeltaType!
-  finish_reason: String
+  finishReason: String
   index: Float!
 }
 
@@ -14,7 +14,7 @@ type ChatCompletionChunkType {
   id: String!
   model: String!
   object: String!
-  system_fingerprint: String
+  systemFingerprint: String
 }
 
 type ChatCompletionDeltaType {
@@ -56,10 +56,6 @@ type ModelTags {
   tags: [String!]!
 }
 
-type ModelTags {
-  tags: [String!]!
-}
-
 type Mutation {
   deleteProject(projectId: String!): Boolean!
   login(input: LoginUserInput!): LoginResponse!
@@ -74,7 +70,7 @@ type Project {
   id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
-  path: String
+  path: String!
   projectName: String!
   projectPackages: [ProjectPackages!]
   updatedAt: Date!

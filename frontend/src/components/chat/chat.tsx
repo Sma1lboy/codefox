@@ -1,8 +1,8 @@
-import React from "react";
-import ChatBottombar from "./chat-bottombar";
-import ChatList from "./chat-list";
-import ChatTopbar from "./chat-topbar";
-import { ChatRequestOptions, Message } from "../types";
+import React from 'react';
+import ChatBottombar from './chat-bottombar';
+import ChatList from './chat-list';
+import ChatTopbar from './chat-topbar';
+import { ChatRequestOptions, Message } from '../types';
 
 export interface ChatProps {
   chatId?: string;
@@ -38,7 +38,6 @@ export default function Chat({
   formRef,
   isMobile,
   setInput,
-  setMessages,
   setMessages,
 }: ChatProps) {
   return (

@@ -1,4 +1,5 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
+import { gql } from '@apollo/client';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -21,7 +22,7 @@ export type Scalars = {
 export type ChatCompletionChoiceType = {
   __typename: 'ChatCompletionChoiceType';
   delta: ChatCompletionDeltaType;
-  finish_reason?: Maybe<Scalars['String']['output']>;
+  finishReason?: Maybe<Scalars['String']['output']>;
   index: Scalars['Float']['output'];
 };
 
@@ -32,7 +33,7 @@ export type ChatCompletionChunkType = {
   id: Scalars['String']['output'];
   model: Scalars['String']['output'];
   object: Scalars['String']['output'];
-  system_fingerprint?: Maybe<Scalars['String']['output']>;
+  systemFingerprint?: Maybe<Scalars['String']['output']>;
 };
 
 export type ChatCompletionDeltaType = {
@@ -60,14 +61,19 @@ export type LoginUserInput = {
 
 export type Menu = {
   __typename: 'Menu';
-  created_at: Scalars['Date']['output'];
+  createdAt: Scalars['Date']['output'];
   id: Scalars['ID']['output'];
-  is_active: Scalars['Boolean']['output'];
-  is_deleted: Scalars['Boolean']['output'];
-  last_updated: Scalars['Date']['output'];
+  isActive: Scalars['Boolean']['output'];
+  isDeleted: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   path: Scalars['String']['output'];
   permission: Scalars['String']['output'];
+  updatedAt: Scalars['Date']['output'];
+};
+
+export type ModelTags = {
+  __typename: 'ModelTags';
+  tags: Array<Scalars['String']['output']>;
 };
 
 export type Mutation = {
@@ -77,7 +83,7 @@ export type Mutation = {
   registerUser: User;
   removePackageFromProject: Scalars['Boolean']['output'];
   updateProjectPath: Scalars['Boolean']['output'];
-  upsertProject: Projects;
+  upsertProject: Project;
 };
 
 
@@ -112,36 +118,37 @@ export type MutationUpsertProjectArgs = {
   upsertProjectInput: UpsertProjectInput;
 };
 
+export type Project = {
+  __typename: 'Project';
+  createdAt: Scalars['Date']['output'];
+  id: Scalars['ID']['output'];
+  isActive: Scalars['Boolean']['output'];
+  isDeleted: Scalars['Boolean']['output'];
+  path: Scalars['String']['output'];
+  projectName: Scalars['String']['output'];
+  projectPackages?: Maybe<Array<ProjectPackages>>;
+  updatedAt: Scalars['Date']['output'];
+  userId: Scalars['ID']['output'];
+};
+
 export type ProjectPackages = {
   __typename: 'ProjectPackages';
   content: Scalars['String']['output'];
-  created_at: Scalars['Date']['output'];
+  createdAt: Scalars['Date']['output'];
   id: Scalars['ID']['output'];
-  is_active: Scalars['Boolean']['output'];
-  is_deleted: Scalars['Boolean']['output'];
-  last_updated: Scalars['Date']['output'];
+  isActive: Scalars['Boolean']['output'];
+  isDeleted: Scalars['Boolean']['output'];
   project_id: Scalars['ID']['output'];
-};
-
-export type Projects = {
-  __typename: 'Projects';
-  created_at: Scalars['Date']['output'];
-  id: Scalars['ID']['output'];
-  is_active: Scalars['Boolean']['output'];
-  is_deleted: Scalars['Boolean']['output'];
-  last_updated: Scalars['Date']['output'];
-  path: Scalars['String']['output'];
-  projectPackages?: Maybe<Array<ProjectPackages>>;
-  project_name: Scalars['String']['output'];
-  user_id: Scalars['ID']['output'];
+  updatedAt: Scalars['Date']['output'];
 };
 
 export type Query = {
   __typename: 'Query';
   checkToken: Scalars['Boolean']['output'];
-  getProjectDetails: Projects;
-  getUserProjects: Array<Projects>;
+  getProjectDetails: Project;
+  getUserProjects: Array<Project>;
   logout: Scalars['Boolean']['output'];
+  modelTags: ModelTags;
 };
 
 
@@ -171,19 +178,19 @@ export type SubscriptionChatStreamArgs = {
 };
 
 export type UpsertProjectInput = {
-  project_id?: InputMaybe<Scalars['ID']['input']>;
-  project_name: Scalars['String']['input'];
-  project_packages?: InputMaybe<Array<Scalars['String']['input']>>;
+  projectId?: InputMaybe<Scalars['ID']['input']>;
+  projectName: Scalars['String']['input'];
+  projectPackages?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type User = {
   __typename: 'User';
-  created_at: Scalars['Date']['output'];
+  createdAt: Scalars['Date']['output'];
   email: Scalars['String']['output'];
   id: Scalars['ID']['output'];
-  is_active: Scalars['Boolean']['output'];
-  is_deleted: Scalars['Boolean']['output'];
-  last_updated: Scalars['Date']['output'];
+  isActive: Scalars['Boolean']['output'];
+  isDeleted: Scalars['Boolean']['output'];
+  updatedAt: Scalars['Date']['output'];
   username: Scalars['String']['output'];
 };
 
@@ -271,9 +278,10 @@ export type ResolversTypes = ResolversObject<{
   LoginResponse: ResolverTypeWrapper<LoginResponse>;
   LoginUserInput: LoginUserInput;
   Menu: ResolverTypeWrapper<Menu>;
+  ModelTags: ResolverTypeWrapper<ModelTags>;
   Mutation: ResolverTypeWrapper<{}>;
+  Project: ResolverTypeWrapper<Project>;
   ProjectPackages: ResolverTypeWrapper<ProjectPackages>;
-  Projects: ResolverTypeWrapper<Projects>;
   Query: ResolverTypeWrapper<{}>;
   RegisterUserInput: RegisterUserInput;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
@@ -296,9 +304,10 @@ export type ResolversParentTypes = ResolversObject<{
   LoginResponse: LoginResponse;
   LoginUserInput: LoginUserInput;
   Menu: Menu;
+  ModelTags: ModelTags;
   Mutation: {};
+  Project: Project;
   ProjectPackages: ProjectPackages;
-  Projects: Projects;
   Query: {};
   RegisterUserInput: RegisterUserInput;
   String: Scalars['String']['output'];
@@ -309,7 +318,7 @@ export type ResolversParentTypes = ResolversObject<{
 
 export type ChatCompletionChoiceTypeResolvers<ContextType = any, ParentType extends ResolversParentTypes['ChatCompletionChoiceType'] = ResolversParentTypes['ChatCompletionChoiceType']> = ResolversObject<{
   delta?: Resolver<ResolversTypes['ChatCompletionDeltaType'], ParentType, ContextType>;
-  finish_reason?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  finishReason?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   index?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
@@ -320,7 +329,7 @@ export type ChatCompletionChunkTypeResolvers<ContextType = any, ParentType exten
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   model?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   object?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  system_fingerprint?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  systemFingerprint?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
@@ -339,14 +348,19 @@ export type LoginResponseResolvers<ContextType = any, ParentType extends Resolve
 }>;
 
 export type MenuResolvers<ContextType = any, ParentType extends ResolversParentTypes['Menu'] = ResolversParentTypes['Menu']> = ResolversObject<{
-  created_at?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  is_active?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  is_deleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  last_updated?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
+  isActive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  isDeleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   path?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   permission?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
+export type ModelTagsResolvers<ContextType = any, ParentType extends ResolversParentTypes['ModelTags'] = ResolversParentTypes['ModelTags']> = ResolversObject<{
+  tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
@@ -356,38 +370,39 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
   registerUser?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<MutationRegisterUserArgs, 'input'>>;
   removePackageFromProject?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationRemovePackageFromProjectArgs, 'packageId' | 'projectId'>>;
   updateProjectPath?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUpdateProjectPathArgs, 'newPath' | 'projectId'>>;
-  upsertProject?: Resolver<ResolversTypes['Projects'], ParentType, ContextType, RequireFields<MutationUpsertProjectArgs, 'upsertProjectInput'>>;
+  upsertProject?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<MutationUpsertProjectArgs, 'upsertProjectInput'>>;
+}>;
+
+export type ProjectResolvers<ContextType = any, ParentType extends ResolversParentTypes['Project'] = ResolversParentTypes['Project']> = ResolversObject<{
+  createdAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  isActive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  isDeleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  path?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  projectName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  projectPackages?: Resolver<Maybe<Array<ResolversTypes['ProjectPackages']>>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
 export type ProjectPackagesResolvers<ContextType = any, ParentType extends ResolversParentTypes['ProjectPackages'] = ResolversParentTypes['ProjectPackages']> = ResolversObject<{
   content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  created_at?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  is_active?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  is_deleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  last_updated?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
+  isActive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  isDeleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   project_id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-}>;
-
-export type ProjectsResolvers<ContextType = any, ParentType extends ResolversParentTypes['Projects'] = ResolversParentTypes['Projects']> = ResolversObject<{
-  created_at?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  is_active?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  is_deleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  last_updated?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
-  path?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  projectPackages?: Resolver<Maybe<Array<ResolversTypes['ProjectPackages']>>, ParentType, ContextType>;
-  project_name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  user_id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
   checkToken?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<QueryCheckTokenArgs, 'input'>>;
-  getProjectDetails?: Resolver<ResolversTypes['Projects'], ParentType, ContextType, RequireFields<QueryGetProjectDetailsArgs, 'projectId'>>;
-  getUserProjects?: Resolver<Array<ResolversTypes['Projects']>, ParentType, ContextType>;
+  getProjectDetails?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<QueryGetProjectDetailsArgs, 'projectId'>>;
+  getUserProjects?: Resolver<Array<ResolversTypes['Project']>, ParentType, ContextType>;
   logout?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  modelTags?: Resolver<ResolversTypes['ModelTags'], ParentType, ContextType>;
 }>;
 
 export type SubscriptionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = ResolversObject<{
@@ -395,12 +410,12 @@ export type SubscriptionResolvers<ContextType = any, ParentType extends Resolver
 }>;
 
 export type UserResolvers<ContextType = any, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = ResolversObject<{
-  created_at?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  is_active?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  is_deleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  last_updated?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
+  isActive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  isDeleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
   username?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
@@ -412,9 +427,10 @@ export type Resolvers<ContextType = any> = ResolversObject<{
   Date?: GraphQLScalarType;
   LoginResponse?: LoginResponseResolvers<ContextType>;
   Menu?: MenuResolvers<ContextType>;
+  ModelTags?: ModelTagsResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
+  Project?: ProjectResolvers<ContextType>;
   ProjectPackages?: ProjectPackagesResolvers<ContextType>;
-  Projects?: ProjectsResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
   User?: UserResolvers<ContextType>;

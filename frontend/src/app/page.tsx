@@ -1,30 +1,29 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from "react";
-import { ChatLayout } from "@/components/chat/chat-layout";
+import React, { useEffect, useRef, useState } from 'react';
+import { ChatLayout } from '@/components/chat/chat-layout';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
-import UsernameForm from "@/components/username-form";
-import { getSelectedModel } from "@/lib/model-helper";
-import { toast } from "sonner";
-import { v4 as uuidv4 } from "uuid";
-import useChatStore from "./hooks/useChatStore";
-import { Message } from "@/components/types";
+} from '@/components/ui/dialog';
+import UsernameForm from '@/components/username-form';
+import { getSelectedModel } from '@/lib/model-helper';
+import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
+import useChatStore from './hooks/useChatStore';
+import { Message } from '@/components/types';
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [chatId, setChatId] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState<string>(
-    getSelectedModel()
-  );
+  const [chatId, setChatId] = useState<string>('');
+  const [selectedModel, setSelectedModel] =
+    useState<string>(getSelectedModel());
   const [open, setOpen] = useState(false);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -43,21 +42,20 @@ export default function Home() {
   useEffect(() => {
     if (!isLoading && !error && chatId && messages.length > 0) {
       localStorage.setItem(`chat_${chatId}`, JSON.stringify(messages));
-      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event('storage'));
     }
   }, [chatId, isLoading, error, messages]);
 
   useEffect(() => {
-    // 初始化 WebSocket 连接
-    ws.current = new WebSocket("ws://localhost:8080/graphql");
+    ws.current = new WebSocket('ws://localhost:8080/graphql');
 
     ws.current.onopen = () => {
-      console.log("WebSocket connected");
+      console.log('WebSocket connected');
     };
 
     ws.current.onerror = (error) => {
-      console.error("WebSocket error:", error);
-      toast.error("Connection error. Retrying...");
+      console.error('WebSocket error:', error);
+      toast.error('Connection error. Retrying...');
     };
 
     if (!localStorage.getItem('ollama_user')) {
@@ -76,11 +74,10 @@ export default function Home() {
   };
 
   const stop = () => {
-    // 实现停止生成的逻辑
     if (ws.current) {
       ws.current.send(
         JSON.stringify({
-          type: "stop",
+          type: 'stop',
           id: chatId,
         })
       );
@@ -101,24 +98,23 @@ export default function Home() {
 
     const newMessage: Message = {
       id: uuidv4(),
-      role: "user",
+      role: 'user',
       content: input,
       createdAt: new Date().toISOString(),
     };
 
     setMessages((prev) => [...prev, newMessage]);
-    setInput("");
+    setInput('');
 
     const attachments = base64Images
       ? base64Images.map((image) => ({
-          contentType: "image/base64",
+          contentType: 'image/base64',
           url: image,
         }))
       : [];
 
-    // GraphQL subscription 请求
     const subscriptionMsg = {
-      type: "start",
+      type: 'start',
       id: Date.now().toString(),
       payload: {
         query: `
@@ -150,18 +146,17 @@ export default function Home() {
     };
 
     try {
-      // 设置消息处理器
       ws.current.onmessage = (event) => {
         const response = JSON.parse(event.data);
 
-        if (response.type === "data" && response.payload.data) {
+        if (response.type === 'data' && response.payload.data) {
           const chunk = response.payload.data.chatStream;
           const content = chunk.choices[0]?.delta?.content;
 
           if (content) {
             setMessages((prev) => {
               const lastMsg = prev[prev.length - 1];
-              if (lastMsg?.role === "assistant") {
+              if (lastMsg?.role === 'assistant') {
                 return [
                   ...prev.slice(0, -1),
                   { ...lastMsg, content: lastMsg.content + content },
@@ -171,7 +166,7 @@ export default function Home() {
                   ...prev,
                   {
                     id: chunk.id,
-                    role: "assistant",
+                    role: 'assistant',
                     content,
                     createdAt: new Date(chunk.created * 1000).toISOString(),
                   },
@@ -180,11 +175,11 @@ export default function Home() {
             });
           }
 
-          if (chunk.choices[0]?.finish_reason === "stop") {
+          if (chunk.choices[0]?.finish_reason === 'stop') {
             setLoadingSubmit(false);
             // 保存到本地存储
             localStorage.setItem(`chat_${chatId}`, JSON.stringify(messages));
-            window.dispatchEvent(new Event("storage"));
+            window.dispatchEvent(new Event('storage'));
           }
         }
       };
@@ -193,18 +188,18 @@ export default function Home() {
       ws.current.send(JSON.stringify(subscriptionMsg));
       setBase64Images(null);
     } catch (error) {
-      console.error("Error:", error);
-      toast.error("An error occurred. Please try again.");
+      console.error('Error:', error);
+      toast.error('An error occurred. Please try again.');
       setLoadingSubmit(false);
     }
   };
 
   const onOpenChange = (isOpen: boolean) => {
-    const username = localStorage.getItem("ollama_user");
+    const username = localStorage.getItem('ollama_user');
     if (username) return setOpen(isOpen);
 
-    localStorage.setItem("ollama_user", "Anonymous");
-    window.dispatchEvent(new Event("storage"));
+    localStorage.setItem('ollama_user', 'Anonymous');
+    window.dispatchEvent(new Event('storage'));
     setOpen(isOpen);
   };
 

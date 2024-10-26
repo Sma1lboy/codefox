@@ -57,6 +57,7 @@
     "zustand": "^5.0.0-rc.2"
   },
   "devDependencies": {
+    "@0no-co/graphqlsp": "^1.12.16",
     "@graphql-codegen/cli": "^5.0.3",
     "@graphql-codegen/typescript": "^4.1.0",
     "@graphql-codegen/typescript-operations": "^4.3.0",

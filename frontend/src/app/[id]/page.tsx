@@ -1,11 +1,11 @@
 'use client';
 
-import { ChatLayout } from "@/components/chat/chat-layout";
-import { getSelectedModel } from "@/lib/model-helper";
-import React, { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
-import useChatStore from "../hooks/useChatStore";
-import { Message } from "@/components/types";
+import { ChatLayout } from '@/components/chat/chat-layout';
+import { getSelectedModel } from '@/lib/model-helper';
+import React, { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import useChatStore from '../hooks/useChatStore';
+import { Message } from '@/components/types';
 
 interface ChatStreamResponse {
   chatStream: {
@@ -31,18 +31,17 @@ interface Attachment {
 export default function Page({ params }: { params: { id: string } }) {
   // 状态管理
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [selectedModel, setSelectedModel] = useState<string>(
-    getSelectedModel()
-  );
+  const [selectedModel, setSelectedModel] =
+    useState<string>(getSelectedModel());
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const ws = useRef<WebSocket | null>(null);
   const base64Images = useChatStore((state) => state.base64Images);
   const setBase64Images = useChatStore((state) => state.setBase64Images);
-  const [currentAssistantMessage, setCurrentAssistantMessage] = useState("");
+  const [currentAssistantMessage, setCurrentAssistantMessage] = useState('');
 
   // 初始化 WebSocket 连接
   useEffect(() => {
@@ -65,35 +64,35 @@ export default function Page({ params }: { params: { id: string } }) {
   useEffect(() => {
     if (!isLoading && !error && messages.length > 0) {
       localStorage.setItem(`chat_${params.id}`, JSON.stringify(messages));
-      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event('storage'));
     }
   }, [messages, isLoading, error, params.id]);
 
   const initWebSocket = () => {
-    ws.current = new WebSocket("ws://localhost:8080/graphql");
+    ws.current = new WebSocket('ws://localhost:8080/graphql');
 
     ws.current.onopen = () => {
-      console.log("WebSocket connected");
+      console.log('WebSocket connected');
     };
 
     ws.current.onerror = (error) => {
-      console.error("WebSocket error:", error);
-      toast.error("Connection error. Retrying...");
+      console.error('WebSocket error:', error);
+      toast.error('Connection error. Retrying...');
       setTimeout(initWebSocket, 3000);
     };
 
     ws.current.onclose = () => {
-      console.log("WebSocket closed");
+      console.log('WebSocket closed');
       setTimeout(initWebSocket, 3000);
     };
   };
 
   const loadChatHistory = async (chatId: string) => {
     try {
-      const response = await fetch("http://localhost:8080/graphql", {
-        method: "POST",
+      const response = await fetch('http://localhost:8080/graphql', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           query: `
@@ -120,7 +119,7 @@ export default function Page({ params }: { params: { id: string } }) {
       const savedMessages = data.data.getChatHistory || [];
       setMessages(savedMessages);
     } catch (error) {
-      console.error("Error loading chat history:", error);
+      console.error('Error loading chat history:', error);
       // 尝试从本地存储加载
       const localMessages = localStorage.getItem(`chat_${chatId}`);
       if (localMessages) {
@@ -137,7 +136,7 @@ export default function Page({ params }: { params: { id: string } }) {
     if (ws.current?.readyState === WebSocket.OPEN) {
       ws.current.send(
         JSON.stringify({
-          type: "stop",
+          type: 'stop',
           id: params.id,
         })
       );
@@ -152,7 +151,7 @@ export default function Page({ params }: { params: { id: string } }) {
       ws.current.readyState !== WebSocket.OPEN
     ) {
       if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
-        toast.error("Connection lost. Reconnecting...");
+        toast.error('Connection lost. Reconnecting...');
         initWebSocket();
       }
       return;
@@ -162,25 +161,25 @@ export default function Page({ params }: { params: { id: string } }) {
 
     const newMessage: Message = {
       id: params.id,
-      role: "user",
+      role: 'user',
       content: input,
       createdAt: new Date().toISOString(),
     };
 
     setMessages((prev) => [...prev, newMessage]);
-    setInput("");
-    setCurrentAssistantMessage("");
+    setInput('');
+    setCurrentAssistantMessage('');
 
     const attachments = base64Images
       ? base64Images.map((image) => ({
-          contentType: "image/base64",
+          contentType: 'image/base64',
           url: image,
         }))
       : [];
 
     // 发送 GraphQL subscription 请求
     const subscriptionMsg = {
-      type: "start",
+      type: 'start',
       id: Date.now().toString(),
       payload: {
         query: `
@@ -215,7 +214,7 @@ export default function Page({ params }: { params: { id: string } }) {
       ws.current.onmessage = (event) => {
         const response = JSON.parse(event.data);
 
-        if (response.type === "data" && response.payload.data) {
+        if (response.type === 'data' && response.payload.data) {
           const chunk = response.payload.data.chatStream;
           const content = chunk.choices[0]?.delta?.content;
 
@@ -223,7 +222,7 @@ export default function Page({ params }: { params: { id: string } }) {
             setCurrentAssistantMessage((prev) => prev + content);
             setMessages((prev) => {
               const lastMsg = prev[prev.length - 1];
-              if (lastMsg?.role === "assistant") {
+              if (lastMsg?.role === 'assistant') {
                 return [
                   ...prev.slice(0, -1),
                   {
@@ -236,7 +235,7 @@ export default function Page({ params }: { params: { id: string } }) {
                   ...prev,
                   {
                     id: chunk.id,
-                    role: "assistant",
+                    role: 'assistant',
                     content,
                     createdAt: new Date(chunk.created * 1000).toISOString(),
                   },
@@ -245,13 +244,13 @@ export default function Page({ params }: { params: { id: string } }) {
             });
           }
 
-          if (chunk.choices[0]?.finish_reason === "stop") {
+          if (chunk.choices[0]?.finish_reason === 'stop') {
             setLoadingSubmit(false);
-            setCurrentAssistantMessage("");
+            setCurrentAssistantMessage('');
 
             // 保存消息
             localStorage.setItem(`chat_${params.id}`, JSON.stringify(messages));
-            window.dispatchEvent(new Event("storage"));
+            window.dispatchEvent(new Event('storage'));
           }
         }
       };
@@ -259,8 +258,8 @@ export default function Page({ params }: { params: { id: string } }) {
       ws.current.send(JSON.stringify(subscriptionMsg));
       setBase64Images(null);
     } catch (error) {
-      console.error("Error:", error);
-      toast.error("Failed to send message");
+      console.error('Error:', error);
+      toast.error('Failed to send message');
       setLoadingSubmit(false);
     }
   };

@@ -1,17 +1,17 @@
-"use client";
+'use client';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import React, { useEffect } from "react";
-import { getSelectedModel } from "@/lib/model-helper";
-import { CaretSortIcon, HamburgerMenuIcon } from "@radix-ui/react-icons";
-import { Sidebar } from "../sidebar";
-import { Button } from "../ui/button";
-import { Message } from "../types";
-import { toast } from "sonner";
+} from '@/components/ui/popover';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import React, { useEffect } from 'react';
+import { getSelectedModel } from '@/lib/model-helper';
+import { CaretSortIcon, HamburgerMenuIcon } from '@radix-ui/react-icons';
+import { Sidebar } from '../sidebar';
+import { Button } from '../ui/button';
+import { Message } from '../types';
+import { toast } from 'sonner';
 
 interface ModelTags {
   tags: string[];
@@ -31,7 +31,6 @@ export default function ChatTopbar({
   chatId,
   messages,
   setMessages,
-  setMessages,
 }: ChatTopbarProps) {
   const [models, setModels] = React.useState<string[]>([]);
   const [open, setOpen] = React.useState(false);
@@ -47,10 +46,10 @@ export default function ChatTopbar({
   const fetchModels = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:8080/graphql", {
-        method: "POST",
+      const response = await fetch('http://localhost:8080/graphql', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           query: `
@@ -72,8 +71,8 @@ export default function ChatTopbar({
       const { tags } = result.data.modelTags;
       setModels(tags);
     } catch (error) {
-      console.error("Error fetching models:", error);
-      toast.error("Failed to load models");
+      console.error('Error fetching models:', error);
+      toast.error('Failed to load models');
     } finally {
       setLoading(false);
     }
@@ -82,8 +81,8 @@ export default function ChatTopbar({
   const handleModelChange = (modelName: string) => {
     setCurrentModel(modelName);
     setSelectedModel(modelName);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("selectedModel", modelName);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedModel', modelName);
     }
     setOpen(false);
   };
@@ -119,7 +118,7 @@ export default function ChatTopbar({
             aria-expanded={open}
             className="w-[300px] justify-between"
           >
-            {loading ? "Loading models..." : currentModel || "Select model"}
+            {loading ? 'Loading models...' : currentModel || 'Select model'}
             <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>

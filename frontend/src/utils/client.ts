@@ -5,10 +5,10 @@ import {
   ApolloLink,
   concat,
 } from '@apollo/client';
+import { useMemo } from 'react';
 
 const httpLink = new HttpLink({
-  //   uri: process.env.NEXT_PUBLIC_API_BASE_URL,
-  uri: 'http://localhost:8080/graphql',
+  uri: process.env.NEXT_PUBLIC_GRAPHQL_URL,
 });
 
 const authMiddleware = new ApolloLink((operation, forward) => {
@@ -25,9 +25,12 @@ const authMiddleware = new ApolloLink((operation, forward) => {
   return forward(operation);
 });
 
-const client = new ApolloClient({
-  link: concat(authMiddleware, httpLink),
-  cache: new InMemoryCache(),
-});
-
-export default client;
+export const useClient = () => {
+  const client = useMemo(() => {
+    return new ApolloClient({
+      link: concat(authMiddleware, httpLink),
+      cache: new InMemoryCache(),
+    });
+  }, []);
+  return client;
+};

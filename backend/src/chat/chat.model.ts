@@ -5,6 +5,7 @@ class ChatCompletionDelta {
   @Field({ nullable: true })
   content?: string;
 }
+
 @ObjectType('ChatCompletionChunkType')
 export class ChatCompletionChunk {
   @Field()
@@ -20,7 +21,7 @@ export class ChatCompletionChunk {
   model: string;
 
   @Field({ nullable: true })
-  system_fingerprint: string | null;
+  systemFingerprint: string | null;
 
   @Field(() => [ChatCompletionChoice])
   choices: ChatCompletionChoice[];
@@ -35,7 +36,7 @@ class ChatCompletionChoice {
   delta: ChatCompletionDelta;
 
   @Field({ nullable: true })
-  finish_reason: string | null;
+  finishReason: string | null;
 }
 
 @InputType('ChatInputType')
