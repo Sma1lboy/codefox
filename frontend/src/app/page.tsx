@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useEffect, useRef, useState } from "react";
 import { ChatLayout } from "@/components/chat/chat-layout";
@@ -60,7 +60,7 @@ export default function Home() {
       toast.error("Connection error. Retrying...");
     };
 
-    if (!localStorage.getItem("ollama_user")) {
+    if (!localStorage.getItem('ollama_user')) {
       setOpen(true);
     }
 

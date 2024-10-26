@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { ChatLayout } from "@/components/chat/chat-layout";
 import { getSelectedModel } from "@/lib/model-helper";

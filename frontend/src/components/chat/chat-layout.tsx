@@ -57,7 +57,7 @@ export function ChatLayout({
     checkScreenWidth();
     window.addEventListener("resize", checkScreenWidth);
     return () => {
-      window.removeEventListener("resize", checkScreenWidth);
+      window.removeEventListener('resize', checkScreenWidth);
     };
   }, []);
 
@@ -91,8 +91,8 @@ export function ChatLayout({
         }}
         className={cn(
           isCollapsed
-            ? "min-w-[50px] md:min-w-[70px] transition-all duration-300 ease-in-out"
-            : "hidden md:block"
+            ? 'min-w-[50px] md:min-w-[70px] transition-all duration-300 ease-in-out'
+            : 'hidden md:block'
         )}
       >
         <Sidebar
@@ -103,7 +103,7 @@ export function ChatLayout({
           setMessages={setMessages}
         />
       </ResizablePanel>
-      <ResizableHandle className={cn("hidden md:flex")} withHandle />
+      <ResizableHandle className={cn('hidden md:flex')} withHandle />
       <ResizablePanel
         className="h-full w-full flex justify-center"
         defaultSize={defaultLayout[1]}

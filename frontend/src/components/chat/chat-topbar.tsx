@@ -31,6 +31,7 @@ export default function ChatTopbar({
   chatId,
   messages,
   setMessages,
+  setMessages,
 }: ChatTopbarProps) {
   const [models, setModels] = React.useState<string[]>([]);
   const [open, setOpen] = React.useState(false);
@@ -99,11 +100,12 @@ export default function ChatTopbar({
         </SheetTrigger>
         <SheetContent side="left">
           <Sidebar
-            chatId={chatId || ""}
+            chatId={chatId || ''}
             isCollapsed={false}
             isMobile={false}
             messages={messages}
             setMessages={setMessages}
+            closeSidebar={handleCloseSidebar}
             closeSidebar={handleCloseSidebar}
           />
         </SheetContent>

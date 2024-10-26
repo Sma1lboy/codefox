@@ -1,5 +1,5 @@
 {
-  "name": "genearte-ai",
+  "name": "codefox-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,7 +8,8 @@
     "start:dev-watch": "tmuxinator start -p .tmuxinator/build.yml",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "next lint --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
     "generate": "graphql-codegen",
     "generate:watch": "graphql-codegen --watch"
   },
@@ -62,15 +63,18 @@
     "@graphql-codegen/typescript-react-apollo": "^4.3.2",
     "@graphql-codegen/typescript-resolvers": "^4.3.0",
     "@parcel/watcher": "^2.4.1",
+    "@types/jest": "^29.5.14",
     "@types/node": "^22.5.5",
     "@types/react": "^18.3.8",
     "@types/react-dom": "^18.3.0",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.20",
-    "eslint": "^8.0.0",
+    "eslint": "8.57.1",
     "eslint-config-next": "14.2.13",
+    "jest": "^29.7.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.12",
+    "ts-jest": "^29.2.5",
     "typescript": "^5.6.2"
   }
 }

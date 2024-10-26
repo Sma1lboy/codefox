@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 export interface ChatCompletionChunk {
   /**
    * A unique identifier for the chat completion. Each chunk has the same ID.
@@ -25,13 +26,13 @@ export interface ChatCompletionChunk {
   /**
    * The object type, which is always `chat.completion.chunk`.
    */
-  object: "chat.completion.chunk";
+  object: 'chat.completion.chunk';
 
   /**
    * The service tier used for processing the request. This field is only included if
    * the `service_tier` parameter is specified in the request.
    */
-  service_tier?: "scale" | "default" | null;
+  service_tier?: 'scale' | 'default' | null;
 
   /**
    * This fingerprint represents the backend configuration that the model runs with.
@@ -57,11 +58,11 @@ export namespace ChatCompletionChunk {
      * function.
      */
     finish_reason:
-      | "stop"
-      | "length"
-      | "tool_calls"
-      | "content_filter"
-      | "function_call"
+      | 'stop'
+      | 'length'
+      | 'tool_calls'
+      | 'content_filter'
+      | 'function_call'
       | null;
 
     /**
@@ -94,7 +95,7 @@ export namespace ChatCompletionChunk {
       /**
        * The role of the author of this message.
        */
-      role?: "system" | "user" | "assistant" | "tool";
+      role?: 'system' | 'user' | 'assistant' | 'tool';
 
       tool_calls?: Array<Delta.ToolCall>;
     }
@@ -132,7 +133,7 @@ export namespace ChatCompletionChunk {
         /**
          * The type of the tool. Currently, only `function` is supported.
          */
-        type?: "function";
+        type?: 'function';
       }
 
       export namespace ToolCall {

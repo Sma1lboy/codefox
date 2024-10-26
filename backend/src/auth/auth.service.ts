@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compare, hash } from 'bcrypt';
-import { LoginUserInput } from 'src/user/dto/lgoin-user.input';
+import { LoginUserInput } from 'src/user/dto/login-user.input';
 import { RegisterUserInput } from 'src/user/dto/register-user.input';
 import { User } from 'src/user/user.model';
 import { Repository } from 'typeorm';
@@ -81,7 +81,7 @@ export class AuthService {
       return false;
     }
   }
-  async logout(token: string): Promise<Boolean> {
+  async logout(token: string): Promise<boolean> {
     Logger.log('logout token', token);
     try {
       await this.jwtService.verifyAsync(token);

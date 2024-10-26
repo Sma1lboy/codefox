@@ -39,6 +39,7 @@ export default function Chat({
   isMobile,
   setInput,
   setMessages,
+  setMessages,
 }: ChatProps) {
   return (
     <div className="flex flex-col justify-between w-full max-w-3xl h-full ">
