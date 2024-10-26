@@ -1,14 +1,14 @@
-"use client";
-import React, { useEffect, useState, Dispatch, SetStateAction } from "react";
+'use client';
+import React, { useEffect, useState, Dispatch, SetStateAction } from 'react';
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import { cn } from "@/lib/utils";
-import { Sidebar } from "../sidebar";
-import Chat from "./chat";
-import { Message } from "../types";
+} from '@/components/ui/resizable';
+import { cn } from '@/lib/utils';
+import { Sidebar } from '../sidebar';
+import Chat from './chat';
+import { Message } from '../types';
 
 interface ChatLayoutProps {
   defaultLayout?: number[];
@@ -55,7 +55,7 @@ export function ChatLayout({
       setIsMobile(window.innerWidth <= 1023);
     };
     checkScreenWidth();
-    window.addEventListener("resize", checkScreenWidth);
+    window.addEventListener('resize', checkScreenWidth);
     return () => {
       window.removeEventListener('resize', checkScreenWidth);
     };
