@@ -1,4 +1,3 @@
-import { Message, useChat } from 'ai/react';
 import React, { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -10,6 +9,7 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { INITIAL_QUESTIONS } from '@/utils/initial-questions';
 import { Button } from '../ui/button';
+import { Message } from '../types';
 
 export default function ChatList({
   messages,
@@ -80,8 +80,6 @@ export default function ChatList({
       );
     }, 1);
   };
-
-  messages.map((m) => console.log(m.experimental_attachments));
 
   if (messages.length === 0) {
     return (
@@ -167,22 +165,6 @@ export default function ChatList({
               {message.role === 'user' && (
                 <div className="flex items-end gap-3">
                   <div className="flex flex-col gap-2 bg-accent p-3 rounded-md max-w-xs sm:max-w-2xl overflow-x-auto">
-                    <div className="flex gap-2">
-                      {message.experimental_attachments
-                        ?.filter((attachment) =>
-                          attachment.contentType?.startsWith('image/')
-                        )
-                        .map((attachment, index) => (
-                          <Image
-                            key={`${message.id}-${index}`}
-                            src={attachment.url}
-                            width={200}
-                            height={200}
-                            alt="attached image"
-                            className="rounded-md object-contain"
-                          />
-                        ))}
-                    </div>
                     <p className="text-end">{message.content}</p>
                   </div>
                   <Avatar className="flex justify-start items-center overflow-hidden">

@@ -65,10 +65,12 @@ export default function ChatBottombar({
     useSpeechToText({ continuous: true });
 
   const listen = () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     isListening ? stopVoiceInput() : startListening();
   };
 
   const stopVoiceInput = () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     setInput && setInput(transcript.length ? transcript : '');
     stopListening();
   };

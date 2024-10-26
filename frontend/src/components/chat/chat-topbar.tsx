@@ -105,7 +105,6 @@ export default function ChatTopbar({
             messages={messages}
             setMessages={setMessages}
             closeSidebar={handleCloseSidebar}
-            closeSidebar={handleCloseSidebar}
           />
         </SheetContent>
       </Sheet>
