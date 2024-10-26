@@ -4,6 +4,7 @@ import { ChatCompletionChunk, Chat, Message } from './chat.model';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from 'src/user/user.model';
+import { ChatMessageInput } from 'src/chat/dto/chat.input';
 
 type CustomAsyncIterableIterator<T> = AsyncIterator<T> & {
   [Symbol.asyncIterator](): AsyncIterableIterator<T>;
@@ -160,9 +161,9 @@ export class ChatService {
     });
   }
 
-  async createChat(): Promise<Chat> {
+  async createChat(chatMessageInput: ChatMessageInput): Promise<Chat> {
     const newChat = this.chatRepository.create({
-      title: 'New Chat',
+      title: chatMessageInput.title,
       messages: [],
       createdAt: new Date(),
       updatedAt: new Date(),

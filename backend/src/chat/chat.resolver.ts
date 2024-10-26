@@ -1,9 +1,8 @@
 import { Resolver, Subscription, Args, Query, Mutation } from '@nestjs/graphql';
 import { ChatCompletionChunk, ChatInput } from './chat.model';
 import { ChatProxyService, ChatService } from './chat.service';
-import { title } from 'process';
 import { Chat, Message } from './chat.model';
-import { User } from 'src/user/user.model';
+import { ChatMessageInput } from 'src/chat/dto/chat.input';
 
 @Resolver('Chat')
 export class ChatResolver {
@@ -47,8 +46,10 @@ export class ChatResolver {
   // }
 
   @Mutation(() => Chat)
-  async createChat(): Promise<Chat> {
-    return this.chatService.createChat();
+  async createChat(
+    @Args('chatMessageInput') chatMessageInput: ChatMessageInput,
+  ): Promise<Chat> {
+    return this.chatService.createChat(chatMessageInput);
   }
 
   @Mutation(() => Boolean)
