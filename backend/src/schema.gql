@@ -7,9 +7,10 @@ type Chat {
   id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
-  messages: [Message!]!
+  messages: [Message!]
   title: String
   updatedAt: Date!
+  user: User!
 }
 
 type ChatCompletionChoiceType {
@@ -32,6 +33,7 @@ type ChatCompletionDeltaType {
 }
 
 input ChatInputType {
+  chatId: String!
   message: String!
 }
 
@@ -75,15 +77,19 @@ type Message {
 
 type Mutation {
   clearChatHistory(chatId: String!): Boolean!
-  createChat: Chat!
+  createChat(newChatInput: NewChatInput!): Chat!
   deleteChat(chatId: String!): Boolean!
   deleteProject(projectId: String!): Boolean!
   login(input: LoginUserInput!): LoginResponse!
   registerUser(input: RegisterUserInput!): User!
   removePackageFromProject(packageId: String!, projectId: String!): Boolean!
-  updateChatTitle(chatId: String!, title: String!): Chat
+  updateChatTitle(upateChatTitleInput: UpateChatTitleInput!): Chat
   updateProjectPath(newPath: String!, projectId: String!): Boolean!
   upsertProject(upsertProjectInput: UpsertProjectInput!): Project!
+}
+
+input NewChatInput {
+  title: String
 }
 
 type Project {
@@ -91,7 +97,7 @@ type Project {
   id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
-  path: String!
+  path: String
   projectName: String!
   projectPackages: [ProjectPackages!]
   updatedAt: Date!
@@ -112,7 +118,9 @@ type Query {
   checkToken(input: CheckTokenInput!): Boolean!
   getChatDetails(chatId: String!): Chat
   getChatHistory(chatId: String!): [Message!]!
+  getMessageDetail(messageId: String!): Message
   getProjectDetails(projectId: String!): Project!
+  getUserChats: [Chat!]
   getUserProjects: [Project!]!
   logout: Boolean!
 }
@@ -130,6 +138,11 @@ enum Role {
 
 type Subscription {
   chatStream(input: ChatInputType!): ChatCompletionChunkType
+}
+
+input UpateChatTitleInput {
+  chatId: String!
+  title: String
 }
 
 input UpsertProjectInput {

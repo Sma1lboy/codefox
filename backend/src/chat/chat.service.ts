@@ -171,13 +171,22 @@ export class ChatService {
     });
   }
 
-  async createChat(newChatInput: NewChatInput): Promise<Chat> {
+  async createChat(userId: string, newChatInput: NewChatInput): Promise<Chat> {
+    // Fetch the user entity using the userId
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Create a new chat and associate it with the user
     const newChat = this.chatRepository.create({
       title: newChatInput.title,
       messages: [],
       createdAt: new Date(),
       updatedAt: new Date(),
+      user: user, // Associate the user with the chat
     });
+
     return await this.chatRepository.save(newChat);
   }
 
@@ -204,7 +213,7 @@ export class ChatService {
     upateChatTitleInput: UpateChatTitleInput,
   ): Promise<Chat> {
     const chat = await this.chatRepository.findOne({
-      where: { id: upateChatTitleInput.id },
+      where: { id: upateChatTitleInput.chatId },
     });
     if (chat) {
       chat.title = upateChatTitleInput.title;

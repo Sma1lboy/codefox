@@ -11,7 +11,7 @@ export class NewChatInput {
 @InputType()
 export class UpateChatTitleInput {
   @Field()
-  id: string;
+  chatId: string;
 
   @Field({ nullable: true })
   title: string;
@@ -20,7 +20,7 @@ export class UpateChatTitleInput {
 @InputType('ChatInputType')
 export class ChatInput {
   @Field()
-  id: string;
+  chatId: string;
 
   @Field()
   message: string;

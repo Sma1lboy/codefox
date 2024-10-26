@@ -13,4 +13,17 @@ import { LoginUserInput } from './dto/login-user.input';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class UserService {}
+export class UserService {
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+  ) {}
+
+  // Method to get all chats of a user
+  async getUserChats(userId: string): Promise<User> {
+    return this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['chats'], // Ensure 'chats' relation is loaded
+    });
+  }
+}

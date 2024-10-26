@@ -16,6 +16,7 @@ import {
 import { forwardRef } from '@nestjs/common';
 import { Message } from 'src/chat/message.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
+import { User } from 'src/user/user.model';
 
 @Entity()
 @ObjectType()
@@ -31,6 +32,10 @@ export class Chat extends SystemBaseModel {
   @Field(() => [Message], { nullable: true })
   @OneToMany(() => Message, (message) => message.chat, { cascade: true })
   messages: Message[];
+
+  @ManyToOne(() => User, (user) => user.chats)
+  @Field(() => User)
+  user: User;
 }
 
 @ObjectType('ChatCompletionDeltaType')
