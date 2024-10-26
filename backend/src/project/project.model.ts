@@ -28,7 +28,7 @@ export class Project extends SystemBaseModel {
 
   @Field(() => ID)
   @Column()
-  userId: string;
+  userId: number;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
