@@ -177,7 +177,6 @@ export default function HomeContent() {
 
           if (chunk.choices[0]?.finish_reason === 'stop') {
             setLoadingSubmit(false);
-            // 保存到本地存储
             localStorage.setItem(`chat_${chatId}`, JSON.stringify(messages));
             window.dispatchEvent(new Event('storage'));
           }

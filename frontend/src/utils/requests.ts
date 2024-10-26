@@ -1,7 +1,6 @@
 import { ApolloClient, gql, TypedDocumentNode } from '@apollo/client';
 import type { DocumentNode } from 'graphql';
 
-// 定义具体的查询类型
 export type GetUserProjectsQuery = { __typename?: 'Query' } & {
   getUserProjects: Array<
     { __typename?: 'Project' } & {
