@@ -27,6 +27,7 @@ export class ChatResolver {
         if (chunk) {
           await this.chatService.saveMessage(
             input.id,
+            chunk.id,
             chunk.choices[0].delta.content,
           );
           yield chunk;
@@ -36,6 +37,13 @@ export class ChatResolver {
       console.error('Error in chatStream:', error);
       throw new Error('Chat stream failed');
     }
+  }
+
+  @Query(() => Message, { nullable: true })
+  async getMessageDetail(
+    @Args('messageId') messageId: string,
+  ): Promise<Message> {
+    return this.chatService.getMessageById(messageId);
   }
 
   @Query(() => [Message])

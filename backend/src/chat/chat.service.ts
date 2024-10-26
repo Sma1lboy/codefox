@@ -158,6 +158,12 @@ export class ChatService {
     return chat ? chat.messages : [];
   }
 
+  async getMessageById(messageId: string): Promise<Message> {
+    return await this.messageRepository.findOne({
+      where: { id: messageId },
+    });
+  }
+
   async getChatDetails(chatId: string): Promise<Chat> {
     return this.chatRepository.findOne({
       where: { id: chatId },
@@ -208,13 +214,18 @@ export class ChatService {
     return null;
   }
 
-  async saveMessage(chatId: string, messageContent: string): Promise<Message> {
+  async saveMessage(
+    chatId: string,
+    chunkId: string,
+    messageContent: string,
+  ): Promise<Message> {
     // Find the chat instance
     const chat = await this.chatRepository.findOne({ where: { id: chatId } });
     if (!chat) throw new Error('Chat not found');
 
     // Create a new message associated with the chat
     const message = this.messageRepository.create({
+      id: chunkId,
       content: messageContent,
       role: Role.Model,
       chat,
