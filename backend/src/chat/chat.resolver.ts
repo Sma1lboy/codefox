@@ -61,6 +61,8 @@ export class ChatResolver {
     return this.chatService.getMessageById(messageId);
   }
 
+  // To do: message need a update resolver
+
   @UseGuards(ChatGuard)
   @Query(() => [Message])
   async getChatHistory(@Args('chatId') chatId: string): Promise<Message[]> {
