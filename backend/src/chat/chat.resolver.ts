@@ -10,7 +10,7 @@ import {
   ChatInput,
 } from 'src/chat/dto/chat.input';
 import { UseGuards } from '@nestjs/common';
-import { ChatGuard } from '../guard/chat.guard';
+import { ChatGuard, MessageGuard } from '../guard/chat.guard';
 import { GetUserIdFromToken } from '../decorator/get-auth-token';
 
 @Resolver('Chat')
@@ -52,6 +52,7 @@ export class ChatResolver {
     return user ? user.chats : []; // Return chats if user exists, otherwise return an empty array
   }
 
+  @UseGuards(MessageGuard)
   @Query(() => Message, { nullable: true })
   async getMessageDetail(
     @GetUserIdFromToken() userId: string,
