@@ -10,21 +10,23 @@ import {
 } from 'typeorm';
 import { Menu } from '../menu/menu.model';
 
-@Entity()
 @ObjectType()
-export class Role extends SystemBaseModel {
-  @Field(() => ID)
-  @PrimaryGeneratedColumn()
+@Entity()
+export class Role {
+  @Field()
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Field()
-  @Column()
+  @Column({ unique: true })
   name: string;
 
-  @ManyToMany(() => User, (user) => user.roles)
-  users: User[];
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  description?: string;
 
-  @ManyToMany(() => Menu)
+  @Field(() => [Menu], { nullable: true })
+  @ManyToMany(() => Menu, { eager: true })
   @JoinTable({
     name: 'role_menus',
     joinColumn: {
@@ -36,6 +38,19 @@ export class Role extends SystemBaseModel {
       referencedColumnName: 'id',
     },
   })
-  @Field(() => [Menu])
-  menus: Menu[];
+  menus?: Menu[];
+
+  @ManyToMany(() => User, (user) => user.roles)
+  @JoinTable({
+    name: 'user_roles',
+    joinColumn: {
+      name: 'role_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'user_id',
+      referencedColumnName: 'id',
+    },
+  })
+  users?: User[];
 }
