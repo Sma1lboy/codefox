@@ -9,6 +9,7 @@ import {
   Column,
   ManyToMany,
   JoinTable,
+  OneToMany,
 } from 'typeorm';
 
 @Entity()
@@ -31,6 +32,11 @@ export class User extends SystemBaseModel {
   email: string;
 
   @Field(() => [Chat])
+  @OneToMany(() => Chat, (chat) => chat.user, {
+    cascade: true, // Automatically save related chats
+    lazy: true, // Load chats only when accessed
+    onDelete: 'CASCADE', // Delete chats when user is deleted
+  })
   chats: Chat[];
 
   @ManyToMany(() => Role)
