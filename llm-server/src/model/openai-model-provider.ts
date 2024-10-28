@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import OpenAI from 'openai';
-import { ModelProvider } from './model-provider.js';
+import { ModelProvider } from './model-provider';
 import { Logger } from '@nestjs/common';
 export class OpenAIModelProvider extends ModelProvider {
   private readonly logger = new Logger(OpenAIModelProvider.name);
@@ -49,6 +49,38 @@ export class OpenAIModelProvider extends ModelProvider {
       res.write(`data: [DONE]\n\n`);
       res.end();
       this.logger.log('Response stream ended.');
+    } catch (error) {
+      this.logger.error('Error during OpenAI response generation:', error);
+      res.write(`data: ${JSON.stringify({ error: 'Generation failed' })}\n\n`);
+      res.write(`data: [DONE]\n\n`);
+      res.end();
+    }
+  }
+
+  async getModelTagsResponse(res: Response): Promise<void> {
+    this.logger.log('Fetching available models from OpenAI...');
+    // Set SSE headers
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    });
+    try {
+      const startTime = Date.now();
+      const models = await this.openai.models.list();
+
+      const response = {
+        models: models, // Wrap the models in the required structure
+      };
+
+      const endTime = Date.now();
+      this.logger.log(
+        `Model fetching completed. Total models: ${models.data.length}`,
+      );
+      this.logger.log(`Fetch time: ${endTime - startTime}ms`);
+      res.write(JSON.stringify(response));
+      res.end();
+      this.logger.log('Response ModelTags ended.');
     } catch (error) {
       this.logger.error('Error during OpenAI response generation:', error);
       res.write(`data: ${JSON.stringify({ error: 'Generation failed' })}\n\n`);

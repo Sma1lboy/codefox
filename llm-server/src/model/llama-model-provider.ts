@@ -68,4 +68,36 @@ export class LlamaModelProvider extends ModelProvider {
       res.end();
     }
   }
+
+  async getModelTagsResponse(res: Response): Promise<void> {
+    this.logger.log('Fetching available models from OpenAI...');
+    // Set SSE headers
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    });
+    try {
+      const startTime = Date.now();
+      const models = 'tresr';
+
+      const response = {
+        models: models, // Wrap the models in the required structure
+      };
+
+      const endTime = Date.now();
+      this.logger.log(
+        `Model fetching completed. Total models: ${models.length}`,
+      );
+      this.logger.log(`Fetch time: ${endTime - startTime}ms`);
+      res.write(JSON.stringify(response));
+      res.end();
+      this.logger.log('Response ModelTags ended.');
+    } catch (error) {
+      this.logger.error('Error during OpenAI response generation:', error);
+      res.write(`data: ${JSON.stringify({ error: 'Generation failed' })}\n\n`);
+      res.write(`data: [DONE]\n\n`);
+      res.end();
+    }
+  }
 }
