@@ -83,7 +83,7 @@ type Mutation {
   login(input: LoginUserInput!): LoginResponse!
   registerUser(input: RegisterUserInput!): User!
   removePackageFromProject(packageId: String!, projectId: String!): Boolean!
-  updateChatTitle(upateChatTitleInput: UpateChatTitleInput!): Chat
+  updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
   updateProjectPath(newPath: String!, projectId: String!): Boolean!
   upsertProject(upsertProjectInput: UpsertProjectInput!): Project!
 }
@@ -116,6 +116,7 @@ type ProjectPackages {
 
 type Query {
   checkToken(input: CheckTokenInput!): Boolean!
+  getAvailableModelTags: [String!]
   getChatDetails(chatId: String!): Chat
   getChatHistory(chatId: String!): [Message!]!
   getMessageDetail(messageId: String!): Message
@@ -140,7 +141,7 @@ type Subscription {
   chatStream(input: ChatInputType!): ChatCompletionChunkType
 }
 
-input UpateChatTitleInput {
+input UpdateChatTitleInput {
   chatId: String!
   title: String
 }
