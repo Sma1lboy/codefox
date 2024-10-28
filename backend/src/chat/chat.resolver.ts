@@ -6,7 +6,7 @@ import { Chat } from './chat.model';
 import { Message, Role } from 'src/chat/message.model';
 import {
   NewChatInput,
-  UpateChatTitleInput,
+  UpdateChatTitleInput,
   ChatInput,
 } from 'src/chat/dto/chat.input';
 import { UseGuards } from '@nestjs/common';
@@ -46,6 +46,19 @@ export class ChatResolver {
     }
   }
 
+  @Query(() => [String], { nullable: true })
+  async getAvailableModelTags(
+    @GetUserIdFromToken() userId: string,
+  ): Promise<string[]> {
+    try {
+      const response = await this.chatProxyService.fetchModelTags();
+      return response.models.data.map((model) => model.id); // Adjust based on model structure
+    } catch (error) {
+      throw new Error('Failed to fetch model tags');
+    }
+  }
+
+  // this is not the final api.
   @Query(() => [Chat], { nullable: true })
   async getUserChats(@GetUserIdFromToken() userId: string): Promise<Chat[]> {
     const user = await this.userService.getUserChats(userId);
@@ -75,11 +88,6 @@ export class ChatResolver {
     return this.chatService.getChatDetails(chatId);
   }
 
-  // @Query(() => [Message])
-  // getAvailableModelTags(@Args('chatId') chatId: string): Message[] {
-  //   return this.chatService.getChatHistory(chatId);
-  // }
-
   @Mutation(() => Chat)
   async createChat(
     @GetUserIdFromToken() userId: string,
@@ -103,8 +111,8 @@ export class ChatResolver {
   @UseGuards(ChatGuard)
   @Mutation(() => Chat, { nullable: true })
   async updateChatTitle(
-    @Args('upateChatTitleInput') upateChatTitleInput: UpateChatTitleInput,
+    @Args('updateChatTitleInput') updateChatTitleInput: UpdateChatTitleInput,
   ): Promise<Chat> {
-    return this.chatService.updateChatTitle(upateChatTitleInput);
+    return this.chatService.updateChatTitle(updateChatTitleInput);
   }
 }

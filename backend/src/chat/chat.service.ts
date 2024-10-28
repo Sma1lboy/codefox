@@ -5,7 +5,7 @@ import { Message, Role } from 'src/chat/message.model';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from 'src/user/user.model';
-import { NewChatInput, UpateChatTitleInput } from 'src/chat/dto/chat.input';
+import { NewChatInput, UpdateChatTitleInput } from 'src/chat/dto/chat.input';
 
 type CustomAsyncIterableIterator<T> = AsyncIterator<T> & {
   [Symbol.asyncIterator](): AsyncIterableIterator<T>;
@@ -122,6 +122,23 @@ export class ChatProxyService {
     return iterator;
   }
 
+  async fetchModelTags(): Promise<any> {
+    try {
+      this.logger.debug('Requesting model tags from /tags endpoint.');
+
+      // Make a GET request to /tags
+      const response = await this.httpService
+        .get('http://localhost:3001/tags', { responseType: 'json' })
+        .toPromise();
+
+      this.logger.debug('Model tags received:', response.data);
+      return response.data;
+    } catch (error) {
+      this.logger.error('Error fetching model tags:', error);
+      throw new Error('Failed to fetch model tags');
+    }
+  }
+
   private isValidChunk(chunk: any): chunk is ChatCompletionChunk {
     return (
       chunk &&
@@ -210,7 +227,7 @@ export class ChatService {
   }
 
   async updateChatTitle(
-    upateChatTitleInput: UpateChatTitleInput,
+    upateChatTitleInput: UpdateChatTitleInput,
   ): Promise<Chat> {
     const chat = await this.chatRepository.findOne({
       where: { id: upateChatTitleInput.chatId },

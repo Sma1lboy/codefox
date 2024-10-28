@@ -1,6 +1,5 @@
 // DTOs for Project APIs
-import { InputType, Field, ID } from '@nestjs/graphql';
-import { Message } from 'src/chat/message.model';
+import { InputType, Field } from '@nestjs/graphql';
 
 @InputType()
 export class NewChatInput {
@@ -9,7 +8,7 @@ export class NewChatInput {
 }
 
 @InputType()
-export class UpateChatTitleInput {
+export class UpdateChatTitleInput {
   @Field()
   chatId: string;
 
@@ -22,6 +21,10 @@ export class ChatInput {
   @Field()
   chatId: string;
 
+  // more input check in the feature
+  // @IsString()
+  // @MinLength(1)
+  // @MaxLength(2000)
   @Field()
   message: string;
 }
