@@ -168,24 +168,38 @@ export class ChatService {
 
   async getChatHistory(chatId: string): Promise<Message[]> {
     const chat = await this.chatRepository.findOne({
-      where: { id: chatId },
-      order: { createdAt: 'ASC' },
+      where: { id: chatId, isDeleted: false },
       relations: ['messages'],
     });
+
+    if (chat && chat.messages) {
+      // Sort messages by createdAt in ascending order
+      chat.messages = chat.messages
+        .filter((message) => !message.isDeleted)
+        .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    }
+
     return chat ? chat.messages : [];
   }
 
   async getMessageById(messageId: string): Promise<Message> {
     return await this.messageRepository.findOne({
-      where: { id: messageId },
+      where: { id: messageId, isDeleted: false },
     });
   }
 
   async getChatDetails(chatId: string): Promise<Chat> {
-    return this.chatRepository.findOne({
-      where: { id: chatId },
+    const chat = await this.chatRepository.findOne({
+      where: { id: chatId, isDeleted: false },
       relations: ['messages'],
     });
+
+    if (chat) {
+      // Filter out messages that are soft-deleted
+      chat.messages = chat.messages.filter((message) => !message.isDeleted);
+    }
+
+    return chat;
   }
 
   async createChat(userId: string, newChatInput: NewChatInput): Promise<Chat> {
@@ -208,17 +222,38 @@ export class ChatService {
   }
 
   async deleteChat(chatId: string): Promise<boolean> {
-    const result = await this.chatRepository.delete(chatId);
-    return result.affected > 0;
+    const chat = await this.chatRepository.findOne({
+      where: { id: chatId, isDeleted: false },
+      relations: ['messages'],
+    });
+
+    if (chat) {
+      // Soft delete the chat
+      chat.isDeleted = true;
+      chat.isActive = false;
+      await this.chatRepository.save(chat);
+
+      // Soft delete all associated messages
+      await this.messageRepository.update(
+        { chat: { id: chatId }, isDeleted: false },
+        { isDeleted: true, isActive: false },
+      );
+
+      return true;
+    }
+    return false;
   }
 
   async clearChatHistory(chatId: string): Promise<boolean> {
     const chat = await this.chatRepository.findOne({
-      where: { id: chatId },
+      where: { id: chatId, isDeleted: false },
       relations: ['messages'],
     });
     if (chat) {
-      chat.messages = [];
+      await this.messageRepository.update(
+        { chat: { id: chatId }, isDeleted: false },
+        { isDeleted: true, isActive: false },
+      );
       chat.updatedAt = new Date();
       await this.chatRepository.save(chat);
       return true;
@@ -230,7 +265,7 @@ export class ChatService {
     upateChatTitleInput: UpdateChatTitleInput,
   ): Promise<Chat> {
     const chat = await this.chatRepository.findOne({
-      where: { id: upateChatTitleInput.chatId },
+      where: { id: upateChatTitleInput.chatId, isDeleted: false },
     });
     if (chat) {
       chat.title = upateChatTitleInput.title;
