@@ -83,7 +83,14 @@ export class OpenAIModelProvider extends ModelProvider {
       this.logger.log('Response ModelTags ended.');
     } catch (error) {
       this.logger.error('Error during OpenAI response generation:', error);
-      res.write(`data: ${JSON.stringify({ error: 'Generation failed' })}\n\n`);
+      const errorResponse = {
+        error: {
+          message: 'Failed to fetch models',
+          code: 'FETCH_MODELS_ERROR',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        },
+      };
+      res.write(`data: ${JSON.stringify(errorResponse)}\n\n`);
       res.write(`data: [DONE]\n\n`);
       res.end();
     }
