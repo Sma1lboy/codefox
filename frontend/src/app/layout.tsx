@@ -6,8 +6,8 @@ import { RootProvider } from './provider';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Ollama UI',
-  description: 'Ollama chatbot web interface',
+  title: 'Codefox',
+  description: 'The best dev project generator',
 };
 
 export const viewport = {

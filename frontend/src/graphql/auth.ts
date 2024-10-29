@@ -13,3 +13,10 @@ export const CHECK_TOKEN_QUERY = gql`
     checkToken(input: $input)
   }
 `;
+export const REGISTER_MUTATION = gql`
+  mutation RegisterUser($input: RegisterUserInput!) {
+    registerUser(input: $input) {
+      username
+    }
+  }
+`;

@@ -1,13 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Check, PartyPopper } from 'lucide-react';
+import { useAuth } from '@/app/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 
 type Step = 'welcome' | 'form' | 'success' | 'congrats';
 
 export default function Register() {
+  const router = useRouter();
+  const { register, isLoading, isAuthenticated, validateToken } = useAuth();
   const [step, setStep] = useState<Step>('welcome');
   const [formData, setFormData] = useState({
     name: '',
@@ -15,18 +19,58 @@ export default function Register() {
     password: '',
   });
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/');
+    } else {
+      validateToken();
+    }
+  }, [isAuthenticated, router, validateToken]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleCreateAccount = () => {
+  const handleCreateAccount = async () => {
     if (formData.name && formData.email && formData.password) {
-      console.log('Registering:', formData);
       setStep('success');
-      setTimeout(() => setStep('congrats'), 1000);
+
+      try {
+        const success = await register({
+          username: formData.name,
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (success) {
+          setStep('congrats');
+          setTimeout(() => {
+            router.push('/');
+          }, 2000);
+        } else {
+          setStep('form');
+        }
+      } catch (error) {
+        setStep('form');
+      }
     }
   };
+
+  const handleEnterChat = () => {
+    console.log('enter');
+    router.push('/');
+  };
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const result = await validateToken();
+      if (result.success) {
+        router.push('/');
+      }
+    };
+    checkAuth();
+  }, []);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-light-background dark:bg-dark-background overflow-hidden">
@@ -47,12 +91,14 @@ export default function Register() {
           </p>
           <Button
             onClick={() => setStep('form')}
+            disabled={isLoading}
             className="w-full h-12 bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 text-white rounded-lg text-lg"
           >
             Start
           </Button>
         </div>
 
+        {/* Form Section */}
         <div
           className={`transition-all duration-500 ease-in-out
             ${
@@ -77,6 +123,7 @@ export default function Register() {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
+                  disabled={isLoading}
                   className="w-full h-12 px-4 rounded-lg border-light-border dark:border-dark-border 
                            bg-light-surface dark:bg-dark-surface
                            text-light-text-primary dark:text-dark-text-primary
@@ -95,6 +142,7 @@ export default function Register() {
                   value={formData.email}
                   onChange={handleInputChange}
                   required
+                  disabled={isLoading}
                   className="w-full h-12 px-4 rounded-lg border-light-border dark:border-dark-border 
                            bg-light-surface dark:bg-dark-surface
                            text-light-text-primary dark:text-dark-text-primary
@@ -113,6 +161,7 @@ export default function Register() {
                   value={formData.password}
                   onChange={handleInputChange}
                   required
+                  disabled={isLoading}
                   className="w-full h-12 px-4 rounded-lg border-light-border dark:border-dark-border 
                            bg-light-surface dark:bg-dark-surface
                            text-light-text-primary dark:text-dark-text-primary
@@ -128,10 +177,16 @@ export default function Register() {
 
             <Button
               onClick={handleCreateAccount}
+              disabled={
+                isLoading ||
+                !formData.name ||
+                !formData.email ||
+                !formData.password
+              }
               className="w-full h-12 bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 
                        text-white rounded-lg text-lg"
             >
-              Create Account
+              {isLoading ? 'Creating Account...' : 'Create Account'}
             </Button>
           </div>
         </div>
@@ -174,10 +229,12 @@ export default function Register() {
           </div>
           <div className="pt-6">
             <Button
+              onClick={handleEnterChat}
+              disabled={isLoading}
               className="w-full h-12 bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 
-                             text-white rounded-lg text-lg transform transition-transform hover:scale-105"
+                       text-white rounded-lg text-lg transform transition-transform hover:scale-105"
             >
-              Enter Chat
+              {isLoading ? 'Loading...' : 'Enter Chat'}
             </Button>
           </div>
         </div>

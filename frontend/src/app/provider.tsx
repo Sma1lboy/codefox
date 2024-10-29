@@ -1,4 +1,5 @@
 'use client';
+import { LocalStore } from '@/lib/storage';
 import client from '@/utils/client';
 import { ApolloProvider } from '@apollo/client';
 import { ThemeProvider } from 'next-themes';

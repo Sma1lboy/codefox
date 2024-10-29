@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/app/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 
 interface LoginFormData {
   username: string;
@@ -11,7 +12,7 @@ interface LoginFormData {
 }
 
 const LoginPage = () => {
-  const { login, isLoading, isAuthenticated } = useAuth();
+  const { login, isLoading, isAuthenticated, validateToken } = useAuth();
   const [formData, setFormData] = useState<LoginFormData>({
     username: '',
     password: '',
@@ -26,19 +27,33 @@ const LoginPage = () => {
     }));
   };
 
+  const router = useRouter();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     try {
-      await login({
+      const res = await login({
         username: formData.username,
         password: formData.password,
       });
+      if (res.success) {
+        router.push('/');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     }
   };
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const result = await validateToken();
+      if (result.success) {
+        router.push('/');
+      }
+    };
+    checkAuth();
+  }, []);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-light-background dark:bg-dark-background">
