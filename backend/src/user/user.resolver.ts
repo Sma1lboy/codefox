@@ -44,5 +44,5 @@ export class UserResolver {
 @ObjectType()
 class LoginResponse {
   @Field()
-  access_token: string;
+  accessToken: string;
 }

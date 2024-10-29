@@ -29,7 +29,6 @@ import { ChatModule } from './chat/chat.module';
       type: 'sqlite',
       database: join(process.cwd(), 'src/database.sqlite'),
       synchronize: true,
-      logging: true,
       entities: [__dirname + '/**/*.model{.ts,.js}'],
     }),
     UserModule,

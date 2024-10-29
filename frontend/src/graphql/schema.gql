@@ -33,7 +33,7 @@ input CheckTokenInput {
 scalar Date
 
 type LoginResponse {
-  access_token: String!
+  accessToken: String!
 }
 
 input LoginUserInput {
