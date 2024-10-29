@@ -12,7 +12,7 @@ import { Project } from './project.model';
 import { UpsertProjectInput } from './dto/project.input';
 import { UseGuards } from '@nestjs/common';
 import { ProjectGuard } from '../guard/project.guard';
-import { GetUserIdFromToken } from '../decorator/get-auth-token';
+import { GetUserIdFromToken } from '../decorator/get-auth-token.decorator';
 
 @Resolver(() => Project)
 export class ProjectsResolver {

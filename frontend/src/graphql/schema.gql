@@ -15,7 +15,7 @@ type Chat {
 
 type ChatCompletionChoiceType {
   delta: ChatCompletionDeltaType!
-  finish_reason: String
+  finishReason: String
   index: Float!
 }
 
@@ -25,7 +25,8 @@ type ChatCompletionChunkType {
   id: String!
   model: String!
   object: String!
-  system_fingerprint: String
+  status: StreamStatus!
+  systemFingerprint: String
 }
 
 type ChatCompletionDeltaType {
@@ -35,6 +36,7 @@ type ChatCompletionDeltaType {
 input ChatInputType {
   chatId: String!
   message: String!
+  model: String!
 }
 
 input CheckTokenInput {
@@ -45,7 +47,7 @@ input CheckTokenInput {
 scalar Date
 
 type LoginResponse {
-  access_token: String!
+  accessToken: String!
 }
 
 input LoginUserInput {
@@ -83,6 +85,7 @@ type Mutation {
   login(input: LoginUserInput!): LoginResponse!
   registerUser(input: RegisterUserInput!): User!
   removePackageFromProject(packageId: String!, projectId: String!): Boolean!
+  triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
   updateProjectPath(newPath: String!, projectId: String!): Boolean!
   upsertProject(upsertProjectInput: UpsertProjectInput!): Project!
@@ -119,12 +122,13 @@ type Query {
   getAvailableModelTags: [String!]
   getChatDetails(chatId: String!): Chat
   getChatHistory(chatId: String!): [Message!]!
-  getMessageDetail(messageId: String!): Message
   getHello: String!
+  getMessageDetail(messageId: String!): Message
   getProjectDetails(projectId: String!): Project!
   getUserChats: [Chat!]
   getUserProjects: [Project!]!
   logout: Boolean!
+  me: User!
 }
 
 input RegisterUserInput {
@@ -136,6 +140,11 @@ input RegisterUserInput {
 enum Role {
   Model
   User
+}
+
+enum StreamStatus {
+  DONE
+  STREAMING
 }
 
 type Subscription {
@@ -157,7 +166,6 @@ type User {
   chats: [Chat!]!
   createdAt: Date!
   email: String!
-  id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
   updatedAt: Date!

@@ -43,3 +43,5 @@ describe('Project API', () => {
     expect(deleted).toBe(true);
   });
 });
+
+// Remove the expect function declaration

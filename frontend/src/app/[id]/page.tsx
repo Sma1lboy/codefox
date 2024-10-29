@@ -1,169 +1,160 @@
 'use client';
 
 import { ChatLayout } from '@/components/chat/chat-layout';
-import { getSelectedModel } from '@/lib/model-helper';
-import { ChatOllama } from '@langchain/community/chat_models/ollama';
-import { AIMessage, HumanMessage } from '@langchain/core/messages';
-import { BytesOutputParser } from '@langchain/core/output_parsers';
-import { Attachment, ChatRequestOptions } from 'ai';
-import { Message, useChat } from 'ai/react';
-import React, { useEffect } from 'react';
+import { Message } from '@/components/types';
+import { CHAT_STREAM_SUBSCRIPTION, GET_CHAT_HISTORY } from '@/graphql/request';
+import { useQuery, useSubscription } from '@apollo/client';
+import React, { useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { v4 as uuidv4 } from 'uuid';
 import useChatStore from '../hooks/useChatStore';
+import { useModels } from '../hooks/useModels';
 
-export default function Page({ params }: { params: { id: string } }) {
-  const {
-    messages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
-    error,
-    stop,
-    setMessages,
-    setInput,
-  } = useChat({
-    onResponse: (response) => {
-      if (response) {
-        setLoadingSubmit(false);
+// Define stream states for chat flow
+enum StreamStatus {
+  IDLE = 'IDLE',
+  STREAMING = 'STREAMING',
+  DONE = 'DONE',
+}
+
+interface PageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default function Page({ params }: PageProps) {
+  // Core message states
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Loading and stream control states
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
+  const [streamStatus, setStreamStatus] = useState<StreamStatus>(
+    StreamStatus.IDLE
+  );
+
+  // Model selection state
+  const { models } = useModels();
+  const [selectedModel, setSelectedModel] = useState<string>(
+    models[0] || 'Loading models'
+  );
+
+  // Image handling from global store
+  const setBase64Images = useChatStore((state) => state.setBase64Images);
+
+  // Load chat history
+  const { data: historyData } = useQuery(GET_CHAT_HISTORY, {
+    variables: { chatId: params.id },
+    onCompleted: (data) => {
+      if (data?.getChatHistory) {
+        setMessages(data.getChatHistory);
+        setStreamStatus(StreamStatus.IDLE);
       }
     },
     onError: (error) => {
-      setLoadingSubmit(false);
-      toast.error('An error occurred. Please try again.');
+      console.error('Error loading chat history:', error);
+      toast.error('Failed to load chat history');
+      setStreamStatus(StreamStatus.IDLE);
     },
   });
-  const [chatId, setChatId] = React.useState<string>('');
-  const [selectedModel, setSelectedModel] =
-    React.useState<string>(getSelectedModel());
-  const [ollama, setOllama] = React.useState<ChatOllama>();
-  const env = process.env.NODE_ENV;
-  const [loadingSubmit, setLoadingSubmit] = React.useState(false);
-  const formRef = React.useRef<HTMLFormElement>(null);
-  const base64Images = useChatStore((state) => state.base64Images);
-  const setBase64Images = useChatStore((state) => state.setBase64Images);
 
-  useEffect(() => {
-    if (env === 'production') {
-      const newOllama = new ChatOllama({
-        baseUrl: process.env.NEXT_PUBLIC_OLLAMA_URL || 'http://localhost:11434',
+  // Subscribe to chat stream
+  const { data: streamData } = useSubscription(CHAT_STREAM_SUBSCRIPTION, {
+    variables: {
+      input: {
+        message: input,
+        chatId: params.id,
         model: selectedModel,
-      });
-      setOllama(newOllama);
-    }
-  }, [selectedModel]);
+      },
+    },
+    skip: !input.trim(),
+    onSubscriptionData: ({ subscriptionData }) => {
+      if (!subscriptionData.data) return;
 
-  React.useEffect(() => {
-    if (params.id) {
-      const item = localStorage.getItem(`chat_${params.id}`);
-      if (item) {
-        setMessages(JSON.parse(item));
-      }
-    }
-  }, []);
+      const chunk = subscriptionData.data.chatStream;
+      const content = chunk.choices[0]?.delta?.content;
 
-  const addMessage = (Message: any) => {
-    messages.push(Message);
-    window.dispatchEvent(new Event('storage'));
-    setMessages([...messages]);
-  };
-
-  // Function to handle chatting with Ollama in production (client side)
-  const handleSubmitProduction = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
-    e.preventDefault();
-
-    addMessage({ role: 'user', content: input, id: chatId });
-    setInput('');
-
-    if (ollama) {
-      try {
-        const parser = new BytesOutputParser();
-
-        const stream = await ollama
-          .pipe(parser)
-          .stream(
-            (messages as Message[]).map((m) =>
-              m.role == 'user'
-                ? new HumanMessage(m.content)
-                : new AIMessage(m.content)
-            )
-          );
-
-        const decoder = new TextDecoder();
-
-        let responseMessage = '';
-        for await (const chunk of stream) {
-          const decodedChunk = decoder.decode(chunk);
-          responseMessage += decodedChunk;
-          setLoadingSubmit(false);
-          setMessages([
-            ...messages,
-            { role: 'assistant', content: responseMessage, id: chatId },
-          ]);
-        }
-        addMessage({ role: 'assistant', content: responseMessage, id: chatId });
-        setMessages([...messages]);
-
-        localStorage.setItem(`chat_${params.id}`, JSON.stringify(messages));
-        // Trigger the storage event to update the sidebar component
-        window.dispatchEvent(new Event('storage'));
-      } catch (error) {
-        toast.error('An error occurred. Please try again.');
+      // Handle first data arrival
+      if (streamStatus !== StreamStatus.STREAMING) {
+        setStreamStatus(StreamStatus.STREAMING);
         setLoadingSubmit(false);
       }
+
+      // Update message content
+      if (content) {
+        setMessages((prev) => {
+          const lastMsg = prev[prev.length - 1];
+          if (lastMsg?.role === 'assistant') {
+            // Append to existing assistant message
+            return [
+              ...prev.slice(0, -1),
+              {
+                ...lastMsg,
+                content: lastMsg.content + content,
+              },
+            ];
+          } else {
+            // Create new assistant message
+            return [
+              ...prev,
+              {
+                id: chunk.id,
+                role: 'assistant',
+                content,
+                createdAt: new Date(chunk.created * 1000).toISOString(),
+              },
+            ];
+          }
+        });
+      }
+
+      // Handle stream completion
+      if (chunk.choices[0]?.finish_reason === 'stop') {
+        setStreamStatus(StreamStatus.DONE);
+        setLoadingSubmit(false);
+        setBase64Images(null);
+      }
+    },
+    onError: (error) => {
+      console.error('Subscription error:', error);
+      toast.error('Connection error. Please try again.');
+      setStreamStatus(StreamStatus.IDLE);
+      setLoadingSubmit(false);
+    },
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+  };
+
+  // Stop message generation
+  const stop = () => {
+    if (streamStatus === StreamStatus.STREAMING) {
+      setStreamStatus(StreamStatus.IDLE);
+      setLoadingSubmit(false);
+      toast.info('Stopping message generation...');
     }
   };
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  // Handle message submission
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!input.trim() || loadingSubmit) return;
+
     setLoadingSubmit(true);
 
-    setMessages([...messages]);
-
-    const attachments: Attachment[] = base64Images
-      ? base64Images.map((image) => ({
-          contentType: 'image/base64', // Content type for base64 images
-          url: image, // The base64 image data
-        }))
-      : [];
-
-    // Prepare the options object with additional body data, to pass the model.
-    const requestOptions: ChatRequestOptions = {
-      options: {
-        body: {
-          selectedModel: selectedModel,
-        },
-      },
-      ...(base64Images && {
-        data: {
-          images: base64Images,
-        },
-        experimental_attachments: attachments,
-      }),
+    // Add user message immediately
+    const newMessage: Message = {
+      id: params.id,
+      role: 'user',
+      content: input,
+      createdAt: new Date().toISOString(),
     };
 
-    if (env === 'production' && selectedModel !== 'REST API') {
-      handleSubmitProduction(e);
-      setBase64Images(null);
-    } else {
-      // use the /api/chat route
-      // Call the handleSubmit function with the options
-      handleSubmit(e, requestOptions);
-      setBase64Images(null);
-    }
+    setMessages((prev) => [...prev, newMessage]);
+    setInput('');
   };
-
-  // When starting a new chat, append the messages to the local storage
-  React.useEffect(() => {
-    if (!isLoading && !error && messages.length > 0) {
-      localStorage.setItem(`chat_${params.id}`, JSON.stringify(messages));
-      // Trigger the storage event to update the sidebar component
-      window.dispatchEvent(new Event('storage'));
-    }
-  }, [messages, chatId, isLoading, error]);
 
   return (
     <main className="flex h-[calc(100dvh)] flex-col items-center">
@@ -174,9 +165,7 @@ export default function Page({ params }: { params: { id: string } }) {
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={onSubmit}
-        isLoading={isLoading}
         loadingSubmit={loadingSubmit}
-        error={error}
         stop={stop}
         navCollapsedSize={10}
         defaultLayout={[30, 160]}

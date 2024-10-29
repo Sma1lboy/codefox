@@ -1,10 +1,8 @@
 import React from 'react';
-import ChatTopbar from './chat-topbar';
-import ChatList from './chat-list';
 import ChatBottombar from './chat-bottombar';
-import { Message, useChat } from 'ai/react';
-import { ChatRequestOptions } from 'ai';
-import { v4 as uuidv4 } from 'uuid';
+import ChatList from './chat-list';
+import ChatTopbar from './chat-topbar';
+import { ChatRequestOptions, Message } from '../types';
 
 export interface ChatProps {
   chatId?: string;
@@ -16,9 +14,7 @@ export interface ChatProps {
     e: React.FormEvent<HTMLFormElement>,
     chatRequestOptions?: ChatRequestOptions
   ) => void;
-  isLoading: boolean;
   loadingSubmit?: boolean;
-  error: undefined | Error;
   stop: () => void;
   formRef: React.RefObject<HTMLFormElement>;
   isMobile?: boolean;
@@ -31,8 +27,6 @@ export default function Chat({
   input,
   handleInputChange,
   handleSubmit,
-  isLoading,
-  error,
   stop,
   setSelectedModel,
   chatId,
@@ -46,7 +40,6 @@ export default function Chat({
     <div className="flex flex-col justify-between w-full max-w-3xl h-full ">
       <ChatTopbar
         setSelectedModel={setSelectedModel}
-        isLoading={isLoading}
         chatId={chatId}
         messages={messages}
         setMessages={setMessages}
@@ -58,9 +51,7 @@ export default function Chat({
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={handleSubmit}
-        isLoading={isLoading}
         loadingSubmit={loadingSubmit}
-        error={error}
         stop={stop}
         formRef={formRef}
         isMobile={isMobile}
@@ -73,8 +64,6 @@ export default function Chat({
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={handleSubmit}
-        isLoading={isLoading}
-        error={error}
         stop={stop}
         formRef={formRef}
         setInput={setInput}

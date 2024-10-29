@@ -1,7 +1,6 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
 
 @layer base {
   :root {
@@ -11,7 +10,7 @@
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
+    --primary: 8 100% 60%; /* #FF5533 */
     --primary-foreground: 0 0% 98%;
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
@@ -23,7 +22,7 @@
     --destructive-foreground: 0 0% 98%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
+    --ring: 8 100% 60%;
     --radius: 1rem;
   }
 
@@ -34,19 +33,19 @@
     --card-foreground: 0 0% 98%;
     --popover: 0 0% 12%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
+    --primary: 8 90% 55%;
+    --primary-foreground: 0 0% 98%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
+    --accent: 8 90% 55%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --ring: 8 90% 55%;
   }
 }
 
@@ -68,9 +67,10 @@
   height: 1px;
 }
 
+/* 修改滚动条颜色为主题色调 */
 :root {
-  --scrollbar-thumb-color: #ccc;
-  --scrollbar-thumb-hover-color: #aaa; 
+  --scrollbar-thumb-color: rgba(255, 85, 51, 0.3); /* 主色调的半透明版本 */
+  --scrollbar-thumb-hover-color: rgba(255, 85, 51, 0.5);
 }
 
 ::-webkit-scrollbar {
@@ -81,7 +81,10 @@
 ::-webkit-scrollbar-thumb {
   background-color: var(--scrollbar-thumb-color);
   border-radius: 999px;
-  transition: width 0.3s, height 0.3s, visibility 0.3s; 
+  transition:
+    width 0.3s,
+    height 0.3s,
+    visibility 0.3s;
 }
 
 ::-webkit-scrollbar-thumb:hover {

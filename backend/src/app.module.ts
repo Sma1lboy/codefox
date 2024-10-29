@@ -14,23 +14,27 @@ import { RolesGuard } from './guard/roles.guard';
 import { MenuGuard } from './guard/menu.guard';
 import { User } from './user/user.model';
 import { AppResolver } from './app.resolver';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { LoggingInterceptor } from 'interceptor/LoggingInterceptor';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      autoSchemaFile: join(process.cwd(), '../frontend/src/graphql/schema.gql'),
       sortSchema: true,
       playground: true,
-      installSubscriptionHandlers: true,
+      subscriptions: {
+        'graphql-ws': true,
+        'subscriptions-transport-ws': true,
+      },
       context: ({ req, res }) => ({ req, res }),
     }),
     TypeOrmModule.forRoot({
       type: 'sqlite',
       database: join(process.cwd(), 'src/database.sqlite'),
       synchronize: true,
-      logging: true,
       entities: [__dirname + '/**/*.model{.ts,.js}'],
     }),
     InitModule,
@@ -41,6 +45,12 @@ import { AppResolver } from './app.resolver';
     ChatModule,
     TypeOrmModule.forFeature([User]),
   ],
-  providers: [AppResolver],
+  providers: [
+    AppResolver,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+  ],
 })
 export class AppModule {}

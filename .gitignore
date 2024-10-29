@@ -13,3 +13,6 @@ dist/
 # Models
 models/
 */**/models/
+
+*/**/database.sqlite
+./backend/src/database.sqlite

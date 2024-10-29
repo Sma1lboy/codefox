@@ -55,7 +55,7 @@ export class AuthService {
 
   async login(
     loginUserInput: LoginUserInput,
-  ): Promise<{ access_token: string }> {
+  ): Promise<{ accessToken: string }> {
     const { username, password } = loginUserInput;
 
     const user = await this.userRepository.findOne({
@@ -73,10 +73,10 @@ export class AuthService {
     }
 
     const payload = { userId: user.id, username: user.username };
-    const access_token = this.jwtService.sign(payload);
-    this.jwtCacheService.storeToken(access_token);
+    const accessToken = this.jwtService.sign(payload);
+    this.jwtCacheService.storeToken(accessToken);
 
-    return { access_token };
+    return { accessToken };
   }
 
   async validateToken(params: CheckTokenInput): Promise<boolean> {

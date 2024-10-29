@@ -1,59 +1,88 @@
-import { Resolver, Subscription, Args, Query, Mutation } from '@nestjs/graphql';
-import { ChatCompletionChunk } from './chat.model';
+import {
+  Resolver,
+  Subscription,
+  Args,
+  Field,
+  ObjectType,
+  Query,
+  Mutation,
+} from '@nestjs/graphql';
+import { Chat, ChatCompletionChunk } from './chat.model';
 import { ChatProxyService, ChatService } from './chat.service';
 import { UserService } from 'src/user/user.service';
-import { Chat } from './chat.model';
-import { Message, MessageRole } from 'src/chat/message.model';
+import { Message, MessageRole } from './message.model';
 import {
+  ChatInput,
   NewChatInput,
   UpdateChatTitleInput,
-  ChatInput,
-} from 'src/chat/dto/chat.input';
-import { UseGuards } from '@nestjs/common';
-import {
-  ChatGuard,
-  ChatSubscriptionGuard,
-  MessageGuard,
-} from '../guard/chat.guard';
-import { GetUserIdFromToken } from '../decorator/get-auth-token';
-
+} from './dto/chat.input';
+import { GetUserIdFromToken } from 'src/decorator/get-auth-token.decorator';
+import { Inject, Logger, UseGuards } from '@nestjs/common';
+import { ChatGuard, MessageGuard } from 'src/guard/chat.guard';
+import { JWTAuth } from 'src/decorator/jwt-auth.decorator';
+import { PubSubEngine } from 'graphql-subscriptions';
 @Resolver('Chat')
 export class ChatResolver {
+  private readonly logger = new Logger('ChatResolver');
+
   constructor(
     private chatProxyService: ChatProxyService,
     private chatService: ChatService,
     private userService: UserService,
+    @Inject('PUB_SUB') private pubSub: PubSubEngine,
   ) {}
 
-  // this guard is not easy to test in /graphql
-  // @UseGuards(ChatSubscriptionGuard)
   @Subscription(() => ChatCompletionChunk, {
     nullable: true,
-    resolve: (value) => value,
+    filter: (payload, variables) => {
+      return payload.chatStream.chatId === variables.input.chatId;
+    },
+    resolve: (payload) => payload.chatStream,
   })
-  async *chatStream(@Args('input') input: ChatInput) {
-    const iterator = this.chatProxyService.streamChat(input.message);
-    this.chatService.saveMessage(input.chatId, input.message, MessageRole.User);
+  async chatStream(@Args('input') input: ChatInput) {
+    return this.pubSub.asyncIterator(`chat_stream_${input.chatId}`);
+  }
 
-    let accumulatedContent = ''; // Accumulator for all chunks
-
+  @Mutation(() => Boolean)
+  @JWTAuth()
+  async triggerChatStream(@Args('input') input: ChatInput): Promise<boolean> {
     try {
+      await this.chatService.saveMessage(
+        input.chatId,
+        input.message,
+        MessageRole.User,
+      );
+
+      const iterator = this.chatProxyService.streamChat(input.message);
+      let accumulatedContent = '';
+
       for await (const chunk of iterator) {
         if (chunk) {
-          accumulatedContent += chunk.choices[0].delta.content; // Accumulate content
-          yield chunk; // Send each chunk
+          const enhancedChunk = {
+            ...chunk,
+            chatId: input.chatId,
+          };
+
+          await this.pubSub.publish(`chat_stream_${input.chatId}`, {
+            chatStream: enhancedChunk,
+          });
+
+          if (chunk.choices[0]?.delta?.content) {
+            accumulatedContent += chunk.choices[0].delta.content;
+          }
         }
       }
 
-      // After all chunks are received, save the complete response as a single message
       await this.chatService.saveMessage(
         input.chatId,
         accumulatedContent,
         MessageRole.Model,
       );
+
+      return true;
     } catch (error) {
-      console.error('Error in chatStream:', error);
-      throw new Error('Chat stream failed');
+      this.logger.error('Error in triggerChatStream:', error);
+      throw error;
     }
   }
 
@@ -69,14 +98,13 @@ export class ChatResolver {
     }
   }
 
-  // this is not the final api.
   @Query(() => [Chat], { nullable: true })
   async getUserChats(@GetUserIdFromToken() userId: string): Promise<Chat[]> {
     const user = await this.userService.getUserChats(userId);
-    return user ? user.chats : []; // Return chats if user exists, otherwise return an empty array
+    return user ? user.chats : [];
   }
 
-  @UseGuards(MessageGuard)
+  @JWTAuth()
   @Query(() => Message, { nullable: true })
   async getMessageDetail(
     @GetUserIdFromToken() userId: string,
@@ -87,19 +115,20 @@ export class ChatResolver {
 
   // To do: message need a update resolver
 
-  @UseGuards(ChatGuard)
+  @JWTAuth()
   @Query(() => [Message])
   async getChatHistory(@Args('chatId') chatId: string): Promise<Message[]> {
     return this.chatService.getChatHistory(chatId);
   }
 
-  @UseGuards(ChatGuard)
+  @JWTAuth()
   @Query(() => Chat, { nullable: true })
   async getChatDetails(@Args('chatId') chatId: string): Promise<Chat> {
     return this.chatService.getChatDetails(chatId);
   }
 
   @Mutation(() => Chat)
+  @JWTAuth()
   async createChat(
     @GetUserIdFromToken() userId: string,
     @Args('newChatInput') newChatInput: NewChatInput,
@@ -107,19 +136,19 @@ export class ChatResolver {
     return this.chatService.createChat(userId, newChatInput);
   }
 
-  @UseGuards(ChatGuard)
+  @JWTAuth()
   @Mutation(() => Boolean)
   async deleteChat(@Args('chatId') chatId: string): Promise<boolean> {
     return this.chatService.deleteChat(chatId);
   }
 
-  @UseGuards(ChatGuard)
+  @JWTAuth()
   @Mutation(() => Boolean)
   async clearChatHistory(@Args('chatId') chatId: string): Promise<boolean> {
     return this.chatService.clearChatHistory(chatId);
   }
 
-  @UseGuards(ChatGuard)
+  @JWTAuth()
   @Mutation(() => Chat, { nullable: true })
   async updateChatTitle(
     @Args('updateChatTitleInput') updateChatTitleInput: UpdateChatTitleInput,
