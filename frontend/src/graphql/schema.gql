@@ -2,6 +2,17 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type Chat {
+  createdAt: Date!
+  id: ID!
+  isActive: Boolean!
+  isDeleted: Boolean!
+  messages: [Message!]
+  title: String
+  updatedAt: Date!
+  user: User!
+}
+
 type ChatCompletionChoiceType {
   delta: ChatCompletionDeltaType!
   finishReason: String
@@ -22,6 +33,7 @@ type ChatCompletionDeltaType {
 }
 
 input ChatInputType {
+  chatId: String!
   message: String!
 }
 
@@ -52,8 +64,15 @@ type Menu {
   updatedAt: Date!
 }
 
-type ModelTags {
-  tags: [String!]!
+type Message {
+  content: String!
+  createdAt: Date!
+  id: ID!
+  isActive: Boolean!
+  isDeleted: Boolean!
+  modelId: String
+  role: Role!
+  updatedAt: Date!
 }
 
 type Mutation {
@@ -89,16 +108,21 @@ type ProjectPackages {
 
 type Query {
   checkToken(input: CheckTokenInput!): Boolean!
+  getHello: String!
   getProjectDetails(projectId: String!): Project!
   getUserProjects: [Project!]!
   logout: Boolean!
-  modelTags: ModelTags!
 }
 
 input RegisterUserInput {
   email: String!
   password: String!
   username: String!
+}
+
+enum Role {
+  Model
+  User
 }
 
 type Subscription {
@@ -112,6 +136,7 @@ input UpsertProjectInput {
 }
 
 type User {
+  chats: [Chat!]!
   createdAt: Date!
   email: String!
   id: ID!

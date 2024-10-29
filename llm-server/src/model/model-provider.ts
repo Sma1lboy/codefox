@@ -6,4 +6,6 @@ export abstract class ModelProvider {
     content: string,
     res: Response,
   ): Promise<void>;
+
+  abstract getModelTagsResponse(res: Response): Promise<void>;
 }

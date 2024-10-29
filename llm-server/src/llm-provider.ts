@@ -1,7 +1,7 @@
 import express, { Express, Request, Response } from 'express';
-import { ModelProvider } from './model/model-provider.js';
-import { OpenAIModelProvider } from './model/openai-model-provider.js';
-import { LlamaModelProvider } from './model/llama-model-provider.js';
+import { ModelProvider } from './model/model-provider';
+import { OpenAIModelProvider } from './model/openai-model-provider';
+import { LlamaModelProvider } from './model/llama-model-provider';
 import { Logger } from '@nestjs/common';
 
 export interface ChatMessageInput {
@@ -36,5 +36,9 @@ export class LLMProvider {
     res: Response,
   ): Promise<void> {
     await this.modelProvider.generateStreamingResponse(content, res);
+  }
+
+  async getModelTags(res: Response): Promise<void> {
+    await this.modelProvider.getModelTagsResponse(res);
   }
 }

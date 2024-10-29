@@ -1,4 +1,42 @@
-import { Field, InputType, ObjectType } from '@nestjs/graphql';
+import {
+  Field,
+  InputType,
+  ObjectType,
+  ID,
+  registerEnumType,
+} from '@nestjs/graphql';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
+import { forwardRef } from '@nestjs/common';
+import { Message } from 'src/chat/message.model';
+import { SystemBaseModel } from 'src/system-base-model/system-base.model';
+import { User } from 'src/user/user.model';
+
+@Entity()
+@ObjectType()
+export class Chat extends SystemBaseModel {
+  @PrimaryGeneratedColumn('uuid')
+  @Field(() => ID)
+  id: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  title: string;
+
+  @Field(() => [Message], { nullable: true })
+  @OneToMany(() => Message, (message) => message.chat, { cascade: true })
+  messages: Message[];
+
+  @ManyToOne(() => User, (user) => user.chats)
+  @Field(() => User)
+  user: User;
+}
 
 @ObjectType('ChatCompletionDeltaType')
 class ChatCompletionDelta {
@@ -37,10 +75,4 @@ class ChatCompletionChoice {
 
   @Field({ nullable: true })
   finishReason: string | null;
-}
-
-@InputType('ChatInputType')
-export class ChatInput {
-  @Field()
-  message: string;
 }
