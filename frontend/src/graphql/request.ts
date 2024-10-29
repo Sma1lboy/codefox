@@ -67,20 +67,21 @@ export const GET_CHAT_HISTORY = gql`
 export const CHAT_STREAM_SUBSCRIPTION = gql`
   subscription ChatStream($input: ChatInputType!) {
     chatStream(input: $input) {
+      id
+      created
       choices {
         delta {
           content
         }
-        finish_reason
+        finishReason
         index
       }
-      created
-      id
       model
       object
     }
   }
 `;
+
 export const GET_USER_CHATS = gql`
   query GetUserChats {
     getUserChats {
@@ -109,5 +110,30 @@ export const GET_USER_INFO = gql`
       username
       email
     }
+  }
+`;
+
+export const CHAT_STREAM = gql`
+  subscription ChatStream($input: ChatInputType!) {
+    chatStream(input: $input) {
+      id
+      created
+      choices {
+        delta {
+          content
+        }
+        finishReason
+        index
+      }
+      model
+      object
+      status
+    }
+  }
+`;
+
+export const TRIGGER_CHAT = gql`
+  mutation TriggerChatStream($input: ChatInputType!) {
+    triggerChatStream(input: $input)
   }
 `;

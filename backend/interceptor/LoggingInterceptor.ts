@@ -15,7 +15,12 @@ export class LoggingInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const ctx = GqlExecutionContext.create(context);
     const { operation, fieldName } = ctx.getInfo();
-    const variables = ctx.getContext().req.body.variables;
+    let variables = '';
+    try {
+      variables = ctx.getContext().req.body.variables;
+    } catch (error) {
+      variables = '';
+    }
 
     this.logger.log(
       `${operation.operation.toUpperCase()} \x1B[33m${fieldName}\x1B[39m${

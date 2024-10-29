@@ -18,6 +18,15 @@ import { Message } from 'src/chat/message.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
 import { User } from 'src/user/user.model';
 
+export enum StreamStatus {
+  STREAMING = 'streaming',
+  DONE = 'done',
+}
+
+registerEnumType(StreamStatus, {
+  name: 'StreamStatus',
+});
+
 @Entity()
 @ObjectType()
 export class Chat extends SystemBaseModel {
@@ -44,6 +53,18 @@ class ChatCompletionDelta {
   content?: string;
 }
 
+@ObjectType('ChatCompletionChoiceType')
+class ChatCompletionChoice {
+  @Field()
+  index: number;
+
+  @Field(() => ChatCompletionDelta)
+  delta: ChatCompletionDelta;
+
+  @Field({ nullable: true })
+  finishReason: string | null;
+}
+
 @ObjectType('ChatCompletionChunkType')
 export class ChatCompletionChunk {
   @Field()
@@ -63,16 +84,11 @@ export class ChatCompletionChunk {
 
   @Field(() => [ChatCompletionChoice])
   choices: ChatCompletionChoice[];
+
+  @Field(() => StreamStatus)
+  status: StreamStatus;
 }
 
-@ObjectType('ChatCompletionChoiceType')
-class ChatCompletionChoice {
-  @Field()
-  index: number;
-
-  @Field(() => ChatCompletionDelta)
-  delta: ChatCompletionDelta;
-
-  @Field({ nullable: true })
-  finishReason: string | null;
+export function isDoneStatus(chunk: ChatCompletionChunk): boolean {
+  return chunk.status === StreamStatus.DONE;
 }

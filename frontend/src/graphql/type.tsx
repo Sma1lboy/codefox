@@ -64,6 +64,7 @@ export type ChatCompletionChunkType = {
   id: Scalars['String']['output'];
   model: Scalars['String']['output'];
   object: Scalars['String']['output'];
+  status: StreamStatus;
   systemFingerprint?: Maybe<Scalars['String']['output']>;
 };
 
@@ -75,6 +76,7 @@ export type ChatCompletionDeltaType = {
 export type ChatInputType = {
   chatId: Scalars['String']['input'];
   message: Scalars['String']['input'];
+  model: Scalars['String']['input'];
 };
 
 export type CheckTokenInput = {
@@ -124,6 +126,7 @@ export type Mutation = {
   login: LoginResponse;
   registerUser: User;
   removePackageFromProject: Scalars['Boolean']['output'];
+  triggerChatStream: Scalars['Boolean']['output'];
   updateChatTitle?: Maybe<Chat>;
   updateProjectPath: Scalars['Boolean']['output'];
   upsertProject: Project;
@@ -156,6 +159,10 @@ export type MutationRegisterUserArgs = {
 export type MutationRemovePackageFromProjectArgs = {
   packageId: Scalars['String']['input'];
   projectId: Scalars['String']['input'];
+};
+
+export type MutationTriggerChatStreamArgs = {
+  input: ChatInputType;
 };
 
 export type MutationUpdateChatTitleArgs = {
@@ -241,6 +248,8 @@ export type RegisterUserInput = {
 };
 
 export type Role = 'Model' | 'User';
+
+export type StreamStatus = 'DONE' | 'STREAMING';
 
 export type Subscription = {
   __typename: 'Subscription';
@@ -404,6 +413,7 @@ export type ResolversTypes = ResolversObject<{
   Query: ResolverTypeWrapper<{}>;
   RegisterUserInput: RegisterUserInput;
   Role: Role;
+  StreamStatus: StreamStatus;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   Subscription: ResolverTypeWrapper<{}>;
   UpdateChatTitleInput: UpdateChatTitleInput;

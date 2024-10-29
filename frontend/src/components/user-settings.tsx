@@ -1,5 +1,4 @@
 'use client';
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,51 +15,63 @@ import {
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { GearIcon } from '@radix-ui/react-icons';
-import { useState } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { Skeleton } from './ui/skeleton';
 import EditUsernameForm from './edit-username-form';
 import PullModel from './pull-model';
 import { useAuth } from '@/app/hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import exp from 'constants';
 
-export default function UserSettings() {
+export const UserSettings = () => {
   const { user, isLoading, logout } = useAuth();
   const [open, setOpen] = useState(false);
-
-  console.log(user);
   const router = useRouter();
-  const handleLogout = () => {
-    router.push('/login');
-    logout();
-  };
+
+  const handleLogout = useMemo(() => {
+    return () => {
+      router.push('/login');
+      logout();
+    };
+  }, [router, logout]);
+
+  const avatarFallback = useMemo(() => {
+    if (!user?.username) return '';
+    return user.username.substring(0, 2).toUpperCase();
+  }, [user?.username]);
+
+  const displayUsername = useMemo(() => {
+    if (isLoading) return null;
+    return user?.username || 'Anonymous';
+  }, [isLoading, user?.username]);
+
+  const avatarButton = useMemo(
+    () => (
+      <Button
+        variant="ghost"
+        className="flex justify-start gap-3 w-full h-14 text-base font-normal items-center"
+      >
+        <Avatar className="flex justify-start items-center overflow-hidden">
+          <AvatarImage
+            src=""
+            alt="User"
+            width={4}
+            height={4}
+            className="object-contain"
+          />
+          <AvatarFallback>{avatarFallback}</AvatarFallback>
+        </Avatar>
+        <div className="text-xs truncate">
+          {isLoading ? <Skeleton className="w-20 h-4" /> : displayUsername}
+        </div>
+      </Button>
+    ),
+    [avatarFallback, displayUsername, isLoading]
+  );
+
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="flex justify-start gap-3 w-full h-14 text-base font-normal items-center"
-        >
-          <Avatar className="flex justify-start items-center overflow-hidden">
-            <AvatarImage
-              src=""
-              alt="User"
-              width={4}
-              height={4}
-              className="object-contain"
-            />
-            <AvatarFallback>
-              {user?.username && user.username.substring(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="text-xs truncate">
-            {isLoading ? (
-              <Skeleton className="w-20 h-4" />
-            ) : (
-              user?.username || 'Anonymous'
-            )}
-          </div>
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>{avatarButton}</DropdownMenuTrigger>
       <DropdownMenuContent className="w-48 p-2">
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
           <PullModel />
@@ -90,4 +101,5 @@ export default function UserSettings() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+};
+export default memo(UserSettings);

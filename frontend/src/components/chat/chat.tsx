@@ -14,9 +14,7 @@ export interface ChatProps {
     e: React.FormEvent<HTMLFormElement>,
     chatRequestOptions?: ChatRequestOptions
   ) => void;
-  isLoading: boolean;
   loadingSubmit?: boolean;
-  error: null | Error;
   stop: () => void;
   formRef: React.RefObject<HTMLFormElement>;
   isMobile?: boolean;
@@ -29,8 +27,6 @@ export default function Chat({
   input,
   handleInputChange,
   handleSubmit,
-  isLoading,
-  error,
   stop,
   setSelectedModel,
   chatId,
@@ -44,7 +40,6 @@ export default function Chat({
     <div className="flex flex-col justify-between w-full max-w-3xl h-full ">
       <ChatTopbar
         setSelectedModel={setSelectedModel}
-        isLoading={isLoading}
         chatId={chatId}
         messages={messages}
         setMessages={setMessages}
@@ -56,9 +51,7 @@ export default function Chat({
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={handleSubmit}
-        isLoading={isLoading}
         loadingSubmit={loadingSubmit}
-        error={error}
         stop={stop}
         formRef={formRef}
         isMobile={isMobile}
@@ -71,8 +64,6 @@ export default function Chat({
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={handleSubmit}
-        isLoading={isLoading}
-        error={error}
         stop={stop}
         formRef={formRef}
         setInput={setInput}

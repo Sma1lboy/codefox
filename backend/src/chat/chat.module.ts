@@ -11,6 +11,7 @@ import { Message } from 'src/chat/message.model';
 import { ChatGuard } from '../guard/chat.guard';
 import { AuthModule } from '../auth/auth.module';
 import { UserService } from 'src/user/user.service';
+import { PubSub } from 'graphql-subscriptions';
 
 @Module({
   imports: [
@@ -24,6 +25,10 @@ import { UserService } from 'src/user/user.service';
     ChatService,
     ChatGuard,
     UserService,
+    {
+      provide: 'PUB_SUB',
+      useValue: new PubSub(),
+    },
   ],
   exports: [ChatService, ChatGuard],
 })

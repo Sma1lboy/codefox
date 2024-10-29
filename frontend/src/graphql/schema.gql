@@ -25,6 +25,7 @@ type ChatCompletionChunkType {
   id: String!
   model: String!
   object: String!
+  status: StreamStatus!
   systemFingerprint: String
 }
 
@@ -35,6 +36,7 @@ type ChatCompletionDeltaType {
 input ChatInputType {
   chatId: String!
   message: String!
+  model: String!
 }
 
 input CheckTokenInput {
@@ -83,6 +85,7 @@ type Mutation {
   login(input: LoginUserInput!): LoginResponse!
   registerUser(input: RegisterUserInput!): User!
   removePackageFromProject(packageId: String!, projectId: String!): Boolean!
+  triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
   updateProjectPath(newPath: String!, projectId: String!): Boolean!
   upsertProject(upsertProjectInput: UpsertProjectInput!): Project!
@@ -137,6 +140,11 @@ input RegisterUserInput {
 enum Role {
   Model
   User
+}
+
+enum StreamStatus {
+  DONE
+  STREAMING
 }
 
 type Subscription {

@@ -16,8 +16,6 @@ export default function ChatList({
   input,
   handleInputChange,
   handleSubmit,
-  isLoading,
-  error,
   stop,
   loadingSubmit,
   formRef,
@@ -209,12 +207,6 @@ export default function ChatList({
                         );
                       }
                     })}
-                    {isLoading &&
-                      messages.indexOf(message) === messages.length - 1 && (
-                        <span className="animate-pulse" aria-label="Typing">
-                          ...
-                        </span>
-                      )}
                   </span>
                 </div>
               )}

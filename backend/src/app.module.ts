@@ -14,6 +14,8 @@ import { RolesGuard } from './guard/roles.guard';
 import { MenuGuard } from './guard/menu.guard';
 import { User } from './user/user.model';
 import { AppResolver } from './app.resolver';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { LoggingInterceptor } from 'interceptor/LoggingInterceptor';
 
 @Module({
   imports: [
@@ -23,7 +25,10 @@ import { AppResolver } from './app.resolver';
       autoSchemaFile: join(process.cwd(), '../frontend/src/graphql/schema.gql'),
       sortSchema: true,
       playground: true,
-      installSubscriptionHandlers: true,
+      subscriptions: {
+        'graphql-ws': true,
+        'subscriptions-transport-ws': true,
+      },
       context: ({ req, res }) => ({ req, res }),
     }),
     TypeOrmModule.forRoot({
@@ -40,6 +45,12 @@ import { AppResolver } from './app.resolver';
     ChatModule,
     TypeOrmModule.forFeature([User]),
   ],
-  providers: [AppResolver],
+  providers: [
+    AppResolver,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+  ],
 })
 export class AppModule {}

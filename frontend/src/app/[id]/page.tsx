@@ -1,17 +1,13 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useMutation, useQuery, useSubscription } from '@apollo/client';
 import { toast } from 'sonner';
 import { ChatLayout } from '@/components/chat/chat-layout';
 import { Message } from '@/components/types';
 import { useModels } from '../hooks/useModels';
 import useChatStore from '../hooks/useChatStore';
-import {
-  CHAT_STREAM_SUBSCRIPTION,
-  GET_CHAT_HISTORY,
-  SAVE_CHAT_HISTORY,
-} from '@/graphql/request';
+import { CHAT_STREAM_SUBSCRIPTION, GET_CHAT_HISTORY } from '@/graphql/request';
 
 interface PageProps {
   params: {
@@ -46,25 +42,7 @@ export default function Page({ params }: PageProps) {
     },
     onError: (error) => {
       console.error('Error loading chat history:', error);
-      // Fallback to local storage
-      const localMessages = localStorage.getItem(`chat_${params.id}`);
-      if (localMessages) {
-        setMessages(JSON.parse(localMessages));
-      }
       toast.error('Failed to load chat history');
-    },
-  });
-
-  // Save chat history mutation
-  const [saveChatHistory] = useMutation(SAVE_CHAT_HISTORY, {
-    onCompleted: (data) => {
-      console.log('Saved chat history:', data);
-    },
-    onError: (error) => {
-      console.error('Error saving chat history:', error);
-      // Fallback to local storage
-      localStorage.setItem(`chat_${params.id}`, JSON.stringify(messages));
-      window.dispatchEvent(new Event('storage'));
     },
   });
 
@@ -75,12 +53,6 @@ export default function Page({ params }: PageProps) {
         message: input,
         chatId: params.id,
         model: selectedModel,
-        attachments: base64Images
-          ? base64Images.map((image) => ({
-              contentType: 'image/base64',
-              url: image,
-            }))
-          : [],
       },
     },
     skip: !input.trim(),
@@ -118,18 +90,7 @@ export default function Page({ params }: PageProps) {
         if (chunk.choices[0]?.finish_reason === 'stop') {
           setLoadingSubmit(false);
           setCurrentAssistantMessage('');
-
-          // Save final message state
-          saveChatHistory({
-            variables: {
-              chatId: params.id,
-              messages: messages.map((msg) => ({
-                content: msg.content,
-                role: msg.role,
-                createdAt: msg.createdAt,
-              })),
-            },
-          });
+          setBase64Images(null);
         }
       }
     },
@@ -140,29 +101,14 @@ export default function Page({ params }: PageProps) {
     },
   });
 
-  // Save messages to local storage effect
-  useEffect(() => {
-    if (!isLoading && !error && messages.length > 0) {
-      saveChatHistory({
-        variables: {
-          chatId: params.id,
-          messages: messages.map((msg) => ({
-            content: msg.content,
-            role: msg.role,
-            createdAt: msg.createdAt,
-          })),
-        },
-      });
-    }
-  }, [messages, isLoading, error, params.id]);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
   };
 
   const stop = () => {
+    setLoadingSubmit(false);
+    setCurrentAssistantMessage('');
     toast.info('Stopping message generation...');
-    // Optional: Implement stop functionality through a mutation if needed
   };
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

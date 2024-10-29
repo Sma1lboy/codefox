@@ -19,9 +19,7 @@ interface ChatLayoutProps {
   input: string;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-  isLoading: boolean;
   loadingSubmit: boolean;
-  error: Error | null;
   stop: () => void;
   setSelectedModel: Dispatch<SetStateAction<string>>;
   formRef: React.RefObject<HTMLFormElement>;
@@ -37,8 +35,6 @@ export function ChatLayout({
   input,
   handleInputChange,
   handleSubmit,
-  isLoading,
-  error,
   stop,
   chatId,
   setSelectedModel,
@@ -114,9 +110,7 @@ export function ChatLayout({
           input={input}
           handleInputChange={handleInputChange}
           handleSubmit={handleSubmit}
-          isLoading={isLoading}
           loadingSubmit={loadingSubmit}
-          error={error}
           stop={stop}
           formRef={formRef}
           isMobile={isMobile}

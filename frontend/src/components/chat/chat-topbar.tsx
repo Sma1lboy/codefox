@@ -14,7 +14,6 @@ import { useModels } from '@/app/hooks/useModels';
 
 interface ChatTopbarProps {
   setSelectedModel: React.Dispatch<React.SetStateAction<string>>;
-  isLoading: boolean;
   chatId?: string;
   messages: Message[];
   setMessages: (messages: Message[]) => void;
@@ -22,7 +21,6 @@ interface ChatTopbarProps {
 
 export default function ChatTopbar({
   setSelectedModel,
-  isLoading,
   chatId,
   messages,
   setMessages,
@@ -69,7 +67,7 @@ export default function ChatTopbar({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
-            disabled={isLoading || modelsLoading}
+            disabled={modelsLoading}
             variant="outline"
             role="combobox"
             aria-expanded={open}

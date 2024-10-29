@@ -20,11 +20,9 @@ export class UpdateChatTitleInput {
 export class ChatInput {
   @Field()
   chatId: string;
-
-  // more input check in the feature
-  // @IsString()
-  // @MinLength(1)
-  // @MaxLength(2000)
   @Field()
   message: string;
+
+  @Field()
+  model: string;
 }
