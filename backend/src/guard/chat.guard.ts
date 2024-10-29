@@ -39,7 +39,7 @@ export class ChatGuard implements CanActivate {
     const { chatId } = args;
 
     // check if the user is part of the chat
-    const chat = await this.chatService.getChatDetails(chatId);
+    const chat = await this.chatService.getChatWithUser(chatId);
     if (!chat) {
       throw new UnauthorizedException('Chat not found');
     }
