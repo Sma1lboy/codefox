@@ -6,16 +6,11 @@ import {
 } from '@/components/ui/popover';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import React, { useEffect } from 'react';
-import { getSelectedModel } from '@/lib/model-helper';
 import { CaretSortIcon, HamburgerMenuIcon } from '@radix-ui/react-icons';
 import { Sidebar } from '../sidebar';
 import { Button } from '../ui/button';
 import { Message } from '../types';
-import { toast } from 'sonner';
-
-interface ModelTags {
-  tags: string[];
-}
+import { useModels } from '@/app/hooks/useModels';
 
 interface ChatTopbarProps {
   setSelectedModel: React.Dispatch<React.SetStateAction<string>>;
@@ -32,51 +27,15 @@ export default function ChatTopbar({
   messages,
   setMessages,
 }: ChatTopbarProps) {
-  const [models, setModels] = React.useState<string[]>([]);
   const [open, setOpen] = React.useState(false);
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const [currentModel, setCurrentModel] = React.useState<string | null>(null);
-  const [loading, setLoading] = React.useState(false);
+
+  const { models, loading: modelsLoading } = useModels();
 
   useEffect(() => {
-    setCurrentModel(getSelectedModel());
-    fetchModels();
+    setCurrentModel(models[0] || null);
   }, []);
-
-  const fetchModels = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('http://localhost:8080/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: `
-            query GetModelTags {
-              modelTags {
-                tags
-              }
-            }
-          `,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.errors) {
-        throw new Error(result.errors[0].message);
-      }
-
-      const { tags } = result.data.modelTags;
-      setModels(tags);
-    } catch (error) {
-      console.error('Error fetching models:', error);
-      toast.error('Failed to load models');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleModelChange = (modelName: string) => {
     setCurrentModel(modelName);
@@ -111,18 +70,20 @@ export default function ChatTopbar({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
-            disabled={isLoading || loading}
+            disabled={isLoading || modelsLoading}
             variant="outline"
             role="combobox"
             aria-expanded={open}
             className="w-[300px] justify-between"
           >
-            {loading ? 'Loading models...' : currentModel || 'Select model'}
+            {modelsLoading
+              ? 'Loading models...'
+              : currentModel || 'Select model'}
             <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-1">
-          {loading ? (
+          {modelsLoading ? (
             <Button variant="ghost" disabled className="w-full">
               Loading models...
             </Button>

@@ -1,3 +1,4 @@
+import { LocalStore } from '@/lib/storage';
 import {
   ApolloClient,
   InMemoryCache,
@@ -31,8 +32,7 @@ const authMiddleware = new ApolloLink((operation, forward) => {
   if (typeof window === 'undefined') {
     return forward(operation);
   }
-  const token = localStorage.getItem('token');
-  // Use the setContext method to set the HTTP headers.
+  const token = localStorage.getItem(LocalStore.accessToken);
   if (token) {
     operation.setContext({
       headers: {

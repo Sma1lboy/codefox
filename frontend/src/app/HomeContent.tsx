@@ -10,11 +10,11 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import UsernameForm from '@/components/username-form';
-import { getSelectedModel } from '@/lib/model-helper';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import useChatStore from './hooks/useChatStore';
 import { Message } from '@/components/types';
+import { useModels } from './hooks/useModels';
 
 export default function HomeContent() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -22,8 +22,10 @@ export default function HomeContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [chatId, setChatId] = useState<string>('');
-  const [selectedModel, setSelectedModel] =
-    useState<string>(getSelectedModel());
+  const { models } = useModels();
+  const [selectedModel, setSelectedModel] = useState<string>(
+    models[0] || 'Loading models'
+  );
   const [open, setOpen] = useState(false);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);

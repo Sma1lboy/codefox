@@ -1,11 +1,11 @@
 'use client';
 
 import { ChatLayout } from '@/components/chat/chat-layout';
-import { getSelectedModel } from '@/lib/model-helper';
 import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import useChatStore from '../hooks/useChatStore';
 import { Message } from '@/components/types';
+import { useModels } from '../hooks/useModels';
 
 interface ChatStreamResponse {
   chatStream: {
@@ -29,13 +29,14 @@ interface Attachment {
 }
 
 export default function Page({ params }: { params: { id: string } }) {
-  // 状态管理
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [selectedModel, setSelectedModel] =
-    useState<string>(getSelectedModel());
+  const { models } = useModels();
+  const [selectedModel, setSelectedModel] = useState<string>(
+    models[0] || 'Loading models'
+  );
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const ws = useRef<WebSocket | null>(null);
@@ -43,7 +44,6 @@ export default function Page({ params }: { params: { id: string } }) {
   const setBase64Images = useChatStore((state) => state.setBase64Images);
   const [currentAssistantMessage, setCurrentAssistantMessage] = useState('');
 
-  // 初始化 WebSocket 连接
   useEffect(() => {
     initWebSocket();
     return () => {
@@ -53,14 +53,12 @@ export default function Page({ params }: { params: { id: string } }) {
     };
   }, []);
 
-  // 加载历史消息
   useEffect(() => {
     if (params.id) {
       loadChatHistory(params.id);
     }
   }, [params.id]);
 
-  // 保存消息到本地存储
   useEffect(() => {
     if (!isLoading && !error && messages.length > 0) {
       localStorage.setItem(`chat_${params.id}`, JSON.stringify(messages));

@@ -22,14 +22,11 @@ export const REGISTER_MUTATION = gql`
 `;
 
 export const GET_MODEL_TAGS = gql`
-  query GetModelTags {
-    modelTags {
-      tags
-    }
+  query GetAvailableModelTags {
+    getAvailableModelTags
   }
 `;
+
 export interface ModelTagsData {
-  modelTags: {
-    tags: string[];
-  };
+  getAvailableModelTags: string[];
 }
