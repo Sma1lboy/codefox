@@ -81,3 +81,33 @@ export const CHAT_STREAM_SUBSCRIPTION = gql`
     }
   }
 `;
+export const GET_USER_CHATS = gql`
+  query GetUserChats {
+    getUserChats {
+      id
+      title
+      createdAt
+      messages {
+        id
+        content
+        role
+        createdAt
+      }
+    }
+  }
+`;
+
+export const DELETE_CHAT = gql`
+  mutation DeleteChat($chatId: String!) {
+    deleteChat(chatId: $chatId)
+  }
+`;
+
+export const GET_USER_INFO = gql`
+  query me {
+    me {
+      username
+      email
+    }
+  }
+`;

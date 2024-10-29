@@ -11,7 +11,10 @@ import { UserService } from './user.service';
 import { RegisterUserInput } from './dto/register-user.input';
 import { LoginUserInput } from './dto/login-user.input';
 import { AuthService } from 'src/auth/auth.service';
-import { GetAuthToken } from 'src/decorator/get-auth-token.decorator';
+import {
+  GetAuthToken,
+  GetUserIdFromToken,
+} from 'src/decorator/get-auth-token.decorator';
 
 @Resolver(() => User)
 export class UserResolver {
@@ -34,10 +37,14 @@ export class UserResolver {
     return this.authService.login(loginUserInput);
   }
 
-  //TODO use header authorization
   @Query(() => Boolean)
   async logout(@GetAuthToken() token: string): Promise<boolean> {
     return this.authService.logout(token);
+  }
+
+  @Query(() => User)
+  async me(@GetUserIdFromToken() id: string): Promise<User> {
+    return this.userService.getUser(id);
   }
 }
 

@@ -97,7 +97,6 @@ export function ChatLayout({
       >
         <Sidebar
           isCollapsed={isCollapsed || isMobile}
-          messages={messages}
           isMobile={isMobile}
           chatId={chatId}
           setMessages={setMessages}

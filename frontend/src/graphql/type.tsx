@@ -211,6 +211,7 @@ export type Query = {
   getUserChats?: Maybe<Array<Chat>>;
   getUserProjects: Array<Project>;
   logout: Scalars['Boolean']['output'];
+  me: User;
 };
 
 export type QueryCheckTokenArgs = {
@@ -266,7 +267,6 @@ export type User = {
   chats: Array<Chat>;
   createdAt: Scalars['Date']['output'];
   email: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
   isActive: Scalars['Boolean']['output'];
   isDeleted: Scalars['Boolean']['output'];
   updatedAt: Scalars['Date']['output'];
@@ -714,6 +714,7 @@ export type QueryResolvers<
     ContextType
   >;
   logout?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  me?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
 }>;
 
 export type SubscriptionResolvers<
@@ -738,7 +739,6 @@ export type UserResolvers<
   chats?: Resolver<Array<ResolversTypes['Chat']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   isActive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   isDeleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;

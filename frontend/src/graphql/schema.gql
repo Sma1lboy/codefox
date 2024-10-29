@@ -125,6 +125,7 @@ type Query {
   getUserChats: [Chat!]
   getUserProjects: [Project!]!
   logout: Boolean!
+  me: User!
 }
 
 input RegisterUserInput {
@@ -157,7 +158,6 @@ type User {
   chats: [Chat!]!
   createdAt: Date!
   email: String!
-  id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
   updatedAt: Date!

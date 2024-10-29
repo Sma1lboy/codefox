@@ -61,7 +61,6 @@ export default function ChatTopbar({
             chatId={chatId || ''}
             isCollapsed={false}
             isMobile={false}
-            messages={messages}
             setMessages={setMessages}
             closeSidebar={handleCloseSidebar}
           />

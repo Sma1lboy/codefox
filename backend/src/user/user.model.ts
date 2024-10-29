@@ -15,7 +15,6 @@ import {
 @Entity()
 @ObjectType()
 export class User extends SystemBaseModel {
-  @Field(() => ID)
   @PrimaryGeneratedColumn()
   id: string;
 
