@@ -10,7 +10,11 @@ import {
   ChatInput,
 } from 'src/chat/dto/chat.input';
 import { UseGuards } from '@nestjs/common';
-import { ChatGuard, MessageGuard } from '../guard/chat.guard';
+import {
+  ChatGuard,
+  ChatSubscriptionGuard,
+  MessageGuard,
+} from '../guard/chat.guard';
 import { GetUserIdFromToken } from '../decorator/get-auth-token';
 
 @Resolver('Chat')
@@ -21,6 +25,8 @@ export class ChatResolver {
     private userService: UserService,
   ) {}
 
+  // this guard is not easy to test in /graphql
+  // @UseGuards(ChatSubscriptionGuard)
   @Subscription(() => ChatCompletionChunk, {
     nullable: true,
     resolve: (value) => value,
