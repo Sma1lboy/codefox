@@ -16,13 +16,13 @@
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
-    --accent: 8 100% 60%; /* 设置强调色也为橙红色 */
-    --accent-foreground: 0 0% 98%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 8 100% 60%; /* 设置聚焦环也使用主色调 */
+    --ring: 8 100% 60%;
     --radius: 1rem;
   }
 
@@ -33,20 +33,19 @@
     --card-foreground: 0 0% 98%;
     --popover: 0 0% 12%;
     --popover-foreground: 0 0% 98%;
-    /* 深色模式下的橙红色调整 */
-    --primary: 8 90% 55%; /* 稍微调暗和降低饱和度 */
+    --primary: 8 90% 55%;
     --primary-foreground: 0 0% 98%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 8 90% 55%; /* 深色模式下的强调色 */
+    --accent: 8 90% 55%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 8 90% 55%; /* 深色模式下的聚焦环 */
+    --ring: 8 90% 55%;
   }
 }
 
