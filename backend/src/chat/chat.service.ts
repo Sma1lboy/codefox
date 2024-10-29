@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ChatCompletionChunk, Chat } from './chat.model';
-import { Message, Role } from 'src/chat/message.model';
+import { Message, MessageRole } from 'src/chat/message.model';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from 'src/user/user.model';
@@ -278,7 +278,7 @@ export class ChatService {
   async saveMessage(
     chatId: string,
     messageContent: string,
-    role: Role,
+    role: MessageRole,
   ): Promise<Message> {
     // Find the chat instance
     const chat = await this.chatRepository.findOne({ where: { id: chatId } });
