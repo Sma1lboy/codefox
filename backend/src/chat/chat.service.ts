@@ -277,7 +277,6 @@ export class ChatService {
 
   async saveMessage(
     chatId: string,
-    chunkId: string | null,
     messageContent: string,
     role: Role,
   ): Promise<Message> {
@@ -287,7 +286,6 @@ export class ChatService {
 
     // Create a new message associated with the chat
     const message = this.messageRepository.create({
-      id: chunkId || null,
       content: messageContent,
       role: role,
       chat,
@@ -296,5 +294,12 @@ export class ChatService {
 
     // Save the message to the database
     return await this.messageRepository.save(message);
+  }
+
+  async getChatWithUser(chatId: string): Promise<Chat | null> {
+    return this.chatRepository.findOne({
+      where: { id: chatId, isDeleted: false },
+      relations: ['user'], // Only load the user relation
+    });
   }
 }
