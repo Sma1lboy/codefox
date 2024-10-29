@@ -2,6 +2,17 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type Chat {
+  createdAt: Date!
+  id: ID!
+  isActive: Boolean!
+  isDeleted: Boolean!
+  messages: [Message!]
+  title: String
+  updatedAt: Date!
+  user: User!
+}
+
 type ChatCompletionChoiceType {
   delta: ChatCompletionDeltaType!
   finish_reason: String
@@ -22,6 +33,7 @@ type ChatCompletionDeltaType {
 }
 
 input ChatInputType {
+  chatId: String!
   message: String!
 }
 
@@ -52,13 +64,32 @@ type Menu {
   updatedAt: Date!
 }
 
+type Message {
+  content: String!
+  createdAt: Date!
+  id: ID!
+  isActive: Boolean!
+  isDeleted: Boolean!
+  modelId: String
+  role: Role!
+  updatedAt: Date!
+}
+
 type Mutation {
+  clearChatHistory(chatId: String!): Boolean!
+  createChat(newChatInput: NewChatInput!): Chat!
+  deleteChat(chatId: String!): Boolean!
   deleteProject(projectId: String!): Boolean!
   login(input: LoginUserInput!): LoginResponse!
   registerUser(input: RegisterUserInput!): User!
   removePackageFromProject(packageId: String!, projectId: String!): Boolean!
+  updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
   updateProjectPath(newPath: String!, projectId: String!): Boolean!
   upsertProject(upsertProjectInput: UpsertProjectInput!): Project!
+}
+
+input NewChatInput {
+  title: String
 }
 
 type Project {
@@ -85,8 +116,13 @@ type ProjectPackages {
 
 type Query {
   checkToken(input: CheckTokenInput!): Boolean!
+  getAvailableModelTags: [String!]
+  getChatDetails(chatId: String!): Chat
+  getChatHistory(chatId: String!): [Message!]!
+  getMessageDetail(messageId: String!): Message
   getHello: String!
   getProjectDetails(projectId: String!): Project!
+  getUserChats: [Chat!]
   getUserProjects: [Project!]!
   logout: Boolean!
 }
@@ -97,8 +133,18 @@ input RegisterUserInput {
   username: String!
 }
 
+enum Role {
+  Model
+  User
+}
+
 type Subscription {
   chatStream(input: ChatInputType!): ChatCompletionChunkType
+}
+
+input UpdateChatTitleInput {
+  chatId: String!
+  title: String
 }
 
 input UpsertProjectInput {
@@ -108,6 +154,7 @@ input UpsertProjectInput {
 }
 
 type User {
+  chats: [Chat!]!
   createdAt: Date!
   email: String!
   id: ID!

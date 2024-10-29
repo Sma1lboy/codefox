@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { ChatMessageInput, LLMProvider } from './llm-provider.js';
+import { ChatMessageInput, LLMProvider } from './llm-provider';
 import express, { Express, Request, Response } from 'express';
 
 export class App {
@@ -19,6 +19,7 @@ export class App {
   setupRoutes(): void {
     this.logger.log('Setting up routes...');
     this.app.post('/chat/completion', this.handleChatRequest.bind(this));
+    this.app.get('/tags', this.handleModelTagsRequest.bind(this));
     this.logger.log('Routes set up successfully.');
   }
 
@@ -33,6 +34,26 @@ export class App {
       res.setHeader('Connection', 'keep-alive');
       this.logger.debug('Response headers set for streaming.');
       await this.llmProvider.generateStreamingResponse(content, res);
+    } catch (error) {
+      this.logger.error('Error in chat endpoint:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  private async handleModelTagsRequest(
+    req: Request,
+    res: Response,
+  ): Promise<void> {
+    this.logger.log('Received chat request.');
+    try {
+      this.logger.debug(JSON.stringify(req.body));
+      const { content } = req.body as ChatMessageInput;
+      this.logger.debug(`Request content: "${content}"`);
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      this.logger.debug('Response headers set for streaming.');
+      await this.llmProvider.getModelTags(res);
     } catch (error) {
       this.logger.error('Error in chat endpoint:', error);
       res.status(500).json({ error: 'Internal server error' });
