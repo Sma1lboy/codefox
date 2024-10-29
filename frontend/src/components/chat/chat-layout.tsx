@@ -91,12 +91,7 @@ export function ChatLayout({
             : 'hidden md:block'
         )}
       >
-        <Sidebar
-          isCollapsed={isCollapsed || isMobile}
-          isMobile={isMobile}
-          chatId={chatId}
-          setMessages={setMessages}
-        />
+        <Sidebar isCollapsed={isCollapsed || isMobile} isMobile={isMobile} />
       </ResizablePanel>
       <ResizableHandle className={cn('hidden md:flex')} withHandle />
       <ResizablePanel

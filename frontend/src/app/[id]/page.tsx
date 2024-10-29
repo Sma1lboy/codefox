@@ -1,13 +1,20 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
-import { useMutation, useQuery, useSubscription } from '@apollo/client';
-import { toast } from 'sonner';
 import { ChatLayout } from '@/components/chat/chat-layout';
 import { Message } from '@/components/types';
-import { useModels } from '../hooks/useModels';
-import useChatStore from '../hooks/useChatStore';
 import { CHAT_STREAM_SUBSCRIPTION, GET_CHAT_HISTORY } from '@/graphql/request';
+import { useQuery, useSubscription } from '@apollo/client';
+import React, { useRef, useState } from 'react';
+import { toast } from 'sonner';
+import useChatStore from '../hooks/useChatStore';
+import { useModels } from '../hooks/useModels';
+
+// Define stream states for chat flow
+enum StreamStatus {
+  IDLE = 'IDLE',
+  STREAMING = 'STREAMING',
+  DONE = 'DONE',
+}
 
 interface PageProps {
   params: {
@@ -16,37 +23,43 @@ interface PageProps {
 }
 
 export default function Page({ params }: PageProps) {
+  // Core message states
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Loading and stream control states
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
+  const [streamStatus, setStreamStatus] = useState<StreamStatus>(
+    StreamStatus.IDLE
+  );
+
+  // Model selection state
   const { models } = useModels();
   const [selectedModel, setSelectedModel] = useState<string>(
     models[0] || 'Loading models'
   );
-  const [loadingSubmit, setLoadingSubmit] = useState(false);
-  const [currentAssistantMessage, setCurrentAssistantMessage] = useState('');
-  const formRef = useRef<HTMLFormElement>(null);
 
-  const base64Images = useChatStore((state) => state.base64Images);
+  // Image handling from global store
   const setBase64Images = useChatStore((state) => state.setBase64Images);
 
-  // Query chat history
+  // Load chat history
   const { data: historyData } = useQuery(GET_CHAT_HISTORY, {
     variables: { chatId: params.id },
     onCompleted: (data) => {
-      console.log('Loaded chat history:', data);
       if (data?.getChatHistory) {
         setMessages(data.getChatHistory);
+        setStreamStatus(StreamStatus.IDLE);
       }
     },
     onError: (error) => {
       console.error('Error loading chat history:', error);
       toast.error('Failed to load chat history');
+      setStreamStatus(StreamStatus.IDLE);
     },
   });
 
-  // Chat subscription
+  // Subscribe to chat stream
   const { data: streamData } = useSubscription(CHAT_STREAM_SUBSCRIPTION, {
     variables: {
       input: {
@@ -57,46 +70,56 @@ export default function Page({ params }: PageProps) {
     },
     skip: !input.trim(),
     onSubscriptionData: ({ subscriptionData }) => {
-      if (subscriptionData.data) {
-        const chunk = subscriptionData.data.chatStream;
-        const content = chunk.choices[0]?.delta?.content;
+      if (!subscriptionData.data) return;
 
-        if (content) {
-          setCurrentAssistantMessage((prev) => prev + content);
-          setMessages((prev) => {
-            const lastMsg = prev[prev.length - 1];
-            if (lastMsg?.role === 'assistant') {
-              return [
-                ...prev.slice(0, -1),
-                {
-                  ...lastMsg,
-                  content: lastMsg.content + content,
-                },
-              ];
-            } else {
-              return [
-                ...prev,
-                {
-                  id: chunk.id,
-                  role: 'assistant',
-                  content,
-                  createdAt: new Date(chunk.created * 1000).toISOString(),
-                },
-              ];
-            }
-          });
-        }
+      const chunk = subscriptionData.data.chatStream;
+      const content = chunk.choices[0]?.delta?.content;
 
-        if (chunk.choices[0]?.finish_reason === 'stop') {
-          setLoadingSubmit(false);
-          setCurrentAssistantMessage('');
-          setBase64Images(null);
-        }
+      // Handle first data arrival
+      if (streamStatus !== StreamStatus.STREAMING) {
+        setStreamStatus(StreamStatus.STREAMING);
+        setLoadingSubmit(false);
+      }
+
+      // Update message content
+      if (content) {
+        setMessages((prev) => {
+          const lastMsg = prev[prev.length - 1];
+          if (lastMsg?.role === 'assistant') {
+            // Append to existing assistant message
+            return [
+              ...prev.slice(0, -1),
+              {
+                ...lastMsg,
+                content: lastMsg.content + content,
+              },
+            ];
+          } else {
+            // Create new assistant message
+            return [
+              ...prev,
+              {
+                id: chunk.id,
+                role: 'assistant',
+                content,
+                createdAt: new Date(chunk.created * 1000).toISOString(),
+              },
+            ];
+          }
+        });
+      }
+
+      // Handle stream completion
+      if (chunk.choices[0]?.finish_reason === 'stop') {
+        setStreamStatus(StreamStatus.DONE);
+        setLoadingSubmit(false);
+        setBase64Images(null);
       }
     },
     onError: (error) => {
       console.error('Subscription error:', error);
       toast.error('Connection error. Please try again.');
+      setStreamStatus(StreamStatus.IDLE);
       setLoadingSubmit(false);
     },
   });
@@ -105,18 +128,23 @@ export default function Page({ params }: PageProps) {
     setInput(e.target.value);
   };
 
+  // Stop message generation
   const stop = () => {
-    setLoadingSubmit(false);
-    setCurrentAssistantMessage('');
-    toast.info('Stopping message generation...');
+    if (streamStatus === StreamStatus.STREAMING) {
+      setStreamStatus(StreamStatus.IDLE);
+      setLoadingSubmit(false);
+      toast.info('Stopping message generation...');
+    }
   };
 
+  // Handle message submission
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || loadingSubmit) return;
 
     setLoadingSubmit(true);
 
+    // Add user message immediately
     const newMessage: Message = {
       id: params.id,
       role: 'user',
@@ -126,7 +154,6 @@ export default function Page({ params }: PageProps) {
 
     setMessages((prev) => [...prev, newMessage]);
     setInput('');
-    setCurrentAssistantMessage('');
   };
 
   return (
@@ -138,9 +165,7 @@ export default function Page({ params }: PageProps) {
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={onSubmit}
-        isLoading={isLoading}
         loadingSubmit={loadingSubmit}
-        error={error}
         stop={stop}
         navCollapsedSize={10}
         defaultLayout={[30, 160]}

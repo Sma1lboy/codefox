@@ -29,38 +29,30 @@ import { toast } from 'sonner';
 interface SidebarProps {
   isCollapsed: boolean;
   isMobile: boolean;
-  chatId?: string;
-  setMessages: (messages: any[]) => void;
-  closeSidebar?: () => void;
+  currentChatId?: string;
 }
 
+// Define chat type based on the actual GraphQL response
 interface Chat {
+  __typename: 'Chat';
   id: string;
   title: string;
-  messages: {
-    id: string;
-    content: string;
-    role: string;
-    createdAt: string;
-  }[];
   createdAt: string;
 }
 
 export function Sidebar({
   isCollapsed,
   isMobile,
-  chatId,
-  setMessages,
-  closeSidebar,
+  currentChatId,
 }: SidebarProps) {
-  const [selectedChatId, setSelectedChatId] = useState<string | null>(
-    chatId || null
-  );
   const router = useRouter();
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(
+    currentChatId || null
+  );
 
   // Query user chats
   const { data, loading, error } = useQuery(GET_USER_CHATS, {
-    fetchPolicy: 'network-only', // Don't use cache
+    fetchPolicy: 'network-only',
   });
 
   // Delete chat mutation
@@ -92,9 +84,22 @@ export function Sidebar({
           chatId,
         },
       });
+
+      // If the deleted chat was selected, navigate to home
+      if (chatId === selectedChatId) {
+        router.push('/');
+      }
+
+      toast.success('Chat deleted successfully');
     } catch (error) {
       console.error('Error deleting chat:', error);
+      toast.error('Failed to delete chat');
     }
+  };
+
+  const handleNewChat = () => {
+    setSelectedChatId(null);
+    router.push('/');
   };
 
   return (
@@ -103,14 +108,9 @@ export function Sidebar({
       className="relative justify-between group lg:bg-accent/20 lg:dark:bg-card/35 flex flex-col h-full gap-4 p-2 data-[collapsed=true]:p-2"
     >
       <div className="flex flex-col justify-between p-2 max-h-fit overflow-y-auto">
+        {/* New Chat Button */}
         <Button
-          onClick={() => {
-            router.push('/');
-            setMessages([]);
-            if (closeSidebar) {
-              closeSidebar();
-            }
-          }}
+          onClick={handleNewChat}
           variant="ghost"
           className="flex justify-between w-full h-14 text-sm xl:text-lg font-normal items-center"
         >
@@ -129,34 +129,30 @@ export function Sidebar({
           <SquarePen size={18} className="shrink-0 w-4 h-4" />
         </Button>
 
+        {/* Chat List */}
         <div className="flex flex-col pt-10 gap-2">
           <p className="pl-4 text-xs text-muted-foreground">Your chats</p>
           {sortedChats.length > 0 && (
             <div>
               {sortedChats.map((chat) => {
-                const firstMessage = chat.messages?.[0]?.content || 'New Chat';
-                const truncatedContent =
-                  firstMessage.slice(0, 50) +
-                  (firstMessage.length > 50 ? '...' : '');
+                const isSelected = chat.id === currentChatId;
 
                 return (
                   <Link
                     key={chat.id}
                     href={`/${chat.id}`}
+                    onClick={() => setSelectedChatId(chat.id)}
                     className={cn(
-                      {
-                        [buttonVariants({ variant: 'secondaryLink' })]:
-                          chat.id === selectedChatId,
-                        [buttonVariants({ variant: 'ghost' })]:
-                          chat.id !== selectedChatId,
-                      },
+                      buttonVariants({
+                        variant: isSelected ? 'secondaryLink' : 'ghost',
+                      }),
                       'flex justify-between w-full h-14 text-base font-normal items-center'
                     )}
                   >
                     <div className="flex gap-3 items-center truncate">
                       <div className="flex flex-col">
                         <span className="text-xs font-normal">
-                          {truncatedContent}
+                          {chat.title || 'New Chat'}
                         </span>
                       </div>
                     </div>
@@ -165,7 +161,7 @@ export function Sidebar({
                         <Button
                           variant="ghost"
                           className="flex justify-end items-center"
-                          onClick={(e) => e.stopPropagation()}
+                          onClick={(e) => e.preventDefault()}
                         >
                           <MoreHorizontal size={15} className="shrink-0" />
                         </Button>
@@ -176,7 +172,7 @@ export function Sidebar({
                             <Button
                               variant="ghost"
                               className="w-full flex gap-2 hover:text-red-500 text-red-500 justify-start items-center"
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={(e) => e.preventDefault()}
                             >
                               <Trash2 className="shrink-0 w-4 h-4" />
                               Delete chat
@@ -211,6 +207,7 @@ export function Sidebar({
         </div>
       </div>
 
+      {/* User Settings */}
       <div className="justify-end px-2 py-2 w-full border-t">
         <UserSettings />
       </div>
