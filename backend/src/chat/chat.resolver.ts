@@ -5,12 +5,20 @@ import {
   Field,
   ObjectType,
   Query,
+  Mutation,
 } from '@nestjs/graphql';
-import { ChatCompletionChunk } from './chat.model';
+import { Chat, ChatCompletionChunk } from './chat.model';
 import { ChatProxyService, ChatService } from './chat.service';
 import { UserService } from 'src/user/user.service';
-import { MessageRole } from './message.model';
-import { ChatInput } from './dto/chat.input';
+import { Message, MessageRole } from './message.model';
+import {
+  ChatInput,
+  NewChatInput,
+  UpdateChatTitleInput,
+} from './dto/chat.input';
+import { GetUserIdFromToken } from 'src/decorator/get-auth-token';
+import { UseGuards } from '@nestjs/common';
+import { ChatGuard, MessageGuard } from 'src/guard/chat.guard';
 
 @Resolver('Chat')
 export class ChatResolver {
@@ -50,5 +58,75 @@ export class ChatResolver {
       console.error('Error in chatStream:', error);
       throw new Error('Chat stream failed');
     }
+  }
+
+  @Query(() => [String], { nullable: true })
+  async getAvailableModelTags(
+    @GetUserIdFromToken() userId: string,
+  ): Promise<string[]> {
+    try {
+      const response = await this.chatProxyService.fetchModelTags();
+      return response.models.data.map((model) => model.id); // Adjust based on model structure
+    } catch (error) {
+      throw new Error('Failed to fetch model tags');
+    }
+  }
+
+  // this is not the final api.
+  @Query(() => [Chat], { nullable: true })
+  async getUserChats(@GetUserIdFromToken() userId: string): Promise<Chat[]> {
+    const user = await this.userService.getUserChats(userId);
+    return user ? user.chats : []; // Return chats if user exists, otherwise return an empty array
+  }
+
+  @UseGuards(MessageGuard)
+  @Query(() => Message, { nullable: true })
+  async getMessageDetail(
+    @GetUserIdFromToken() userId: string,
+    @Args('messageId') messageId: string,
+  ): Promise<Message> {
+    return this.chatService.getMessageById(messageId);
+  }
+
+  // To do: message need a update resolver
+
+  @UseGuards(ChatGuard)
+  @Query(() => [Message])
+  async getChatHistory(@Args('chatId') chatId: string): Promise<Message[]> {
+    return this.chatService.getChatHistory(chatId);
+  }
+
+  @UseGuards(ChatGuard)
+  @Query(() => Chat, { nullable: true })
+  async getChatDetails(@Args('chatId') chatId: string): Promise<Chat> {
+    return this.chatService.getChatDetails(chatId);
+  }
+
+  @Mutation(() => Chat)
+  async createChat(
+    @GetUserIdFromToken() userId: string,
+    @Args('newChatInput') newChatInput: NewChatInput,
+  ): Promise<Chat> {
+    return this.chatService.createChat(userId, newChatInput);
+  }
+
+  @UseGuards(ChatGuard)
+  @Mutation(() => Boolean)
+  async deleteChat(@Args('chatId') chatId: string): Promise<boolean> {
+    return this.chatService.deleteChat(chatId);
+  }
+
+  @UseGuards(ChatGuard)
+  @Mutation(() => Boolean)
+  async clearChatHistory(@Args('chatId') chatId: string): Promise<boolean> {
+    return this.chatService.clearChatHistory(chatId);
+  }
+
+  @UseGuards(ChatGuard)
+  @Mutation(() => Chat, { nullable: true })
+  async updateChatTitle(
+    @Args('updateChatTitleInput') updateChatTitleInput: UpdateChatTitleInput,
+  ): Promise<Chat> {
+    return this.chatService.updateChatTitle(updateChatTitleInput);
   }
 }
