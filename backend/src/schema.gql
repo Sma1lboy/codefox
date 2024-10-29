@@ -120,6 +120,7 @@ type Query {
   getChatDetails(chatId: String!): Chat
   getChatHistory(chatId: String!): [Message!]!
   getMessageDetail(messageId: String!): Message
+  getHello: String!
   getProjectDetails(projectId: String!): Project!
   getUserChats: [Chat!]
   getUserProjects: [Project!]!
