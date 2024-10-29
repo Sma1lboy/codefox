@@ -20,10 +20,18 @@ export class UserService {
   ) {}
 
   // Method to get all chats of a user
-  async getUserChats(userId: string): Promise<User> {
-    return this.userRepository.findOne({
-      where: { id: userId },
-      relations: ['chats'], // Ensure 'chats' relation is loaded
+  async getUserChats(userId: string): Promise<User | null> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId, isDeleted: false },
+      relations: ['chats'], // Load 'chats' relation, even though it's lazy
     });
+
+    if (user) {
+      // Resolve the lazy-loaded 'chats' relation and filter out soft-deleted chats
+      const chats = await user.chats;
+      user.chats = chats.filter((chat) => !chat.isDeleted);
+    }
+
+    return user;
   }
 }
