@@ -3,7 +3,7 @@ import { ChatCompletionChunk } from './chat.model';
 import { ChatProxyService, ChatService } from './chat.service';
 import { UserService } from 'src/user/user.service';
 import { Chat } from './chat.model';
-import { Message, Role } from 'src/chat/message.model';
+import { Message, MessageRole } from 'src/chat/message.model';
 import {
   NewChatInput,
   UpdateChatTitleInput,
@@ -33,7 +33,7 @@ export class ChatResolver {
   })
   async *chatStream(@Args('input') input: ChatInput) {
     const iterator = this.chatProxyService.streamChat(input.message);
-    this.chatService.saveMessage(input.chatId, input.message, Role.User);
+    this.chatService.saveMessage(input.chatId, input.message, MessageRole.User);
 
     let accumulatedContent = ''; // Accumulator for all chunks
 
@@ -49,7 +49,7 @@ export class ChatResolver {
       await this.chatService.saveMessage(
         input.chatId,
         accumulatedContent,
-        Role.Model,
+        MessageRole.Model,
       );
     } catch (error) {
       console.error('Error in chatStream:', error);

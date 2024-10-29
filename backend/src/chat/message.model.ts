@@ -16,12 +16,12 @@ import {
 import { Chat } from 'src/chat/chat.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
 
-export enum Role {
+export enum MessageRole {
   User = 'User',
   Model = 'Model',
 }
 
-registerEnumType(Role, {
+registerEnumType(MessageRole, {
   name: 'Role',
 });
 
@@ -36,9 +36,9 @@ export class Message extends SystemBaseModel {
   @Column()
   content: string;
 
-  @Field(() => Role)
+  @Field(() => MessageRole)
   @Column({ type: 'text' })
-  role: Role;
+  role: MessageRole;
 
   @Field({ nullable: true })
   @Column({ nullable: true })
