@@ -20,3 +20,16 @@ export const REGISTER_MUTATION = gql`
     }
   }
 `;
+
+export const GET_MODEL_TAGS = gql`
+  query GetModelTags {
+    modelTags {
+      tags
+    }
+  }
+`;
+export interface ModelTagsData {
+  modelTags: {
+    tags: string[];
+  };
+}

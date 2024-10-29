@@ -10,7 +10,7 @@ import {
   CHECK_TOKEN_QUERY,
   LOGIN_MUTATION,
   REGISTER_MUTATION,
-} from '@/graphql/auth';
+} from '@/graphql/request';
 import { LocalStore } from '@/lib/storage';
 
 export const useAuth = () => {
