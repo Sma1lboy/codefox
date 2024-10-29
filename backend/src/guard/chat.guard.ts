@@ -101,3 +101,45 @@ export class MessageGuard implements CanActivate {
     return true;
   }
 }
+
+@Injectable()
+export class ChatSubscriptionGuard implements CanActivate {
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const gqlContext = GqlExecutionContext.create(context);
+
+    // For WebSocket context: get token from connectionParams
+    const token = gqlContext
+      .getContext()
+      .connectionParams?.authorization?.split(' ')[1];
+
+    if (!token) {
+      throw new UnauthorizedException('Authorization token is missing');
+    }
+
+    let user: any;
+    try {
+      user = this.jwtService.verify(token);
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    // Extract chatId from the subscription arguments
+    const args = gqlContext.getArgs();
+    const { chatId } = args;
+
+    // Check if the user is part of the chat
+    const chat = await this.chatService.getChatWithUser(chatId);
+    if (!chat || !chat.user || chat.user.id !== user.userId) {
+      throw new UnauthorizedException(
+        'User is not authorized to access this chat',
+      );
+    }
+
+    return true;
+  }
+}
