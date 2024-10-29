@@ -6,10 +6,11 @@ import {
   ObjectType,
   Query,
 } from '@nestjs/graphql';
-import { ChatCompletionChunk, ChatInput } from './chat.model';
+import { ChatCompletionChunk } from './chat.model';
 import { ChatProxyService, ChatService } from './chat.service';
 import { UserService } from 'src/user/user.service';
 import { MessageRole } from './message.model';
+import { ChatInput } from './dto/chat.input';
 
 @Resolver('Chat')
 export class ChatResolver {

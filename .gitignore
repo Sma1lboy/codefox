@@ -13,3 +13,5 @@ dist/
 # Models
 models/
 */**/models/
+
+*/**/database.sqlite
