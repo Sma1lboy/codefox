@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { useMutation, useSubscription } from '@apollo/client';
 import { ChatLayout } from '@/components/chat/chat-layout';
 import {
   Dialog,
@@ -11,10 +12,14 @@ import {
 } from '@/components/ui/dialog';
 import UsernameForm from '@/components/username-form';
 import { toast } from 'sonner';
-import { v4 as uuidv4 } from 'uuid';
 import useChatStore from './hooks/useChatStore';
 import { Message } from '@/components/types';
 import { useModels } from './hooks/useModels';
+import {
+  CHAT_STREAM_SUBSCRIPTION,
+  CREATE_CHAT,
+  SAVE_CHAT_HISTORY,
+} from '@/graphql/request';
 
 export default function HomeContent() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -32,74 +37,136 @@ export default function HomeContent() {
 
   const base64Images = useChatStore((state) => state.base64Images);
   const setBase64Images = useChatStore((state) => state.setBase64Images);
-  const ws = useRef<WebSocket | null>(null);
 
+  // Apollo mutations
+  const [createChat] = useMutation(CREATE_CHAT, {
+    onCompleted: (data) => {
+      console.log('Created new chat:', data);
+      setChatId(data.createChat.id);
+    },
+    onError: (error) => {
+      console.error('Error creating chat:', error);
+      toast.error('Failed to create new chat');
+    },
+  });
+
+  const [saveChatHistory] = useMutation(SAVE_CHAT_HISTORY, {
+    onCompleted: (data) => {
+      console.log('Saved chat history:', data);
+    },
+    onError: (error) => {
+      console.error('Error saving chat history:', error);
+      // Fallback to local storage
+      if (chatId) {
+        localStorage.setItem(`chat_${chatId}`, JSON.stringify(messages));
+        window.dispatchEvent(new Event('storage'));
+      }
+    },
+  });
+
+  // Create new chat when component mounts
   useEffect(() => {
     if (messages.length < 1) {
-      const id = uuidv4();
-      setChatId(id);
+      createChat({
+        variables: {
+          input: {
+            title: 'New Chat',
+          },
+        },
+      });
     }
-  }, [messages]);
+  }, [messages, createChat]);
 
+  // Save messages to local storage
   useEffect(() => {
     if (!isLoading && !error && chatId && messages.length > 0) {
-      localStorage.setItem(`chat_${chatId}`, JSON.stringify(messages));
-      window.dispatchEvent(new Event('storage'));
+      saveChatHistory({
+        variables: {
+          chatId,
+          messages: messages.map((msg) => ({
+            content: msg.content,
+            role: msg.role,
+            createdAt: msg.createdAt,
+          })),
+        },
+      });
     }
-  }, [chatId, isLoading, error, messages]);
+  }, [chatId, isLoading, error, messages, saveChatHistory]);
 
-  useEffect(() => {
-    ws.current = new WebSocket('ws://localhost:8080/graphql');
+  // Chat subscription
+  const { data: streamData } = useSubscription(CHAT_STREAM_SUBSCRIPTION, {
+    variables: {
+      input: {
+        chatId,
+        message: input,
+        model: selectedModel,
+        attachments: base64Images
+          ? base64Images.map((image) => ({
+              contentType: 'image/base64',
+              url: image,
+            }))
+          : [],
+      },
+    },
+    skip: !input.trim() || !chatId,
+    onSubscriptionData: ({ subscriptionData }) => {
+      if (subscriptionData.data) {
+        const chunk = subscriptionData.data.chatStream;
+        const content = chunk.choices[0]?.delta?.content;
 
-    ws.current.onopen = () => {
-      console.log('WebSocket connected');
-    };
+        if (content) {
+          setMessages((prev) => {
+            const lastMsg = prev[prev.length - 1];
+            if (lastMsg?.role === 'assistant') {
+              return [
+                ...prev.slice(0, -1),
+                {
+                  ...lastMsg,
+                  content: lastMsg.content + content,
+                  updatedAt: new Date().toISOString(),
+                },
+              ];
+            } else {
+              return [
+                ...prev,
+                {
+                  id: chunk.id,
+                  role: 'assistant',
+                  content,
+                  createdAt: new Date(chunk.created * 1000).toISOString(),
+                  isActive: true,
+                  isDeleted: false,
+                },
+              ];
+            }
+          });
+        }
 
-    ws.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      toast.error('Connection error. Retrying...');
-    };
-
-    if (!localStorage.getItem('ollama_user')) {
-      setOpen(true);
-    }
-
-    return () => {
-      if (ws.current) {
-        ws.current.close();
+        if (chunk.choices[0]?.finish_reason === 'stop') {
+          setLoadingSubmit(false);
+          setBase64Images(null);
+        }
       }
-    };
-  }, []);
+    },
+    onError: (error) => {
+      console.error('Subscription error:', error);
+      toast.error('Connection error. Please try again.');
+      setLoadingSubmit(false);
+    },
+  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
   };
 
-  const stop = () => {
-    if (ws.current) {
-      ws.current.send(
-        JSON.stringify({
-          type: 'stop',
-          id: chatId,
-        })
-      );
-    }
-  };
-
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (
-      !input.trim() ||
-      !ws.current ||
-      ws.current.readyState !== WebSocket.OPEN
-    ) {
-      return;
-    }
+    if (!input.trim() || !chatId) return;
 
     setLoadingSubmit(true);
 
     const newMessage: Message = {
-      id: uuidv4(),
+      id: chatId,
       role: 'user',
       content: input,
       createdAt: new Date().toISOString(),
@@ -107,92 +174,11 @@ export default function HomeContent() {
 
     setMessages((prev) => [...prev, newMessage]);
     setInput('');
+  };
 
-    const attachments = base64Images
-      ? base64Images.map((image) => ({
-          contentType: 'image/base64',
-          url: image,
-        }))
-      : [];
-
-    const subscriptionMsg = {
-      type: 'start',
-      id: Date.now().toString(),
-      payload: {
-        query: `
-          subscription ChatStream($input: ChatInputType!) {
-            chatStream(input: $input) {
-              choices {
-                delta {
-                  content
-                }
-                finish_reason
-                index
-              }
-              created
-              id
-              model
-              object
-            }
-          }
-        `,
-        variables: {
-          input: {
-            message: input,
-            chatId,
-            model: selectedModel,
-            attachments,
-          },
-        },
-      },
-    };
-
-    try {
-      ws.current.onmessage = (event) => {
-        const response = JSON.parse(event.data);
-
-        if (response.type === 'data' && response.payload.data) {
-          const chunk = response.payload.data.chatStream;
-          const content = chunk.choices[0]?.delta?.content;
-
-          if (content) {
-            setMessages((prev) => {
-              const lastMsg = prev[prev.length - 1];
-              if (lastMsg?.role === 'assistant') {
-                return [
-                  ...prev.slice(0, -1),
-                  { ...lastMsg, content: lastMsg.content + content },
-                ];
-              } else {
-                return [
-                  ...prev,
-                  {
-                    id: chunk.id,
-                    role: 'assistant',
-                    content,
-                    createdAt: new Date(chunk.created * 1000).toISOString(),
-                  },
-                ];
-              }
-            });
-          }
-
-          if (chunk.choices[0]?.finish_reason === 'stop') {
-            setLoadingSubmit(false);
-            localStorage.setItem(`chat_${chatId}`, JSON.stringify(messages));
-            window.dispatchEvent(new Event('storage'));
-          }
-        }
-      };
-
-      // 发送订阅请求
-      ws.current.send(JSON.stringify(subscriptionMsg));
-      setBase64Images(null);
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('An error occurred. Please try again.');
-      setLoadingSubmit(false);
-    }
+  const stop = () => {
+    // Implement stop functionality if needed
+    toast.info('Stopping message generation...');
   };
 
   const onOpenChange = (isOpen: boolean) => {

@@ -1,17 +1,20 @@
 'use client';
-import { LocalStore } from '@/lib/storage';
-import client from '@/utils/client';
+
+import client from '@/lib/client';
 import { ApolloProvider } from '@apollo/client';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'sonner';
+import { AuthProvider } from './AuthProvider';
 
 export const RootProvider = ({ children }) => {
   return (
     <ApolloProvider client={client}>
-      <ThemeProvider attribute="class" defaultTheme="dark">
-        {children}
-        <Toaster />
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider attribute="class" defaultTheme="dark">
+          {children}
+          <Toaster />
+        </ThemeProvider>
+      </AuthProvider>
     </ApolloProvider>
   );
 };

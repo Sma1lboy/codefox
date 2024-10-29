@@ -78,7 +78,7 @@ export default function ChatTopbar({
           >
             {modelsLoading
               ? 'Loading models...'
-              : currentModel || 'Select model'}
+              : currentModel || 'Loading models...'}
             <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>

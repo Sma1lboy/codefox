@@ -45,9 +45,6 @@ export default function Register() {
 
         if (success) {
           setStep('congrats');
-          setTimeout(() => {
-            router.push('/');
-          }, 2000);
         } else {
           setStep('form');
         }
