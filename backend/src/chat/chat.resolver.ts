@@ -27,19 +27,24 @@ export class ChatResolver {
   })
   async *chatStream(@Args('input') input: ChatInput) {
     const iterator = this.chatProxyService.streamChat(input.message);
-    this.chatService.saveMessage(input.chatId, null, input.message, Role.User);
+    this.chatService.saveMessage(input.chatId, input.message, Role.User);
+
+    let accumulatedContent = ''; // Accumulator for all chunks
+
     try {
       for await (const chunk of iterator) {
         if (chunk) {
-          await this.chatService.saveMessage(
-            input.chatId,
-            chunk.id,
-            chunk.choices[0].delta.content,
-            Role.Model,
-          );
-          yield chunk;
+          accumulatedContent += chunk.choices[0].delta.content; // Accumulate content
+          yield chunk; // Send each chunk
         }
       }
+
+      // After all chunks are received, save the complete response as a single message
+      await this.chatService.saveMessage(
+        input.chatId,
+        accumulatedContent,
+        Role.Model,
+      );
     } catch (error) {
       console.error('Error in chatStream:', error);
       throw new Error('Chat stream failed');
