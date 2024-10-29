@@ -97,7 +97,7 @@ type Project {
   id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
-  path: String
+  path: String!
   projectName: String!
   projectPackages: [ProjectPackages!]
   updatedAt: Date!
