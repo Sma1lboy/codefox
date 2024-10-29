@@ -16,12 +16,15 @@ import {
   NewChatInput,
   UpdateChatTitleInput,
 } from './dto/chat.input';
-import { GetUserIdFromToken } from 'src/decorator/get-auth-token';
-import { UseGuards } from '@nestjs/common';
+import { GetUserIdFromToken } from 'src/decorator/get-auth-token.decorator';
+import { Logger, UseGuards } from '@nestjs/common';
 import { ChatGuard, MessageGuard } from 'src/guard/chat.guard';
+import { JWTAuth } from 'src/decorator/jwt-auth.decorator';
 
 @Resolver('Chat')
 export class ChatResolver {
+  private readonly logger = new Logger('ChatResolver');
+
   constructor(
     private chatProxyService: ChatProxyService,
     private chatService: ChatService,
@@ -72,14 +75,13 @@ export class ChatResolver {
     }
   }
 
-  // this is not the final api.
   @Query(() => [Chat], { nullable: true })
   async getUserChats(@GetUserIdFromToken() userId: string): Promise<Chat[]> {
     const user = await this.userService.getUserChats(userId);
-    return user ? user.chats : []; // Return chats if user exists, otherwise return an empty array
+    return user ? user.chats : [];
   }
 
-  @UseGuards(MessageGuard)
+  @JWTAuth()
   @Query(() => Message, { nullable: true })
   async getMessageDetail(
     @GetUserIdFromToken() userId: string,
@@ -90,19 +92,20 @@ export class ChatResolver {
 
   // To do: message need a update resolver
 
-  @UseGuards(ChatGuard)
+  @JWTAuth()
   @Query(() => [Message])
   async getChatHistory(@Args('chatId') chatId: string): Promise<Message[]> {
     return this.chatService.getChatHistory(chatId);
   }
 
-  @UseGuards(ChatGuard)
+  @JWTAuth()
   @Query(() => Chat, { nullable: true })
   async getChatDetails(@Args('chatId') chatId: string): Promise<Chat> {
     return this.chatService.getChatDetails(chatId);
   }
 
   @Mutation(() => Chat)
+  @JWTAuth()
   async createChat(
     @GetUserIdFromToken() userId: string,
     @Args('newChatInput') newChatInput: NewChatInput,
@@ -110,19 +113,19 @@ export class ChatResolver {
     return this.chatService.createChat(userId, newChatInput);
   }
 
-  @UseGuards(ChatGuard)
+  @JWTAuth()
   @Mutation(() => Boolean)
   async deleteChat(@Args('chatId') chatId: string): Promise<boolean> {
     return this.chatService.deleteChat(chatId);
   }
 
-  @UseGuards(ChatGuard)
+  @JWTAuth()
   @Mutation(() => Boolean)
   async clearChatHistory(@Args('chatId') chatId: string): Promise<boolean> {
     return this.chatService.clearChatHistory(chatId);
   }
 
-  @UseGuards(ChatGuard)
+  @JWTAuth()
   @Mutation(() => Chat, { nullable: true })
   async updateChatTitle(
     @Args('updateChatTitleInput') updateChatTitleInput: UpdateChatTitleInput,

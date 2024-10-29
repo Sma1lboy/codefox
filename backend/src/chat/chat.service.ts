@@ -267,6 +267,7 @@ export class ChatService {
     const chat = await this.chatRepository.findOne({
       where: { id: upateChatTitleInput.chatId, isDeleted: false },
     });
+    new Logger("chat").log('chat', chat);
     if (chat) {
       chat.title = upateChatTitleInput.title;
       chat.updatedAt = new Date();
@@ -282,7 +283,10 @@ export class ChatService {
   ): Promise<Message> {
     // Find the chat instance
     const chat = await this.chatRepository.findOne({ where: { id: chatId } });
-    if (!chat) throw new Error('Chat not found');
+    //if the chat id not exist, dont save this messages
+    if (!chat) {
+      return null;
+    }
 
     // Create a new message associated with the chat
     const message = this.messageRepository.create({
