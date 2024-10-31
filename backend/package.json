@@ -35,6 +35,7 @@
     "bcrypt": "^5.1.1",
     "class-validator": "^0.14.1",
     "graphql": "^16.9.0",
+    "lodash": "^4.17.21",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "sqlite3": "^5.1.7",
