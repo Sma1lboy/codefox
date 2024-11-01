@@ -55,6 +55,7 @@ export default function HomeContent() {
   const [selectedModel, setSelectedModel] = useState<string>(
     models[0] || 'Loading models'
   );
+  const [chatListUpdated, setChatListUpdated] = useState(false);
 
   // Welcome dialog state
   const [open, setOpen] = useState(false);
@@ -165,6 +166,7 @@ export default function HomeContent() {
     onCompleted: async (data) => {
       const newChatId = data.createChat.id;
       setChatId(newChatId);
+      setChatListUpdated(true);
       await startChatStream(newChatId, input);
     },
     onError: () => {
@@ -274,6 +276,8 @@ export default function HomeContent() {
           formRef={formRef}
           setMessages={setMessages}
           setInput={setInput}
+          chatListUpdated={chatListUpdated} // Pass to ChatLayout
+          setChatListUpdated={setChatListUpdated} // Pass to ChatLayout
         />
         <DialogContent className="flex flex-col space-y-4">
           <DialogHeader className="space-y-2">

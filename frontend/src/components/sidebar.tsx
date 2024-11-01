@@ -5,7 +5,7 @@ import { MoreHorizontal, SquarePen, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button, buttonVariants } from '@/components/ui/button';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import SidebarSkeleton from './sidebar-skeleton';
 import UserSettings from './user-settings';
 import { useQuery, useMutation } from '@apollo/client';
@@ -30,6 +30,8 @@ interface SidebarProps {
   isCollapsed: boolean;
   isMobile: boolean;
   currentChatId?: string;
+  chatListUpdated: boolean;
+  setChatListUpdated: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 // Define chat type based on the actual GraphQL response
@@ -44,6 +46,8 @@ export function Sidebar({
   isCollapsed,
   isMobile,
   currentChatId,
+  chatListUpdated,
+  setChatListUpdated,
 }: SidebarProps) {
   const router = useRouter();
   const [selectedChatId, setSelectedChatId] = useState<string | null>(
@@ -51,9 +55,20 @@ export function Sidebar({
   );
 
   // Query user chats
+  // const { data, loading, error } = useQuery(GET_USER_CHATS, {
+  //   fetchPolicy: 'network-only',
+  // });
   const { data, loading, error } = useQuery(GET_USER_CHATS, {
-    fetchPolicy: 'network-only',
+    fetchPolicy: chatListUpdated ? 'network-only' : 'cache-first',
   });
+
+  const chats: Chat[] = data?.getUserChats || [];
+
+  useEffect(() => {
+    if (chatListUpdated) {
+      setChatListUpdated(false);
+    }
+  }, [chatListUpdated, setChatListUpdated]);
 
   // Delete chat mutation
   const [deleteChat] = useMutation(DELETE_CHAT, {
@@ -69,8 +84,6 @@ export function Sidebar({
     console.error('Error loading chats:', error);
     return null;
   }
-
-  const chats: Chat[] = data?.getUserChats || [];
 
   // Sort chats by creation date
   const sortedChats = [...chats].sort((a, b) => {
