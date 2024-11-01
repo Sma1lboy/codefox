@@ -25,6 +25,8 @@ interface ChatLayoutProps {
   formRef: React.RefObject<HTMLFormElement>;
   setMessages: Dispatch<SetStateAction<Message[]>>;
   setInput: Dispatch<SetStateAction<string>>;
+  chatListUpdated: boolean;
+  setChatListUpdated: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export function ChatLayout({
@@ -42,6 +44,8 @@ export function ChatLayout({
   formRef,
   setMessages,
   setInput,
+  chatListUpdated,
+  setChatListUpdated,
 }: ChatLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
   const [isMobile, setIsMobile] = useState(false);
@@ -91,7 +95,12 @@ export function ChatLayout({
             : 'hidden md:block'
         )}
       >
-        <Sidebar isCollapsed={isCollapsed || isMobile} isMobile={isMobile} />
+        <Sidebar
+          isCollapsed={isCollapsed || isMobile}
+          isMobile={isMobile}
+          chatListUpdated={chatListUpdated}
+          setChatListUpdated={setChatListUpdated}
+        />
       </ResizablePanel>
       <ResizableHandle className={cn('hidden md:flex')} withHandle />
       <ResizablePanel
