@@ -1,5 +1,4 @@
 'use client';
-
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -36,8 +35,9 @@ function Sidebar({
   const router = useRouter();
 
   const handleNewChat = useCallback(() => {
-    router.push('/');
-  }, [router]);
+    //force reload to reset the chat state
+    window.location.href = '/';
+  }, []);
 
   if (loading) return <SidebarSkeleton />;
   if (error) {

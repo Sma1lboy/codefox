@@ -3,16 +3,13 @@ import { useMutation, useSubscription } from '@apollo/client';
 import { CHAT_STREAM, CREATE_CHAT, TRIGGER_CHAT } from '@/graphql/request';
 import { Message } from '@/components/types';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 
-// Define stream states to manage chat flow
 enum StreamStatus {
   IDLE = 'IDLE',
   STREAMING = 'STREAMING',
   DONE = 'DONE',
 }
 
-// GraphQL input types
 interface ChatInput {
   chatId: string;
   message: string;
@@ -41,11 +38,11 @@ export function useChatStream({
   setMessages,
   selectedModel,
 }: UseChatStreamProps) {
-  const router = useRouter();
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [streamStatus, setStreamStatus] = useState<StreamStatus>(
     StreamStatus.IDLE
   );
+  const [currentChatId, setCurrentChatId] = useState<string>(chatId);
 
   const [subscription, setSubscription] = useState<SubscriptionState>({
     enabled: false,
@@ -65,7 +62,8 @@ export function useChatStream({
   const [createChat] = useMutation(CREATE_CHAT, {
     onCompleted: async (data) => {
       const newChatId = data.createChat.id;
-      router.push(`/${newChatId}`);
+      window.history.replaceState({}, '', `/${newChatId}`);
+      setCurrentChatId(newChatId);
       await startChatStream(newChatId, input);
     },
     onError: () => {
@@ -128,10 +126,10 @@ export function useChatStream({
     },
   });
 
-  const startChatStream = async (currentChatId: string, message: string) => {
+  const startChatStream = async (targetChatId: string, message: string) => {
     try {
       const input: ChatInput = {
-        chatId: currentChatId,
+        chatId: targetChatId,
         message,
         model: selectedModel,
       };
@@ -151,26 +149,6 @@ export function useChatStream({
     }
   };
 
-  const finishChatResponse = useCallback(() => {
-    setLoadingSubmit(false);
-    setSubscription({
-      enabled: false,
-      variables: null,
-    });
-    if (streamStatus === StreamStatus.DONE) {
-      setStreamStatus(StreamStatus.IDLE);
-    }
-  }, [streamStatus]);
-
-  // Handle input change
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setInput(e.target.value);
-    },
-    [setInput]
-  );
-
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -181,15 +159,16 @@ export function useChatStream({
 
     setLoadingSubmit(true);
 
+    const messageId = currentChatId || 'temp-id';
     const newMessage: Message = {
-      id: chatId || 'temp-id',
+      id: messageId,
       role: 'user',
       content: content,
       createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, newMessage]);
 
-    if (!chatId) {
+    if (!currentChatId) {
       try {
         await createChat({
           variables: {
@@ -203,9 +182,27 @@ export function useChatStream({
         return;
       }
     } else {
-      await startChatStream(chatId, content);
+      await startChatStream(currentChatId, content);
     }
   };
+
+  const finishChatResponse = useCallback(() => {
+    setLoadingSubmit(false);
+    setSubscription({
+      enabled: false,
+      variables: null,
+    });
+    if (streamStatus === StreamStatus.DONE) {
+      setStreamStatus(StreamStatus.IDLE);
+    }
+  }, [streamStatus]);
+
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setInput(e.target.value);
+    },
+    [setInput]
+  );
 
   const stop = useCallback(() => {
     if (streamStatus === StreamStatus.STREAMING) {
@@ -225,5 +222,6 @@ export function useChatStream({
     handleInputChange,
     stop,
     isStreaming: streamStatus === StreamStatus.STREAMING,
+    currentChatId,
   };
 }
