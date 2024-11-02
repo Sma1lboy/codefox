@@ -4,10 +4,7 @@ import { existsSync, mkdirSync, promises } from 'fs-extra';
 import { createHash } from 'crypto';
 
 // Constants for base directories
-const CLIENT_CACHE_DIR = path.resolve(
-  __dirname,
-  '../../frontend/.codefox-client/.cache'
-);
+const CLIENT_CACHE_DIR = path.resolve(__dirname, '../.codefox-client/.cache');
 
 // Utility function to ensure a directory exists
 const ensureDir = (dirPath: string): string => {
