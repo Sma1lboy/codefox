@@ -5,12 +5,12 @@ import { ApolloProvider } from '@apollo/client';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '../AuthProvider';
-import RootLayout from '../RootLayout';
 
 interface ProvidersProps {
   children: React.ReactNode;
 }
 
+// Base Provider for the app
 export function BaseProviders({ children }: ProvidersProps) {
   return (
     <ApolloProvider client={client}>

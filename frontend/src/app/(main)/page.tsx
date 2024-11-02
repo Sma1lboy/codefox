@@ -2,9 +2,9 @@
 
 import { useRef, useState } from 'react';
 import { Message } from '@/components/types';
-import { useModels } from './hooks/useModels';
+import { useModels } from '../hooks/useModels';
 import ChatContent from '@/components/chat/chat';
-import { useChatStream } from './hooks/useChatStream';
+import { useChatStream } from '../hooks/useChatStream';
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);

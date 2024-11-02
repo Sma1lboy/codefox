@@ -8,10 +8,10 @@ import {
 } from '@/components/ui/resizable';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
-import { useChatList } from './hooks/useChatList';
 import Sidebar from '@/components/sidebar';
+import { useChatList } from '../hooks/useChatList';
 
-export default function RootLayout({
+export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;

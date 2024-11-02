@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { Message } from '@/components/types';
 import { useModels } from '@/app/hooks/useModels';
 import ChatContent from '@/components/chat/chat';
-import { useChatStream } from '../hooks/useChatStream';
+import { useChatStream } from '../../hooks/useChatStream';
 import { useQuery } from '@apollo/client';
 import { GET_CHAT_HISTORY } from '@/graphql/request';
 import { toast } from 'sonner';
