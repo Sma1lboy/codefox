@@ -74,7 +74,7 @@ export default function ChatList({
       <div className="w-full h-full flex justify-center items-center">
         <div className="flex flex-col  items-center">
           <img
-            src="/codefox.png"
+            src="/codefox.svg"
             alt="AI"
             className="h-24 w-24 aspect-square object-contain dark:invert"
           />
@@ -170,7 +170,7 @@ export default function ChatList({
                   <div className="flex items-end gap-2">
                     <Avatar className="flex justify-start items-center">
                       <AvatarImage
-                        src="/codefox.png"
+                        src="/codefox.svg"
                         alt="AI"
                         className="h-full w-full object-contain dark:invert"
                       />
@@ -189,7 +189,7 @@ export default function ChatList({
           <div className="flex pl-4 pb-4 gap-2 items-center">
             <Avatar className="h-10 w-10 flex justify-start items-center">
               <AvatarImage
-                src="/codefox.png"
+                src="/codefox.svg"
                 alt="AI"
                 className="h-full w-full object-contain dark:invert"
               />
