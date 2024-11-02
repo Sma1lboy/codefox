@@ -47,13 +47,11 @@ export function useChatStream({
     StreamStatus.IDLE
   );
 
-  // Subscription state management
   const [subscription, setSubscription] = useState<SubscriptionState>({
     enabled: false,
     variables: null,
   });
 
-  // Initialize trigger chat mutation
   const [triggerChat] = useMutation(TRIGGER_CHAT, {
     onCompleted: () => {
       setStreamStatus(StreamStatus.STREAMING);
@@ -64,7 +62,6 @@ export function useChatStream({
     },
   });
 
-  // Create new chat session mutation
   const [createChat] = useMutation(CREATE_CHAT, {
     onCompleted: async (data) => {
       const newChatId = data.createChat.id;
@@ -78,7 +75,6 @@ export function useChatStream({
     },
   });
 
-  // Subscribe to chat stream
   useSubscription(CHAT_STREAM, {
     skip: !subscription.enabled || !subscription.variables,
     variables: subscription.variables,
@@ -86,12 +82,10 @@ export function useChatStream({
       const chatStream = subscriptionData?.data?.chatStream;
       if (!chatStream) return;
 
-      // Set loading state to false when first data arrives
       if (streamStatus === StreamStatus.STREAMING && loadingSubmit) {
         setLoadingSubmit(false);
       }
 
-      // Handle stream completion
       if (chatStream.status === StreamStatus.DONE) {
         setStreamStatus(StreamStatus.DONE);
         finishChatResponse();
@@ -100,18 +94,15 @@ export function useChatStream({
 
       const content = chatStream.choices?.[0]?.delta?.content;
 
-      // Update message content
       if (content) {
         setMessages((prev) => {
           const lastMsg = prev[prev.length - 1];
           if (lastMsg?.role === 'assistant') {
-            // Append content to existing assistant message
             return [
               ...prev.slice(0, -1),
               { ...lastMsg, content: lastMsg.content + content },
             ];
           } else {
-            // Create new assistant message
             return [
               ...prev,
               {
@@ -125,7 +116,6 @@ export function useChatStream({
         });
       }
 
-      // Handle message completion
       if (chatStream.choices?.[0]?.finishReason === 'stop') {
         setStreamStatus(StreamStatus.DONE);
         finishChatResponse();
@@ -138,7 +128,6 @@ export function useChatStream({
     },
   });
 
-  // Initialize chat stream
   const startChatStream = async (currentChatId: string, message: string) => {
     try {
       const input: ChatInput = {
@@ -153,7 +142,6 @@ export function useChatStream({
         variables: { input },
       });
 
-      // Ensure subscription is set up before triggering
       await new Promise((resolve) => setTimeout(resolve, 100));
       await triggerChat({ variables: { input } });
     } catch (err) {
@@ -163,7 +151,6 @@ export function useChatStream({
     }
   };
 
-  // Reset states after response completion
   const finishChatResponse = useCallback(() => {
     setLoadingSubmit(false);
     setSubscription({
@@ -186,26 +173,28 @@ export function useChatStream({
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!input.trim() || loadingSubmit) return;
+
+    const content = input;
+    setInput('');
+
+    if (!content.trim() || loadingSubmit) return;
 
     setLoadingSubmit(true);
 
-    // Add user message immediately
     const newMessage: Message = {
       id: chatId || 'temp-id',
       role: 'user',
-      content: input,
+      content: content,
       createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, newMessage]);
 
-    // Handle new or existing chat
     if (!chatId) {
       try {
         await createChat({
           variables: {
             input: {
-              title: input.slice(0, 50),
+              title: content.slice(0, 50),
             },
           },
         });
@@ -214,13 +203,10 @@ export function useChatStream({
         return;
       }
     } else {
-      await startChatStream(chatId, input);
+      await startChatStream(chatId, content);
     }
-
-    setInput('');
   };
 
-  // Stop message generation
   const stop = useCallback(() => {
     if (streamStatus === StreamStatus.STREAMING) {
       setSubscription({
