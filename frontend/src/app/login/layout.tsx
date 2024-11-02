@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-import './globals.css';
-import { RootProvider } from './providers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,16 +15,14 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({
+export default function Layout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <RootProvider>{children}</RootProvider>
-      </body>
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }
