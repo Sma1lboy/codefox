@@ -5,13 +5,14 @@ import { ApolloProvider } from '@apollo/client';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'sonner';
 import { AuthProvider } from './AuthProvider';
+import RootLayout from './RootLayout';
 
 export const RootProvider = ({ children }) => {
   return (
     <ApolloProvider client={client}>
       <AuthProvider>
         <ThemeProvider attribute="class" defaultTheme="dark">
-          {children}
+          <RootLayout>{children}</RootLayout>
           <Toaster />
         </ThemeProvider>
       </AuthProvider>

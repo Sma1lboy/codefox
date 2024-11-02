@@ -1,20 +1,9 @@
-'use client';
-
-import React, { useEffect, useRef, useState } from 'react';
-import { useMutation, useSubscription, gql } from '@apollo/client';
-import { ChatLayout } from '@/components/chat/chat-layout';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import UsernameForm from '@/components/username-form';
-import { toast } from 'sonner';
-import { Message } from '@/components/types';
-import { useModels } from './hooks/useModels';
+import { useState, useCallback } from 'react';
+import { useMutation, useSubscription } from '@apollo/client';
 import { CHAT_STREAM, CREATE_CHAT, TRIGGER_CHAT } from '@/graphql/request';
+import { Message } from '@/components/types';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 // Define stream states to manage chat flow
 enum StreamStatus {
@@ -37,28 +26,26 @@ interface SubscriptionState {
   } | null;
 }
 
-export default function HomeContent() {
-  // Core message states
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const formRef = useRef<HTMLFormElement>(null);
+interface UseChatStreamProps {
+  chatId: string;
+  input: string;
+  setInput: (input: string) => void;
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  selectedModel: string;
+}
 
-  // Loading and stream control states
+export function useChatStream({
+  chatId,
+  input,
+  setInput,
+  setMessages,
+  selectedModel,
+}: UseChatStreamProps) {
+  const router = useRouter();
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [streamStatus, setStreamStatus] = useState<StreamStatus>(
     StreamStatus.IDLE
   );
-
-  // Chat session states
-  const [chatId, setChatId] = useState<string>('');
-  const { models } = useModels();
-  const [selectedModel, setSelectedModel] = useState<string>(
-    models[0] || 'Loading models'
-  );
-  const [chatListUpdated, setChatListUpdated] = useState(false);
-
-  // Welcome dialog state
-  const [open, setOpen] = useState(false);
 
   // Subscription state management
   const [subscription, setSubscription] = useState<SubscriptionState>({
@@ -66,6 +53,7 @@ export default function HomeContent() {
     variables: null,
   });
 
+  // Initialize trigger chat mutation
   const [triggerChat] = useMutation(TRIGGER_CHAT, {
     onCompleted: () => {
       setStreamStatus(StreamStatus.STREAMING);
@@ -76,8 +64,22 @@ export default function HomeContent() {
     },
   });
 
+  // Create new chat session mutation
+  const [createChat] = useMutation(CREATE_CHAT, {
+    onCompleted: async (data) => {
+      const newChatId = data.createChat.id;
+      router.push(`/${newChatId}`);
+      await startChatStream(newChatId, input);
+    },
+    onError: () => {
+      toast.error('Failed to create chat');
+      setStreamStatus(StreamStatus.IDLE);
+      setLoadingSubmit(false);
+    },
+  });
+
   // Subscribe to chat stream
-  const { error: subError } = useSubscription(CHAT_STREAM, {
+  useSubscription(CHAT_STREAM, {
     skip: !subscription.enabled || !subscription.variables,
     variables: subscription.variables,
     onSubscriptionData: ({ subscriptionData }) => {
@@ -161,23 +163,8 @@ export default function HomeContent() {
     }
   };
 
-  // Create new chat session
-  const [createChat] = useMutation(CREATE_CHAT, {
-    onCompleted: async (data) => {
-      const newChatId = data.createChat.id;
-      setChatId(newChatId);
-      setChatListUpdated(true);
-      await startChatStream(newChatId, input);
-    },
-    onError: () => {
-      toast.error('Failed to create chat');
-      setStreamStatus(StreamStatus.IDLE);
-      setLoadingSubmit(false);
-    },
-  });
-
   // Reset states after response completion
-  const finishChatResponse = () => {
+  const finishChatResponse = useCallback(() => {
     setLoadingSubmit(false);
     setSubscription({
       enabled: false,
@@ -186,14 +173,18 @@ export default function HomeContent() {
     if (streamStatus === StreamStatus.DONE) {
       setStreamStatus(StreamStatus.IDLE);
     }
-  };
+  }, [streamStatus]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
-  };
+  // Handle input change
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setInput(e.target.value);
+    },
+    [setInput]
+  );
 
-  // Handle message submission
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim() || loadingSubmit) return;
 
@@ -230,7 +221,7 @@ export default function HomeContent() {
   };
 
   // Stop message generation
-  const stop = () => {
+  const stop = useCallback(() => {
     if (streamStatus === StreamStatus.STREAMING) {
       setSubscription({
         enabled: false,
@@ -240,56 +231,13 @@ export default function HomeContent() {
       setLoadingSubmit(false);
       toast.info('Message generation stopped');
     }
+  }, [streamStatus]);
+
+  return {
+    loadingSubmit,
+    handleSubmit,
+    handleInputChange,
+    stop,
+    isStreaming: streamStatus === StreamStatus.STREAMING,
   };
-
-  // Handle welcome dialog
-  const onOpenChange = (isOpen: boolean) => {
-    const username = localStorage.getItem('ollama_user');
-    if (username) return setOpen(isOpen);
-
-    localStorage.setItem('ollama_user', 'Anonymous');
-    window.dispatchEvent(new Event('storage'));
-    setOpen(isOpen);
-  };
-
-  // Monitor subscription errors
-  useEffect(() => {
-    if (subError) {
-      console.error('Subscription error:', subError);
-    }
-  }, [subError]);
-
-  return (
-    <main className="flex h-[calc(100dvh)] flex-col items-center">
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <ChatLayout
-          chatId={chatId}
-          setSelectedModel={setSelectedModel}
-          messages={messages}
-          input={input}
-          handleInputChange={handleInputChange}
-          handleSubmit={onSubmit}
-          loadingSubmit={loadingSubmit}
-          stop={stop}
-          navCollapsedSize={10}
-          defaultLayout={[30, 160]}
-          formRef={formRef}
-          setMessages={setMessages}
-          setInput={setInput}
-          chatListUpdated={chatListUpdated} // Pass to ChatLayout
-          setChatListUpdated={setChatListUpdated} // Pass to ChatLayout
-        />
-        <DialogContent className="flex flex-col space-y-4">
-          <DialogHeader className="space-y-2">
-            <DialogTitle>Welcome to Ollama!</DialogTitle>
-            <DialogDescription>
-              Enter your name to get started. This is just to personalize your
-              experience.
-            </DialogDescription>
-            <UsernameForm setOpen={setOpen} />
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-    </main>
-  );
 }

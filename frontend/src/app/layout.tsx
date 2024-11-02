@@ -17,7 +17,7 @@ export const viewport = {
   userScalable: 1,
 };
 
-export default function RootLayout({
+export default function Layout({
   children,
 }: Readonly<{
   children: React.ReactNode;
