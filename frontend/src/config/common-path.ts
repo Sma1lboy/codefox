@@ -1,10 +1,10 @@
 import path from 'path';
-import os from 'os';
-import { existsSync, mkdirSync, promises } from 'fs-extra';
+import { existsSync, mkdirSync, promises as fsPromises } from 'fs-extra';
 import { createHash } from 'crypto';
 
-// Constants for base directories
-const CLIENT_CACHE_DIR = path.resolve(__dirname, '../.codefox-client/.cache');
+// Constants for the frontend root directory
+const FRONTEND_ROOT_DIR = path.resolve(__dirname, '../.codefox-client');
+const CLIENT_CACHE_DIR = path.join(FRONTEND_ROOT_DIR, '.cache');
 
 // Utility function to ensure a directory exists
 const ensureDir = (dirPath: string): string => {
@@ -14,23 +14,52 @@ const ensureDir = (dirPath: string): string => {
   return dirPath;
 };
 
-// Client Cache Paths
-export const getCacheDir = (): string => ensureDir(CLIENT_CACHE_DIR);
-export const getUserCacheDir = (userId: string): string =>
-  ensureDir(path.join(CLIENT_CACHE_DIR, hashUserId(userId)));
-export const getProjectCacheDir = (userId: string, projectId: string): string =>
-  ensureDir(path.join(getUserCacheDir(userId), projectId));
+// ----------- We need path traverse Protection after we decide how we read and store the file !!!!!!!!!!!!! ------------
+// -------------------------------------------------------------------------------------------------------------
 
-// Access or create content file within a project’s cache directory
+// Step 1: Frontend Root Directory
+export const getFrontendRootDir = (): string => ensureDir(FRONTEND_ROOT_DIR);
+
+// Step 2: Cache Directory
+export const getCacheDir = (): string => ensureDir(CLIENT_CACHE_DIR);
+
+// Step 3: User Cache Directory
+export const getUserCacheDir = (userId: string): string => {
+  const hashedUserId = hashUserId(userId);
+  return ensureDir(path.join(getCacheDir(), hashedUserId));
+};
+
+// Step 4: Project Cache Directory within a User's Directory
+export const getProjectCacheDir = (
+  userId: string,
+  projectId: string
+): string => {
+  return ensureDir(path.join(getUserCacheDir(userId), projectId));
+};
+
+// Step 5: Content Directory within a Project's Cache Directory
+export const getProjectContentDir = (
+  userId: string,
+  projectId: string
+): string => {
+  return ensureDir(path.join(getProjectCacheDir(userId, projectId), 'content'));
+};
+
+// Updated function to get the full path to a specific file within the 'content' directory
 export const getProjectContentPath = (
   userId: string,
   projectId: string,
   fileName: string
 ): string => {
-  return path.join(getProjectCacheDir(userId, projectId), fileName);
+  return path.join(getProjectContentDir(userId, projectId), fileName);
 };
 
-// Utility functions to read and write content files in the project cache directory
+// Helper function to hash user IDs for unique cache directories
+const hashUserId = (userId: string): string => {
+  return createHash('md5').update(userId).digest('hex');
+};
+
+// Utility Functions for File Operations
 export const writeProjectContent = async (
   userId: string,
   projectId: string,
@@ -38,7 +67,7 @@ export const writeProjectContent = async (
   content: string
 ): Promise<void> => {
   const contentPath = getProjectContentPath(userId, projectId, fileName);
-  await promises.writeFile(contentPath, content, 'utf8');
+  await fsPromises.writeFile(contentPath, content, 'utf8');
 };
 
 export const readProjectContent = async (
@@ -47,7 +76,7 @@ export const readProjectContent = async (
   fileName: string
 ): Promise<string> => {
   const contentPath = getProjectContentPath(userId, projectId, fileName);
-  return promises.readFile(contentPath, 'utf8');
+  return fsPromises.readFile(contentPath, 'utf8');
 };
 
 export const deleteProjectContent = async (
@@ -57,26 +86,6 @@ export const deleteProjectContent = async (
 ): Promise<void> => {
   const contentPath = getProjectContentPath(userId, projectId, fileName);
   if (existsSync(contentPath)) {
-    await promises.unlink(contentPath);
+    await fsPromises.unlink(contentPath);
   }
 };
-
-// Helper function to hash user IDs
-const hashUserId = (userId: string): string => {
-  return createHash('md5').update(userId).digest('hex');
-};
-
-// Utility Functions
-export const exists = (filePath: string): boolean => existsSync(filePath);
-
-// Access Project Structure
-export const getProjectStructure = (
-  userId: string,
-  projectId: string
-): {
-  root: string;
-  content: string;
-} => ({
-  root: getProjectCacheDir(userId, projectId),
-  content: path.join(getProjectCacheDir(userId, projectId), 'content'),
-});

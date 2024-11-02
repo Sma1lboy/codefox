@@ -15,6 +15,9 @@ const ensureDir = (dirPath: string): string => {
   return dirPath;
 };
 
+// ----------- We need path traverse Protection after we decide how we read and store the file !!!!!!!!!!!!! ------------
+// -------------------------------------------------------------------------------------------------------------
+
 // Root Directory Accessor
 export const getRootDir = (): string => ensureDir(ROOT_DIR);
 
@@ -56,7 +59,7 @@ export const getIndexFilePath = (indexFileName: string): string =>
 
 // Temporary files
 export const getTempDir = (): string => {
-  const tempDir = path.join(ROOT_DIR, '.codefox', 'temp');
+  const tempDir = path.join(ROOT_DIR, 'temp');
   if (!existsSync(tempDir)) {
     mkdirSync(tempDir, { recursive: true });
   }
