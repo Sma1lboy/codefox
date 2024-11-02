@@ -7,15 +7,19 @@ import { Toaster } from 'sonner';
 import { AuthProvider } from '../AuthProvider';
 import RootLayout from '../RootLayout';
 
-export const RootProvider = ({ children }) => {
+interface ProvidersProps {
+  children: React.ReactNode;
+}
+
+export function Providers({ children }: ProvidersProps) {
   return (
     <ApolloProvider client={client}>
       <AuthProvider>
-        <ThemeProvider attribute="class" defaultTheme="dark">
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <RootLayout>{children}</RootLayout>
-          <Toaster />
+          <Toaster position="top-right" />
         </ThemeProvider>
       </AuthProvider>
     </ApolloProvider>
   );
-};
+}

@@ -1,7 +1,7 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { RootProvider } from './providers';
+import { Providers } from './providers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -10,22 +10,22 @@ export const metadata: Metadata = {
   description: 'The best dev project generator',
 };
 
-export const viewport = {
+export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  userScalable: 1,
+  userScalable: false,
 };
 
-export default function Layout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <RootProvider>{children}</RootProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
