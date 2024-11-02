@@ -72,11 +72,11 @@ export default function ChatList({
   if (messages.length === 0) {
     return (
       <div className="w-full h-full flex justify-center items-center">
-        <div className="flex flex-col gap-4 items-center">
+        <div className="flex flex-col  items-center">
           <img
-            src="/ollama.png"
+            src="/codefox.png"
             alt="AI"
-            className="h-20 w-14 object-contain dark:invert"
+            className="h-24 w-24 aspect-square object-contain dark:invert"
           />
           <p className="text-center text-lg text-muted-foreground">
             How can I help you today?
@@ -159,9 +159,7 @@ export default function ChatList({
                       <AvatarImage
                         src="/"
                         alt="user"
-                        width={6}
-                        height={6}
-                        className="object-contain"
+                        className="h-full w-full object-cover"
                       />
                       <AvatarFallback>
                         {user.username?.substring(0, 2).toUpperCase()}
@@ -172,11 +170,9 @@ export default function ChatList({
                   <div className="flex items-end gap-2">
                     <Avatar className="flex justify-start items-center">
                       <AvatarImage
-                        src="/ollama.png"
+                        src="/codefox.png"
                         alt="AI"
-                        width={6}
-                        height={6}
-                        className="object-contain dark:invert"
+                        className="h-full w-full object-contain dark:invert"
                       />
                     </Avatar>
                     <span className="bg-accent p-3 rounded-md max-w-xs sm:max-w-2xl overflow-x-auto">
@@ -191,13 +187,11 @@ export default function ChatList({
 
         {loadingSubmit && (
           <div className="flex pl-4 pb-4 gap-2 items-center">
-            <Avatar className="flex justify-start items-center">
+            <Avatar className="h-10 w-10 flex justify-start items-center">
               <AvatarImage
-                src="/ollama.png"
+                src="/codefox.png"
                 alt="AI"
-                width={6}
-                height={6}
-                className="object-contain dark:invert"
+                className="h-full w-full object-contain dark:invert"
               />
             </Avatar>
             <div className="bg-accent p-3 rounded-md max-w-xs sm:max-w-2xl overflow-x-auto">

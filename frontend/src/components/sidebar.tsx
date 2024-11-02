@@ -59,7 +59,7 @@ function Sidebar({
           <div className="flex gap-3 items-center">
             {!isCollapsed && !isMobile && (
               <Image
-                src="/ollama.png"
+                src="/codefox.png"
                 alt="AI"
                 width={28}
                 height={28}
