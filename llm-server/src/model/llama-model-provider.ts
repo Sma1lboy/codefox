@@ -8,6 +8,7 @@ import {
 } from 'node-llama-cpp';
 import { ModelProvider } from './model-provider.js';
 import { Logger } from '@nestjs/common';
+import { GenerateMessageParams } from '../type/GenerateMessage';
 
 //TODO: using protocol class
 export class LlamaModelProvider extends ModelProvider {
@@ -33,7 +34,7 @@ export class LlamaModelProvider extends ModelProvider {
   }
 
   async generateStreamingResponse(
-    content: string,
+    { model, message, role = 'user' }: GenerateMessageParams,
     res: Response,
   ): Promise<void> {
     this.logger.log('Generating streaming response with Llama...');
@@ -44,7 +45,7 @@ export class LlamaModelProvider extends ModelProvider {
     let chunkCount = 0;
     const startTime = Date.now();
     try {
-      await session.prompt(content, {
+      await session.prompt(message, {
         onTextChunk: chunk => {
           chunkCount++;
           this.logger.debug(`Sending chunk #${chunkCount}: "${chunk}"`);

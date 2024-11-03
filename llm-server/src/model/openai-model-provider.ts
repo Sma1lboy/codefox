@@ -2,6 +2,10 @@ import { Response } from 'express';
 import OpenAI from 'openai';
 import { ModelProvider } from './model-provider';
 import { Logger } from '@nestjs/common';
+import { systemPrompts } from '../prompt/systemPrompt';
+import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import { GenerateMessageParams } from '../type/GenerateMessage';
+
 export class OpenAIModelProvider extends ModelProvider {
   private readonly logger = new Logger(OpenAIModelProvider.name);
   private openai: OpenAI;
@@ -15,21 +19,31 @@ export class OpenAIModelProvider extends ModelProvider {
   }
 
   async generateStreamingResponse(
-    content: string,
+    { model, message, role = 'user' }: GenerateMessageParams,
     res: Response,
   ): Promise<void> {
     this.logger.log('Generating streaming response with OpenAI...');
     const startTime = Date.now();
+
     // Set SSE headers
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
     });
+
+    // Get the system prompt based on the model
+    const systemPrompt = systemPrompts['codefox-basic']?.systemPrompt || '';
+
+    // Prepare the messages array, including system prompt if available
+    const messages: ChatCompletionMessageParam[] = systemPrompt
+      ? [{ role: 'system', content: systemPrompt }]
+      : [{ role: role as 'user' | 'system' | 'assistant', content: message }];
+
     try {
       const stream = await this.openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: content }],
+        model,
+        messages,
         stream: true,
       });
       let chunkCount = 0;

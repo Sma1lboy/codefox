@@ -1,9 +1,10 @@
 import { Response } from 'express';
+import { GenerateMessageParams } from '../type/GenerateMessage';
 
 export abstract class ModelProvider {
   abstract initialize(): Promise<void>;
   abstract generateStreamingResponse(
-    content: string,
+    params: GenerateMessageParams,
     res: Response,
   ): Promise<void>;
 
