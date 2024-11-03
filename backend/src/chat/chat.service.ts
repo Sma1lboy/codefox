@@ -5,7 +5,11 @@ import { Message, MessageRole } from 'src/chat/message.model';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from 'src/user/user.model';
-import { NewChatInput, UpdateChatTitleInput } from 'src/chat/dto/chat.input';
+import {
+  ChatInput,
+  NewChatInput,
+  UpdateChatTitleInput,
+} from 'src/chat/dto/chat.input';
 
 type CustomAsyncIterableIterator<T> = AsyncIterator<T> & {
   [Symbol.asyncIterator](): AsyncIterableIterator<T>;
@@ -17,8 +21,12 @@ export class ChatProxyService {
 
   constructor(private httpService: HttpService) {}
 
-  streamChat(input: string): CustomAsyncIterableIterator<ChatCompletionChunk> {
-    this.logger.debug('request chat input: ' + input);
+  streamChat(
+    input: ChatInput,
+  ): CustomAsyncIterableIterator<ChatCompletionChunk> {
+    this.logger.debug(
+      `Request chat input: ${input.message} with model: ${input.model}`,
+    );
     let isDone = false;
     let responseSubscription: any;
     const chunkQueue: ChatCompletionChunk[] = [];
@@ -60,7 +68,7 @@ export class ChatProxyService {
     responseSubscription = this.httpService
       .post(
         'http://localhost:3001/chat/completion',
-        { content: input },
+        { content: input.message, model: input.model },
         { responseType: 'stream' },
       )
       .subscribe({

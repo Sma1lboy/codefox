@@ -53,7 +53,7 @@ export class ChatResolver {
         MessageRole.User,
       );
 
-      const iterator = this.chatProxyService.streamChat(input.message);
+      const iterator = this.chatProxyService.streamChat(input);
       let accumulatedContent = '';
 
       for await (const chunk of iterator) {
