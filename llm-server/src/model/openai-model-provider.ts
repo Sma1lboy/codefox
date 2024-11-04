@@ -2,6 +2,10 @@ import { Response } from 'express';
 import OpenAI from 'openai';
 import { ModelProvider } from './model-provider';
 import { Logger } from '@nestjs/common';
+import { systemPrompts } from '../prompt/systemPrompt';
+import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import { GenerateMessageParams } from '../type/GenerateMessage';
+
 export class OpenAIModelProvider extends ModelProvider {
   private readonly logger = new Logger(OpenAIModelProvider.name);
   private openai: OpenAI;
@@ -15,23 +19,34 @@ export class OpenAIModelProvider extends ModelProvider {
   }
 
   async generateStreamingResponse(
-    content: string,
+    { model, message, role = 'user' }: GenerateMessageParams,
     res: Response,
   ): Promise<void> {
     this.logger.log('Generating streaming response with OpenAI...');
     const startTime = Date.now();
+
     // Set SSE headers
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
     });
+
+    // Get the system prompt based on the model
+    const systemPrompt = systemPrompts['codefox-basic']?.systemPrompt || '';
+
+    const messages: ChatCompletionMessageParam[] = [
+      { role: 'system', content: systemPrompt },
+      { role: role as 'user' | 'system' | 'assistant', content: message },
+    ];
+
     try {
       const stream = await this.openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: content }],
+        model,
+        messages,
         stream: true,
       });
+
       let chunkCount = 0;
       for await (const chunk of stream) {
         const content = chunk.choices[0]?.delta?.content || '';
@@ -41,6 +56,7 @@ export class OpenAIModelProvider extends ModelProvider {
           res.write(`data: ${JSON.stringify(chunk)}\n\n`);
         }
       }
+
       const endTime = Date.now();
       this.logger.log(
         `Response generation completed. Total chunks: ${chunkCount}`,
@@ -59,20 +75,18 @@ export class OpenAIModelProvider extends ModelProvider {
 
   async getModelTagsResponse(res: Response): Promise<void> {
     this.logger.log('Fetching available models from OpenAI...');
-    // Set SSE headers
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
     });
+
     try {
       const startTime = Date.now();
       const models = await this.openai.models.list();
-
       const response = {
-        models: models, // Wrap the models in the required structure
+        models: models,
       };
-
       const endTime = Date.now();
       this.logger.log(
         `Model fetching completed. Total models: ${models.data.length}`,
