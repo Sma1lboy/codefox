@@ -35,10 +35,10 @@ export class OpenAIModelProvider extends ModelProvider {
     // Get the system prompt based on the model
     const systemPrompt = systemPrompts['codefox-basic']?.systemPrompt || '';
 
-    // Prepare the messages array, including system prompt if available
-    const messages: ChatCompletionMessageParam[] = systemPrompt
-      ? [{ role: 'system', content: systemPrompt }]
-      : [{ role: role as 'user' | 'system' | 'assistant', content: message }];
+    const messages: ChatCompletionMessageParam[] = [
+      { role: 'system', content: systemPrompt },
+      { role: role as 'user' | 'system' | 'assistant', content: message },
+    ];
 
     try {
       const stream = await this.openai.chat.completions.create({
@@ -46,6 +46,7 @@ export class OpenAIModelProvider extends ModelProvider {
         messages,
         stream: true,
       });
+
       let chunkCount = 0;
       for await (const chunk of stream) {
         const content = chunk.choices[0]?.delta?.content || '';
@@ -55,6 +56,7 @@ export class OpenAIModelProvider extends ModelProvider {
           res.write(`data: ${JSON.stringify(chunk)}\n\n`);
         }
       }
+
       const endTime = Date.now();
       this.logger.log(
         `Response generation completed. Total chunks: ${chunkCount}`,
@@ -73,20 +75,18 @@ export class OpenAIModelProvider extends ModelProvider {
 
   async getModelTagsResponse(res: Response): Promise<void> {
     this.logger.log('Fetching available models from OpenAI...');
-    // Set SSE headers
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
     });
+
     try {
       const startTime = Date.now();
       const models = await this.openai.models.list();
-
       const response = {
-        models: models, // Wrap the models in the required structure
+        models: models,
       };
-
       const endTime = Date.now();
       this.logger.log(
         `Model fetching completed. Total models: ${models.data.length}`,
