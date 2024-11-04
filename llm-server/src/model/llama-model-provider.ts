@@ -8,6 +8,8 @@ import {
 } from 'node-llama-cpp';
 import { ModelProvider } from './model-provider.js';
 import { Logger } from '@nestjs/common';
+import { systemPrompts } from '../prompt/systemPrompt';
+import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import { GenerateMessageParams } from '../type/GenerateMessage';
 
 //TODO: using protocol class
@@ -44,8 +46,22 @@ export class LlamaModelProvider extends ModelProvider {
     this.logger.log('LlamaChatSession created.');
     let chunkCount = 0;
     const startTime = Date.now();
+
+    // Get the system prompt based on the model
+    const systemPrompt = systemPrompts['codefox-basic']?.systemPrompt || '';
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      { role: role as 'user' | 'system' | 'assistant', content: message },
+    ];
+
+    // Convert messages array to a single formatted string for Llama
+    const formattedPrompt = messages
+      .map(({ role, content }) => `${role}: ${content}`)
+      .join('\n');
+
     try {
-      await session.prompt(message, {
+      await session.prompt(formattedPrompt, {
         onTextChunk: chunk => {
           chunkCount++;
           this.logger.debug(`Sending chunk #${chunkCount}: "${chunk}"`);
