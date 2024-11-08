@@ -1,17 +1,20 @@
+import { BuilderContext } from '../context';
 import { BuildHandlerManager } from '../hanlder-manager';
+import { BuildHandler, BuildResult } from '../types';
 
-const manager = BuildHandlerManager.getInstance();
+export class ProjectInitHandler implements BuildHandler {
+  readonly id = 'op:PROJECT::STATE:SETUP';
 
-//TODO
-manager.register('op:PROJECT::STATE:SETUP', async (context) => {
-  console.log('Setting up project...');
-  const result = {
-    projectName: 'example',
-    path: '/path/to/project',
-  };
-  context.setData('projectConfig', result);
-  return {
-    success: true,
-    data: result,
-  };
-});
+  async run(context: BuilderContext): Promise<BuildResult> {
+    console.log('Setting up project...');
+    const result = {
+      projectName: 'example',
+      path: '/path/to/project',
+    };
+    context.setData('projectConfig', result);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+}

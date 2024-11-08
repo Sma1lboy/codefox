@@ -78,7 +78,8 @@ export class BuilderContext {
 
   private async executeNode(node: BuildNode): Promise<BuildResult> {
     if (process.env.NODE_ENV === 'test') {
-      return { success: true, data: {} };
+      console.log(`[TEST] Executing node: ${node.id}`);
+      return { success: true, data: { nodeId: node.id } };
     }
 
     console.log(`Executing node: ${node.id}`);
@@ -86,6 +87,6 @@ export class BuilderContext {
     if (!handler) {
       throw new Error(`No handler found for node: ${node.id}`);
     }
-    return await handler(this);
+    return handler.run(this);
   }
 }

@@ -51,8 +51,6 @@ export interface BuildHandlerContext {
   run: (nodeId: string) => Promise<BuildResult>;
 }
 
-export type BuildHandler = (context: BuilderContext) => Promise<BuildResult>;
-
 export interface BuildHandlerRegistry {
   [key: string]: BuildHandler;
 }
@@ -73,4 +71,9 @@ export interface BuildExecutionState {
   pending: Set<string>;
   failed: Set<string>;
   waiting: Set<string>;
+}
+
+export interface BuildHandler {
+  id: string;
+  run(context: BuilderContext): Promise<BuildResult>;
 }
