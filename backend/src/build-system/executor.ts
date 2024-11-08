@@ -5,38 +5,89 @@ export class BuildSequenceExecutor {
   constructor(private context: BuilderContext) {}
 
   private async executeNode(node: BuildNode): Promise<void> {
-    if (!this.context.canExecute(node.id)) {
-      console.log(`Waiting for dependencies: ${node.requires?.join(', ')}`);
-      return;
-    }
+    try {
+      if (this.context.getState().completed.has(node.id)) {
+        return;
+      }
 
-    await this.context.run(node.id);
+      if (!this.context.canExecute(node.id)) {
+        console.log(`Waiting for dependencies: ${node.requires?.join(', ')}`);
+        await new Promise((resolve) => setTimeout(resolve, 100)); // 添加小延迟
+        return;
+      }
+
+      await this.context.run(node.id);
+    } catch (error) {
+      console.error(`Error executing node ${node.id}:`, error);
+      throw error;
+    }
   }
 
   private async executeStep(step: BuildStep): Promise<void> {
     console.log(`Executing build step: ${step.id}`);
 
     if (step.parallel) {
-      const executableNodes = step.nodes.filter((node) =>
-        this.context.canExecute(node.id),
-      );
+      let remainingNodes = [...step.nodes];
+      let lastLength = remainingNodes.length;
+      let retryCount = 0;
+      const maxRetries = 10;
 
-      await Promise.all(executableNodes.map((node) => this.executeNode(node)));
+      while (remainingNodes.length > 0 && retryCount < maxRetries) {
+        const executableNodes = remainingNodes.filter((node) =>
+          this.context.canExecute(node.id),
+        );
 
-      const remainingNodes = step.nodes.filter(
-        (node) => !executableNodes.includes(node),
-      );
+        if (executableNodes.length > 0) {
+          await Promise.all(
+            executableNodes.map((node) => this.executeNode(node)),
+          );
+
+          remainingNodes = remainingNodes.filter(
+            (node) => !this.context.getState().completed.has(node.id),
+          );
+
+          if (remainingNodes.length < lastLength) {
+            retryCount = 0;
+            lastLength = remainingNodes.length;
+          } else {
+            retryCount++;
+          }
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          retryCount++;
+        }
+      }
 
       if (remainingNodes.length > 0) {
-        await this.executeStep({
-          ...step,
-          nodes: remainingNodes,
-        });
+        throw new Error(
+          `Unable to complete all nodes in step ${step.id}. Remaining: ${remainingNodes
+            .map((n) => n.id)
+            .join(', ')}`,
+        );
       }
     } else {
-      // 串行执行
       for (const node of step.nodes) {
-        await this.executeNode(node);
+        let retryCount = 0;
+        const maxRetries = 10;
+
+        while (
+          !this.context.getState().completed.has(node.id) &&
+          retryCount < maxRetries
+        ) {
+          await this.executeNode(node);
+
+          if (!this.context.getState().completed.has(node.id)) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            retryCount++;
+          }
+        }
+
+        if (!this.context.getState().completed.has(node.id)) {
+          // TODO: change to error log
+          console.warn(
+            `Failed to execute node ${node.id} after ${maxRetries} attempts`,
+          );
+        }
       }
     }
   }
@@ -46,6 +97,20 @@ export class BuildSequenceExecutor {
 
     for (const step of sequence.steps) {
       await this.executeStep(step);
+
+      const incompletedNodes = step.nodes.filter(
+        (node) => !this.context.getState().completed.has(node.id),
+      );
+
+      if (incompletedNodes.length > 0) {
+        // TODO: change to error log
+        console.warn(
+          `Step ${step.id} failed to complete nodes: ${incompletedNodes
+            .map((n) => n.id)
+            .join(', ')}`,
+        );
+        return;
+      }
     }
 
     console.log(`Build sequence completed: ${sequence.id}`);

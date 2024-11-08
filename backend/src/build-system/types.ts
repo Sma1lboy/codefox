@@ -1,3 +1,5 @@
+import { BuilderContext } from './context';
+
 export type BuildNodeType =
   | 'PROJECT_SETUP'
   | 'ANALYSIS'
@@ -42,4 +44,33 @@ export interface BuildSequence {
   name: string;
   description?: string;
   steps: BuildStep[];
+}
+
+export interface BuildHandlerContext {
+  data: Record<string, any>;
+  run: (nodeId: string) => Promise<BuildResult>;
+}
+
+export type BuildHandler = (context: BuilderContext) => Promise<BuildResult>;
+
+export interface BuildHandlerRegistry {
+  [key: string]: BuildHandler;
+}
+export interface BuildContext {
+  data: Record<string, any>;
+  completedNodes: Set<string>;
+  pendingNodes: Set<string>;
+}
+
+export interface BuildResult {
+  success: boolean;
+  data?: any;
+  error?: Error;
+}
+
+export interface BuildExecutionState {
+  completed: Set<string>;
+  pending: Set<string>;
+  failed: Set<string>;
+  waiting: Set<string>;
 }

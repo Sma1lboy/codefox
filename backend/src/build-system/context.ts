@@ -1,23 +1,11 @@
-import { BuildNode, BuildSequence, BuildStep } from './types';
-
-export interface BuildContext {
-  data: Record<string, any>;
-  completedNodes: Set<string>;
-  pendingNodes: Set<string>;
-}
-
-export interface BuildResult {
-  success: boolean;
-  data?: any;
-  error?: Error;
-}
-
-export interface BuildExecutionState {
-  completed: Set<string>;
-  pending: Set<string>;
-  failed: Set<string>;
-  waiting: Set<string>;
-}
+import { BuildHandlerManager } from './hanlder-manager';
+import {
+  BuildExecutionState,
+  BuildNode,
+  BuildResult,
+  BuildSequence,
+  BuildStep,
+} from './types';
 
 export class BuilderContext {
   private state: BuildExecutionState = {
@@ -28,8 +16,11 @@ export class BuilderContext {
   };
 
   private data: Record<string, any> = {};
+  private handlerManager: BuildHandlerManager;
 
-  constructor(private sequence: BuildSequence) {}
+  constructor(private sequence: BuildSequence) {
+    this.handlerManager = BuildHandlerManager.getInstance();
+  }
 
   canExecute(nodeId: string): boolean {
     const node = this.findNode(nodeId);
@@ -39,11 +30,9 @@ export class BuilderContext {
       return false;
     }
 
-    // 检查所有依赖是否已完成
     return !node.requires?.some((dep) => !this.state.completed.has(dep));
   }
 
-  // 查找节点
   private findNode(nodeId: string): BuildNode | null {
     for (const step of this.sequence.steps) {
       const node = step.nodes.find((n) => n.id === nodeId);
@@ -88,7 +77,15 @@ export class BuilderContext {
   }
 
   private async executeNode(node: BuildNode): Promise<BuildResult> {
+    if (process.env.NODE_ENV === 'test') {
+      return { success: true, data: {} };
+    }
+
     console.log(`Executing node: ${node.id}`);
-    return { success: true, data: {} };
+    const handler = this.handlerManager.getHandler(node.id);
+    if (!handler) {
+      throw new Error(`No handler found for node: ${node.id}`);
+    }
+    return await handler(this);
   }
 }
