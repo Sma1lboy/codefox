@@ -16,6 +16,7 @@ export class UpdateChatTitleInput {
   title: string;
 }
 
+// TODO: using ChatInput in model-provider.ts
 @InputType('ChatInputType')
 export class ChatInput {
   @Field()
