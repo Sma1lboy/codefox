@@ -10,211 +10,27 @@ import {
   NewChatInput,
   UpdateChatTitleInput,
 } from 'src/chat/dto/chat.input';
+import { CustomAsyncIterableIterator } from 'src/common/model-provider/types';
+import { ModelProvider } from 'src/common/model-provider';
 
-type CustomAsyncIterableIterator<T> = AsyncIterator<T> & {
-  [Symbol.asyncIterator](): AsyncIterableIterator<T>;
-};
 
 @Injectable()
 export class ChatProxyService {
   private readonly logger = new Logger('ChatProxyService');
+  private models: ModelProvider;
 
-  constructor(private httpService: HttpService) {}
+  constructor(private httpService: HttpService) {
+    this.models = ModelProvider.getInstance();
+  }
 
   streamChat(
     input: ChatInput,
   ): CustomAsyncIterableIterator<ChatCompletionChunk> {
-    this.logger.debug(
-      `Request chat input: ${input.message} with model: ${input.model}`,
-    );
-    let isDone = false;
-    let responseSubscription: any;
-    const chunkQueue: ChatCompletionChunk[] = [];
-    let resolveNextChunk:
-      | ((value: IteratorResult<ChatCompletionChunk>) => void)
-      | null = null;
-
-    const iterator: CustomAsyncIterableIterator<ChatCompletionChunk> = {
-      next: () => {
-        return new Promise<IteratorResult<ChatCompletionChunk>>((resolve) => {
-          if (chunkQueue.length > 0) {
-            resolve({ done: false, value: chunkQueue.shift()! });
-          } else if (isDone) {
-            resolve({ done: true, value: undefined });
-          } else {
-            resolveNextChunk = resolve;
-          }
-        });
-      },
-      return: () => {
-        isDone = true;
-        if (responseSubscription) {
-          responseSubscription.unsubscribe();
-        }
-        return Promise.resolve({ done: true, value: undefined });
-      },
-      throw: (error) => {
-        isDone = true;
-        if (responseSubscription) {
-          responseSubscription.unsubscribe();
-        }
-        return Promise.reject(error);
-      },
-      [Symbol.asyncIterator]() {
-        return this;
-      },
-    };
-
-    responseSubscription = this.httpService
-      .post(
-        'http://localhost:3001/chat/completion',
-        { content: input.message, model: input.model },
-        { responseType: 'stream' },
-      )
-      .subscribe({
-        next: (response) => {
-          let buffer = '';
-          response.data.on('data', (chunk: Buffer) => {
-            buffer += chunk.toString();
-            let newlineIndex;
-            while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-              const line = buffer.slice(0, newlineIndex).trim();
-              buffer = buffer.slice(newlineIndex + 1);
-
-              if (line.startsWith('data: ')) {
-                const jsonStr = line.slice(6);
-                // TODO: don't remove rn
-                if (jsonStr === '[DONE]') {
-                  return;
-                }
-                // if (jsonStr === '[DONE]') {
-                //   const doneChunk: ChatCompletionChunk = {
-                //     id: 'done',
-                //     object: 'chat.completion.chunk',
-                //     created: Date.now(),
-                //     model: '',
-                //     systemFingerprint: null,
-                //     choices: [],
-                //     status: StreamStatus.DONE,
-                //   };
-
-                //   if (resolveNextChunk) {
-                //     resolveNextChunk({ done: false, value: doneChunk });
-                //     resolveNextChunk = null;
-                //   } else {
-                //     chunkQueue.push(doneChunk);
-                //   }
-                //   return;
-                // }
-                try {
-                  const parsed = JSON.parse(jsonStr);
-                  if (this.isValidChunk(parsed)) {
-                    const parsedChunk: ChatCompletionChunk = {
-                      ...parsed,
-                      status: StreamStatus.STREAMING,
-                    };
-
-                    if (resolveNextChunk) {
-                      resolveNextChunk({ done: false, value: parsedChunk });
-                      resolveNextChunk = null;
-                    } else {
-                      chunkQueue.push(parsedChunk);
-                    }
-                  } else {
-                    this.logger.warn('Invalid chunk received:', parsed);
-                  }
-                } catch (error) {
-                  this.logger.error('Error parsing chunk:', error);
-                }
-              }
-            }
-          });
-          response.data.on('end', () => {
-            this.logger.debug('Stream ended');
-            if (!isDone) {
-              const doneChunk: ChatCompletionChunk = {
-                id: 'done',
-                object: 'chat.completion.chunk',
-                created: Date.now(),
-                model: 'gpt-3.5-turbo',
-                systemFingerprint: null,
-                choices: [],
-                status: StreamStatus.DONE,
-              };
-
-              if (resolveNextChunk) {
-                resolveNextChunk({ done: false, value: doneChunk });
-                resolveNextChunk = null;
-              } else {
-                chunkQueue.push(doneChunk);
-              }
-            }
-
-            setTimeout(() => {
-              isDone = true;
-              if (resolveNextChunk) {
-                resolveNextChunk({ done: true, value: undefined });
-                resolveNextChunk = null;
-              }
-            }, 0);
-          });
-        },
-        error: (error) => {
-          this.logger.error('Error in stream:', error);
-          const doneChunk: ChatCompletionChunk = {
-            id: 'done',
-            object: 'chat.completion.chunk',
-            created: Date.now(),
-            model: 'gpt-3.5-turbo',
-            systemFingerprint: null,
-            choices: [],
-            status: StreamStatus.DONE,
-          };
-
-          if (resolveNextChunk) {
-            resolveNextChunk({ done: false, value: doneChunk });
-            setTimeout(() => {
-              isDone = true;
-              resolveNextChunk?.({ done: true, value: undefined });
-              resolveNextChunk = null;
-            }, 0);
-          } else {
-            chunkQueue.push(doneChunk);
-            setTimeout(() => {
-              isDone = true;
-            }, 0);
-          }
-        },
-      });
-
-    return iterator;
-  }
-
-  private isValidChunk(chunk: any): boolean {
-    return (
-      chunk &&
-      typeof chunk.id === 'string' &&
-      typeof chunk.object === 'string' &&
-      typeof chunk.created === 'number' &&
-      typeof chunk.model === 'string'
-    );
+    return this.models.chat(input.message, input.model, input.chatId);
   }
 
   async fetchModelTags(): Promise<any> {
-    try {
-      this.logger.debug('Requesting model tags from /tags endpoint.');
-
-      // Make a GET request to /tags
-      const response = await this.httpService
-        .get('http://localhost:3001/tags', { responseType: 'json' })
-        .toPromise();
-
-      this.logger.debug('Model tags received:', response.data);
-      return response.data;
-    } catch (error) {
-      this.logger.error('Error fetching model tags:', error);
-      throw new Error('Failed to fetch model tags');
-    }
+    return this.models.fetchModelsName();
   }
 }
 
