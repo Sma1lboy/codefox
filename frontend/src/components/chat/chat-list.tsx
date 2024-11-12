@@ -4,65 +4,52 @@ import React, { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { ChatProps } from './chat';
-import Image from 'next/image';
-import CodeDisplayBlock from '../code-display-block';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { INITIAL_QUESTIONS } from '@/utils/initial-questions';
-import { Button } from '../ui/button';
+import CodeDisplayBlock from '../code-display-block';
 import { Message } from '../types';
 import { useAuth } from '@/app/hooks/useAuth';
+import { Button } from '../ui/button';
+import { Pencil } from 'lucide-react';
 
-// Helper function to determine if a message is from the user
-const isUserMessage = (role: string) =>
-  role.toLowerCase() === 'user' || role.toLowerCase() === 'User';
+interface ChatListProps {
+  messages: Message[];
+  loadingSubmit?: boolean;
+  onMessageEdit?: (messageId: string, newContent: string) => void;
+}
 
-// Helper function to determine if a message is from the assistant/model
-const isAssistantMessage = (role: string) =>
-  role.toLowerCase() === 'assistant' ||
-  role.toLowerCase() === 'model' ||
-  role.toLowerCase() === 'Model';
+const isUserMessage = (role: string) => role.toLowerCase() === 'user';
 
 export default function ChatList({
   messages,
-  input,
-  handleInputChange,
-  handleSubmit,
-  stop,
   loadingSubmit,
-  formRef,
-  isMobile,
-}: ChatProps) {
+  onMessageEdit,
+}: ChatListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
-  const [initialQuestions, setInitialQuestions] = React.useState<Message[]>([]);
   const { user } = useAuth();
-
-  const scrollToBottom = () => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'end',
-      });
-    }
-  };
+  const [editingMessageId, setEditingMessageId] = React.useState<string | null>(
+    null
+  );
+  const [editContent, setEditContent] = React.useState('');
 
   useEffect(() => {
-    const timeoutId = setTimeout(scrollToBottom, 100);
+    const timeoutId = setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 100);
     return () => clearTimeout(timeoutId);
   }, [messages]);
 
-  const onClickQuestion = (content: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    handleInputChange({
-      target: { value: content },
-    } as React.ChangeEvent<HTMLTextAreaElement>);
+  const handleEditStart = (message: Message) => {
+    setEditingMessageId(message.id);
+    setEditContent(message.content);
+  };
 
-    requestAnimationFrame(() => {
-      formRef.current?.dispatchEvent(
-        new Event('submit', { cancelable: true, bubbles: true })
-      );
-    });
+  const handleEditSubmit = (messageId: string) => {
+    if (onMessageEdit) {
+      onMessageEdit(messageId, editContent);
+    }
+    setEditingMessageId(null);
+    setEditContent('');
   };
 
   const renderMessageContent = (content: string) => {
@@ -85,46 +72,15 @@ export default function ChatList({
   if (messages.length === 0) {
     return (
       <div className="w-full h-full flex justify-center items-center">
-        <div className="relative flex flex-col gap-4 items-center justify-center w-full h-full">
-          <div className="flex flex-col gap-4 items-center">
-            <Image
-              src="/ollama.png"
-              alt="AI"
-              width={60}
-              height={60}
-              className="h-20 w-14 object-contain dark:invert"
-            />
-            <p className="text-center text-lg text-muted-foreground">
-              How can I help you today?
-            </p>
-          </div>
-
-          <div className="absolute bottom-0 w-full px-4 sm:max-w-3xl grid gap-2 sm:grid-cols-2 sm:gap-4 text-sm">
-            {initialQuestions.map((message) => {
-              const delay = Math.random() * 0.25;
-              return (
-                <motion.div
-                  key={message.content}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  transition={{
-                    opacity: { duration: 0.1, delay },
-                    y: { type: 'spring', stiffness: 100, damping: 10, delay },
-                  }}
-                >
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="sm:text-start px-4 py-8 flex w-full justify-center sm:justify-start items-center text-sm whitespace-pre-wrap"
-                    onClick={(e) => onClickQuestion(message.content, e)}
-                  >
-                    {message.content}
-                  </Button>
-                </motion.div>
-              );
-            })}
-          </div>
+        <div className="flex flex-col  items-center">
+          <img
+            src="/codefox.svg"
+            alt="AI"
+            className="h-24 w-24 aspect-square object-contain dark:invert"
+          />
+          <p className="text-center text-lg text-muted-foreground">
+            How can I help you today?
+          </p>
         </div>
       </div>
     );
@@ -135,6 +91,8 @@ export default function ChatList({
       <div className="w-full flex flex-col overflow-x-hidden overflow-y-hidden min-h-full justify-end">
         {messages.map((message, index) => {
           const isUser = isUserMessage(message.role);
+          const isEditing = message.id === editingMessageId;
+
           return (
             <motion.div
               key={`${message.id}-${index}`}
@@ -151,23 +109,57 @@ export default function ChatList({
                 },
               }}
               className={cn(
-                'flex flex-col gap-2 p-4 whitespace-pre-wrap',
+                'flex flex-col gap-2 p-4 whitespace-pre-wrap group',
                 isUser ? 'items-end' : 'items-start'
               )}
             >
               <div className="flex gap-3 items-center">
                 {isUser ? (
                   <div className="flex items-end gap-3">
-                    <div className="flex flex-col gap-2 bg-accent p-3 rounded-md max-w-xs sm:max-w-2xl overflow-x-auto">
-                      <p className="text-end">{message.content}</p>
+                    <div className="relative flex flex-col gap-2 bg-accent p-3 rounded-md max-w-xs sm:max-w-2xl overflow-x-auto">
+                      {isEditing ? (
+                        <div className="flex flex-col gap-2">
+                          <textarea
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            className="min-h-[100px] w-full p-2 rounded border bg-background resize-none"
+                            autoFocus
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setEditingMessageId(null)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleEditSubmit(message.id)}
+                            >
+                              Save
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-end">{message.content}</p>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="absolute -left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleEditStart(message)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                     <Avatar className="flex justify-start items-center overflow-hidden">
                       <AvatarImage
                         src="/"
                         alt="user"
-                        width={6}
-                        height={6}
-                        className="object-contain"
+                        className="h-full w-full object-cover"
                       />
                       <AvatarFallback>
                         {user.username?.substring(0, 2).toUpperCase()}
@@ -178,11 +170,9 @@ export default function ChatList({
                   <div className="flex items-end gap-2">
                     <Avatar className="flex justify-start items-center">
                       <AvatarImage
-                        src="/ollama.png"
+                        src="/codefox.svg"
                         alt="AI"
-                        width={6}
-                        height={6}
-                        className="object-contain dark:invert"
+                        className="h-full w-full object-contain dark:invert"
                       />
                     </Avatar>
                     <span className="bg-accent p-3 rounded-md max-w-xs sm:max-w-2xl overflow-x-auto">
@@ -197,13 +187,11 @@ export default function ChatList({
 
         {loadingSubmit && (
           <div className="flex pl-4 pb-4 gap-2 items-center">
-            <Avatar className="flex justify-start items-center">
+            <Avatar className="h-10 w-10 flex justify-start items-center">
               <AvatarImage
-                src="/ollama.png"
+                src="/codefox.svg"
                 alt="AI"
-                width={6}
-                height={6}
-                className="object-contain dark:invert"
+                className="h-full w-full object-contain dark:invert"
               />
             </Avatar>
             <div className="bg-accent p-3 rounded-md max-w-xs sm:max-w-2xl overflow-x-auto">

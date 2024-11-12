@@ -1,8 +1,8 @@
 import React from 'react';
 import ChatBottombar from './chat-bottombar';
-import ChatList from './chat-list';
 import ChatTopbar from './chat-topbar';
 import { ChatRequestOptions, Message } from '../types';
+import ChatList from './chat-list';
 
 export interface ChatProps {
   chatId?: string;
@@ -22,7 +22,7 @@ export interface ChatProps {
   setMessages: (messages: Message[]) => void;
 }
 
-export default function Chat({
+export default function ChatContent({
   messages,
   input,
   handleInputChange,
@@ -36,27 +36,26 @@ export default function Chat({
   setInput,
   setMessages,
 }: ChatProps) {
+  // TODO(Sma1lboy): on message edit
+  // onMessageEdit?: (messageId: string, newContent: string) => void;
+  // const [editingMessageId, setEditingMessageId] = React.useState<string | null>(null);
+  // const [editContent, setEditContent] = React.useState('');
+  // const handleEditStart = (message: Message) => {
+  //   setEditingMessageId(message.id);
+  //   setEditContent(message.content);
+  // };
+  // const handleEditSubmit = (messageId: string) => {
+  //   if (onMessageEdit) {
+  //     onMessageEdit(messageId, editContent);
+  //   }
+  //   setEditingMessageId(null);
+  //   setEditContent('');
+  // };
   return (
     <div className="flex flex-col justify-between w-full max-w-3xl h-full ">
-      <ChatTopbar
-        setSelectedModel={setSelectedModel}
-        chatId={chatId}
-        messages={messages}
-        setMessages={setMessages}
-      />
+      <ChatTopbar />
 
-      <ChatList
-        setSelectedModel={setSelectedModel}
-        messages={messages}
-        input={input}
-        handleInputChange={handleInputChange}
-        handleSubmit={handleSubmit}
-        loadingSubmit={loadingSubmit}
-        stop={stop}
-        formRef={formRef}
-        isMobile={isMobile}
-        setMessages={setMessages}
-      />
+      <ChatList messages={messages} loadingSubmit={loadingSubmit} />
 
       <ChatBottombar
         setSelectedModel={setSelectedModel}

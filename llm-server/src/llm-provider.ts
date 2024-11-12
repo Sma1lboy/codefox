@@ -3,6 +3,7 @@ import { ModelProvider } from './model/model-provider';
 import { OpenAIModelProvider } from './model/openai-model-provider';
 import { LlamaModelProvider } from './model/llama-model-provider';
 import { Logger } from '@nestjs/common';
+import { GenerateMessageParams } from './type/GenerateMessage';
 
 export interface ChatMessageInput {
   content: string;
@@ -32,10 +33,10 @@ export class LLMProvider {
   }
 
   async generateStreamingResponse(
-    content: string,
+    params: GenerateMessageParams,
     res: Response,
   ): Promise<void> {
-    await this.modelProvider.generateStreamingResponse(content, res);
+    await this.modelProvider.generateStreamingResponse(params, res);
   }
 
   async getModelTags(res: Response): Promise<void> {

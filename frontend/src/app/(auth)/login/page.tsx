@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,12 @@ const LoginPage = () => {
     password: '',
   });
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -27,7 +34,6 @@ const LoginPage = () => {
     }));
   };
 
-  const router = useRouter();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -57,16 +63,21 @@ const LoginPage = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-light-background dark:bg-dark-background">
-      <div className="w-full max-w-md px-8">
+      <div
+        className={`w-full max-w-md px-8 transition-all duration-1000 ease-in-out
+          ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+      >
         <div className="space-y-2 mb-8">
-          <h1 className="text-2xl font-semibold">Sign In</h1>
+          <h1 className="text-2xl font-semibold text-light-text-primary dark:text-dark-text-primary">
+            Sign In
+          </h1>
           <p className="text-gray-500">
             Enter credentials to login to your account
           </p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 text-sm text-red-500 bg-red-50 rounded-lg">
+          <div className="mb-4 p-3 text-sm text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg">
             {error}
           </div>
         )}
@@ -83,7 +94,10 @@ const LoginPage = () => {
               value={formData.username}
               onChange={handleChange}
               required
-              className="h-12 rounded-lg border-gray-200 focus:border-gray-300 focus:ring-0"
+              className="h-12 rounded-lg border-light-border dark:border-dark-border 
+                       bg-light-surface dark:bg-dark-surface
+                       text-light-text-primary dark:text-dark-text-primary
+                       focus:outline-none focus:ring-2 focus:ring-primary-400 dark:focus:ring-primary-500 focus:border-transparent"
               placeholder="Enter your username"
               disabled={isLoading}
             />
@@ -100,7 +114,10 @@ const LoginPage = () => {
               value={formData.password}
               onChange={handleChange}
               required
-              className="h-12 rounded-lg border-gray-200 focus:border-gray-300 focus:ring-0"
+              className="h-12 rounded-lg border-light-border dark:border-dark-border 
+                       bg-light-surface dark:bg-dark-surface
+                       text-light-text-primary dark:text-dark-text-primary
+                       focus:outline-none focus:ring-2 focus:ring-primary-400 dark:focus:ring-primary-500 focus:border-transparent"
               placeholder="Enter your password"
               disabled={isLoading}
             />
@@ -108,7 +125,8 @@ const LoginPage = () => {
 
           <Button
             type="submit"
-            className="w-full h-12 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium"
+            className="w-full h-12 bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 
+                     text-white rounded-lg font-medium"
             disabled={isLoading}
           >
             {isLoading ? 'Signing In...' : 'Sign In'}

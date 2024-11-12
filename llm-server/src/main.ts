@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { ChatMessageInput, LLMProvider } from './llm-provider';
 import express, { Express, Request, Response } from 'express';
+import { GenerateMessageParams } from './type/GenerateMessage';
 
 export class App {
   private readonly logger = new Logger(App.name);
@@ -27,13 +28,22 @@ export class App {
     this.logger.log('Received chat request.');
     try {
       this.logger.debug(JSON.stringify(req.body));
-      const { content } = req.body as ChatMessageInput;
+      const { content, model } = req.body as ChatMessageInput & {
+        model: string;
+      };
+
+      const params: GenerateMessageParams = {
+        model: model || 'gpt-3.5-turbo', // Default to 'gpt-3.5-turbo' if model is not provided
+        message: content,
+        role: 'user',
+      };
+
       this.logger.debug(`Request content: "${content}"`);
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       this.logger.debug('Response headers set for streaming.');
-      await this.llmProvider.generateStreamingResponse(content, res);
+      await this.llmProvider.generateStreamingResponse(params, res);
     } catch (error) {
       this.logger.error('Error in chat endpoint:', error);
       res.status(500).json({ error: 'Internal server error' });
