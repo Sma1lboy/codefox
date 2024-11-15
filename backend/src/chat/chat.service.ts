@@ -13,7 +13,6 @@ import {
 import { CustomAsyncIterableIterator } from 'src/common/model-provider/types';
 import { ModelProvider } from 'src/common/model-provider';
 
-
 @Injectable()
 export class ChatProxyService {
   private readonly logger = new Logger('ChatProxyService');
