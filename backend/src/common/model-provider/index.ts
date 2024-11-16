@@ -51,7 +51,7 @@ export class ModelProvider {
 
   chat(
     input: ChatInput | string,
-    model?: string,
+    model: string,
     chatId?: string,
   ): CustomAsyncIterableIterator<ChatCompletionChunk> {
     const chatInput = this.normalizeChatInput(input);
