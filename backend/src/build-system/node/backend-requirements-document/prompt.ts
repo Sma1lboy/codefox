@@ -6,18 +6,22 @@ export const generateBackendOverviewPrompt = (
   framework: string,
   packages: Record<string, string>,
 ): string => {
-  return `You are a Senior Backend Architect specializing in ${language} with ${framework}. Analyze the provided Database Requirements and generate the System Overview and API Endpoints specifications for ${projectName}.
+  return `You are a Senior Backend Architect specializing in backend systems. Generate the System Overview and API Endpoints specifications based on the following inputs.
+.
 
-Database Requirements:
-${dbRequirements}
+### Inputs
+Project Name: ${projectName}
 
-Technology Stack:
+### Technology Stack
 - Language: ${language}
 - Framework: ${framework}
 - Key Packages:
 ${Object.entries(packages)
   .map(([pkg, version]) => `  - ${pkg}@${version}`)
   .join('\n')}
+
+### Database Requirements
+${dbRequirements}
 
 Generate a Backend Overview Document following these guidelines:
 
@@ -84,7 +88,7 @@ export const generateBackendImplementationPrompt = (
 ): string => {
   return `You are a Senior Backend Architect specializing in ${language} with ${framework}. Based on the provided Backend Overview, generate detailed implementation requirements for security, error handling, and other technical aspects.
 
-Backend Overview:
+## Backend Overview:
 ${backendOverview}
 
 Generate detailed implementation requirements following these sections:
