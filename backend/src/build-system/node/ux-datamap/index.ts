@@ -14,7 +14,6 @@ export class UXDatamapHandler implements BuildHandler {
       context.getData('projectName') || 'Default Project Name';
     const uxGoals = context.getData('uxGoals') || 'Default UX Goals';
 
-    // generate the UX Data Map prompt dynamically
     const prompt = prompts.generateUXDataMapPrompt(
       projectName,
       args as string,
@@ -22,16 +21,13 @@ export class UXDatamapHandler implements BuildHandler {
       'web',
     );
 
-    // Use ModelProsvider or another service to generate the document
     const uxDatamapContent = await context.model.chatSync(
       {
         content: prompt,
       },
-      'gpt-3.5-turbo',
+      'gpt-4o-mini',
     );
 
-    // Store the generated document in the context
-    context.setData('uxDatamapDocument', uxDatamapContent);
     return {
       success: true,
       data: uxDatamapContent,
