@@ -8,24 +8,26 @@ export class UXSMDHandler implements BuildHandler {
   readonly id = 'op:UXSMD::STATE:GENERATE';
   readonly logger: Logger = new Logger('UXSMDHandler');
 
-  async run(context: BuilderContext): Promise<BuildResult> {
+  async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
     this.logger.log('Generating UXSMD...');
 
     // Extract project data from the context
     const projectName =
       context.getData('projectName') || 'Default Project Name';
-    const prdDocument = context.getData('prdDocument') || 'Default prdDocument';
     const platform = context.getData('platform') || 'Default Platform';
 
     // Generate the prompt dynamically
     const prompt = prompts.generateUxsmdrompt(
       projectName,
-      prdDocument,
+      args as string,
       platform,
     );
 
     // Send the prompt to the LLM server and process the response
     const uxsmdContent = await this.generateUXSMDFromLLM(prompt);
+
+    // Store the generated document in the context
+    context.setData('uxsmdDocument', uxsmdContent);
 
     return {
       success: true,
