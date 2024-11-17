@@ -1,29 +1,25 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { ModelProvider } from 'src/common/model-provider';
+import * as fs from 'fs';
+import * as path from 'path';
 import { prompts } from './prompt';
+import { Logger } from '@nestjs/common';
 
-export class UXDatamapHandler implements BuildHandler {
-  readonly id = 'op:UX_DATAMAP::STATE:GENERATE';
-
+export class DatabaseRequirementHandler implements BuildHandler {
+  readonly id = 'op:DATABASE_REQ::STATE:GENERATE';
+  readonly logger = new Logger('DatabaseRequirementHandler');
   async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
-    console.log('Generating UX Data Map Document...');
-
-    // extract relevant data from the context
+    this.logger.log('Generating Database Requirements Document...');
     const projectName =
       context.getData('projectName') || 'Default Project Name';
-    const uxGoals = context.getData('uxGoals') || 'Default UX Goals';
 
-    // generate the UX Data Map prompt dynamically
-
-    const prompt = prompts.generateUXDataMapPrompt(
+    const prompt = prompts.generateDatabaseRequirementPrompt(
       projectName,
       args as string,
-      // TODO: change later
-      'web',
     );
-
-    const uxDatamapContent = await context.model.chatSync(
+    const model = ModelProvider.getInstance();
+    const dbRequirementsContent = await model.chatSync(
       {
         content: prompt,
       },
@@ -31,7 +27,7 @@ export class UXDatamapHandler implements BuildHandler {
     );
     return {
       success: true,
-      data: uxDatamapContent,
+      data: dbRequirementsContent,
     };
   }
 }
