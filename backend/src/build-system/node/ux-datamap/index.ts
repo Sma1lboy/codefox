@@ -12,9 +12,6 @@ export class UXDatamapHandler implements BuildHandler {
     // extract relevant data from the context
     const projectName =
       context.getData('projectName') || 'Default Project Name';
-    const uxGoals = context.getData('uxGoals') || 'Default UX Goals';
-
-    // generate the UX Data Map prompt dynamically
 
     const prompt = prompts.generateUXDataMapPrompt(
       projectName,
