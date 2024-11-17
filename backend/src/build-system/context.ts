@@ -1,11 +1,12 @@
+import { ModelProvider } from 'src/common/model-provider';
 import { BuildHandlerManager } from './hanlder-manager';
 import {
   BuildExecutionState,
   BuildNode,
   BuildResult,
   BuildSequence,
-  BuildStep,
 } from './types';
+import { Logger } from '@nestjs/common';
 
 export class BuilderContext {
   private state: BuildExecutionState = {
@@ -14,12 +15,19 @@ export class BuilderContext {
     failed: new Set(),
     waiting: new Set(),
   };
-
+  private logger;
   private data: Record<string, any> = {};
+  // Store the results of the nodes
+  private results: Map<string, BuildResult> = new Map();
   private handlerManager: BuildHandlerManager;
+  public model: ModelProvider;
 
-  constructor(private sequence: BuildSequence) {
+  constructor(
+    private sequence: BuildSequence,
+    id: string,
+  ) {
     this.handlerManager = BuildHandlerManager.getInstance();
+    new Logger(`builder-context-${id}`);
   }
 
   canExecute(nodeId: string): boolean {
@@ -41,7 +49,7 @@ export class BuilderContext {
     return null;
   }
 
-  async run(nodeId: string): Promise<BuildResult> {
+  async run(nodeId: string, args: unknown | undefined): Promise<BuildResult> {
     const node = this.findNode(nodeId);
     if (!node) {
       throw new Error(`Node not found: ${nodeId}`);
@@ -53,9 +61,13 @@ export class BuilderContext {
 
     try {
       this.state.pending.add(nodeId);
-      const result = await this.executeNode(node);
+      const result = await this.executeNode(node, args);
       this.state.completed.add(nodeId);
       this.state.pending.delete(nodeId);
+
+      // Store the result for future use
+      this.results.set(nodeId, result);
+
       return result;
     } catch (error) {
       this.state.failed.add(nodeId);
@@ -76,17 +88,24 @@ export class BuilderContext {
     return this.data[key];
   }
 
-  private async executeNode(node: BuildNode): Promise<BuildResult> {
+  getResult(nodeId: string): BuildResult | undefined {
+    return this.results.get(nodeId);
+  }
+
+  private async executeNode(
+    node: BuildNode,
+    args: unknown,
+  ): Promise<BuildResult> {
     if (process.env.NODE_ENV === 'test') {
-      console.log(`[TEST] Executing node: ${node.id}`);
+      this.logger.log(`[TEST] Executing node: ${node.id}`);
       return { success: true, data: { nodeId: node.id } };
     }
 
-    console.log(`Executing node: ${node.id}`);
+    this.logger.log(`Executing node: ${node.id}`);
     const handler = this.handlerManager.getHandler(node.id);
     if (!handler) {
       throw new Error(`No handler found for node: ${node.id}`);
     }
-    return handler.run(this);
+    return handler.run(this, args);
   }
 }

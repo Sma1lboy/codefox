@@ -1,9 +1,12 @@
+import { Logger } from '@nestjs/common';
 import { BuilderContext } from './context';
 import { BuildNode, BuildSequence, BuildStep } from './types';
+import { v4 as uuidv4 } from 'uuid';
 
 export class BuildSequenceExecutor {
   constructor(private context: BuilderContext) {}
 
+  private logger: Logger = new Logger(`BuildSequenceExecutor-${uuidv4()}`);
   private async executeNode(node: BuildNode): Promise<void> {
     try {
       if (this.context.getState().completed.has(node.id)) {
@@ -11,20 +14,31 @@ export class BuildSequenceExecutor {
       }
 
       if (!this.context.canExecute(node.id)) {
-        console.log(`Waiting for dependencies: ${node.requires?.join(', ')}`);
-        await new Promise((resolve) => setTimeout(resolve, 100)); // 添加小延迟
+        this.logger.log(
+          `Waiting for dependencies: ${node.requires?.join(', ')}`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 100));
         return;
       }
 
-      await this.context.run(node.id);
+      const dependenciesResults = node.requires?.map((depId) =>
+        this.context.getResult(depId),
+      );
+
+      this.logger.log(
+        `Executing node ${node.id} with dependencies:`,
+        dependenciesResults,
+      );
+
+      await this.context.run(node.id, dependenciesResults);
     } catch (error) {
-      console.error(`Error executing node ${node.id}:`, error);
+      this.logger.error(`Error executing node ${node.id}:`, error);
       throw error;
     }
   }
 
   private async executeStep(step: BuildStep): Promise<void> {
-    console.log(`Executing build step: ${step.id}`);
+    this.logger.log(`Executing build step: ${step.id}`);
 
     if (step.parallel) {
       let remainingNodes = [...step.nodes];
@@ -84,7 +98,7 @@ export class BuildSequenceExecutor {
 
         if (!this.context.getState().completed.has(node.id)) {
           // TODO: change to error log
-          console.warn(
+          this.logger.warn(
             `Failed to execute node ${node.id} after ${maxRetries} attempts`,
           );
         }
@@ -93,7 +107,7 @@ export class BuildSequenceExecutor {
   }
 
   async executeSequence(sequence: BuildSequence): Promise<void> {
-    console.log(`Starting build sequence: ${sequence.id}`);
+    this.logger.log(`Starting build sequence: ${sequence.id}`);
 
     for (const step of sequence.steps) {
       await this.executeStep(step);
@@ -104,7 +118,7 @@ export class BuildSequenceExecutor {
 
       if (incompletedNodes.length > 0) {
         // TODO: change to error log
-        console.warn(
+        this.logger.warn(
           `Step ${step.id} failed to complete nodes: ${incompletedNodes
             .map((n) => n.id)
             .join(', ')}`,
@@ -113,7 +127,7 @@ export class BuildSequenceExecutor {
       }
     }
 
-    console.log(`Build sequence completed: ${sequence.id}`);
-    console.log('Final state:', this.context.getState());
+    this.logger.log(`Build sequence completed: ${sequence.id}`);
+    this.logger.log('Final state:', this.context.getState());
   }
 }
