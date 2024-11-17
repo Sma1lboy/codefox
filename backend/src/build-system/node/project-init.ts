@@ -8,7 +8,9 @@ export class ProjectInitHandler implements BuildHandler {
   async run(context: BuilderContext): Promise<BuildResult> {
     console.log('Setting up project...');
     const result = {
-      projectName: 'example',
+      projectName: 'online shoping',
+      descreption: 'sell products',
+      Platform: 'Web',
       path: '/path/to/project',
     };
     context.setData('projectConfig', result);
