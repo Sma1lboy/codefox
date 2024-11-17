@@ -14,6 +14,8 @@ export class UXDatamapHandler implements BuildHandler {
       context.getData('projectName') || 'Default Project Name';
     const uxGoals = context.getData('uxGoals') || 'Default UX Goals';
 
+    // generate the UX Data Map prompt dynamically
+
     const prompt = prompts.generateUXDataMapPrompt(
       projectName,
       args as string,
@@ -27,7 +29,6 @@ export class UXDatamapHandler implements BuildHandler {
       },
       'gpt-4o-mini',
     );
-
     return {
       success: true,
       data: uxDatamapContent,
