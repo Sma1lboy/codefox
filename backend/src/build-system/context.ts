@@ -8,6 +8,11 @@ import {
 } from './types';
 import { Logger } from '@nestjs/common';
 
+export type GlobalDataKeys = 'projectName' | 'description' | 'platform';
+type ContextData = {
+  [key in GlobalDataKeys]: string;
+} & Record<string, any>;
+
 export class BuilderContext {
   private state: BuildExecutionState = {
     completed: new Set(),
@@ -80,11 +85,17 @@ export class BuilderContext {
     return { ...this.state };
   }
 
-  setData(key: string, value: any): void {
+  setData<Key extends keyof ContextData>(
+    key: Key,
+    value: ContextData[Key],
+  ): void {
     this.data[key] = value;
   }
 
-  getData(key: string): any {
+  getData<Key extends keyof ContextData>(key: Key): ContextData[Key] {
+    if (!(key in this.data)) {
+      throw new Error(`Data key "${key}" is not set or does not exist.`);
+    }
     return this.data[key];
   }
 
