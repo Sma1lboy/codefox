@@ -34,7 +34,7 @@ export class PRDHandler implements BuildHandler {
 
   private async generatePRDFromLLM(prompt: string): Promise<string> {
     const modelProvider = ModelProvider.getInstance();
-    const model = 'gpt-3.5-turbo';
+    const model = 'gpt-4o-mini';
     const prdContent = await modelProvider.chatSync({ content: prompt }, model);
     this.logger.log('Received full PRD content from LLM server.');
     return prdContent;
