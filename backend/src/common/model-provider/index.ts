@@ -49,6 +49,24 @@ export class ModelProvider {
     private readonly config: ModelProviderConfig,
   ) {}
 
+  async chatSync(
+    input: ChatInput | string,
+    model: string,
+    chatId?: string,
+  ): Promise<string> {
+    const chatStream = this.chat(input, model, chatId);
+    let content = '';
+    for await (const chunk of chatStream) {
+      if (chunk.status === StreamStatus.STREAMING) {
+        content += chunk.choices
+          .map((choice) => choice.delta?.content || '')
+          .join('');
+      }
+    }
+    this.logger.log('Aggregated content from chat stream:', content);
+    return content;
+  }
+
   chat(
     input: ChatInput | string,
     model: string,
@@ -197,19 +215,6 @@ export class ModelProvider {
         this.isDone = true;
       }, 0);
     }
-  }
-
-  async chunkSync(chatStream: AsyncIterableIterator<any>): Promise<string> {
-    let aggregatedContent = '';
-    for await (const chunk of chatStream) {
-      if (chunk.status === StreamStatus.STREAMING) {
-        aggregatedContent += chunk.choices
-          .map((choice) => choice.delta?.content || '')
-          .join('');
-      }
-    }
-    this.logger.log('Aggregated content from chat stream:', aggregatedContent);
-    return aggregatedContent;
   }
 
   private startChat(input: ChatInput, model: string, chatId?: string) {
