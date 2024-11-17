@@ -1,5 +1,6 @@
 import { ProjectInitHandler } from './node/project-init';
 import { BuildHandler } from './types';
+import { PRDHandler } from './node/product_requirements_document/prd';
 
 export class BuildHandlerManager {
   private static instance: BuildHandlerManager;
@@ -10,7 +11,10 @@ export class BuildHandlerManager {
   }
 
   private registerBuiltInHandlers() {
-    const builtInHandlers: BuildHandler[] = [new ProjectInitHandler()];
+    const builtInHandlers: BuildHandler[] = [
+      new ProjectInitHandler(),
+      new PRDHandler(),
+    ];
 
     for (const handler of builtInHandlers) {
       this.handlers.set(handler.id, handler);
