@@ -17,7 +17,7 @@ export class ConfigService{
         this.config = JSON.parse(file);
     }
 
-     get(path: string) {
+    get(path: string) {
         return _.get(this.config, path);
     }
 
