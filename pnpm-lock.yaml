@@ -101,6 +101,7 @@ importers:
         version: 0.11.0(graphql@16.9.0)
       typeorm:
         specifier: ^0.3.20
+
         version: 0.3.20(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.9.2(@swc/helpers@0.5.5))(@types/node@20.17.5)(typescript@5.6.3))
     devDependencies:
       '@eslint/eslintrc':
@@ -13553,6 +13554,7 @@ snapshots:
       string-width: 4.2.3
       strip-ansi: 6.0.1
       wide-align: 1.1.5
+
 
   gauge@4.0.4:
     dependencies:
