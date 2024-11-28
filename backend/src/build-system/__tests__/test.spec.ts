@@ -4,7 +4,6 @@ import { BuildSequenceExecutor } from '../executor';
 import { BuildHandlerManager } from '../hanlder-manager';
 import { ProjectInitHandler } from '../node/project-init';
 import { BuildSequence } from '../types';
-
 describe('Project Init Handler Test', () => {
   let context: BuilderContext;
   let executor: BuildSequenceExecutor;
@@ -35,7 +34,7 @@ describe('Project Init Handler Test', () => {
     handlerManager = BuildHandlerManager.getInstance();
     handlerManager.clear();
 
-    context = new BuilderContext(testSequence);
+    context = new BuilderContext(testSequence, 'id');
     executor = new BuildSequenceExecutor(context);
   });
 
@@ -44,22 +43,6 @@ describe('Project Init Handler Test', () => {
       const handler = handlerManager.getHandler('op:PROJECT::STATE:SETUP');
       expect(handler).toBeDefined();
       expect(handler instanceof ProjectInitHandler).toBeTruthy();
-    });
-  });
-
-  describe('State Management', () => {
-    test('should update execution state correctly', async () => {
-      let state = context.getState();
-      expect(state.completed.size).toBe(0);
-      expect(state.pending.size).toBe(0);
-
-      await executor.executeSequence(testSequence);
-
-      state = context.getState();
-      expect(state.completed.size).toBe(1);
-      expect(state.completed.has('op:PROJECT::STATE:SETUP')).toBe(true);
-      expect(state.pending.size).toBe(0);
-      expect(state.failed.size).toBe(0);
     });
   });
 

@@ -1,3 +1,4 @@
+import { ModelProvider } from 'src/common/model-provider';
 import { BuilderContext } from './context';
 
 export type BuildNodeType =
@@ -74,6 +75,14 @@ export interface BuildExecutionState {
 }
 
 export interface BuildHandler {
+  // Unique identifier for the handler
   id: string;
-  run(context: BuilderContext): Promise<BuildResult>;
+
+  /**
+   *
+   * @param context the context object for the build
+   * @param model model provider for the build
+   * @param args the request arguments
+   */
+  run(context: BuilderContext, args: unknown): Promise<BuildResult>;
 }
