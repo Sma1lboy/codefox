@@ -1,8 +1,14 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import _ from 'lodash';
-interface Config {
+interface ChatConfig {
   model: string;
+  endpoint?: string;
+  token?: string;
+  default?: boolean;
+}
+interface Config {
+   model: string;
   endpoint?: string;
   token?: string;
   default?: boolean;
@@ -33,5 +39,11 @@ export class ConfigService{
 
     private saveConfig() {
         fs.writeFileSync(this.configPath, JSON.stringify(this.config, null, 4), "utf-8");
+    }
+
+    validateConfig(){
+        if (!this.config) {
+            throw new Error("Invalid configuration: 'chats' section is missing.");
+        }
     }
 }

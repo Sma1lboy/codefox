@@ -24,6 +24,7 @@ class PipelineSingleton {
 export default async function loadAllChatsModels(progressCallback: ProgressCallback = () => {}) {
     const configService = new ConfigService();
     const chats = configService.get("chats");
+    const res = configService.validateConfig();
 
     for (const chatKey in chats) {
         if (Object.prototype.hasOwnProperty.call(chats, chatKey)) {

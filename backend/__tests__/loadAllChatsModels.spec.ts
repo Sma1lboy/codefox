@@ -18,6 +18,7 @@ jest.mock('../src/config/config.service', () => {
                 get: jest.fn().mockReturnValue({
                     chat1: { model: 'Xenova/LaMini-Flan-T5-783M', task: 'text2text-generation' },
                 }),
+                validateConfig: jest.fn(),
             };
         }),
     };
