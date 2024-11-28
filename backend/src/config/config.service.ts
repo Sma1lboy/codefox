@@ -1,9 +1,14 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import _ from 'lodash';
-
+interface Config {
+  model: string;
+  endpoint?: string;
+  token?: string;
+  default?: boolean;
+}
 export class ConfigService{
-    private config: any;
+    private config: Config;
 
     private readonly configPath: string;
 
