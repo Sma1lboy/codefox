@@ -17,7 +17,8 @@ export class FileStructureHandler implements BuildHandler {
       projectName,
       args as string,
       // TODO: change later
-      'web',
+      args as string,
+      'FrameWork Holder',
     );
 
     const fileStructureContent = await context.model.chatSync(

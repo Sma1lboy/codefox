@@ -1,8 +1,8 @@
 export const prompts = {
-  generateUXDataMapPrompt: (
+  generateFileStructurePrompt: (
     projectName: string,
     sitemapDoc: string,
-
+    DataAnalysisDoc: string,
     framework: string,
   ): string => {
     return `You are an expert frontend developer. Your task is to generate a complete folder and file structure for the src directory of a frontend project. Include all necessary files and folders to cover UI, API calls, and local state management while ensuring scalability and maintainability. 
@@ -10,6 +10,7 @@ export const prompts = {
 
          - Project name: ${projectName}
          - Sitemap Documentation: ${sitemapDoc}
+         - Data Analysis Doc ${DataAnalysisDoc}
 
     ### Instructions and Rules:
 
