@@ -101,8 +101,10 @@ importers:
         version: 0.11.0(graphql@16.9.0)
       typeorm:
         specifier: ^0.3.20
-
         version: 0.3.20(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.9.2(@swc/helpers@0.5.5))(@types/node@20.17.5)(typescript@5.6.3))
+      uuid:
+        specifier: ^10.0.0
+        version: 10.0.0
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.1.0
@@ -13555,7 +13557,6 @@ snapshots:
       strip-ansi: 6.0.1
       wide-align: 1.1.5
 
-
   gauge@4.0.4:
     dependencies:
       aproba: 2.0.0
@@ -13872,7 +13873,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.2
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.7.4(debug@4.3.7))
+      retry-axios: 2.6.0(axios@1.7.4)
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -16461,7 +16462,7 @@ snapshots:
       onetime: 7.0.0
       signal-exit: 4.1.0
 
-  retry-axios@2.6.0(axios@1.7.4(debug@4.3.7)):
+  retry-axios@2.6.0(axios@1.7.4):
     dependencies:
       axios: 1.7.4(debug@4.3.7)
 
