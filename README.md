@@ -1,11 +1,8 @@
+# CODEFOX
+![Logo](https://cdn.discordapp.com/attachments/1288794538491772968/1311894579003396176/image.png?ex=674b2d49&is=6749dbc9&hm=922397db9499ca2f7bd267a714c09f0c4e063360d30692c320617ebd12f149e8&)
+
 ![1%](https://progress-bar.xyz/1)
-
 Still on progress
-
-CodeFox
-LOGO
-![](./assets/WechatIMG1000.svg)
-
 ```mermaid
 graph TD
     subgraph Project_Generate_Layer[Project Generate Layer]
