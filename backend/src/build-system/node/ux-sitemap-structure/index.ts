@@ -3,7 +3,7 @@ import { BuilderContext } from 'src/build-system/context';
 import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 
-export class UXStructureHandler implements BuildHandler {
+export class UXSitemapStructureHandler implements BuildHandler {
   readonly id = 'op:UX_Structure::STATE:GENERATE';
 
   async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
