@@ -20,13 +20,13 @@ export type BuildSubType = {
 
 export interface BuildBase {
   id: string;
-  name: string;
+  name?: string;
   description?: string;
   requires?: string[];
 }
 
 export interface BuildNode extends BuildBase {
-  type: BuildNodeType;
+  type?: BuildNodeType;
   subType?: BuildSubType[BuildNodeType];
   config?: Record<string, any>;
 }

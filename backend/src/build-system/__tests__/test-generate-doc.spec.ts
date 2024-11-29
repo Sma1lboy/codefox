@@ -7,15 +7,16 @@ import * as path from 'path';
 
 describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
   // Generate a unique folder with a timestamp
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-'); // Format timestamp
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const logFolderPath = `./log-${timestamp}`;
-  fs.mkdirSync(logFolderPath, { recursive: true }); // Create folder
+  fs.mkdirSync(logFolderPath, { recursive: true });
 
-  // Utility function to write data to individual files
-  const writeDataToFile = (handlerName: string, data: any) => {
-    const filePath = path.join(logFolderPath, `${handlerName}.txt`);
-    const logContent = `${new Date().toISOString()}\n${JSON.stringify(data, null, 2)}\n`;
-    fs.writeFileSync(filePath, logContent, 'utf8');
+  // Utility function to extract Markdown content and write to .md files
+  const writeMarkdownToFile = (handlerName: string, data: any) => {
+    // Extract "data" field and remove surrounding Markdown code block formatting
+    const markdownContent = data?.data?.replace(/```/g, '') || '';
+    const filePath = path.join(logFolderPath, `${handlerName}.md`);
+    fs.writeFileSync(filePath, markdownContent, 'utf8');
     console.log(`Logged ${handlerName} result data to ${filePath}`);
   };
 
@@ -64,27 +65,34 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
             },
           ],
         },
+        {
+          id: 'step-4',
+          name: 'file structure generation',
+          nodes: [
+            {
+              id: 'op:FSTRUCT::STATE:GENERATE',
+              name: 'file structure generation',
+            },
+          ],
+        },
       ],
     };
 
-    // Initialize context
     const context = new BuilderContext(sequence, 'test');
 
-    // Set input data in context
+    // Set input data for context
     context.setData('projectName', 'spotify like music web');
     context.setData('description', 'user can play music');
     context.setData('platform', 'web');
 
-    // Execute sequence
     try {
       await BuildSequenceExecutor.executeSequence(sequence, context);
 
-      // Write results for each node
       sequence.steps.forEach((step) => {
         step.nodes.forEach((node) => {
           const resultData = context.getResult(node.id);
           if (resultData) {
-            writeDataToFile(node.name.replace(/ /g, '_'), resultData);
+            writeMarkdownToFile(node.name.replace(/ /g, '_'), resultData);
           }
         });
       });
@@ -102,5 +110,5 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
       );
       throw error;
     }
-  }, 60000); // Timeout extended for long-running sequence
+  }, 60000);
 });
