@@ -4,16 +4,23 @@ import { BuildNode, BuildSequence, BuildStep } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
 export class BuildSequenceExecutor {
-  constructor(private context: BuilderContext) {}
+  private static logger: Logger = new Logger(
+    `BuildSequenceExecutor-${uuidv4()}`,
+  );
 
-  private logger: Logger = new Logger(`BuildSequenceExecutor-${uuidv4()}`);
-  private async executeNode(node: BuildNode): Promise<void> {
+  /**
+   * 执行单个节点
+   */
+  static async executeNode(
+    node: BuildNode,
+    context: BuilderContext,
+  ): Promise<void> {
     try {
-      if (this.context.getState().completed.has(node.id)) {
-        return;
+      if (context.getState().completed.has(node.id)) {
+        return; // 如果节点已完成，跳过
       }
 
-      if (!this.context.canExecute(node.id)) {
+      if (!context.canExecute(node.id)) {
         this.logger.log(
           `Waiting for dependencies: ${node.requires?.join(', ')}`,
         );
@@ -22,7 +29,7 @@ export class BuildSequenceExecutor {
       }
 
       const dependenciesResults = node.requires?.map((depId) =>
-        this.context.getResult(depId),
+        context.getResult(depId),
       );
 
       this.logger.log(
@@ -30,14 +37,20 @@ export class BuildSequenceExecutor {
         dependenciesResults,
       );
 
-      await this.context.run(node.id, dependenciesResults);
+      await context.run(node.id, dependenciesResults);
     } catch (error) {
       this.logger.error(`Error executing node ${node.id}:`, error);
       throw error;
     }
   }
 
-  private async executeStep(step: BuildStep): Promise<void> {
+  /**
+   * 执行单个步骤
+   */
+  static async executeStep(
+    step: BuildStep,
+    context: BuilderContext,
+  ): Promise<void> {
     this.logger.log(`Executing build step: ${step.id}`);
 
     if (step.parallel) {
@@ -48,16 +61,16 @@ export class BuildSequenceExecutor {
 
       while (remainingNodes.length > 0 && retryCount < maxRetries) {
         const executableNodes = remainingNodes.filter((node) =>
-          this.context.canExecute(node.id),
+          context.canExecute(node.id),
         );
 
         if (executableNodes.length > 0) {
           await Promise.all(
-            executableNodes.map((node) => this.executeNode(node)),
+            executableNodes.map((node) => this.executeNode(node, context)),
           );
 
           remainingNodes = remainingNodes.filter(
-            (node) => !this.context.getState().completed.has(node.id),
+            (node) => !context.getState().completed.has(node.id),
           );
 
           if (remainingNodes.length < lastLength) {
@@ -85,19 +98,18 @@ export class BuildSequenceExecutor {
         const maxRetries = 10;
 
         while (
-          !this.context.getState().completed.has(node.id) &&
+          !context.getState().completed.has(node.id) &&
           retryCount < maxRetries
         ) {
-          await this.executeNode(node);
+          await this.executeNode(node, context);
 
-          if (!this.context.getState().completed.has(node.id)) {
+          if (!context.getState().completed.has(node.id)) {
             await new Promise((resolve) => setTimeout(resolve, 100));
             retryCount++;
           }
         }
 
-        if (!this.context.getState().completed.has(node.id)) {
-          // TODO: change to error log
+        if (!context.getState().completed.has(node.id)) {
           this.logger.warn(
             `Failed to execute node ${node.id} after ${maxRetries} attempts`,
           );
@@ -106,18 +118,23 @@ export class BuildSequenceExecutor {
     }
   }
 
-  async executeSequence(sequence: BuildSequence): Promise<void> {
+  /**
+   * 执行整个序列
+   */
+  static async executeSequence(
+    sequence: BuildSequence,
+    context: BuilderContext,
+  ): Promise<void> {
     this.logger.log(`Starting build sequence: ${sequence.id}`);
 
     for (const step of sequence.steps) {
-      await this.executeStep(step);
+      await this.executeStep(step, context);
 
       const incompletedNodes = step.nodes.filter(
-        (node) => !this.context.getState().completed.has(node.id),
+        (node) => !context.getState().completed.has(node.id),
       );
 
       if (incompletedNodes.length > 0) {
-        // TODO: change to error log
         this.logger.warn(
           `Step ${step.id} failed to complete nodes: ${incompletedNodes
             .map((n) => n.id)
@@ -128,6 +145,6 @@ export class BuildSequenceExecutor {
     }
 
     this.logger.log(`Build sequence completed: ${sequence.id}`);
-    this.logger.log('Final state:', this.context.getState());
+    this.logger.log('Final state:', context.getState());
   }
 }
