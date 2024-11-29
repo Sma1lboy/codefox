@@ -1,6 +1,6 @@
 import { ProjectInitHandler } from './node/project-init';
 import { BuildHandler } from './types';
-import { PRDHandler } from './node/product_requirements_document/prd';
+import { PRDHandler } from './node/product-requirements-document/prd';
 
 export class BuildHandlerManager {
   private static instance: BuildHandlerManager;
