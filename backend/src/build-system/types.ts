@@ -84,5 +84,5 @@ export interface BuildHandler {
    * @param model model provider for the build
    * @param args the request arguments
    */
-  run(context: BuilderContext, args: unknown): Promise<BuildResult>;
+  run(context: BuilderContext, ...args: any[]): Promise<BuildResult>;
 }

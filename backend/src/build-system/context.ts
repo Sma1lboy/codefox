@@ -32,6 +32,7 @@ export class BuilderContext {
     id: string,
   ) {
     this.handlerManager = BuildHandlerManager.getInstance();
+    this.model = ModelProvider.getInstance();
     new Logger(`builder-context-${id}`);
   }
 
@@ -92,9 +93,11 @@ export class BuilderContext {
     this.data[key] = value;
   }
 
-  getData<Key extends keyof ContextData>(key: Key): ContextData[Key] {
+  getData<Key extends keyof ContextData>(
+    key: Key,
+  ): ContextData[Key] | undefined {
     if (!(key in this.data)) {
-      throw new Error(`Data key "${key}" is not set or does not exist.`);
+      return undefined;
     }
     return this.data[key];
   }
