@@ -1,6 +1,10 @@
 import { ProjectInitHandler } from './node/project-init';
 import { BuildHandler } from './types';
 import { PRDHandler } from './node/product-requirements-document/prd';
+import { UXSitemapStructureHandler } from './node/ux-sitemap-structure';
+import { UXDatamapHandler } from './node/ux-datamap';
+import { UXSMDHandler } from './node/ux-sitemap-document/uxsmd';
+import { FileStructureHandler } from './node/frontend-file-structure';
 
 export class BuildHandlerManager {
   private static instance: BuildHandlerManager;
@@ -14,6 +18,10 @@ export class BuildHandlerManager {
     const builtInHandlers: BuildHandler[] = [
       new ProjectInitHandler(),
       new PRDHandler(),
+      new UXSitemapStructureHandler(),
+      new UXDatamapHandler(),
+      new UXSMDHandler(),
+      new FileStructureHandler(),
     ];
 
     for (const handler of builtInHandlers) {

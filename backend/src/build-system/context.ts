@@ -33,7 +33,7 @@ export class BuilderContext {
   ) {
     this.handlerManager = BuildHandlerManager.getInstance();
     this.model = ModelProvider.getInstance();
-    new Logger(`builder-context-${id}`);
+    this.logger = new Logger(`builder-context-${id}`);
   }
 
   canExecute(nodeId: string): boolean {

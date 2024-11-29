@@ -4,7 +4,8 @@ import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 
 export class FileStructureHandler implements BuildHandler {
-  readonly id = 'op:File_Structure::STATE:GENERATE';
+  
+  readonly id = 'op:FSTRUCT::STATE:GENERATE';
 
   async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
     console.log('Generating File Structure Document...');
