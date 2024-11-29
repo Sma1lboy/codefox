@@ -56,7 +56,7 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
           name: 'Generate UX Sitemap Structure',
           nodes: [
             {
-              id: 'op:UX_Structure::STATE:GENERATE',
+              id: 'op:UXSMS::STATE:GENERATE',
               name: 'UX Sitemap Structure Node',
               type: 'UX',
               subType: 'VIEWS',
