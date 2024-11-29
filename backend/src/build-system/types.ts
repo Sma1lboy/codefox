@@ -20,13 +20,13 @@ export type BuildSubType = {
 
 export interface BuildBase {
   id: string;
-  name: string;
+  name?: string;
   description?: string;
   requires?: string[];
 }
 
 export interface BuildNode extends BuildBase {
-  type: BuildNodeType;
+  type?: BuildNodeType;
   subType?: BuildSubType[BuildNodeType];
   config?: Record<string, any>;
 }
@@ -84,5 +84,5 @@ export interface BuildHandler {
    * @param model model provider for the build
    * @param args the request arguments
    */
-  run(context: BuilderContext, args: unknown): Promise<BuildResult>;
+  run(context: BuilderContext, ...args: any[]): Promise<BuildResult>;
 }

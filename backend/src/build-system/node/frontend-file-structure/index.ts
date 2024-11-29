@@ -3,25 +3,26 @@ import { BuilderContext } from 'src/build-system/context';
 import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 
-// UXSMS: UX Sitemap Structure
-export class UXSitemapStructureHandler implements BuildHandler {
-  readonly id = 'op:UXSMS::STATE:GENERATE';
+export class FileStructureHandler implements BuildHandler {
+  
+  readonly id = 'op:FSTRUCT::STATE:GENERATE';
 
   async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
-    console.log('Generating UX Structure Document...');
+    console.log('Generating File Structure Document...');
 
     // extract relevant data from the context
     const projectName =
       context.getData('projectName') || 'Default Project Name';
 
-    const prompt = prompts.generateUXDataMapPrompt(
+    const prompt = prompts.generateFileStructurePrompt(
       projectName,
       args as string,
       // TODO: change later
-      'web',
+      args as string,
+      'FrameWork Holder',
     );
 
-    const uxStructureContent = await context.model.chatSync(
+    const fileStructureContent = await context.model.chatSync(
       {
         content: prompt,
       },
@@ -29,7 +30,7 @@ export class UXSitemapStructureHandler implements BuildHandler {
     );
     return {
       success: true,
-      data: uxStructureContent,
+      data: fileStructureContent,
     };
   }
 }
