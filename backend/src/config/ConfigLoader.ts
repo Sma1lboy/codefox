@@ -1,20 +1,15 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import _ from 'lodash';
-interface ChatConfig {
-  model: string;
-  endpoint?: string;
-  token?: string;
-  default?: boolean;
-}
-interface Config {
+export interface ChatConfig {
    model: string;
   endpoint?: string;
   token?: string;
-  default?: boolean;
+    default?: boolean;
+    task?: string;
 }
-export class ConfigService{
-    private config: Config;
+export class ConfigLoader{
+    private config: ChatConfig;
 
     private readonly configPath: string;
 
@@ -28,7 +23,7 @@ export class ConfigService{
         this.config = JSON.parse(file);
     }
 
-    get(path: string) {
+    get<T>(path: string) {
         return _.get(this.config, path);
     }
 
