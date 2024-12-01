@@ -4,11 +4,11 @@ import { generateFileArchPrompt } from './prompt';
 import { Logger } from '@nestjs/common';
 
 export class FileArchGenerateHandler implements BuildHandler {
-  readonly id = 'op:File_Arch::STATE:GENERATE';
+  readonly id = 'op:FILE_ARCH::STATE:GENERATE';
   private readonly logger: Logger = new Logger('FileArchGenerateHandler');
 
   // TODO: adding page by page analysis
-  async run(context: BuilderContext, ...args: any[]): Promise<BuildResult> {
+  async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
     this.logger.log('Generating File Architecture Document...');
 
     const fileStructure = args[0] as string;
@@ -23,7 +23,13 @@ export class FileArchGenerateHandler implements BuildHandler {
       };
     }
 
-    const prompt = generateFileArchPrompt(fileStructure, dataMapStruct);
+    const prompt = generateFileArchPrompt(
+      JSON.stringify(fileStructure, null, 2),
+      JSON.stringify(dataMapStruct, null, 2),
+    );
+    this.logger.log(
+      'generateFileArchPrompt: ' + JSON.stringify(prompt, null, 2),
+    );
 
     const fileArchContent = await context.model.chatSync(
       {
