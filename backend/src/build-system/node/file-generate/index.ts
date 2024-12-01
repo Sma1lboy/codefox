@@ -56,33 +56,39 @@ export class FileGeneratorHandler {
       throw new Error('No files to generate.');
     }
 
-    const generatedFiles = new Set<string>();
-    const remainingFiles = [...files];
-    const generatedResult: Record<string, { dependsOn: string[] }> = {};
-    const visited = new Set<string>();
+    const independentFiles = files.filter(
+      (file) => file.dependencies.length === 0,
+    );
+    const dependentFiles = files.filter((file) => file.dependencies.length > 0);
 
-    while (remainingFiles.length > 0) {
+    const generatedFiles = new Set<string>();
+    const generatedResult: Record<string, { dependsOn: string[] }> = {};
+
+    // **Step 1: Generate all independent files**
+    for (const file of independentFiles) {
+      const fullPath = path.resolve(projectSrcPath, file.name);
+      this.logger.log(`Generating independent file: ${fullPath}`);
+      await this.createFile(fullPath);
+      generatedFiles.add(file.name);
+      generatedResult[file.name] = { dependsOn: file.dependencies };
+    }
+
+    // **Step 2: Iteratively resolve and generate dependent files**
+    while (dependentFiles.length > 0) {
       let generatedInThisStep = false;
 
-      for (const file of remainingFiles) {
-        if (visited.has(file.name)) {
-          this.logger.error(`Circular dependency detected: ${file.name}`);
-          continue;
-        }
-
-        visited.add(file.name);
-
+      for (const file of dependentFiles) {
         const unresolvedDeps = file.dependencies.filter(
           (dep) => !generatedFiles.has(dep),
         );
 
         if (unresolvedDeps.length === 0) {
           const fullPath = path.resolve(projectSrcPath, file.name);
-          this.logger.log(`Generating file: ${fullPath}`);
+          this.logger.log(`Generating dependent file: ${fullPath}`);
           await this.createFile(fullPath);
           generatedFiles.add(file.name);
           generatedResult[file.name] = { dependsOn: file.dependencies };
-          remainingFiles.splice(remainingFiles.indexOf(file), 1);
+          dependentFiles.splice(dependentFiles.indexOf(file), 1);
           generatedInThisStep = true;
         } else {
           this.logger.warn(
@@ -92,7 +98,7 @@ export class FileGeneratorHandler {
       }
 
       if (!generatedInThisStep) {
-        const unresolved = remainingFiles.map((file) => ({
+        const unresolved = dependentFiles.map((file) => ({
           file: file.name,
           missingDependencies: file.dependencies.filter(
             (dep) => !generatedFiles.has(dep),
