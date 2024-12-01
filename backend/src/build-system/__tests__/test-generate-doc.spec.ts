@@ -75,6 +75,26 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
             },
           ],
         },
+        {
+          id: 'step-5',
+          name: 'UX Data Map Document',
+          nodes: [
+            {
+              id: 'op:UX_DATAMAP::STATE:GENERATE',
+              name: 'UX Data Map Document node',
+            },
+          ],
+        },
+        // {
+        //   id: 'step-6',
+        //   name: 'File_Arch Document',
+        //   nodes: [
+        //     {
+        //       id: 'op:FILE_ARCH::STATE:GENERATE',
+        //       name: 'File_Arch',
+        //     },
+        //   ],
+        // },
       ],
     };
 
@@ -91,6 +111,7 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
       sequence.steps.forEach((step) => {
         step.nodes.forEach((node) => {
           const resultData = context.getResult(node.id);
+          console.log(resultData);
           if (resultData) {
             writeMarkdownToFile(node.name.replace(/ /g, '_'), resultData);
           }
