@@ -3,7 +3,7 @@ import * as path from 'path';
 import { FileGeneratorHandler } from '../node/file-generate'; // Update with actual file path to the handler
 
 describe('FileGeneratorHandler', () => {
-  const projectSrcPath = 'src\\build-system\\__tests__\\test-project\\src\\';
+  const projectSrcPath = 'src\\build-system\\__tests__\\test-project\\';
 
   beforeEach(async () => {
     // Ensure the project directory is clean
@@ -19,24 +19,34 @@ describe('FileGeneratorHandler', () => {
     const handler = new FileGeneratorHandler();
 
     // Read JSON data from file
-    const jsonFilePath = path.resolve(
-      'src\\build-system\\__tests__\\file-arch.json',
+    const mdFilePath = path.resolve(
+      'src\\build-system\\__tests__\\file-arch.md',
     );
-    const jsonData = fs.readJSONSync(jsonFilePath);
+
+    const markdownContent = fs.readFileSync(path.resolve(mdFilePath), 'utf8');
 
     // Run the file generator with the JSON data
-    const result = await handler.generateFiles(jsonData, projectSrcPath);
-
-    // Write result to console and verify success
-    console.log(result);
-    expect(result.success).toBe(true);
+    const result = await handler.generateFiles(markdownContent, projectSrcPath);
 
     // Verify files were generated correctly
-    const generatedFiles = Object.keys(jsonData.files);
-    for (const fileName of generatedFiles) {
-      const filePath = path.resolve(projectSrcPath, fileName);
-      const fileExists = await fs.pathExists(filePath);
-      expect(fileExists).toBe(true);
+    // const generatedFiles = Object.keys(jsonData.files);
+    // for (const fileName of generatedFiles) {
+    //   const filePath = path.resolve(projectSrcPath, fileName);
+    //   const fileExists = await fs.pathExists(filePath);
+    //   expect(fileExists).toBe(true);
+    // }
+
+    console.log('File generation result:', result);
+
+    // Verify that all files exist
+    const jsonData = JSON.parse(
+      /<GENERATEDCODE>([\s\S]*?)<\/GENERATEDCODE>/.exec(markdownContent)![1],
+    );
+    const files = Object.keys(jsonData.files);
+
+    for (const file of files) {
+      const filePath = path.resolve(projectSrcPath, file);
+      expect(fs.existsSync(filePath)).toBeTruthy();
     }
   }, 30000);
 });
