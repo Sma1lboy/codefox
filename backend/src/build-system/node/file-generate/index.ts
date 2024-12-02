@@ -17,6 +17,7 @@ export class FileGeneratorHandler {
     const jsonData = this.extractJsonFromMarkdown(markdownContent);
 
     this.validateJsonData(jsonData);
+    this.detectCycles(jsonData);
 
     const files = Object.entries(jsonData.files).map(([name, details]) => ({
       name,
@@ -86,6 +87,44 @@ export class FileGeneratorHandler {
       success: true,
       data: 'Files and dependencies created successfully.',
     };
+  }
+
+  /**
+   * Detect circular dependencies in the JSON data.
+   * @param jsonData The JSON data to analyze.
+   * @throws Error if a circular dependency is detected.
+   */
+  private detectCycles(jsonData: {
+    files: Record<string, { dependsOn: string[] }>;
+  }): void {
+    const graph = jsonData.files;
+    const visited = new Set<string>();
+    const currentPath = new Set<string>();
+
+    const dfs = (node: string): void => {
+      if (currentPath.has(node)) {
+        throw new Error(
+          `Circular dependency detected: ${[...currentPath, node].join(' -> ')}`,
+        );
+      }
+
+      if (!visited.has(node)) {
+        currentPath.add(node);
+        visited.add(node);
+
+        for (const dependency of graph[node]?.dependsOn || []) {
+          dfs(dependency);
+        }
+
+        currentPath.delete(node);
+      }
+    };
+
+    for (const file of Object.keys(graph)) {
+      if (!visited.has(file)) {
+        dfs(file);
+      }
+    }
   }
 
   /**
