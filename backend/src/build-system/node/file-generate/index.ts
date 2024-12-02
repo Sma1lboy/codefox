@@ -16,6 +16,8 @@ export class FileGeneratorHandler {
   ): Promise<{ success: boolean; data: string }> {
     const jsonData = this.extractJsonFromMarkdown(markdownContent);
 
+    this.validateJsonData(jsonData);
+
     const files = Object.entries(jsonData.files).map(([name, details]) => ({
       name,
       dependencies: details.dependsOn.map((dep) =>
@@ -84,6 +86,40 @@ export class FileGeneratorHandler {
       success: true,
       data: 'Files and dependencies created successfully.',
     };
+  }
+
+  /**
+   * Validate the structure and content of the JSON data.
+   * @param jsonData The JSON data to validate.
+   * @throws Error if validation fails.
+   */
+  private validateJsonData(jsonData: {
+    files: Record<string, { dependsOn: string[] }>;
+  }): void {
+    const validPathRegex = /^[a-zA-Z0-9_\-/.]+$/;
+
+    for (const [file, details] of Object.entries(jsonData.files)) {
+      // Validate the file path
+      if (!validPathRegex.test(file)) {
+        throw new Error(`Invalid file path: ${file}`);
+      }
+
+      // Validate dependencies
+      for (const dependency of details.dependsOn) {
+        if (!validPathRegex.test(dependency)) {
+          throw new Error(
+            `Invalid dependency path "${dependency}" in file "${file}".`,
+          );
+        }
+
+        // Ensure no double slashes or trailing slashes
+        if (dependency.includes('//') || dependency.endsWith('/')) {
+          throw new Error(
+            `Malformed dependency path "${dependency}" in file "${file}".`,
+          );
+        }
+      }
+    }
   }
 
   /**
