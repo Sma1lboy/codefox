@@ -2,59 +2,26 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { Logger } from '@nestjs/common';
 
-interface FileEntry {
-  name: string;
-  dependencies: string[];
-}
-
 export class FileGeneratorHandler {
   private readonly logger = new Logger('FileGeneratorHandler');
 
   /**
-   * Generate files based on JSON input and a specified project source path.
-   * @param jsonData The JSON file data containing file dependencies.
-   * @param projectSrcPath The base path where files should be generated.
+   * Generate files based on the JSON extracted from a Markdown file.
+   * @param markdownContent The Markdown content containing the JSON.
+   * @param projectSrcPath The base directory where files should be generated.
    */
   async generateFiles(
     markdownContent: string,
     projectSrcPath: string,
   ): Promise<{ success: boolean; data: string }> {
-    const resolveDependencyPath = (
-      filePath: string,
-      dependency: string,
-      projectSrcPath: string,
-    ): string => {
-      const fileDir = path.dirname(filePath); // Directory of the current file
-      let resolvedPath = path.resolve(fileDir, dependency); // Resolve relative to the file's location
-
-      // If the dependency doesn't have an extension, assume it's a folder with an index file
-      if (!path.extname(resolvedPath)) {
-        const isCSS = dependency.includes('css');
-        resolvedPath = isCSS
-          ? `${resolvedPath}/index.css`
-          : `${resolvedPath}/index.ts`;
-      }
-
-      // Ensure the resolved path is within the project source path
-      return path.relative(projectSrcPath, resolvedPath);
-    };
-
     const jsonData = this.extractJsonFromMarkdown(markdownContent);
 
     const files = Object.entries(jsonData.files).map(([name, details]) => ({
       name,
       dependencies: details.dependsOn.map((dep) =>
-        resolveDependencyPath(
-          path.resolve(projectSrcPath, name),
-          dep,
-          projectSrcPath,
-        ),
+        this.resolveDependency(name, dep),
       ),
     }));
-
-    if (!files || files.length === 0) {
-      throw new Error('No files to generate.');
-    }
 
     const independentFiles = files.filter(
       (file) => file.dependencies.length === 0,
@@ -62,18 +29,16 @@ export class FileGeneratorHandler {
     const dependentFiles = files.filter((file) => file.dependencies.length > 0);
 
     const generatedFiles = new Set<string>();
-    const generatedResult: Record<string, { dependsOn: string[] }> = {};
 
-    // **Step 1: Generate all independent files**
+    // Step 1: Generate all independent files
     for (const file of independentFiles) {
       const fullPath = path.resolve(projectSrcPath, file.name);
       this.logger.log(`Generating independent file: ${fullPath}`);
       await this.createFile(fullPath);
       generatedFiles.add(file.name);
-      generatedResult[file.name] = { dependsOn: file.dependencies };
     }
 
-    // **Step 2: Iteratively resolve and generate dependent files**
+    // Step 2: Generate dependent files, resolving dependencies iteratively
     while (dependentFiles.length > 0) {
       let generatedInThisStep = false;
 
@@ -87,12 +52,13 @@ export class FileGeneratorHandler {
           this.logger.log(`Generating dependent file: ${fullPath}`);
           await this.createFile(fullPath);
           generatedFiles.add(file.name);
-          generatedResult[file.name] = { dependsOn: file.dependencies };
           dependentFiles.splice(dependentFiles.indexOf(file), 1);
           generatedInThisStep = true;
         } else {
           this.logger.warn(
-            `Unresolved dependencies for ${file.name}: ${JSON.stringify(unresolvedDeps)}`,
+            `Unresolved dependencies for ${file.name}: ${JSON.stringify(
+              unresolvedDeps,
+            )}`,
           );
         }
       }
@@ -116,8 +82,30 @@ export class FileGeneratorHandler {
 
     return {
       success: true,
-      data: `<GENERATEDCODE>${JSON.stringify({ files: generatedResult }, null, 2)}</GENERATEDCODE>`,
+      data: 'Files and dependencies created successfully.',
     };
+  }
+
+  /**
+   * Resolve a dependency path relative to the current file.
+   * @param currentFile The current file's path.
+   * @param dependency The dependency path.
+   */
+  private resolveDependency(currentFile: string, dependency: string): string {
+    const currentDir = path.dirname(currentFile);
+
+    // Check if the dependency is a file with an extension
+    const hasExtension = path.extname(dependency).length > 0;
+
+    // If the dependency doesn't have an extension and is not CSS/JS, assume it's a TypeScript file
+    if (!hasExtension) {
+      dependency = path.join(dependency, 'index.ts');
+    }
+
+    // Resolve the dependency path relative to the current directory
+    const resolvedPath = path.join(currentDir, dependency).replace(/\\/g, '/');
+    this.logger.log(`Resolved dependency: ${resolvedPath}`);
+    return resolvedPath;
   }
 
   /**
