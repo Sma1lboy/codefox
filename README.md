@@ -1,7 +1,11 @@
 ![LOGO](./assets/logo.svg)
+
 ## CODEFOX
+
 Welcome to CODEFOX! A next generation AI sequence full stack project generator with interactive chatbot
+
 # Exciting features
+
 - **🚀 Extraordinary Modeling system** : Integrated AI model, seamless connection of all aspects of the project.
 - **💻 Automatic code generation** : Instant implementation of full stack code, fast development.
 - **💬 Secure lifecycle Records** : Use SQLite to store data locally for maximum privacy and control.
@@ -12,14 +16,13 @@ Welcome to CODEFOX! A next generation AI sequence full stack project generator w
 - **✨ Live Preview** : Makes real-time project updates with real-time rendering faster decisions.
 - **🔧 Precise code customization** : provides targeted and efficient visual tools for module adjustment.
 
-
 ---
 
 **Revolutionize development with this disruptive platform. Join now and set the new standard!**
 
-
 ![1%](https://progress-bar.xyz/1)
 Still on progress
+
 ```mermaid
 graph TD
     subgraph Project_Generate_Layer[Project Generate Layer]
