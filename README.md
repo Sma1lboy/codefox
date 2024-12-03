@@ -1,27 +1,29 @@
-![LOGO](./assets/logo.svg)
+> [!CAUTION]  
+> Still working on it, it will release soon
 
-## CODEFOX
+![LOGO](./assets/badge.svg)
 
 Welcome to CODEFOX! A next generation AI sequence full stack project generator with interactive chatbot
 
+# News
+
+🌟 Oct. 18, 2024: First line of Codefox code committed.
+
 # Exciting features
 
-- **🚀 Extraordinary Modeling system** : Integrated AI model, seamless connection of all aspects of the project.
-- **💻 Automatic code generation** : Instant implementation of full stack code, fast development.
-- **💬 Secure lifecycle Records** : Use SQLite to store data locally for maximum privacy and control.
-- **🔄 Flexible integration** : Modular output to adapt to different needs, improving scalability and productivity.
-- **📋 Document Automation** : Generate all required documents with one click for complete project lifecycle coverage.
-- **🌟 Complete project ecosystem** : Seamlessly sync files, eliminate redundancy and ensure a cohesive system.
-- **⚡ One-click deployment** : Easily deploy across environments, saving time and resources.
-- **✨ Live Preview** : Makes real-time project updates with real-time rendering faster decisions.
-- **🔧 Precise code customization** : provides targeted and efficient visual tools for module adjustment.
+💻 **Transforming Ideas into Projects**  
+🚀 **Extraordinary Modeling System**: Integrates an AI model to seamlessly connect every aspect of your project.  
+🤖 **Multi-Agent Generator**: Create and manage multiple intelligent agents to enhance project functionality.
+⚡ **One-Click Deployment**: Deploy your project effortlessly to cloud services or clone it locally with ease.  
+✨ **Live Preview**: Interact with your project while engaging in AI-powered conversations to make real-time modifications.  
+🔧 **Precise Code Customization**: Leverage targeted and efficient visual tools for precise module adjustments.
 
----
+## Support
+
+> [!WARNING]  
+> adding later
 
 **Revolutionize development with this disruptive platform. Join now and set the new standard!**
-
-![1%](https://progress-bar.xyz/1)
-Still on progress
 
 ```mermaid
 graph TD
