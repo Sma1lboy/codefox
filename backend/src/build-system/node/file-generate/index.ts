@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { Logger } from '@nestjs/common';
+import * as toposort from 'toposort';
 
 export class FileGeneratorHandler {
   private readonly logger = new Logger('FileGeneratorHandler');
@@ -15,74 +16,23 @@ export class FileGeneratorHandler {
     projectSrcPath: string,
   ): Promise<{ success: boolean; data: string }> {
     const jsonData = this.extractJsonFromMarkdown(markdownContent);
-
     this.validateJsonData(jsonData);
-    this.detectCycles(jsonData);
 
-    const files = Object.entries(jsonData.files).map(([name, details]) => ({
-      name,
-      dependencies: details.dependsOn.map((dep) =>
-        this.resolveDependency(name, dep),
-      ),
-    }));
+    // Build the dependency graph and detect cycles before any file operations
+    const { graph, nodes } = this.buildDependencyGraph(jsonData);
+    this.detectCycles(graph);
 
-    const independentFiles = files.filter(
-      (file) => file.dependencies.length === 0,
-    );
-    const dependentFiles = files.filter((file) => file.dependencies.length > 0);
+    // After validation and cycle detection, perform topological sort
+    const sortedFiles = this.getSortedFiles(graph, nodes);
 
-    const generatedFiles = new Set<string>();
-
-    // Step 1: Generate all independent files
-    for (const file of independentFiles) {
-      const fullPath = path.resolve(projectSrcPath, file.name);
-      this.logger.log(`Generating independent file: ${fullPath}`);
+    // Generate files in the correct order
+    for (const file of sortedFiles) {
+      const fullPath = path.resolve(projectSrcPath, file);
+      this.logger.log(`Generating file in dependency order: ${fullPath}`);
       await this.createFile(fullPath);
-      generatedFiles.add(file.name);
-    }
-
-    // Step 2: Generate dependent files, resolving dependencies iteratively
-    while (dependentFiles.length > 0) {
-      let generatedInThisStep = false;
-
-      for (const file of dependentFiles) {
-        const unresolvedDeps = file.dependencies.filter(
-          (dep) => !generatedFiles.has(dep),
-        );
-
-        if (unresolvedDeps.length === 0) {
-          const fullPath = path.resolve(projectSrcPath, file.name);
-          this.logger.log(`Generating dependent file: ${fullPath}`);
-          await this.createFile(fullPath);
-          generatedFiles.add(file.name);
-          dependentFiles.splice(dependentFiles.indexOf(file), 1);
-          generatedInThisStep = true;
-        } else {
-          this.logger.warn(
-            `Unresolved dependencies for ${file.name}: ${JSON.stringify(
-              unresolvedDeps,
-            )}`,
-          );
-        }
-      }
-
-      if (!generatedInThisStep) {
-        const unresolved = dependentFiles.map((file) => ({
-          file: file.name,
-          missingDependencies: file.dependencies.filter(
-            (dep) => !generatedFiles.has(dep),
-          ),
-        }));
-        this.logger.error(
-          'Unresolved dependencies:',
-          JSON.stringify(unresolved, null, 2),
-        );
-        throw new Error('Circular or unresolved dependencies detected.');
-      }
     }
 
     this.logger.log('All files generated successfully.');
-
     return {
       success: true,
       data: 'Files and dependencies created successfully.',
@@ -90,41 +40,64 @@ export class FileGeneratorHandler {
   }
 
   /**
-   * Detect circular dependencies in the JSON data.
-   * @param jsonData The JSON data to analyze.
-   * @throws Error if a circular dependency is detected.
+   * Build dependency graph from JSON data.
+   * @param jsonData The JSON data containing file dependencies.
    */
-  private detectCycles(jsonData: {
+  private buildDependencyGraph(jsonData: {
     files: Record<string, { dependsOn: string[] }>;
-  }): void {
-    const graph = jsonData.files;
-    const visited = new Set<string>();
-    const currentPath = new Set<string>();
+  }): { graph: [string, string][]; nodes: Set<string> } {
+    const graph: [string, string][] = [];
+    const nodes = new Set<string>();
 
-    const dfs = (node: string): void => {
-      if (currentPath.has(node)) {
+    Object.entries(jsonData.files).forEach(([fileName, details]) => {
+      nodes.add(fileName);
+      details.dependsOn.forEach((dep) => {
+        const resolvedDep = this.resolveDependency(fileName, dep);
+        graph.push([resolvedDep, fileName]); // [dependency, dependent]
+        nodes.add(resolvedDep);
+      });
+    });
+
+    return { graph, nodes };
+  }
+
+  /**
+   * Detect cycles in the dependency graph before any file operations.
+   * @param graph The dependency graph to check.
+   * @throws Error if a cycle is detected.
+   */
+  private detectCycles(graph: [string, string][]): void {
+    try {
+      toposort(graph);
+    } catch (error) {
+      if (error.message.includes('cycle')) {
         throw new Error(
-          `Circular dependency detected: ${[...currentPath, node].join(' -> ')}`,
+          `Circular dependency detected in the file structure: ${error.message}`,
         );
       }
-
-      if (!visited.has(node)) {
-        currentPath.add(node);
-        visited.add(node);
-
-        for (const dependency of graph[node]?.dependsOn || []) {
-          dfs(dependency);
-        }
-
-        currentPath.delete(node);
-      }
-    };
-
-    for (const file of Object.keys(graph)) {
-      if (!visited.has(file)) {
-        dfs(file);
-      }
+      throw error;
     }
+  }
+
+  /**
+   * Get topologically sorted list of files.
+   * @param graph The dependency graph.
+   * @param nodes Set of all nodes.
+   */
+  private getSortedFiles(
+    graph: [string, string][],
+    nodes: Set<string>,
+  ): string[] {
+    const sortedFiles = toposort(graph).reverse();
+
+    // Add any files that have no dependencies and weren't included in the sort
+    Array.from(nodes).forEach((node) => {
+      if (!sortedFiles.includes(node)) {
+        sortedFiles.unshift(node);
+      }
+    });
+
+    return sortedFiles;
   }
 
   /**
