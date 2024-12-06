@@ -75,28 +75,6 @@ export class VirtualDirectory {
     }
   }
 
-  printTree(): void {
-    const traverse = (
-      node: VirtualNode,
-      depth: number = 0,
-      path: string = '',
-    ) => {
-      const indent = '  '.repeat(depth);
-      const currentPath = path ? `${path}/${node.name}` : node.name;
-      console.log(
-        `${indent}${node.name} (${node.isFile ? 'File' : 'Directory'})`,
-      );
-      console.log(`${indent}Path: ${currentPath}`);
-      console.log(`${indent}Children: ${node.children.size}`);
-
-      node.children.forEach((child) => {
-        traverse(child, depth + 1, currentPath);
-      });
-    };
-
-    traverse(this.root);
-  }
-
   isValidFile(filePath: string): boolean {
     const node = this.findNode(filePath);
     return node?.isFile ?? false;
@@ -111,9 +89,14 @@ export class VirtualDirectory {
     const normalizedPath = this.normalizePath(inputPath);
     const parts = normalizedPath.split('/').filter(Boolean);
 
+    // Require src prefix
+    if (parts[0] !== 'src') {
+      return null;
+    }
+
     let current = this.root;
-    for (const part of parts) {
-      const next = current.children.get(part);
+    for (let i = 1; i < parts.length; i++) {
+      const next = current.children.get(parts[i]);
       if (!next) return null;
       current = next;
     }
@@ -121,12 +104,8 @@ export class VirtualDirectory {
   }
 
   private normalizePath(inputPath: string): string {
-    const withoutSrc = inputPath.startsWith('src/')
-      ? inputPath.slice(4)
-      : inputPath;
-    return path.normalize(withoutSrc).replace(/\\/g, '/').replace(/\/$/, '');
+    return path.normalize(inputPath).replace(/\\/g, '/').replace(/\/$/, '');
   }
-
   resolveRelativePath(fromFile: string, toPath: string): string {
     const fromDir = path.dirname(fromFile);
     const resolvedPath = path.join(fromDir, toPath).replace(/\\/g, '/');
