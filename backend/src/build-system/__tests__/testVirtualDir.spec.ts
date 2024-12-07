@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { FileGeneratorHandler } from '../node/file-generate';
-import { VirtualDirectory } from '../node/file-generate/Virtual-Directory';
+import { VirtualDirectory } from '../node/file-generate/virtualDirectory';
 
 describe('FileGeneratorHandler and VirtualDirectory', () => {
   const structMdFilePath = path.resolve(
@@ -53,13 +53,13 @@ describe('FileGeneratorHandler and VirtualDirectory', () => {
       expect(virtualDir.isValidDirectory('nonexistent')).toBeFalsy();
     });
 
-    // it('should resolve relative paths correctly', () => {
-    //   const resolved = virtualDir.resolveRelativePath(
-    //     'components/common/Button/index.tsx',
-    //     '../Input/index.tsx',
-    //   );
-    //   expect(virtualDir.isValidFile(resolved)).toBeTruthy();
-    //   expect(resolved).toBe('components/common/Input/index.tsx');
-    // });
+    it('should resolve relative paths correctly', () => {
+      const resolved = virtualDir.resolveRelativePath(
+        'src/components/common/Button/index.tsx',
+        '../Input/index.tsx',
+      );
+      expect(virtualDir.isValidFile(resolved)).toBeTruthy();
+      expect(resolved).toBe('src/components/common/Input/index.tsx');
+    });
   });
 });
