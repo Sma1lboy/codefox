@@ -2,9 +2,15 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { Logger } from '@nestjs/common';
 import * as toposort from 'toposort';
+import { VirtualDirectory } from './virtual-directory';
 
 export class FileGeneratorHandler {
   private readonly logger = new Logger('FileGeneratorHandler');
+  private virtualDir: VirtualDirectory;
+
+  constructor(structureMarkdown: string) {
+    this.virtualDir = new VirtualDirectory(structureMarkdown);
+  }
 
   /**
    * Generate files based on the JSON extracted from a Markdown file.
@@ -21,6 +27,9 @@ export class FileGeneratorHandler {
     // Build the dependency graph and detect cycles before any file operations
     const { graph, nodes } = this.buildDependencyGraph(jsonData);
     this.detectCycles(graph);
+
+    // Add virtual directory validation
+    this.validateAgainstVirtualDirectory(nodes);
 
     // After validation and cycle detection, perform topological sort
     const sortedFiles = this.getSortedFiles(graph, nodes);
@@ -174,6 +183,27 @@ export class FileGeneratorHandler {
       return JSON.parse(jsonMatch[1]);
     } catch (error) {
       throw new Error('Invalid JSON format in the Markdown content.');
+    }
+  }
+
+  /**
+   * Validate that all files and dependencies exist in the virtual directory structure
+   * @param nodes Set of all files and dependencies
+   * @throws Error if any file or dependency is not found in the virtual directory
+   */
+  private validateAgainstVirtualDirectory(nodes: Set<string>): void {
+    const invalidFiles: string[] = [];
+
+    nodes.forEach((filePath) => {
+      if (!this.virtualDir.isValidFile(filePath)) {
+        invalidFiles.push(filePath);
+      }
+    });
+
+    if (invalidFiles.length > 0) {
+      throw new Error(
+        `The following files do not exist in the project structure:\n${invalidFiles.join('\n')}`,
+      );
     }
   }
 
