@@ -6,6 +6,12 @@ interface VirtualNode {
   children: Map<string, VirtualNode>;
 }
 
+interface FileStructureNode {
+  type: 'file' | 'directory';
+  name: string;
+  children?: FileStructureNode[];
+}
+
 export class VirtualDirectory {
   private root: VirtualNode;
 
