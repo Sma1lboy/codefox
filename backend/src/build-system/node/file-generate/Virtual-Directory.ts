@@ -9,68 +9,43 @@ interface VirtualNode {
 export class VirtualDirectory {
   private root: VirtualNode;
 
-  constructor(structureMarkdown: string) {
+  constructor(jsonStructure: string) {
     this.root = {
       name: 'src',
       isFile: false,
       children: new Map(),
     };
-    this.parseMarkdownStructure(structureMarkdown);
+    this.parseJsonStructure(jsonStructure);
   }
 
-  private parseMarkdownStructure(markdownContent: string): void {
-    const lines = markdownContent.split('\n');
-    const currentPath: VirtualNode[] = [this.root];
-    const lastItemAtLevel: { [level: number]: boolean } = {};
+  private cleanJsonContent(content: string): string {
+    const jsonStart = content.indexOf('{');
+    return content.slice(jsonStart);
+  }
 
-    for (let line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('FolderStructure')) continue;
+  private parseJsonStructure(jsonContent: string): void {
+    try {
+      const cleanedJson = this.cleanJsonContent(jsonContent);
+      const structure = JSON.parse(cleanedJson);
+      this.buildTree(structure, this.root);
+    } catch (error) {
+      console.error('Failed to parse JSON structure:', error);
+    }
+  }
 
-      line = line.split('#')[0].trim();
-      if (!line) continue;
+  private buildTree(node: FileStructureNode, virtualNode: VirtualNode): void {
+    if (node.children) {
+      for (const child of node.children) {
+        const newNode: VirtualNode = {
+          name: child.name,
+          isFile: child.type === 'file',
+          children: new Map(),
+        };
+        virtualNode.children.set(child.name, newNode);
 
-      const match = line.match(/^([\s│]*)([├└])──\s*(.+)$/);
-      if (!match) continue;
-
-      const prefix = match[1];
-      const isLastItem = match[2] === '└';
-      const afterBranch = match[3].trim();
-
-      if (!afterBranch || afterBranch === 'src/') continue;
-
-      // Count vertical bars, accounting for spaces where last items were
-      const level = prefix.split('').reduce((count, char, index) => {
-        if (
-          char === '│' ||
-          (char === ' ' && lastItemAtLevel[Math.floor(index / 4)])
-        ) {
-          return count + (index % 4 === 0 ? 1 : 0);
+        if (child.type === 'directory' && child.children) {
+          this.buildTree(child, newNode);
         }
-        return count;
-      }, 0);
-
-      // Update last item tracking
-      lastItemAtLevel[level] = isLastItem;
-
-      const cleanName = afterBranch.replace(/\/$/, '');
-      const isFile = path.extname(cleanName).length > 0;
-
-      while (currentPath.length > level + 1) {
-        currentPath.pop();
-      }
-
-      const newNode: VirtualNode = {
-        name: cleanName,
-        isFile,
-        children: new Map(),
-      };
-
-      const parent = currentPath[currentPath.length - 1];
-      parent.children.set(cleanName, newNode);
-
-      if (!isFile) {
-        currentPath.push(newNode);
       }
     }
   }
@@ -89,7 +64,6 @@ export class VirtualDirectory {
     const normalizedPath = this.normalizePath(inputPath);
     const parts = normalizedPath.split('/').filter(Boolean);
 
-    // Require src prefix
     if (parts[0] !== 'src') {
       return null;
     }
@@ -106,6 +80,7 @@ export class VirtualDirectory {
   private normalizePath(inputPath: string): string {
     return path.normalize(inputPath).replace(/\\/g, '/').replace(/\/$/, '');
   }
+
   resolveRelativePath(fromFile: string, toPath: string): string {
     const fromDir = path.dirname(fromFile);
     const resolvedPath = path.join(fromDir, toPath).replace(/\\/g, '/');
@@ -119,7 +94,7 @@ export class VirtualDirectory {
       for (const [name, child] of node.children) {
         const currentPath = parentPath ? `${parentPath}/${name}` : name;
         if (child.isFile) {
-          files.push(`src/${currentPath}`); // Prepend 'src/' to match the full path
+          files.push(`src/${currentPath}`);
         }
         traverse(child, currentPath);
       }
