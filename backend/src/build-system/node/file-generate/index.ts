@@ -3,6 +3,8 @@ import * as path from 'path';
 import { Logger } from '@nestjs/common';
 import * as toposort from 'toposort';
 import { VirtualDirectory } from './virtual-directory';
+import { BuilderContext } from 'src/build-system/context';
+import { BuildHandler, BuildResult } from 'src/build-system/types';
 
 export class FileGeneratorHandler {
   private readonly logger = new Logger('FileGeneratorHandler');
@@ -10,6 +12,13 @@ export class FileGeneratorHandler {
 
   constructor(structureMarkdown: string) {
     this.virtualDir = new VirtualDirectory(structureMarkdown);
+  }
+
+  async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
+    return {
+      success: true,
+      data: null,
+    };
   }
 
   /**
@@ -21,6 +30,7 @@ export class FileGeneratorHandler {
     markdownContent: string,
     projectSrcPath: string,
   ): Promise<{ success: boolean; data: string }> {
+    // add test for validate
     const jsonData = this.extractJsonFromMarkdown(markdownContent);
     this.validateJsonData(jsonData);
 
@@ -38,6 +48,7 @@ export class FileGeneratorHandler {
     for (const file of sortedFiles) {
       const fullPath = path.resolve(projectSrcPath, file);
       this.logger.log(`Generating file in dependency order: ${fullPath}`);
+      // to do
       await this.createFile(fullPath);
     }
 
