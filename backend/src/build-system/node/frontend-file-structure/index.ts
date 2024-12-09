@@ -9,7 +9,7 @@ export class FileStructureHandler implements BuildHandler {
   private readonly logger: Logger = new Logger('FileStructureHandler');
 
   async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
-    console.log('Generating File Structure Document...');
+    this.logger.log('Generating File Structure Document...');
 
     // extract relevant data from the context
     const projectName =
@@ -38,9 +38,21 @@ export class FileStructureHandler implements BuildHandler {
       },
       'gpt-4o-mini',
     );
+
+    this.logger.log('For fileStructureContent debug: ' + fileStructureContent);
+
+    const ToJsonPrompt = prompts.convertTreeToJsonPrompt(fileStructureContent);
+
+    const fileStructureJsonContent = await context.model.chatSync(
+      {
+        content: ToJsonPrompt,
+      },
+      'gpt-4o-mini',
+    );
+
     return {
       success: true,
-      data: fileStructureContent,
+      data: fileStructureJsonContent,
     };
   }
 }
