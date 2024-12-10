@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from 'react';
 
 interface SpeechRecognitionOptions {
   interimResults?: boolean;
@@ -8,12 +8,12 @@ interface SpeechRecognitionOptions {
 
 const useSpeechToText = (options: SpeechRecognitionOptions = {}) => {
   const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState("");
+  const [transcript, setTranscript] = useState('');
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
-    if (!("webkitSpeechRecognition" in window)) {
-      console.error("Web Speech API is not supported");
+    if (!('webkitSpeechRecognition' in window)) {
+      console.error('Web Speech API is not supported');
       return;
     }
 
@@ -21,19 +21,19 @@ const useSpeechToText = (options: SpeechRecognitionOptions = {}) => {
     recognitionRef.current = recognition;
 
     recognition.interimResults = options.interimResults || true;
-    recognition.lang = options.lang || "en-US";
+    recognition.lang = options.lang || 'en-US';
     recognition.continuous = options.continuous || false;
 
-    if ("webkitSpeechGrammarList" in window) {
+    if ('webkitSpeechGrammarList' in window) {
       const grammar =
-        "#JSGF V1.0; grammar punctuation; public <punc> = . | , | ! | ; | : ;";
+        '#JSGF V1.0; grammar punctuation; public <punc> = . | , | ! | ; | : ;';
       const speechRecognitionList = new window.webkitSpeechGrammarList();
       speechRecognitionList.addFromString(grammar, 1);
       recognition.grammars = speechRecognitionList;
     }
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let text = "";
+      let text = '';
 
       for (let i = 0; i < event.results.length; i++) {
         text += event.results[i][0].transcript;
@@ -49,7 +49,7 @@ const useSpeechToText = (options: SpeechRecognitionOptions = {}) => {
 
     recognition.onend = () => {
       setIsListening(false);
-      setTranscript("");
+      setTranscript('');
     };
 
     return () => {

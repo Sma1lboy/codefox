@@ -1,2 +1,18 @@
+# Dependencies
 node_modules/
+*/**/node_modules/
+
+# Turbo
 .turbo/
+*/**/.turbo/
+
+# Build outputs
+dist/
+*/**/dist/
+
+# Models
+models/
+*/**/models/
+
+*/**/database.sqlite
+./backend/src/database.sqlite

@@ -1,0 +1,173 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Chat {
+  createdAt: Date!
+  id: ID!
+  isActive: Boolean!
+  isDeleted: Boolean!
+  messages: [Message!]
+  title: String
+  updatedAt: Date!
+  user: User!
+}
+
+type ChatCompletionChoiceType {
+  delta: ChatCompletionDeltaType!
+  finishReason: String
+  index: Float!
+}
+
+type ChatCompletionChunkType {
+  choices: [ChatCompletionChoiceType!]!
+  created: Float!
+  id: String!
+  model: String!
+  object: String!
+  status: StreamStatus!
+  systemFingerprint: String
+}
+
+type ChatCompletionDeltaType {
+  content: String
+}
+
+input ChatInputType {
+  chatId: String!
+  message: String!
+  model: String!
+}
+
+input CheckTokenInput {
+  token: String!
+}
+
+"""Date custom scalar type"""
+scalar Date
+
+type LoginResponse {
+  accessToken: String!
+}
+
+input LoginUserInput {
+  password: String!
+  username: String!
+}
+
+type Menu {
+  createdAt: Date!
+  id: ID!
+  isActive: Boolean!
+  isDeleted: Boolean!
+  name: String!
+  path: String!
+  permission: String!
+  updatedAt: Date!
+}
+
+type Message {
+  content: String!
+  createdAt: Date!
+  id: ID!
+  isActive: Boolean!
+  isDeleted: Boolean!
+  modelId: String
+  role: Role!
+  updatedAt: Date!
+}
+
+type Mutation {
+  clearChatHistory(chatId: String!): Boolean!
+  createChat(newChatInput: NewChatInput!): Chat!
+  deleteChat(chatId: String!): Boolean!
+  deleteProject(projectId: String!): Boolean!
+  login(input: LoginUserInput!): LoginResponse!
+  registerUser(input: RegisterUserInput!): User!
+  removePackageFromProject(packageId: String!, projectId: String!): Boolean!
+  triggerChatStream(input: ChatInputType!): Boolean!
+  updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
+  updateProjectPath(newPath: String!, projectId: String!): Boolean!
+  upsertProject(upsertProjectInput: UpsertProjectInput!): Project!
+}
+
+input NewChatInput {
+  title: String
+}
+
+type Project {
+  createdAt: Date!
+  id: ID!
+  isActive: Boolean!
+  isDeleted: Boolean!
+  path: String!
+  projectName: String!
+  projectPackages: [ProjectPackages!]
+  updatedAt: Date!
+  userId: ID!
+}
+
+type ProjectPackages {
+  content: String!
+  createdAt: Date!
+  id: ID!
+  isActive: Boolean!
+  isDeleted: Boolean!
+  project_id: ID!
+  updatedAt: Date!
+}
+
+type Query {
+  checkToken(input: CheckTokenInput!): Boolean!
+  getAvailableModelTags: [String!]
+  getChatDetails(chatId: String!): Chat
+  getChatHistory(chatId: String!): [Message!]!
+  getHello: String!
+  getMessageDetail(messageId: String!): Message
+  getProjectDetails(projectId: String!): Project!
+  getUserChats: [Chat!]
+  getUserProjects: [Project!]!
+  logout: Boolean!
+  me: User!
+}
+
+input RegisterUserInput {
+  email: String!
+  password: String!
+  username: String!
+}
+
+enum Role {
+  Model
+  User
+}
+
+enum StreamStatus {
+  DONE
+  STREAMING
+}
+
+type Subscription {
+  chatStream(input: ChatInputType!): ChatCompletionChunkType
+}
+
+input UpdateChatTitleInput {
+  chatId: String!
+  title: String
+}
+
+input UpsertProjectInput {
+  projectId: ID
+  projectName: String!
+  projectPackages: [String!]
+}
+
+type User {
+  chats: [Chat!]!
+  createdAt: Date!
+  email: String!
+  isActive: Boolean!
+  isDeleted: Boolean!
+  updatedAt: Date!
+  username: String!
+}

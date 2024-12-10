@@ -1,16 +1,33 @@
-import {
-  ConflictException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { RegisterUserInput } from './dto/register-user.input';
+import { Injectable } from '@nestjs/common';
 import { User } from './user.model';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { compare, hash } from 'bcrypt';
-import { JwtService } from '@nestjs/jwt';
-import { LoginUserInput } from './dto/lgoin-user.input';
-import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
-export class UserService {}
+export class UserService {
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+  ) {}
+
+  // Method to get all chats of a user
+  async getUserChats(userId: string): Promise<User | null> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId, isDeleted: false },
+      relations: ['chats'], // Load 'chats' relation, even though it's lazy
+    });
+
+    if (user) {
+      // Resolve the lazy-loaded 'chats' relation and filter out soft-deleted chats
+      const chats = await user.chats;
+      user.chats = chats.filter((chat) => !chat.isDeleted);
+    }
+
+    return user;
+  }
+  async getUser(id: string): Promise<User> | null {
+    return await this.userRepository.findOneBy({
+      id,
+    });
+  }
+}

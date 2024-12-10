@@ -13,14 +13,14 @@ import { ProjectPackages } from './project-packages.model';
 
 @Entity()
 @ObjectType()
-export class Projects extends SystemBaseModel {
+export class Project extends SystemBaseModel {
   @Field(() => ID)
   @PrimaryGeneratedColumn()
   id: string;
 
   @Field()
   @Column()
-  project_name: string;
+  projectName: string;
 
   @Field()
   @Column()
@@ -28,13 +28,17 @@ export class Projects extends SystemBaseModel {
 
   @Field(() => ID)
   @Column()
-  user_id: string;
+  userId: number;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user: User;
-  
+
   @Field(() => [ProjectPackages], { nullable: true })
-  @OneToMany(() => ProjectPackages, (projectPackage) => projectPackage.project, { cascade: true })
+  @OneToMany(
+    () => ProjectPackages,
+    (projectPackage) => projectPackage.project,
+    { cascade: true },
+  )
   projectPackages: ProjectPackages[];
 }

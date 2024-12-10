@@ -1,10 +1,8 @@
-import React from "react";
-import ChatTopbar from "./chat-topbar";
-import ChatList from "./chat-list";
-import ChatBottombar from "./chat-bottombar";
-import { Message, useChat } from "ai/react";
-import { ChatRequestOptions } from "ai";
-import { v4 as uuidv4 } from "uuid";
+import React from 'react';
+import ChatBottombar from './chat-bottombar';
+import ChatTopbar from './chat-topbar';
+import { ChatRequestOptions, Message } from '../types';
+import ChatList from './chat-list';
 
 export interface ChatProps {
   chatId?: string;
@@ -16,9 +14,7 @@ export interface ChatProps {
     e: React.FormEvent<HTMLFormElement>,
     chatRequestOptions?: ChatRequestOptions
   ) => void;
-  isLoading: boolean;
   loadingSubmit?: boolean;
-  error: undefined | Error;
   stop: () => void;
   formRef: React.RefObject<HTMLFormElement>;
   isMobile?: boolean;
@@ -26,13 +22,11 @@ export interface ChatProps {
   setMessages: (messages: Message[]) => void;
 }
 
-export default function Chat({
+export default function ChatContent({
   messages,
   input,
   handleInputChange,
   handleSubmit,
-  isLoading,
-  error,
   stop,
   setSelectedModel,
   chatId,
@@ -40,32 +34,28 @@ export default function Chat({
   formRef,
   isMobile,
   setInput,
-  setMessages
+  setMessages,
 }: ChatProps) {
+  // TODO(Sma1lboy): on message edit
+  // onMessageEdit?: (messageId: string, newContent: string) => void;
+  // const [editingMessageId, setEditingMessageId] = React.useState<string | null>(null);
+  // const [editContent, setEditContent] = React.useState('');
+  // const handleEditStart = (message: Message) => {
+  //   setEditingMessageId(message.id);
+  //   setEditContent(message.content);
+  // };
+  // const handleEditSubmit = (messageId: string) => {
+  //   if (onMessageEdit) {
+  //     onMessageEdit(messageId, editContent);
+  //   }
+  //   setEditingMessageId(null);
+  //   setEditContent('');
+  // };
   return (
     <div className="flex flex-col justify-between w-full max-w-3xl h-full ">
-      <ChatTopbar
-        setSelectedModel={setSelectedModel}
-        isLoading={isLoading}
-        chatId={chatId}
-        messages={messages}
-        setMessages={setMessages}
-      />
+      <ChatTopbar />
 
-      <ChatList
-        setSelectedModel={setSelectedModel}
-        messages={messages}
-        input={input}
-        handleInputChange={handleInputChange}
-        handleSubmit={handleSubmit}
-        isLoading={isLoading}
-        loadingSubmit={loadingSubmit}
-        error={error}
-        stop={stop}
-        formRef={formRef}
-        isMobile={isMobile}
-        setMessages={setMessages}
-      />
+      <ChatList messages={messages} loadingSubmit={loadingSubmit} />
 
       <ChatBottombar
         setSelectedModel={setSelectedModel}
@@ -73,8 +63,6 @@ export default function Chat({
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={handleSubmit}
-        isLoading={isLoading}
-        error={error}
         stop={stop}
         formRef={formRef}
         setInput={setInput}

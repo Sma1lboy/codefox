@@ -7,7 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Projects } from './project.model';
+import { Project } from './project.model';
 
 @Entity()
 @ObjectType()
@@ -24,7 +24,7 @@ export class ProjectPackages extends SystemBaseModel {
   @Column('text')
   content: string;
 
-  @ManyToOne(() => Projects, (project) => project.projectPackages)
+  @ManyToOne(() => Project, (project) => project.projectPackages)
   @JoinColumn({ name: 'project_id' })
-  project: Projects;
+  project: Project;
 }
