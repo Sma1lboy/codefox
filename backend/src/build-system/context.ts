@@ -7,7 +7,7 @@ import {
   BuildSequence,
 } from './types';
 import { Logger } from '@nestjs/common';
-import { VirtualDirectory } from './node/file-generate/virtual-directory';
+import { VirtualDirectory } from './virtual-dir';
 
 export type GlobalDataKeys = 'projectName' | 'description' | 'platform';
 type ContextData = {
@@ -74,8 +74,7 @@ export class BuilderContext {
     if (!node) {
       throw new Error(`Node not found: ${nodeId}`);
     }
-    console.log('canExecute id: ' + node.name);
-    console.log('canExecute: ' + this.canExecute(nodeId));
+
     if (!this.canExecute(nodeId)) {
       throw new Error(`Dependencies not met for node: ${nodeId}`);
     }
