@@ -42,7 +42,7 @@ export class ModelDownloader {
     task: string,
     model: string,
   ): Promise<any> {
-    let pipelineInstance = await pipeline(task as PipelineType, model);
+    const pipelineInstance = await pipeline(task as PipelineType, model);
     console.log(pipelineInstance);
     return pipelineInstance;
   }
