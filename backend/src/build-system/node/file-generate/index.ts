@@ -10,14 +10,20 @@ export class FileGeneratorHandler {
   private readonly logger = new Logger('FileGeneratorHandler');
   private virtualDir: VirtualDirectory;
 
-  constructor(structureMarkdown: string) {
+  constructor() {
     this.virtualDir = new VirtualDirectory();
   }
 
   async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
+    const fileArch = args[0] as string;
+
+    // change here
+    const projectSrcPath = '';
+    this.generateFiles(JSON.stringify(fileArch, null, 2), projectSrcPath);
+
     return {
       success: true,
-      data: null,
+      data: 'Files and dependencies created successfully.',
     };
   }
 
