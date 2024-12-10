@@ -41,13 +41,24 @@ export class BuilderContext {
 
   canExecute(nodeId: string): boolean {
     const node = this.findNode(nodeId);
+
     if (!node) return false;
 
     if (this.state.completed.has(nodeId) || this.state.pending.has(nodeId)) {
+      console.log(`Node ${nodeId} is already completed or pending.`);
       return false;
     }
 
-    return !node.requires?.some((dep) => !this.state.completed.has(dep));
+    const unmetDependencies =
+      node.requires?.filter((dep) => !this.state.completed.has(dep)) || [];
+    if (unmetDependencies.length > 0) {
+      console.log(
+        `Node ${nodeId} has unmet dependencies: ${unmetDependencies}`,
+      );
+      return false;
+    }
+
+    return true;
   }
 
   private findNode(nodeId: string): BuildNode | null {
@@ -63,7 +74,8 @@ export class BuilderContext {
     if (!node) {
       throw new Error(`Node not found: ${nodeId}`);
     }
-
+    console.log('canExecute id: ' + node.name);
+    console.log('canExecute: ' + this.canExecute(nodeId));
     if (!this.canExecute(nodeId)) {
       throw new Error(`Dependencies not met for node: ${nodeId}`);
     }
@@ -117,10 +129,10 @@ export class BuilderContext {
     node: BuildNode,
     args: unknown,
   ): Promise<BuildResult> {
-    if (process.env.NODE_ENV === 'test') {
-      this.logger.log(`[TEST] Executing node: ${node.id}`);
-      return { success: true, data: { nodeId: node.id } };
-    }
+    // if (process.env.NODE_ENV === 'test') {
+    //   this.logger.log(`[TEST] Executing node: ${node.id}`);
+    //   return { success: true, data: { nodeId: node.id } };
+    // }
 
     this.logger.log(`Executing node: ${node.id}`);
     const handler = this.handlerManager.getHandler(node.id);
