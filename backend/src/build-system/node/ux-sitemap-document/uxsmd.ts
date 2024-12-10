@@ -38,7 +38,7 @@ export class UXSMDHandler implements BuildHandler {
   private async generateUXSMDFromLLM(prompt: string): Promise<string> {
     const modelProvider = ModelProvider.getInstance();
 
-    const model = 'gpt-3.5-turbo';
+    const model = 'gpt-4o-mini';
 
     const prdContent = modelProvider.chatSync(
       {
