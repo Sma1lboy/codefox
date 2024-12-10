@@ -128,11 +128,6 @@ export class BuilderContext {
     node: BuildNode,
     args: unknown,
   ): Promise<BuildResult> {
-    // if (process.env.NODE_ENV === 'test') {
-    //   this.logger.log(`[TEST] Executing node: ${node.id}`);
-    //   return { success: true, data: { nodeId: node.id } };
-    // }
-
     this.logger.log(`Executing node: ${node.id}`);
     const handler = this.handlerManager.getHandler(node.id);
     if (!handler) {
