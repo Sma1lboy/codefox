@@ -1,20 +1,12 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import { FileGeneratorHandler } from '../node/file-generate';
-import { VirtualDirectory } from '../node/file-generate/virtual-directory';
+import { VirtualDirectory } from '../virtual-dir';
+import * as normalizePath from 'normalize-path';
 
-describe('FileGeneratorHandler and VirtualDirectory', () => {
-  const structMdFilePath = path.resolve(
+describe('VirtualDirectory', () => {
+  const structMdFilePath = normalizePath(
     'src\\build-system\\__tests__\\file-structure-document.md',
   );
-
-  beforeEach(async () => {
-    await fs.remove('src\\build-system\\__tests__\\test-project\\src\\');
-  });
-
-  afterEach(async () => {
-    await fs.remove('src\\build-system\\__tests__\\test-project\\src\\');
-  });
 
   describe('VirtualDirectory', () => {
     let virtualDir: VirtualDirectory;
