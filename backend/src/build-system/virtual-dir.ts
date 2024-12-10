@@ -1,4 +1,5 @@
 import * as path from 'path';
+import * as normalizePath from 'normalize-path';
 
 interface VirtualNode {
   name: string;
@@ -69,7 +70,7 @@ export class VirtualDirectory {
   }
 
   private findNode(inputPath: string): VirtualNode | null {
-    const normalizedPath = this.normalizePath(inputPath);
+    const normalizedPath = this.normalize_Path(inputPath);
     const parts = normalizedPath.split('/').filter(Boolean);
 
     if (parts[0] !== 'src') {
@@ -85,14 +86,14 @@ export class VirtualDirectory {
     return current;
   }
 
-  private normalizePath(inputPath: string): string {
-    return path.normalize(inputPath).replace(/\\/g, '/').replace(/\/$/, '');
+  private normalize_Path(inputPath: string): string {
+    return normalizePath(inputPath);
   }
 
   resolveRelativePath(fromFile: string, toPath: string): string {
     const fromDir = path.dirname(fromFile);
     const resolvedPath = path.join(fromDir, toPath).replace(/\\/g, '/');
-    return this.normalizePath(resolvedPath);
+    return this.normalize_Path(resolvedPath);
   }
 
   getAllFiles(): string[] {
