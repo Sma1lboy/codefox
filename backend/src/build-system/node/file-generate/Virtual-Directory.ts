@@ -15,27 +15,29 @@ interface FileStructureNode {
 export class VirtualDirectory {
   private root: VirtualNode;
 
-  constructor(jsonStructure: string) {
+  constructor() {
     this.root = {
       name: 'src',
       isFile: false,
       children: new Map(),
     };
-    this.parseJsonStructure(jsonStructure);
   }
 
   private cleanJsonContent(content: string): string {
     const jsonStart = content.indexOf('{');
-    return content.slice(jsonStart);
+    const jsonEnd = content.lastIndexOf('}');
+    return content.slice(jsonStart, jsonEnd + 1);
   }
 
-  private parseJsonStructure(jsonContent: string): void {
+  public parseJsonStructure(jsonContent: string): boolean {
     try {
       const cleanedJson = this.cleanJsonContent(jsonContent);
       const structure = JSON.parse(cleanedJson);
       this.buildTree(structure, this.root);
+      return true;
     } catch (error) {
       console.error('Failed to parse JSON structure:', error);
+      return false;
     }
   }
 

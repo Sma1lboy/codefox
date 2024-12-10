@@ -7,6 +7,7 @@ import {
   BuildSequence,
 } from './types';
 import { Logger } from '@nestjs/common';
+import { VirtualDirectory } from './node/file-generate/virtual-directory';
 
 export type GlobalDataKeys = 'projectName' | 'description' | 'platform';
 type ContextData = {
@@ -26,6 +27,7 @@ export class BuilderContext {
   private results: Map<string, BuildResult> = new Map();
   private handlerManager: BuildHandlerManager;
   public model: ModelProvider;
+  private virtualDirectory: VirtualDirectory;
 
   constructor(
     private sequence: BuildSequence,
@@ -34,6 +36,7 @@ export class BuilderContext {
     this.handlerManager = BuildHandlerManager.getInstance();
     this.model = ModelProvider.getInstance();
     this.logger = new Logger(`builder-context-${id}`);
+    this.virtualDirectory = new VirtualDirectory();
   }
 
   canExecute(nodeId: string): boolean {
@@ -104,6 +107,10 @@ export class BuilderContext {
 
   getResult(nodeId: string): BuildResult | undefined {
     return this.results.get(nodeId);
+  }
+
+  buildVirtualDirectory(jsonContent: string): boolean {
+    return this.virtualDirectory.parseJsonStructure(jsonContent);
   }
 
   private async executeNode(

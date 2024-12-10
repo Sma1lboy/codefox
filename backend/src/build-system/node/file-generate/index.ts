@@ -11,7 +11,7 @@ export class FileGeneratorHandler {
   private virtualDir: VirtualDirectory;
 
   constructor(structureMarkdown: string) {
-    this.virtualDir = new VirtualDirectory(structureMarkdown);
+    this.virtualDir = new VirtualDirectory();
   }
 
   async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
