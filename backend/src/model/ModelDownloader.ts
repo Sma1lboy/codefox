@@ -11,22 +11,33 @@ export class ModelDownloader {
   private static readonly logger = new Logger(ModelDownloader.name);
   private static readonly loadedModels = new Map<string, any>();
 
-  public static async downloadAllModels(progressCallback: ProgressCallback = () => {}): Promise<void> {
+  public static async downloadAllModels(
+    progressCallback: ProgressCallback = () => {},
+  ): Promise<void> {
     const configLoader = new ConfigLoader();
     configLoader.validateConfig();
     const chats = configLoader.get<{ [key: string]: ChatConfig }>('chats');
 
-    const loadPromises = Object.entries(chats).map(async ([chatKey, chatConfig]: [string, ChatConfig]) => {
-      const { model, task } = chatConfig;
-      try {
-        ModelDownloader.logger.log(`Starting to load model: ${model}`);
-        const pipelineInstance = await ModelDownloader.downloadModel(task, model, progressCallback);
-        ModelDownloader.logger.log(`Model loaded successfully: ${model}`);
-        this.loadedModels.set(chatKey, pipelineInstance);
-      } catch (error) {
-        ModelDownloader.logger.error(`Failed to load model ${model}:`, error.message);
-      }
-    });
+    const loadPromises = Object.entries(chats).map(
+      async ([chatKey, chatConfig]: [string, ChatConfig]) => {
+        const { model, task } = chatConfig;
+        try {
+          ModelDownloader.logger.log(`Starting to load model: ${model}`);
+          const pipelineInstance = await ModelDownloader.downloadModel(
+            task,
+            model,
+            progressCallback,
+          );
+          ModelDownloader.logger.log(`Model loaded successfully: ${model}`);
+          this.loadedModels.set(chatKey, pipelineInstance);
+        } catch (error) {
+          ModelDownloader.logger.error(
+            `Failed to load model ${model}:`,
+            error.message,
+          );
+        }
+      },
+    );
 
     await Promise.all(loadPromises);
 
@@ -38,7 +49,9 @@ export class ModelDownloader {
     model: string,
     progressCallback?: ProgressCallback,
   ): Promise<any> {
-    const pipelineOptions = progressCallback ? { progress_callback: progressCallback } : undefined;
+    const pipelineOptions = progressCallback
+      ? { progress_callback: progressCallback }
+      : undefined;
     return pipeline(task as PipelineType, model, pipelineOptions);
   }
 
