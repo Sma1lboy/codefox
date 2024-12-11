@@ -5,6 +5,7 @@ import * as toposort from 'toposort';
 import { VirtualDirectory } from '../../virtual-dir';
 import { BuilderContext } from 'src/build-system/context';
 import { BuildHandler, BuildResult } from 'src/build-system/types';
+import { FileUtil } from 'src/build-system/util';
 
 export class FileGeneratorHandler {
   private readonly logger = new Logger('FileGeneratorHandler');
@@ -32,10 +33,7 @@ export class FileGeneratorHandler {
     markdownContent: string,
     projectSrcPath: string,
   ): Promise<{ success: boolean; data: string }> {
-    // add test for validate
-    const jsonData = this.extractJsonFromMarkdown(markdownContent);
-    this.validateJsonData(jsonData);
-
+    const jsonData = FileUtil.extractJsonFromMarkdown(markdownContent);
     // Build the dependency graph and detect cycles before any file operations
     const { graph, nodes } = this.buildDependencyGraph(jsonData);
     this.detectCycles(graph);
@@ -123,40 +121,6 @@ export class FileGeneratorHandler {
   }
 
   /**
-   * Validate the structure and content of the JSON data.
-   * @param jsonData The JSON data to validate.
-   * @throws Error if validation fails.
-   */
-  private validateJsonData(jsonData: {
-    files: Record<string, { dependsOn: string[] }>;
-  }): void {
-    const validPathRegex = /^[a-zA-Z0-9_\-/.]+$/;
-
-    for (const [file, details] of Object.entries(jsonData.files)) {
-      // Validate the file path
-      if (!validPathRegex.test(file)) {
-        throw new Error(`Invalid file path: ${file}`);
-      }
-
-      // Validate dependencies
-      for (const dependency of details.dependsOn) {
-        if (!validPathRegex.test(dependency)) {
-          throw new Error(
-            `Invalid dependency path "${dependency}" in file "${file}".`,
-          );
-        }
-
-        // Ensure no double slashes or trailing slashes
-        if (dependency.includes('//') || dependency.endsWith('/')) {
-          throw new Error(
-            `Malformed dependency path "${dependency}" in file "${file}".`,
-          );
-        }
-      }
-    }
-  }
-
-  /**
    * Resolve a dependency path relative to the current file.
    * @param currentFile The current file's path.
    * @param dependency The dependency path.
@@ -176,27 +140,6 @@ export class FileGeneratorHandler {
     const resolvedPath = path.join(currentDir, dependency).replace(/\\/g, '/');
     this.logger.log(`Resolved dependency: ${resolvedPath}`);
     return resolvedPath;
-  }
-
-  /**
-   * Extract JSON data from Markdown content.
-   * @param markdownContent The Markdown content containing the JSON.
-   */
-  private extractJsonFromMarkdown(markdownContent: string): {
-    files: Record<string, { dependsOn: string[] }>;
-  } {
-    const jsonMatch = /<GENERATEDCODE>([\s\S]*?)<\/GENERATEDCODE>/m.exec(
-      markdownContent,
-    );
-    if (!jsonMatch) {
-      throw new Error('No JSON found in the provided Markdown content.');
-    }
-
-    try {
-      return JSON.parse(jsonMatch[1]);
-    } catch (error) {
-      throw new Error('Invalid JSON format in the Markdown content.');
-    }
   }
 
   /**
