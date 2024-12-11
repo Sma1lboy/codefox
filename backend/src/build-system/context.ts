@@ -49,16 +49,7 @@ export class BuilderContext {
       return false;
     }
 
-    const unmetDependencies =
-      node.requires?.filter((dep) => !this.state.completed.has(dep)) || [];
-    if (unmetDependencies.length > 0) {
-      console.log(
-        `Node ${nodeId} has unmet dependencies: ${unmetDependencies}`,
-      );
-      return false;
-    }
-
-    return true;
+    return !node.requires?.some((dep) => !this.state.completed.has(dep));
   }
 
   private findNode(nodeId: string): BuildNode | null {
