@@ -12,6 +12,7 @@ export class FileGeneratorHandler {
   private virtualDir: VirtualDirectory;
 
   async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
+    this.virtualDir = context.virtualDirectory;
     const fileArch = args[0] as string;
 
     // change here

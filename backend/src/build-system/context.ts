@@ -27,7 +27,7 @@ export class BuilderContext {
   private results: Map<string, BuildResult> = new Map();
   private handlerManager: BuildHandlerManager;
   public model: ModelProvider;
-  private virtualDirectory: VirtualDirectory;
+  public virtualDirectory: VirtualDirectory;
 
   constructor(
     private sequence: BuildSequence,
