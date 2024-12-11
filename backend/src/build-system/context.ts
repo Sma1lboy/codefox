@@ -7,6 +7,7 @@ import {
   BuildSequence,
 } from './types';
 import { Logger } from '@nestjs/common';
+import { VirtualDirectory } from './virtual-dir';
 
 export type GlobalDataKeys = 'projectName' | 'description' | 'platform';
 type ContextData = {
@@ -26,6 +27,7 @@ export class BuilderContext {
   private results: Map<string, BuildResult> = new Map();
   private handlerManager: BuildHandlerManager;
   public model: ModelProvider;
+  public virtualDirectory: VirtualDirectory;
 
   constructor(
     private sequence: BuildSequence,
@@ -34,13 +36,16 @@ export class BuilderContext {
     this.handlerManager = BuildHandlerManager.getInstance();
     this.model = ModelProvider.getInstance();
     this.logger = new Logger(`builder-context-${id}`);
+    this.virtualDirectory = new VirtualDirectory();
   }
 
   canExecute(nodeId: string): boolean {
     const node = this.findNode(nodeId);
+
     if (!node) return false;
 
     if (this.state.completed.has(nodeId) || this.state.pending.has(nodeId)) {
+      console.log(`Node ${nodeId} is already completed or pending.`);
       return false;
     }
 
@@ -106,15 +111,14 @@ export class BuilderContext {
     return this.results.get(nodeId);
   }
 
+  buildVirtualDirectory(jsonContent: string): boolean {
+    return this.virtualDirectory.parseJsonStructure(jsonContent);
+  }
+
   private async executeNode(
     node: BuildNode,
     args: unknown,
   ): Promise<BuildResult> {
-    if (process.env.NODE_ENV === 'test') {
-      this.logger.log(`[TEST] Executing node: ${node.id}`);
-      return { success: true, data: { nodeId: node.id } };
-    }
-
     this.logger.log(`Executing node: ${node.id}`);
     const handler = this.handlerManager.getHandler(node.id);
     if (!handler) {
