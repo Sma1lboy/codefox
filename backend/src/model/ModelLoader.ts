@@ -4,7 +4,7 @@ import { ModelDownloader } from './ModelDownloader';
 export async function downloadAllModels(): Promise<void> {
   const configLoader = new ConfigLoader();
   configLoader.validateConfig();
-  const chats = configLoader.get<{ [key: string]: ChatConfig }>('chats');
+  const chats = configLoader.get<{ [key: string]: ChatConfig }>('');
   const downloader = ModelDownloader.getInstance();
   const loadPromises = Object.entries(chats).map(
     async ([chatKey, chatConfig]: [string, ChatConfig]) => {
