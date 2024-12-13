@@ -1,6 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import _ from 'lodash';
+export interface ChatsConfig {
+  chats: ChatConfig[];
+}
 export interface ChatConfig {
   model: string;
   endpoint?: string;
@@ -9,7 +12,7 @@ export interface ChatConfig {
   task?: string;
 }
 export class ConfigLoader {
-  private config: ChatConfig;
+  private chatsConfig: ChatsConfig;
 
   private readonly configPath: string;
 
@@ -20,28 +23,28 @@ export class ConfigLoader {
 
   private loadConfig() {
     const file = fs.readFileSync(this.configPath, 'utf-8');
-    this.config = JSON.parse(file);
+    this.chatsConfig = JSON.parse(file);
   }
 
   get<T>(path: string) {
-    return _.get(this.config, path);
+    return _.get(this.chatsConfig, path);
   }
 
   set(path: string, value: any) {
-    _.set(this.config, path, value);
+    _.set(this.chatsConfig, path, value);
     this.saveConfig();
   }
 
   private saveConfig() {
     fs.writeFileSync(
       this.configPath,
-      JSON.stringify(this.config, null, 4),
+      JSON.stringify(this.chatsConfig, null, 4),
       'utf-8',
     );
   }
 
   validateConfig() {
-    if (!this.config) {
+    if (!this.chatsConfig) {
       throw new Error("Invalid configuration: 'chats' section is missing.");
     }
   }
