@@ -4,8 +4,10 @@ import { PRDHandler } from './node/product-requirements-document/prd';
 import { UXSitemapStructureHandler } from './node/ux-sitemap-structure';
 import { UXDatamapHandler } from './node/ux-datamap';
 import { UXSMDHandler } from './node/ux-sitemap-document/uxsmd';
-import { FileStructureHandler } from './node/frontend-file-structure';
+import { FileStructureHandler } from './node/file-structure';
 import { FileArchGenerateHandler } from './node/file-arch';
+import { BackendCodeHandler } from './node/backend-code-generate';
+import { DBSchemaHandler } from './node/database-schemas/schemas';
 
 export class BuildHandlerManager {
   private static instance: BuildHandlerManager;
@@ -24,6 +26,8 @@ export class BuildHandlerManager {
       new UXSMDHandler(),
       new FileStructureHandler(),
       new FileArchGenerateHandler(),
+      new BackendCodeHandler(),
+      new DBSchemaHandler(),
     ];
 
     for (const handler of builtInHandlers) {
