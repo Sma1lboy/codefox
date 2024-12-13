@@ -5,6 +5,7 @@ import { UXSitemapStructureHandler } from './node/ux-sitemap-structure';
 import { UXDatamapHandler } from './node/ux-datamap';
 import { UXSMDHandler } from './node/ux-sitemap-document/uxsmd';
 import { FileStructureHandler } from './node/frontend-file-structure';
+import { FileArchGenerateHandler } from './node/file-arch';
 
 export class BuildHandlerManager {
   private static instance: BuildHandlerManager;
@@ -22,6 +23,7 @@ export class BuildHandlerManager {
       new UXDatamapHandler(),
       new UXSMDHandler(),
       new FileStructureHandler(),
+      new FileArchGenerateHandler(),
     ];
 
     for (const handler of builtInHandlers) {

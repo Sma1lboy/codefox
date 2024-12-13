@@ -16,13 +16,22 @@ export class UXSitemapStructureHandler implements BuildHandler {
     const projectName =
       context.getData('projectName') || 'Default Project Name';
 
+    const sitemap = args[0] as string;
+
+    if (!sitemap) {
+      return {
+        success: false,
+        error: new Error('Missing required parameters: sitemap'),
+      };
+    }
+
     const prompt = prompts.generateUXSiteMapStructrePrompt(
       projectName,
-      args as string,
+      JSON.stringify(sitemap, null, 2),
       // TODO: change later
       'web',
     );
-
+    this.logger.log(prompt);
     const uxStructureContent = await context.model.chatSync(
       {
         content: prompt,

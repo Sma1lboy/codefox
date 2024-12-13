@@ -67,11 +67,40 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
         },
         {
           id: 'step-4',
+          name: 'UX Data Map Document',
+          nodes: [
+            {
+              id: 'op:UX_DATAMAP::STATE:GENERATE',
+              name: 'UX Data Map Document node',
+              requires: ['op:UXSMD::STATE:GENERATE'],
+            },
+          ],
+        },
+        {
+          id: 'step-5',
           name: 'file structure generation',
           nodes: [
             {
               id: 'op:FSTRUCT::STATE:GENERATE',
               name: 'file structure generation',
+              requires: [
+                'op:UXSMD::STATE:GENERATE',
+                'op:UX_DATAMAP::STATE:GENERATE',
+              ],
+            },
+          ],
+        },
+        {
+          id: 'step-6',
+          name: 'File_Arch Document',
+          nodes: [
+            {
+              id: 'op:FILE_ARCH::STATE:GENERATE',
+              name: 'File_Arch',
+              requires: [
+                'op:FSTRUCT::STATE:GENERATE',
+                'op:UX_DATAMAP::STATE:GENERATE',
+              ],
             },
           ],
         },
@@ -88,14 +117,15 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
     try {
       await BuildSequenceExecutor.executeSequence(sequence, context);
 
-      sequence.steps.forEach((step) => {
-        step.nodes.forEach((node) => {
-          const resultData = context.getResult(node.id);
+      for (const step of sequence.steps) {
+        for (const node of step.nodes) {
+          const resultData = await context.getResult(node.id);
+          console.log(resultData);
           if (resultData) {
             writeMarkdownToFile(node.name.replace(/ /g, '_'), resultData);
           }
-        });
-      });
+        }
+      }
 
       console.log(
         'Sequence completed successfully. Logs stored in:',
@@ -110,5 +140,5 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
       );
       throw error;
     }
-  }, 60000);
+  }, 600000);
 });
