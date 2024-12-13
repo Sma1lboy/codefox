@@ -1,7 +1,8 @@
 import { Logger } from '@nestjs/common';
 import { PipelineType, pipeline, env } from '@huggingface/transformers';
-import { getModelsDir } from 'src/config/common-path';
+import { getModelPath, getModelsDir } from 'src/config/common-path';
 env.allowLocalModels = true;
+env.localModelPath = getModelsDir();
 export class ModelDownloader {
   readonly logger = new Logger(ModelDownloader.name);
   private static instance: ModelDownloader;
@@ -14,12 +15,17 @@ export class ModelDownloader {
 
   async downloadModel(task: string, model: string): Promise<any> {
     const pipelineInstance = await pipeline(task as PipelineType, model, {
-      cache_dir: 'C:/Users/LOVE/Documents/GitHub/codefox/models',
+      cache_dir: getModelsDir(),
     });
     return pipelineInstance;
   }
 
-  // public getModel(chatKey: string): any {
-  //   return ModelDownloader.loadedModels.get(chatKey);
-  // }
+  public async getLocalModel(task: string, model: string): Promise<any> {
+    const pipelineInstance = await pipeline(task as PipelineType, model, {
+      local_files_only: true,
+      revision: 'local',
+    });
+
+    return pipelineInstance;
+  }
 }

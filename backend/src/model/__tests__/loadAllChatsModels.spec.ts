@@ -1,5 +1,6 @@
 import { ConfigLoader } from '../../config/ConfigLoader';
-import { ModelDownloader, getModel } from '../../model/ModelDownloader';
+import { ModelDownloader } from '../ModelDownloader';
+import { downloadAllModels } from '../ModelLoader';
 
 const originalIsArray = Array.isArray;
 
@@ -21,7 +22,7 @@ jest.mock('../../config/ConfigLoader', () => {
       return {
         get: jest.fn().mockReturnValue({
           chat1: {
-            model: 'Xenova/LaMini-Flan-T5-783M',
+            model: 'Felladrin/onnx-flan-alpaca-base',
             task: 'text2text-generation',
           },
         }),
@@ -33,13 +34,17 @@ jest.mock('../../config/ConfigLoader', () => {
 
 describe('loadAllChatsModels with real model loading', () => {
   beforeAll(async () => {
-    await ModelDownloader.downloadAllModels();
-  });
+    await downloadAllModels();
+  }, 600000);
 
   it('should load real models specified in config', async () => {
+    const downloader = ModelDownloader.getInstance();
     expect(ConfigLoader).toHaveBeenCalled();
 
-    const chat1Model = getModel('chat1');
+    const chat1Model = await downloader.getLocalModel(
+      'text2text-generation',
+      'Felladrin/onnx-flan-alpaca-base',
+    );
     expect(chat1Model).toBeDefined();
     console.log('Loaded Model:', chat1Model);
 
