@@ -1,25 +1,37 @@
+// src/build-system/prompts.ts
+
+/**
+ * Collection of prompt functions used for various build system operations.
+ */
+
 export const prompts = {
-  // Step 1: Analyze requirements and generate database tasks
+  /**
+   * Analyzes database requirements and generates a structured analysis.
+   * @param projectName - The name of the project.
+   * @param dbRequirements - The database requirements as a string.
+   * @param databaseType - The type of the database (e.g., PostgreSQL, MongoDB, SQLite).
+   * @returns A prompt string for the language model to perform the analysis.
+   */
   analyzeDatabaseRequirements: (
     projectName: string,
     dbRequirements: string,
     databaseType: string = 'PostgreSQL',
   ): string => {
     return `You are a Database Architect specializing in ${databaseType}. Your task is to analyze the provided database requirements document and create a clear plan for schema generation. Use the following requirements as input:
-
+ 
 ${dbRequirements}
-
-Generate a structured analysis describing what needs to be created for each database entity. Your reply must start with "\`\`\`DBAnalysis" and end with "\`\`\`".
-
+ 
+Generate a structured analysis describing what needs to be created for each database entity. Your reply must start with "<GENERATE>DBAnalysis" and end with "</GENERATE>".
+ 
 For each entity in the requirements:
 1. What tables/collections need to be created
 2. What indexes are necessary
 3. What constraints must be enforced
 4. What relationships need to be established
-
+ 
 Example output format:
-
-\`\`\`DBAnalysis
+ 
+<GENERATE>DBAnalysis
 Database: ${projectName}
 Type: ${databaseType}
 
@@ -54,68 +66,36 @@ Performance Considerations:
 1. User table needs hash indexes on email and username
 2. Playlist_songs needs index on position for queue management
 3. Songs table needs full text search capability
-\`\`\``;
+</GENERATE>`;
   },
 
-  // Step 2: Generate actual schema based on analysis
+  /**
+   * Generates the database schema based on the analysis.
+   * @param dbAnalysis - The database analysis as a string.
+   * @param databaseType - The type of the database (e.g., PostgreSQL, MongoDB, SQLite).
+   * @param fileExtension - The file extension to use for the schema file.
+   * @returns A prompt string for the language model to generate the schema.
+   */
   generateDatabaseSchema: (
     dbAnalysis: string,
     databaseType: string = 'PostgreSQL',
+    fileExtension: string,
   ): string => {
     return `You are a Database Engineer specializing in ${databaseType}. Generate the complete database schema based on the following analysis, using appropriate ${databaseType} syntax and features:
-
-    Here is dbAnalysis content {${dbAnalysis}}
-    
+ 
+Here is dbAnalysis content:
+<GENERATE>
+${dbAnalysis}
+</GENERATE>
+ 
 Rules for generation:
-1. Use ${databaseType}-specific data types and features
-2. Do not include any comments in the output
-3. Use standardized naming conventions
-4. Include all necessary constraints and indexes
-5. Generate schema in the correct creation order for dependencies
-
-Your reply must start with "\`\`\`${databaseType}" and end with "\`\`\`".
-
-For PostgreSQL, output format should be like:
-\`\`\`sql
-CREATE TYPE subscription_type_enum AS ENUM ('FREE', 'PREMIUM', 'FAMILY');
-
-CREATE TABLE users (
-    id UUID DEFAULT gen_random_uuid(),
-    email VARCHAR(255) NOT NULL,
-    username VARCHAR(50) NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    subscription_type subscription_type_enum NOT NULL DEFAULT 'FREE',
-    preferences JSONB DEFAULT '{"theme":"light","audioQuality":"high"}',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE (email),
-    UNIQUE (username)
-);
-
-CREATE INDEX idx_users_email ON users(email);
-[Continue with other tables...]
-\`\`\`
-
-For MongoDB, output format should be like:
-\`\`\`javascript
-db.createCollection("users", {
-   validator: {
-      $jsonSchema: {
-         bsonType: "object",
-         required: ["email", "username", "password_hash", "subscription_type"],
-         properties: {
-            email: { bsonType: "string" },
-            username: { bsonType: "string" },
-            password_hash: { bsonType: "string" },
-            subscription_type: { enum: ["FREE", "PREMIUM", "FAMILY"] }
-         }
-      }
-   }
-});
-
-db.users.createIndex({ "email": 1 }, { unique: true });
-[Continue with other collections...]
-\`\`\``;
+1. Use ${databaseType}-specific data types and features.
+2. Do not include any comments in the output.
+3. Use standardized naming conventions.
+4. Include all necessary constraints and indexes.
+5. Generate schema in the correct creation order for dependencies.
+ 
+Your reply must start with "<GENERATE>" and end with "</GENERATE>".
+`;
   },
 };
