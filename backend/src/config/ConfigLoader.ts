@@ -19,7 +19,7 @@ export class ConfigLoader {
   constructor() {
     this.configPath = path.resolve(__dirname, 'config.json');
     this.loadConfig();
-    console.log("111" + this.chatsConfig);
+    console.log('111' + this.chatsConfig);
   }
 
   private loadConfig() {
