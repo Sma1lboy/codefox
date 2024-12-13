@@ -1,67 +1,18 @@
+// src/build-system/prompts.ts
+
 export const prompts = {
+  // 已被通用的 generateCommonFileStructurePrompt 取代
+  /*
   generateFileStructurePrompt: (
     projectName: string,
     sitemapDoc: string,
     DataAnalysisDoc: string,
     framework: string,
   ): string => {
-    return `You are an expert frontend developer. Your task is to generate a complete folder and file structure for the src directory of a frontend project. Include all necessary files and folders to cover UI, API calls, and local state management while ensuring scalability and maintainability. 
-        Based on following input
-
-         - Project name: ${projectName}
-         - Sitemap Documentation: ${sitemapDoc}
-         - Data Analysis Doc ${DataAnalysisDoc}
-
-    ### Instructions and Rules:
-
-Include:
-    Folder Structure:
-        components: Reusable UI elements grouped by category (e.g., common, layout, specific).
-        contexts: Global state management (e.g., auth, theme, player).
-        hooks: Custom hooks for data fetching and state management.
-        pages: Route-specific views (e.g., Home, Search, Playlist).
-        utils: Utility functions (e.g., constants, helpers, validators).
-        api: Organized API logic (e.g., auth, music, user).
-        router.ts: Central routing configuration.
-        index.ts: Application entry point.
-
-    Files:
-        Include placeholder files in each folder to illustrate their purpose.
-        Add example filenames for components, hooks, APIs, etc.
-
-Do Not Include:
-    Asset folders (e.g., images, icons, fonts).
-    Test folders or files.
-    Service folders unrelated to API logic.
-
-File Naming Guidelines:
-    Use meaningful and descriptive file names.
-    For components, include an index.tsx file in each folder to simplify imports.
-    Each component should have its own folder named after the component (e.g., Button/).
-    Use index.tsx as the main file inside the component folder.
-    Component-specific styles must be in index.css within the same folder as the component.
-    
-File Comments:
-    Include comments describing the purpose of each file or folder to improve readability.
-
-Ask yourself:
-    1, Are you consider all the cases based on the sitemap doc? If not add new folder or file
-    2, Are you consider all the components based on the sitemap doc? If not add new folder or file
-    3, Are you consider all the hooks based on the sitemap doc? If not add new folder or file
-    4, Are you consider all the api based on the sitemap doc? If not add new folder or file
-    5, Are you consider all the pages based on the sitemap doc? If not add new folder or file
-
-This final result must be 100% complete. Will be directly use in the production
-
-Output Format:
-
-    Start with: "\`\`\`FolderStructure"
-    Tree format:
-        Include folder names with placeholder files inside.
-        Add comments to describe the purpose of each file/folder.
-    End with: "\`\`\`"
-      `;
+    // 原有的 generateFileStructurePrompt 内容
   },
+  */
+
   convertTreeToJsonPrompt: (treeMarkdown: string): string => {
     return `You are a highly skilled developer. Your task is to convert the given file and folder structure, currently represented in an ASCII tree format, into a JSON structure. The JSON structure must:
     
@@ -115,6 +66,7 @@ Output Format:
     Return only the JSON structure (no explanations, no additional comments). This JSON will be used directly in the application.
     `;
   },
+
   generateCommonFileStructurePrompt: (
     projectName: string,
     sitemapDoc: string,
@@ -122,13 +74,12 @@ Output Format:
     framework: string,
     projectPart: string,
   ): string => {
-    // Define role and specific instructions based on project part
     let roleDescription = '';
     let includeSections = '';
     let excludeSections = '';
     let fileNamingGuidelines = '';
 
-    switch (projectPart) {
+    switch (projectPart.toLowerCase()) {
       case 'frontend':
         roleDescription = 'an expert frontend developer';
         includeSections = `
@@ -141,10 +92,6 @@ Output Format:
             api: Organized API logic (e.g., auth, music, user).
             router.ts: Central routing configuration.
             index.ts: Application entry point.
-
-          Files:
-            Include placeholder files in each folder to illustrate their purpose.
-            Add example filenames for components, hooks, APIs, etc.
         `;
         excludeSections = `
           Do Not Include:
@@ -192,45 +139,44 @@ Output Format:
         break;
 
       default:
-        throw new Error('Invalid project part specified.');
+        throw new Error(
+          'Invalid project part specified. Must be "frontend" or "backend".',
+        );
     }
 
     return `You are ${roleDescription}. Your task is to generate a complete folder and file structure for the ${projectPart} of a project named "${projectName}". Include all necessary files and folders to cover the essential aspects while ensuring scalability and maintainability.
     
-  Based on the following input:
+    Based on the following input:
+    
+     - Project name: ${projectName}
+     - Sitemap Documentation: ${sitemapDoc}
+     - Data Analysis Doc: ${dataAnalysisDoc}
+    
+    ### Instructions and Rules:
+    
+    Include:
+    ${includeSections}
+    
+    ${fileNamingGuidelines}
+    
+    ${excludeSections}
+    
+    File Comments:
+        Include comments describing the purpose of each file or folder to improve readability.
+    
+    Ask yourself:
+        1. Are you considering all the cases based on the sitemap doc? If not, add new folder or file.
+        2. Are you considering all the components/hooks/services/APIs/routes based on the sitemap doc? If not, add new folder or file.
+    
+    This final result must be 100% complete and ready for direct use in production.
+    
+    Output Format:
   
-   - Project name: ${projectName}
-   - Sitemap Documentation: ${sitemapDoc}
-   - Data Analysis Doc: ${dataAnalysisDoc}
-  
-  ### Instructions and Rules:
-  
-  Include:
-  ${includeSections}
-  
-  ${fileNamingGuidelines}
-  
-  ${excludeSections}
-  
-  File Comments:
-      Include comments describing the purpose of each file or folder to improve readability.
-  
-  Ask yourself:
-      1. Are you considering all the cases based on the sitemap doc? If not, add new folder or file.
-      2. Are you considering all the components based on the sitemap doc? If not, add new folder or file.
-      3. Are you considering all the hooks/services based on the sitemap doc? If not, add new folder or file.
-      4. Are you considering all the APIs/routes based on the sitemap doc? If not, add new folder or file.
-      5. Are you considering all the pages/controllers based on the sitemap doc? If not, add new folder or file.
-  
-  This final result must be 100% complete and ready for direct use in production.
-  
-  Output Format:
-
-      Start with: "\`\`\`FolderStructure"
-      Tree format:
-          Include folder names with placeholder files inside.
-          Add comments to describe the purpose of each file/folder.
-      End with: "\`\`\`"
-  `;
+        Start with: "\`\`\`FolderStructure"
+        Tree format:
+            Include folder names with placeholder files inside.
+            Add comments to describe the purpose of each file/folder.
+        End with: "\`\`\`"
+    `;
   },
 };
