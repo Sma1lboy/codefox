@@ -1,8 +1,6 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { ModelProvider } from 'src/common/model-provider';
-import * as fs from 'fs';
-import * as path from 'path';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 

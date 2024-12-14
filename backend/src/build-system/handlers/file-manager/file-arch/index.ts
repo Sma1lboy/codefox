@@ -2,7 +2,7 @@ import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { generateFileArchPrompt } from './prompt';
 import { Logger } from '@nestjs/common';
-import { FileUtil } from 'src/build-system/util';
+import { FileUtil } from 'src/build-system/utils/util';
 
 export class FileArchGenerateHandler implements BuildHandler {
   readonly id = 'op:FILE_ARCH::STATE:GENERATE';
