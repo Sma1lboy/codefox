@@ -69,6 +69,9 @@ importers:
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4
+      '@types/normalize-path':
+        specifier: ^3.0.2
+        version: 3.0.2
       bcrypt:
         specifier: ^5.1.1
         version: 5.1.1
@@ -90,6 +93,9 @@ importers:
       markdown-to-txt:
         specifier: ^2.0.1
         version: 2.0.1
+      normalize-path:
+        specifier: ^3.0.0
+        version: 3.0.0
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -5642,6 +5648,10 @@ packages:
     dependencies:
       undici-types: 6.20.0
 
+  /@types/normalize-path@3.0.2:
+    resolution: {integrity: sha512-DO++toKYPaFn0Z8hQ7Tx+3iT9t77IJo/nDiqTXilgEP+kPNIYdpS9kh3fXuc53ugqwp9pxC1PVjCpV1tQDyqMA==}
+    dev: false
+
   /@types/parse-json@4.0.2:
     resolution: {integrity: sha512-dISoDXWWQwUquiKsyZ4Ng+HX2KsPL7LyHKHQwgGFEA3IaKac4Obd+h2a/a6waisAoepJlBcx9paWqjA8/HVjCw==}
     dev: true
@@ -6611,7 +6621,7 @@ packages:
     resolution: {integrity: sha512-DukmaFRnY6AzAALSH4J2M3k6PkaC+MfaAGdEERRWcC9q3/TWQwLpHR8ZRLKTdQ3aBDL64EdluRDjJqKw+BPZEw==}
     dependencies:
       follow-redirects: 1.15.9(debug@4.3.7)
-      form-data: 4.0.0
+      form-data: 4.0.1
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
