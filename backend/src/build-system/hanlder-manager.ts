@@ -4,8 +4,8 @@ import { PRDHandler } from './handlers/product-manager/product-requirements-docu
 import { UXSitemapStructureHandler } from './handlers/ux/sitemap-structure';
 import { UXDatamapHandler } from './handlers/ux/datamap';
 import { UXSMDHandler } from './handlers/ux/sitemap-document/uxsmd';
-import { FileStructureHandler } from './handlers/file-structure';
-import { FileArchGenerateHandler } from './handlers/file-arch';
+import { FileStructureHandler } from './handlers/file-manager/file-structure';
+import { FileArchGenerateHandler } from './handlers/file-manager/file-arch';
 import { BackendCodeHandler } from './handlers/backend/code-generate';
 import { DBSchemaHandler } from './handlers/database/schemas/schemas';
 

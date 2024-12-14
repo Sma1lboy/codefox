@@ -2,7 +2,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { Logger } from '@nestjs/common';
 import * as toposort from 'toposort';
-import { VirtualDirectory } from '../../virtual-dir';
+import { VirtualDirectory } from '../../../virtual-dir';
 import { BuilderContext } from 'src/build-system/context';
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { FileUtil } from 'src/build-system/utils/util';
