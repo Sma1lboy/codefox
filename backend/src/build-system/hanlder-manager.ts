@@ -8,6 +8,7 @@ import { FileStructureHandler } from './handlers/file-manager/file-structure';
 import { FileArchGenerateHandler } from './handlers/file-manager/file-arch';
 import { BackendCodeHandler } from './handlers/backend/code-generate';
 import { DBSchemaHandler } from './handlers/database/schemas/schemas';
+import { DatabaseRequirementHandler } from './handlers/database/requirements-document';
 
 export class BuildHandlerManager {
   private static instance: BuildHandlerManager;
@@ -28,6 +29,7 @@ export class BuildHandlerManager {
       new FileArchGenerateHandler(),
       new BackendCodeHandler(),
       new DBSchemaHandler(),
+      new DatabaseRequirementHandler(),
     ];
 
     for (const handler of builtInHandlers) {

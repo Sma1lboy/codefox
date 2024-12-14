@@ -83,11 +83,11 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
         },
         {
           id: 'step-4',
-          name: 'Generate Database Schemas',
+          name: 'Generate Database Requirements',
           nodes: [
             {
-              id: 'op:DATABASE:SCHEMAS',
-              name: 'Database Schemas Node',
+              id: 'op:DATABASE_REQ::STATE:GENERATE',
+              name: 'Database Requirements Node',
               type: 'DATABASE',
               subType: 'SCHEMAS',
               requires: ['op:UX_DATAMAP::STATE:GENERATE'],
@@ -96,6 +96,19 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
         },
         {
           id: 'step-5',
+          name: 'Generate Database Schemas',
+          nodes: [
+            {
+              id: 'op:DATABASE:SCHEMAS',
+              name: 'Database Schemas Node',
+              type: 'DATABASE',
+              subType: 'SCHEMAS',
+              requires: ['op:DATABASE_REQ::STATE:GENERATE'],
+            },
+          ],
+        },
+        {
+          id: 'step-6',
           name: 'Generate Backend Code',
           nodes: [
             {
