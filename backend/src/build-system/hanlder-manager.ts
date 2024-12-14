@@ -1,13 +1,13 @@
-import { ProjectInitHandler } from './node/project-init';
+import { ProjectInitHandler } from './handlers/project-init';
 import { BuildHandler } from './types';
-import { PRDHandler } from './node/product-requirements-document/prd';
-import { UXSitemapStructureHandler } from './node/ux-sitemap-structure';
-import { UXDatamapHandler } from './node/ux-datamap';
-import { UXSMDHandler } from './node/ux-sitemap-document/uxsmd';
-import { FileStructureHandler } from './node/file-structure';
-import { FileArchGenerateHandler } from './node/file-arch';
-import { BackendCodeHandler } from './node/backend-code-generate';
-import { DBSchemaHandler } from './node/database-schemas/schemas';
+import { PRDHandler } from './handlers/product-manager/product-requirements-document/prd';
+import { UXSitemapStructureHandler } from './handlers/ux/sitemap-structure';
+import { UXDatamapHandler } from './handlers/ux/datamap';
+import { UXSMDHandler } from './handlers/ux/sitemap-document/uxsmd';
+import { FileStructureHandler } from './handlers/file-structure';
+import { FileArchGenerateHandler } from './handlers/file-arch';
+import { BackendCodeHandler } from './handlers/backend/code-generate';
+import { DBSchemaHandler } from './handlers/database/schemas/schemas';
 
 export class BuildHandlerManager {
   private static instance: BuildHandlerManager;
