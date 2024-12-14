@@ -7,7 +7,7 @@ import {
   getSupportedDatabaseTypes,
   isSupportedDatabaseType,
   parseGenerateTag,
-} from '../../utils/database-utils';
+} from '../../../utils/database-utils';
 import { writeFile } from 'fs-extra';
 import { prompts } from './prompt';
 

@@ -1,5 +1,3 @@
-// src/build-system/prompts.ts
-
 /**
  * Collection of prompt functions used for various build system operations.
  */
