@@ -1,12 +1,17 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { FileGeneratorHandler } from '../node/file-generate'; // Update with actual file path to the handler
+import * as normalizePath from 'normalize-path';
 
 describe('FileGeneratorHandler', () => {
-  const projectSrcPath = 'src\\build-system\\__tests__\\test-project\\';
+  const projectSrcPath = normalizePath(
+    'src\\build-system\\__tests__\\test-project\\',
+  );
   // Read JSON data from file
-  const mdFilePath = path.resolve('src\\build-system\\__tests__\\file-arch.md');
-  const structMdFilePath = path.resolve(
+  const mdFilePath = normalizePath(
+    'src\\build-system\\__tests__\\file-arch.md',
+  );
+  const structMdFilePath = normalizePath(
     'src\\build-system\\__tests__\\file-structure-document.md',
   );
 
@@ -30,7 +35,8 @@ describe('FileGeneratorHandler', () => {
       'utf8',
     );
 
-    const handler = new FileGeneratorHandler(structMarkdownContent);
+    const handler = new FileGeneratorHandler();
+    handler.generateFiles(structMarkdownContent, projectSrcPath);
 
     // Run the file generator with the JSON data
     const result = await handler.generateFiles(
