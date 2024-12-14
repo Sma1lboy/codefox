@@ -45,7 +45,6 @@ describe('FileGeneratorHandler', () => {
     );
 
     const handler = new FileGeneratorHandler();
-    handler.generateFiles(structMarkdownContent, projectSrcPath);
 
     // Run the file generator with the JSON data
     const result = await handler.generateFiles(
