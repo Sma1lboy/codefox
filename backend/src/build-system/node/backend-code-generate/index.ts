@@ -43,6 +43,9 @@ export class BackendCodeHandler implements BuildHandler {
     const projectName =
       context.getData('projectName') || 'Default Project Name';
     this.logger.debug(`Project Name: ${projectName}`);
+    const databaseType =
+      context.getData('databaseType') || 'Default database type';
+    this.logger.debug(`Database Type: ${databaseType}`);
 
     // Validate and extract args
     if (!args || !Array.isArray(args)) {
@@ -68,6 +71,7 @@ export class BackendCodeHandler implements BuildHandler {
       projectName,
       sitemapDoc,
       DatamapDoc,
+      databaseType,
       currentFile,
       dependencyFile,
     );

@@ -2,13 +2,15 @@ export const generateBackendCodePrompt = (
   projectName: string,
   sitemapDoc: string,
   DatamapDoc: string,
+  databaseType: string,
   currentFile: string,
   dependencyFile: string,
 ): string => {
-  return `You are an expert backend developer. Your task is to generate a complete backend codebase within a single file for a project named "${projectName}". The code should be written using the Express framework with ES Module syntax (using \`import\` statements) and should include all necessary functionalities to cover essential backend operations while ensuring scalability and maintainability.
- 
- ### Based on the following input:
- 
+  return `You are an expert backend developer. 
+  Your task is to generate a complete backend codebase within a single file for a project named "${projectName}". The code should be written using the Express framework with ES Module syntax (using \`import\` statements), and database is ${databaseType}. Ensure the code include all necessary functionalities to cover essential backend operations while ensuring scalability and maintainability.
+
+  ### Based on the following input: 
+  
  - **Project Name:** ${projectName}
  - **Sitemap Documentation:** ${sitemapDoc}
  - **Data Analysis Document:** ${DatamapDoc}
