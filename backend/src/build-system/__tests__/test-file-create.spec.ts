@@ -5,33 +5,42 @@ import * as normalizePath from 'normalize-path';
 
 describe('FileGeneratorHandler', () => {
   const projectSrcPath = normalizePath(
-    'src\\build-system\\__tests__\\test-project\\',
+    path.join('src', 'build-system', '__tests__', 'test-project'),
   );
-  // Read JSON data from file
+
   const mdFilePath = normalizePath(
-    'src\\build-system\\__tests__\\file-arch.md',
+    path.join('src', 'build-system', '__tests__', 'file-arch.md'),
   );
+
   const structMdFilePath = normalizePath(
-    'src\\build-system\\__tests__\\file-structure-document.md',
+    path.join('src', 'build-system', '__tests__', 'file-structure-document.md'),
   );
 
   beforeEach(async () => {
     // Ensure the project directory is clean
-    await fs.remove('src\\build-system\\__tests__\\test-project\\src\\');
+    await fs.remove(
+      normalizePath(
+        path.join('src', 'build-system', '__tests__', 'test-project', 'src'),
+      ),
+    );
   });
 
   afterEach(async () => {
     // Clean up the generated test files
-    await fs.remove('src\\build-system\\__tests__\\test-project\\src\\');
+    await fs.remove(
+      normalizePath(
+        path.join('src', 'build-system', '__tests__', 'test-project', 'src'),
+      ),
+    );
   });
 
   it('should generate files based on file-arch.md', async () => {
     const archMarkdownContent = fs.readFileSync(
-      path.resolve(mdFilePath),
+      normalizePath(path.resolve(mdFilePath)),
       'utf8',
     );
     const structMarkdownContent = fs.readFileSync(
-      path.resolve(structMdFilePath),
+      normalizePath(path.resolve(structMdFilePath)),
       'utf8',
     );
 
