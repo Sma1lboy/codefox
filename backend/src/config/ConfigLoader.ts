@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import _ from 'lodash';
 export interface ChatsConfig {
-  [key: string]: ChatConfig;
+  chats: ChatConfig[];
 }
 export interface ChatConfig {
   model: string;
@@ -19,7 +19,6 @@ export class ConfigLoader {
   constructor() {
     this.configPath = path.resolve(__dirname, 'config.json');
     this.loadConfig();
-    console.log("111" + this.chatsConfig);
   }
 
   private loadConfig() {
