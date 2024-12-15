@@ -3,7 +3,6 @@ import * as path from 'path';
 import { FileGeneratorHandler } from '../handlers/file-generate'; // Update with actual file path to the handler
 import * as normalizePath from 'normalize-path';
 
-
 describe('FileGeneratorHandler', () => {
   const projectSrcPath = normalizePath(
     path.join('src', 'build-system', '__tests__', 'test-project'),
