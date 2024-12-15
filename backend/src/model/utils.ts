@@ -4,8 +4,9 @@ import { ModelDownloader } from './model-downloader';
 export async function downloadAllModels(): Promise<void> {
   const configLoader = new ConfigLoader();
   configLoader.validateConfig();
-  const chats = configLoader.get<ChatConfig[]>('chats');
+  const chats = configLoader.get<ChatConfig[]>('');
   const downloader = ModelDownloader.getInstance();
+  console.log('Loaded config:', chats);
   const loadPromises = chats.map(async (chatConfig: ChatConfig) => {
     const { model, task } = chatConfig;
     try {
@@ -15,7 +16,6 @@ export async function downloadAllModels(): Promise<void> {
       downloader.logger.error(`Failed to load model ${model}:`, error.message);
     }
   });
-
   await Promise.all(loadPromises);
 
   downloader.logger.log('All models loaded.');

@@ -1,6 +1,9 @@
+import path from 'path';
+import * as fs from 'fs';
 import { ConfigLoader } from '../../config/config-loader';
 import { ModelDownloader } from '../model-downloader';
 import { downloadAllModels } from '../utils';
+import { getConfigDir, getConfigPath } from 'src/config/common-path';
 
 const originalIsArray = Array.isArray;
 
@@ -16,30 +19,40 @@ Array.isArray = jest.fn((type: any): type is any[] => {
   return originalIsArray(type);
 }) as unknown as (arg: any) => arg is any[];
 
-jest.mock('../../config/ConfigLoader', () => {
-  return {
-    ConfigLoader: jest.fn().mockImplementation(() => {
-      return {
-        get: jest.fn().mockReturnValue({
-          chat1: {
-            model: 'Felladrin/onnx-flan-alpaca-base',
-            task: 'text2text-generation',
-          },
-        }),
-        validateConfig: jest.fn(),
-      };
-    }),
-  };
-});
+// jest.mock('../../config/config-loader', () => {
+//   return {
+//     ConfigLoader: jest.fn().mockImplementation(() => {
+//       return {
+//         get: jest.fn().mockReturnValue({
+//           chat1: {
+//             model: 'Felladrin/onnx-flan-alpaca-base',
+//             task: 'text2text-generation',
+//           },
+//         }),
+//         validateConfig: jest.fn(),
+//       };
+//     }),
+//   };
+// });
 
 describe('loadAllChatsModels with real model loading', () => {
+  let configLoader: ConfigLoader;
   beforeAll(async () => {
+    const testConfig = [
+      {
+        model: 'Felladrin/onnx-flan-alpaca-base',
+        task: 'text2text-generation',
+      }
+    ];
+    const configPath = getConfigPath('config');
+    fs.writeFileSync(configPath, JSON.stringify(testConfig, null, 2), 'utf8');
+
+    configLoader = new ConfigLoader();
     await downloadAllModels();
   }, 600000);
 
   it('should load real models specified in config', async () => {
     const downloader = ModelDownloader.getInstance();
-    expect(ConfigLoader).toHaveBeenCalled();
 
     const chat1Model = await downloader.getLocalModel(
       'text2text-generation',

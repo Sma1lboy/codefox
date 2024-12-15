@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import _ from 'lodash';
+import * as _ from 'lodash';
+import { getConfigPath } from './common-path';
 export interface ChatConfig {
   model: string;
   endpoint?: string;
@@ -15,17 +16,22 @@ export class ConfigLoader {
   private readonly configPath: string;
 
   constructor() {
-    this.configPath = path.resolve(__dirname, 'config.json');
+    this.configPath = getConfigPath('config');
     this.loadConfig();
   }
 
   private loadConfig() {
     const file = fs.readFileSync(this.configPath, 'utf-8');
+    
     this.chatsConfig = JSON.parse(file);
+    console.log('Raw file content:', this.chatsConfig);
   }
 
   get<T>(path: string) {
-    return _.get(this.chatsConfig, path);
+    if (!path) {
+      return this.chatsConfig as unknown as T;
+  }
+    return _.get(this.chatsConfig, path) as T;
   }
 
   set(path: string, value: any) {
