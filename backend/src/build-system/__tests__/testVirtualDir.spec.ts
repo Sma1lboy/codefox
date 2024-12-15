@@ -5,7 +5,7 @@ import * as normalizePath from 'normalize-path';
 
 describe('VirtualDirectory', () => {
   const structMdFilePath = normalizePath(
-    'src\\build-system\\__tests__\\file-structure-document.md',
+    path.join('src', 'build-system', '__tests__', 'file-structure-document.md'),
   );
 
   describe('VirtualDirectory', () => {
