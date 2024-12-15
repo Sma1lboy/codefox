@@ -1,5 +1,5 @@
 import { BuilderContext } from 'src/build-system/context';
-import { DBSchemaHandler } from '../node/database-schemas/schemas';
+import { DBSchemaHandler } from '../handlers/database/schemas/schemas';
 import { readFileSync } from 'fs';
 import markdownToTxt from 'markdown-to-txt';
 

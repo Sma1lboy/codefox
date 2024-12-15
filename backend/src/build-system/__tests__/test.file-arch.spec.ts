@@ -1,5 +1,5 @@
 import { BuilderContext } from 'src/build-system/context';
-import { FileArchGenerateHandler } from '../node/file-arch';
+import { FileArchGenerateHandler } from '../handlers/file-arch';
 import markdownToTxt from 'markdown-to-txt';
 import { readFileSync } from 'fs-extra';
 
