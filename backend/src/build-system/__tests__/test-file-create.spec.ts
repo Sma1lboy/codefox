@@ -1,7 +1,8 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import { FileGeneratorHandler } from '../node/file-generate'; // Update with actual file path to the handler
+import { FileGeneratorHandler } from '../handlers/file-generate'; // Update with actual file path to the handler
 import * as normalizePath from 'normalize-path';
+
 
 describe('FileGeneratorHandler', () => {
   const projectSrcPath = normalizePath(

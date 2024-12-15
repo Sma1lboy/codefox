@@ -2,7 +2,7 @@
 import { BuilderContext } from '../context';
 import { BuildSequenceExecutor } from '../executor';
 import { BuildHandlerManager } from '../hanlder-manager';
-import { ProjectInitHandler } from '../node/project-init';
+import { ProjectInitHandler } from '../handlers/project-init';
 import { BuildSequence } from '../types';
 describe('Project Init Handler Test', () => {
   let context: BuilderContext;
