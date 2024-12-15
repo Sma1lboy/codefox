@@ -1,5 +1,5 @@
-import { ChatConfig, ConfigLoader } from 'src/config/ConfigLoader';
-import { ModelDownloader } from './ModelDownloader';
+import { ChatConfig, ConfigLoader } from 'src/config/config-loader';
+import { ModelDownloader } from './model-downloader';
 
 export async function downloadAllModels(): Promise<void> {
   const configLoader = new ConfigLoader();

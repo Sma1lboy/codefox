@@ -1,9 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import _ from 'lodash';
-export interface ChatsConfig {
-  chats: ChatConfig[];
-}
 export interface ChatConfig {
   model: string;
   endpoint?: string;
@@ -11,8 +8,9 @@ export interface ChatConfig {
   default?: boolean;
   task?: string;
 }
+
 export class ConfigLoader {
-  private chatsConfig: ChatsConfig;
+  private chatsConfig: ChatConfig[];
 
   private readonly configPath: string;
 

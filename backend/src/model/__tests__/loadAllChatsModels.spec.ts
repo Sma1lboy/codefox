@@ -1,6 +1,6 @@
-import { ConfigLoader } from '../../config/ConfigLoader';
-import { ModelDownloader } from '../ModelDownloader';
-import { downloadAllModels } from '../ModelLoader';
+import { ConfigLoader } from '../../config/config-loader';
+import { ModelDownloader } from '../model-downloader';
+import { downloadAllModels } from '../utils';
 
 const originalIsArray = Array.isArray;
 
