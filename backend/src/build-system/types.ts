@@ -1,5 +1,6 @@
 import { ModelProvider } from 'src/common/model-provider';
 import { BuilderContext } from './context';
+import { BuildOptions } from 'typescript';
 
 export type BuildNodeType =
   | 'PROJECT_SETUP'
@@ -61,9 +62,9 @@ export interface BuildContext {
   pendingNodes: Set<string>;
 }
 
-export interface BuildResult {
+export interface BuildResult<T = any> {
   success: boolean;
-  data?: any;
+  data?: T;
   error?: Error;
 }
 
@@ -74,7 +75,10 @@ export interface BuildExecutionState {
   waiting: Set<string>;
 }
 
-export interface BuildHandler {
+export interface BuildOpts {
+  projectPart?: 'frontend' | 'backend';
+}
+export interface BuildHandler<T = any> {
   // Unique identifier for the handler
   id: string;
 
@@ -84,5 +88,27 @@ export interface BuildHandler {
    * @param model model provider for the build
    * @param args the request arguments
    */
-  run(context: BuilderContext, ...args: any[]): Promise<BuildResult>;
+  run(context: BuilderContext, opts?: BuildOpts): Promise<BuildResult<T>>;
+}
+
+export interface NodeOutputMap {
+  'op:DATABASE_REQ::STATE:GENERATE': string;
+  'op:PRD::STATE:GENERATE': string;
+  'op:UXSMD::STATE:GENERATE': string;
+  'op:UXSMS::STATE:GENERATE': string;
+  'op:LEVEL2_UXSMS::STATE:GENERATE': string;
+  'op:UX_DATAMAP::STATE:GENERATE': string;
+  'op:FSTRUCT::STATE:GENERATE': string;
+  'op:FILE_ARCH::STATE:GENERATE': string;
+  'op:FILE_GENERATE::STATE:CREATE': string;
+  'op:BACKEND_CODE::STATE:GENERATE': string;
+  'op:BACKEND_REQ::STATE:GENERATE': {
+    overview: string;
+    implementation: string;
+    config: {
+      language: string;
+      framework: string;
+      packages: Record<string, string>;
+    };
+  };
 }

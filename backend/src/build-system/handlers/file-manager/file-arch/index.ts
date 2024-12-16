@@ -4,22 +4,24 @@ import { generateFileArchPrompt } from './prompt';
 import { Logger } from '@nestjs/common';
 import { FileUtil } from 'src/build-system/utils/util';
 
-export class FileArchGenerateHandler implements BuildHandler {
+export class FileArchGenerateHandler implements BuildHandler<string> {
   readonly id = 'op:FILE_ARCH::STATE:GENERATE';
   private readonly logger: Logger = new Logger('FileArchGenerateHandler');
 
   // TODO: adding page by page analysis
-  async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
+  async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Generating File Architecture Document...');
 
-    const fileStructure = args[0] as string;
-    const dataMapStruct = args[1] as string;
+    const fileStructure = context.getNodeData('op:FSTRUCT::STATE:GENERATE');
+    // TODO: here should use datamap struct
+    const dataMapStruct = context.getNodeData('op:UX_DATAMAP::STATE:GENERATE');
+    // TODO: adding page by page analysis
 
     if (!fileStructure || !dataMapStruct) {
       return {
         success: false,
         error: new Error(
-          'Missing required parameters: fileStructure or pageByPageAnalysis',
+          'Missing required parameters: fileStructure or dataMapStruct',
         ),
       };
     }
@@ -35,37 +37,62 @@ export class FileArchGenerateHandler implements BuildHandler {
     let jsonData = null;
     let retry = 0;
     const retryChances = 2;
+
     while (!successBuild) {
       if (retry > retryChances) {
-        throw new Error(
+        this.logger.error(
           'Failed to build virtual directory after multiple attempts',
         );
+        return {
+          success: false,
+          error: new Error(
+            'Failed to build virtual directory after multiple attempts',
+          ),
+        };
       }
 
-      fileArchContent = await context.model.chatSync(
-        {
-          content: prompt,
-        },
-        'gpt-4o-mini',
-      );
-
-      // validation test
-      jsonData = FileUtil.extractJsonFromMarkdown(fileArchContent);
-      if (jsonData == null) {
-        retry += 1;
-        this.logger.error('Extract Json From Markdown fail');
-        continue;
+      try {
+        fileArchContent = await context.model.chatSync(
+          {
+            content: prompt,
+          },
+          'gpt-4o-mini',
+        );
+      } catch (error) {
+        this.logger.error('Error generating file architecture content', error);
+        return {
+          success: false,
+          error: new Error('Error generating file architecture content'),
+        };
       }
 
-      if (!this.validateJsonData(jsonData)) {
-        retry += 1;
-        this.logger.error('FileArchGenerate validateJsonData fail');
-        continue;
+      // Extract JSON data from markdown content
+      try {
+        jsonData = FileUtil.extractJsonFromMarkdown(fileArchContent);
+        if (jsonData == null) {
+          retry += 1;
+          this.logger.error('Failed to extract JSON from Markdown');
+          continue;
+        }
+
+        // Validate the extracted JSON data
+        if (!this.validateJsonData(jsonData)) {
+          retry += 1;
+          this.logger.error('File architecture JSON validation failed');
+          continue;
+        }
+
+        successBuild = true;
+      } catch (error) {
+        this.logger.error('Error during JSON extraction or validation', error);
+        return {
+          success: false,
+          error: new Error('Error during JSON extraction or validation'),
+        };
       }
-      this.logger.log(jsonData);
-      successBuild = true;
     }
 
+    this.logger.log('File architecture document generated successfully');
     return {
       success: true,
       data: fileArchContent,
@@ -75,7 +102,7 @@ export class FileArchGenerateHandler implements BuildHandler {
   /**
    * Validate the structure and content of the JSON data.
    * @param jsonData The JSON data to validate.
-   * @throws Error if validation fails.
+   * @returns A boolean indicating whether the JSON data is valid.
    */
   private validateJsonData(jsonData: {
     files: Record<string, { dependsOn: string[] }>;

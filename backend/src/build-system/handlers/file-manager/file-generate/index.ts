@@ -7,17 +7,25 @@ import { BuilderContext } from 'src/build-system/context';
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { FileUtil } from 'src/build-system/utils/util';
 
-export class FileGeneratorHandler {
+export class FileGeneratorHandler implements BuildHandler<string> {
+  readonly id = 'op:FILE_GENERATE::STATE:CREATE';
   private readonly logger = new Logger('FileGeneratorHandler');
   private virtualDir: VirtualDirectory;
 
-  async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
+  async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.virtualDir = context.virtualDirectory;
-    const fileArch = args[0] as string;
+    const fileArchDoc = context.getNodeData('op:FILE_ARCH::STATE:GENERATE');
 
-    // change here
     const projectSrcPath = '';
-    this.generateFiles(JSON.stringify(fileArch, null, 2), projectSrcPath);
+    try {
+      await this.generateFiles(fileArchDoc, projectSrcPath);
+    } catch (error) {
+      this.logger.error('Error during file generation process', error);
+      return {
+        success: false,
+        error: new Error('Failed to generate files and dependencies.'),
+      };
+    }
 
     return {
       success: true,
@@ -33,31 +41,27 @@ export class FileGeneratorHandler {
   async generateFiles(
     markdownContent: string,
     projectSrcPath: string,
-  ): Promise<{ success: boolean; data: string }> {
+  ): Promise<void> {
     const jsonData = FileUtil.extractJsonFromMarkdown(markdownContent);
+
     // Build the dependency graph and detect cycles before any file operations
     const { graph, nodes } = this.buildDependencyGraph(jsonData);
     this.detectCycles(graph);
 
-    // Add virtual directory validation
+    // Validate files against the virtual directory structure
     this.validateAgainstVirtualDirectory(nodes);
 
-    // After validation and cycle detection, perform topological sort
+    // Perform topological sort for file generation
     const sortedFiles = this.getSortedFiles(graph, nodes);
 
-    // Generate files in the correct order
+    // Generate files in dependency order
     for (const file of sortedFiles) {
       const fullPath = path.resolve(projectSrcPath, file);
       this.logger.log(`Generating file in dependency order: ${fullPath}`);
-      // TODO(allen)
       await this.createFile(fullPath);
     }
 
     this.logger.log('All files generated successfully.');
-    return {
-      success: true,
-      data: 'Files and dependencies created successfully.',
-    };
   }
 
   /**
@@ -83,7 +87,7 @@ export class FileGeneratorHandler {
   }
 
   /**
-   * Detect cycles in the dependency graph before any file operations.
+   * Detect cycles in the dependency graph.
    * @param graph The dependency graph to check.
    * @throws Error if a cycle is detected.
    */
@@ -111,7 +115,7 @@ export class FileGeneratorHandler {
   ): string[] {
     const sortedFiles = toposort(graph).reverse();
 
-    // Add any files that have no dependencies and weren't included in the sort
+    // Add any files with no dependencies
     Array.from(nodes).forEach((node) => {
       if (!sortedFiles.includes(node)) {
         sortedFiles.unshift(node);
@@ -128,25 +132,21 @@ export class FileGeneratorHandler {
    */
   private resolveDependency(currentFile: string, dependency: string): string {
     const currentDir = path.dirname(currentFile);
-
-    // Check if the dependency is a file with an extension
     const hasExtension = path.extname(dependency).length > 0;
 
-    // If the dependency doesn't have an extension and is not CSS/JS, assume it's a TypeScript file
     if (!hasExtension) {
       dependency = path.join(dependency, 'index.ts');
     }
 
-    // Resolve the dependency path relative to the current directory
     const resolvedPath = path.join(currentDir, dependency).replace(/\\/g, '/');
     this.logger.log(`Resolved dependency: ${resolvedPath}`);
     return resolvedPath;
   }
 
   /**
-   * Validate that all files and dependencies exist in the virtual directory structure
-   * @param nodes Set of all files and dependencies
-   * @throws Error if any file or dependency is not found in the virtual directory
+   * Validate all files and dependencies against the virtual directory.
+   * @param nodes Set of all files and dependencies.
+   * @throws Error if any file or dependency is not valid.
    */
   private validateAgainstVirtualDirectory(nodes: Set<string>): void {
     const invalidFiles: string[] = [];

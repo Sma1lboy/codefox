@@ -1,25 +1,26 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
-import { prompts } from './prompt/prompt';
+import { prompts } from './prompt';
 import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
 
-export class UXSMDHandler implements BuildHandler {
+export class UXSMDHandler implements BuildHandler<string> {
   readonly id = 'op:UXSMD::STATE:GENERATE';
   readonly logger: Logger = new Logger('UXSMDHandler');
 
-  async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
+  async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Generating UXSMD...');
 
     // Extract project data from the context
     const projectName =
       context.getData('projectName') || 'Default Project Name';
     const platform = context.getData('platform') || 'Default Platform';
+    const prdContent = context.getNodeData('op:PRD::STATE:GENERATE');
 
     // Generate the prompt dynamically
     const prompt = prompts.generateUxsmdrompt(
       projectName,
-      args as string,
+      prdContent,
       platform,
     );
 
@@ -29,6 +30,7 @@ export class UXSMDHandler implements BuildHandler {
     // Store the generated document in the context
     context.setData('uxsmdDocument', uxsmdContent);
 
+    // Return the generated document
     return {
       success: true,
       data: uxsmdContent,
@@ -37,10 +39,9 @@ export class UXSMDHandler implements BuildHandler {
 
   private async generateUXSMDFromLLM(prompt: string): Promise<string> {
     const modelProvider = ModelProvider.getInstance();
-
     const model = 'gpt-4o-mini';
 
-    const prdContent = modelProvider.chatSync(
+    const uxsmdContent = await modelProvider.chatSync(
       {
         content: prompt,
       },
@@ -48,6 +49,6 @@ export class UXSMDHandler implements BuildHandler {
     );
 
     this.logger.log('Received full UXSMD content from LLM server.');
-    return prdContent;
+    return uxsmdContent;
   }
 }
