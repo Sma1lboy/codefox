@@ -42,7 +42,7 @@ describe('loadAllChatsModels with real model loading', () => {
       {
         model: 'Felladrin/onnx-flan-alpaca-base',
         task: 'text2text-generation',
-      }
+      },
     ];
     const configPath = getConfigPath('config');
     fs.writeFileSync(configPath, JSON.stringify(testConfig, null, 2), 'utf8');
