@@ -1,3 +1,4 @@
+// config-loader.ts
 import * as fs from 'fs';
 import * as path from 'path';
 import * as _ from 'lodash';
@@ -18,16 +19,16 @@ export interface EmbeddingConfig {
 }
 
 export interface AppConfig {
-  chats?: Record<string, ChatConfig>;
+  chats?: ChatConfig[];
   embeddings?: EmbeddingConfig;
 }
 
 export const exampleConfigContent = `{
   // Chat models configuration
   // You can configure multiple chat models
-  "chats": {
+  "chats": [
     // Example of OpenAI GPT configuration
-    "gpt": {
+    {
       "model": "gpt-3.5-turbo",
       "endpoint": "https://api.openai.com/v1",
       "token": "your-openai-token",  // Replace with your OpenAI token
@@ -35,15 +36,14 @@ export const exampleConfigContent = `{
     },
     
     // Example of local model configuration
-    "local-model": {
+    {
       "model": "llama2",
       "endpoint": "http://localhost:11434/v1",
       "task": "chat"
     }
-  },
+  ],
 
   // Embedding model configuration (optional)
-  // Used for text embeddings and similarity search
   "embeddings": {
     "model": "text-embedding-ada-002",
     "endpoint": "https://api.openai.com/v1",
@@ -131,20 +131,67 @@ export class ConfigLoader {
     );
   }
 
-  getChatConfig(chatId?: string): ChatConfig | null {
-    if (!this.config.chats) {
+  getAllChatConfigs(): ChatConfig[] {
+    return this.config.chats || [];
+  }
+
+  getChatConfig(modelName?: string): ChatConfig | null {
+    if (!this.config.chats || !Array.isArray(this.config.chats)) {
       return null;
     }
 
     const chats = this.config.chats;
-    if (chatId && chats[chatId]) {
-      return chats[chatId];
+
+    if (modelName) {
+      const foundChat = chats.find((chat) => chat.model === modelName);
+      if (foundChat) {
+        return foundChat;
+      }
     }
 
-    const defaultChat =
-      Object.values(chats).find((chat) => chat.default) ||
-      Object.values(chats)[0];
-    return defaultChat || null;
+    return (
+      chats.find((chat) => chat.default) || (chats.length > 0 ? chats[0] : null)
+    );
+  }
+
+  addChatConfig(config: ChatConfig) {
+    if (!this.config.chats) {
+      this.config.chats = [];
+    }
+
+    const index = this.config.chats.findIndex(
+      (chat) => chat.model === config.model,
+    );
+    if (index !== -1) {
+      this.config.chats.splice(index, 1);
+    }
+
+    if (config.default) {
+      this.config.chats.forEach((chat) => {
+        chat.default = false;
+      });
+    }
+
+    this.config.chats.push(config);
+    this.saveConfig();
+  }
+
+  removeChatConfig(modelName: string): boolean {
+    if (!this.config.chats) {
+      return false;
+    }
+
+    const initialLength = this.config.chats.length;
+    this.config.chats = this.config.chats.filter(
+      (chat) => chat.model !== modelName,
+    );
+
+    if (this.config.chats.length !== initialLength) {
+      this.saveConfig();
+      return true;
+    }
+
+    return false;
   }
 
   getEmbeddingConfig(): EmbeddingConfig | null {
@@ -161,17 +208,24 @@ export class ConfigLoader {
     }
 
     if (this.config.chats) {
-      if (typeof this.config.chats !== 'object') {
-        throw new Error("Invalid configuration: 'chats' must be an object");
+      if (!Array.isArray(this.config.chats)) {
+        throw new Error("Invalid configuration: 'chats' must be an array");
       }
 
-      Object.entries(this.config.chats).forEach(([key, chat]) => {
+      this.config.chats.forEach((chat, index) => {
         if (!chat.model) {
           throw new Error(
-            `Invalid chat configuration for '${key}': 'model' is required`,
+            `Invalid chat configuration at index ${index}: 'model' is required`,
           );
         }
       });
+
+      const defaultChats = this.config.chats.filter((chat) => chat.default);
+      if (defaultChats.length > 1) {
+        throw new Error(
+          'Invalid configuration: Multiple default chat configurations found',
+        );
+      }
     }
 
     if (this.config.embeddings) {
