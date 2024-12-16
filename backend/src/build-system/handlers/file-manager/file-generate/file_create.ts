@@ -20,20 +20,6 @@ export async function saveGeneratedCode(
   content: string,
 ): Promise<string> {
   try {
-    // Ensure the root directory exists
-    const rootDir = getRootDir();
-    if (!rootDir) {
-      throw new Error('Root directory is undefined.');
-    }
-    await fs.mkdir(rootDir, { recursive: true });
-
-    // Ensure the projects directory exists
-    const projectsDir = getProjectsDir();
-    if (!projectsDir) {
-      throw new Error('Projects directory is undefined.');
-    }
-    await fs.mkdir(projectsDir, { recursive: true });
-
     // Generate a unique UUID for the project folder
     const projectUUID = uuidv4();
 
@@ -50,7 +36,8 @@ export async function saveGeneratedCode(
 
     // Write the content to the file
     await fs.writeFile(filePath, content, 'utf8');
-    return filePath;
+
+    return projectPath;
   } catch (error) {
     console.error('Error saving generated code:', error);
     throw error;
