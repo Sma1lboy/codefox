@@ -10,10 +10,19 @@ import {
 import { Logger } from '@nestjs/common';
 import { VirtualDirectory } from './virtual-dir';
 
-export type GlobalDataKeys = 'projectName' | 'description' | 'platform';
-type ContextData = {
-  [key in GlobalDataKeys]: string;
-} & Record<string, any>;
+/**
+ * Predefined global keys for context.
+ */
+export type GlobalDataKeys =
+  | 'projectName'
+  | 'description'
+  | 'platform'
+  | 'databaseType';
+
+/**
+ * ContextData type, allowing dynamic keys and predefined keys.
+ */
+type ContextData = Record<GlobalDataKeys | string, any>;
 
 /**
  * BuilderContext manages:
@@ -31,7 +40,7 @@ export class BuilderContext {
   };
 
   private logger: Logger;
-  private globalContext: Record<string, any> = {};
+  private globalContext: Map<GlobalDataKeys | string, any> = new Map(); // Stores global context data
   private nodeData: Map<string, any> = new Map(); // Stores node outputs
 
   private handlerManager: BuildHandlerManager;
@@ -46,6 +55,12 @@ export class BuilderContext {
     this.model = ModelProvider.getInstance();
     this.logger = new Logger(`builder-context-${id}`);
     this.virtualDirectory = new VirtualDirectory();
+
+    // Initialize global context with default values
+    this.globalContext.set('projectName', sequence.name);
+    this.globalContext.set('description', sequence.description || '');
+    this.globalContext.set('platform', 'web');
+    this.globalContext.set('databaseType', sequence.databaseType || 'SQLite');
   }
 
   /**
@@ -72,7 +87,6 @@ export class BuilderContext {
 
   /**
    * Executes a node by its ID. Upon success, stores node output data.
-   * Node handlers can internally fetch dependency data via context.getNodeData.
    * @param nodeId The ID of the node to execute.
    */
   async executeNodeById<T = any>(nodeId: string): Promise<BuildResult<T>> {
@@ -81,7 +95,6 @@ export class BuilderContext {
       throw new Error(`Node not found: ${nodeId}`);
     }
 
-    // TODO: thread optimization yeild
     if (!this.canExecute(nodeId)) {
       throw new Error(`Dependencies not met for node: ${nodeId}`);
     }
@@ -111,21 +124,24 @@ export class BuilderContext {
 
   /**
    * Store global context data.
+   * @param key The key to store.
+   * @param value The value to store.
    */
-  setGlobalContext<Key extends keyof ContextData>(
+  setGlobalContext<Key extends GlobalDataKeys | string>(
     key: Key,
     value: ContextData[Key],
   ): void {
-    this.globalContext[key] = value;
+    this.globalContext.set(key, value);
   }
 
   /**
    * Retrieve global context data.
+   * @param key The key to retrieve.
    */
-  getGlobalContext<Key extends keyof ContextData>(
+  getGlobalContext<Key extends GlobalDataKeys | string>(
     key: Key,
   ): ContextData[Key] | undefined {
-    return this.globalContext[key];
+    return this.globalContext.get(key);
   }
 
   /**

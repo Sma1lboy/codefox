@@ -45,6 +45,9 @@ export interface BuildSequence {
   version: string;
   name: string;
   description?: string;
+  //TODO: adding dependencies infos list here
+  //TODO: adding type for database maybe
+  databaseType?: string;
   steps: BuildStep[];
 }
 
