@@ -24,6 +24,7 @@ export interface BuildBase {
   name?: string;
   description?: string;
   requires?: string[];
+  options?: BuildOpts;
 }
 
 export interface BuildNode extends BuildBase {
