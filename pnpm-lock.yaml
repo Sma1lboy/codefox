@@ -78,6 +78,9 @@ importers:
       '@types/normalize-path':
         specifier: ^3.0.2
         version: 3.0.2
+      '@types/toposort':
+        specifier: ^2.0.7
+        version: 2.0.7
       axios:
         specifier: ^1.7.7
         version: 1.7.8(debug@4.3.7)
@@ -3262,6 +3265,9 @@ packages:
 
   '@types/supertest@6.0.2':
     resolution: {integrity: sha512-137ypx2lk/wTQbW6An6safu9hXmajAifU/s7szAHLN/FeIm5w7yR0Wkl9fdJMRSHwOn4HLAI0DaB2TOORuhPDg==}
+
+  '@types/toposort@2.0.7':
+    resolution: {integrity: sha512-sQNk65vbC36+UixCkcky+dCr7MlflHcVILg1FVGqlUntsLFv9xd9ToWIVko/gTuin+cVe16t+2YubEFkhnSuPQ==}
 
   '@types/tough-cookie@4.0.5':
     resolution: {integrity: sha512-/Ad8+nIOV7Rl++6f1BdKxFSMgmoqEoYbHRpPcx3JEfv8VRsQe9Z4mCXeJBzxs7mbHY/XOZZuXlRNfhpVPbs6ZA==}
@@ -11555,6 +11561,8 @@ snapshots:
     dependencies:
       '@types/methods': 1.1.4
       '@types/superagent': 8.1.9
+
+  '@types/toposort@2.0.7': {}
 
   '@types/tough-cookie@4.0.5': {}
 
