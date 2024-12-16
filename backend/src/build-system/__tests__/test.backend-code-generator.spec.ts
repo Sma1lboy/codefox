@@ -17,9 +17,9 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
     const sequence: BuildSequence = {
       id: 'test-backend-sequence',
       version: '1.0.0',
-      name: 'Test PRD to Backend Code Generation Sequence',
-      description:
-        'Testing sequence execution from PRD to Backend Code Generation',
+      name: 'Spotify-like Music Web',
+      description: 'Users can play music',
+      databaseType: 'SQLite',
       steps: [
         {
           id: 'step-1',
@@ -105,12 +105,6 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
 
     // Initialize the BuilderContext with the defined sequence and environment
     const context = new BuilderContext(sequence, 'test-env');
-
-    // Set input data for context
-    context.setGlobalContext('projectName', 'Spotify-like Music Web');
-    context.setGlobalContext('description', 'Users can play music');
-    context.setGlobalContext('platform', 'web');
-    context.setGlobalContext('databaseType', 'SQLite'); // Can be 'PostgreSQL', 'MongoDB', etc., based on your needs
 
     try {
       // Execute the build sequence
