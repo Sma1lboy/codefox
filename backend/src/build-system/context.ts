@@ -1,4 +1,3 @@
-import { ModelProvider } from 'src/common/model-provider';
 import { BuildHandlerManager } from './hanlder-manager';
 import {
   BuildExecutionState,
@@ -8,8 +7,15 @@ import {
 } from './types';
 import { Logger } from '@nestjs/common';
 import { VirtualDirectory } from './virtual-dir';
+import { ModelProvider } from 'src/common/model-provider';
 
-export type GlobalDataKeys = 'projectName' | 'description' | 'platform';
+import { v4 as uuidv4 } from 'uuid';
+
+export type GlobalDataKeys =
+  | 'projectName'
+  | 'description'
+  | 'platform'
+  | 'projectUUID';
 type ContextData = {
   [key in GlobalDataKeys]: string;
 } & Record<string, any>;
@@ -37,6 +43,9 @@ export class BuilderContext {
     this.model = ModelProvider.getInstance();
     this.logger = new Logger(`builder-context-${id}`);
     this.virtualDirectory = new VirtualDirectory();
+
+    const projectUUID = uuidv4();
+    this.setData('projectUUID', projectUUID);
   }
 
   canExecute(nodeId: string): boolean {

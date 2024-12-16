@@ -5,18 +5,22 @@ import * as toposort from 'toposort';
 import { VirtualDirectory } from '../../../virtual-dir';
 import { BuilderContext } from 'src/build-system/context';
 import { BuildHandler, BuildResult } from 'src/build-system/types';
-import { FileUtil } from 'src/build-system/utils/util';
+import { extractJsonFromMarkdown } from 'src/build-system/utils/strings';
+import { getProjectPath } from 'src/config/common-path';
+import * as normalizePath from 'normalize-path';
 
-export class FileGeneratorHandler {
+export class FileGeneratorHandler implements BuildHandler {
+  readonly id = 'op:FILE_GENERATE::STATE:GENERATE';
   private readonly logger = new Logger('FileGeneratorHandler');
   private virtualDir: VirtualDirectory;
 
   async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
     this.virtualDir = context.virtualDirectory;
     const fileArch = args[0] as string;
+    const uuid = context.getData('projectUUID');
 
-    // change here
-    const projectSrcPath = '';
+    const projectSrcPath = getProjectPath(uuid);
+
     this.generateFiles(JSON.stringify(fileArch, null, 2), projectSrcPath);
 
     return {
@@ -34,7 +38,7 @@ export class FileGeneratorHandler {
     markdownContent: string,
     projectSrcPath: string,
   ): Promise<{ success: boolean; data: string }> {
-    const jsonData = FileUtil.extractJsonFromMarkdown(markdownContent);
+    const jsonData = extractJsonFromMarkdown(markdownContent);
     // Build the dependency graph and detect cycles before any file operations
     const { graph, nodes } = this.buildDependencyGraph(jsonData);
     this.detectCycles(graph);
@@ -47,7 +51,7 @@ export class FileGeneratorHandler {
 
     // Generate files in the correct order
     for (const file of sortedFiles) {
-      const fullPath = path.resolve(projectSrcPath, file);
+      const fullPath = normalizePath(path.resolve(projectSrcPath, file));
       this.logger.log(`Generating file in dependency order: ${fullPath}`);
       // TODO(allen)
       await this.createFile(fullPath);
