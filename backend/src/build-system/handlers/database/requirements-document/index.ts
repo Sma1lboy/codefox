@@ -2,26 +2,22 @@ import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
+import { Logger } from '@nestjs/common';
 
-export class FileStructureHandler implements BuildHandler {
-  readonly id = 'op:FSTRUCT::STATE:GENERATE';
-
+export class DatabaseRequirementHandler implements BuildHandler {
+  readonly id = 'op:DATABASE_REQ::STATE:GENERATE';
+  readonly logger = new Logger('DatabaseRequirementHandler');
   async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
-    console.log('Generating File Structure Document...');
-
-    // extract relevant data from the context
+    this.logger.log('Generating Database Requirements Document...');
     const projectName =
       context.getData('projectName') || 'Default Project Name';
 
-    const prompt = prompts.generateFileStructurePrompt(
+    const prompt = prompts.generateDatabaseRequirementPrompt(
       projectName,
       args as string,
-      // TODO: change later
-      args as string,
-      'FrameWork Holder',
     );
-
-    const fileStructureContent = await context.model.chatSync(
+    const model = ModelProvider.getInstance();
+    const dbRequirementsContent = await model.chatSync(
       {
         content: prompt,
       },
@@ -29,7 +25,7 @@ export class FileStructureHandler implements BuildHandler {
     );
     return {
       success: true,
-      data: fileStructureContent,
+      data: dbRequirementsContent,
     };
   }
 }

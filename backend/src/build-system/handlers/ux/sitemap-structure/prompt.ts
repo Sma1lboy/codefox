@@ -18,12 +18,13 @@ export const prompts = {
   2, You need to ensure all features from the sitemap documentation are addressed.
   3, You need to identify and define every page/screen required for the application.
   4, Detailed Breakdown for Each Page/Screen:
+    Page name: ## {index}. Name page
     Page Purpose: Clearly state the user goal for the page.
     Core Elements:
         List all components (e.g., headers, buttons, sidebars) and explain their role on the page.
         Include specific interactions and behaviors for each element.
     Content Display:
-        Identify the information that needs to be visible on the page and why it’s essential for the user.
+        Identify the information that needs to be visible on the page and why it's essential for the user.
     Navigation and Routes:
         Specify all frontend routes required to navigate to this page.
         Include links or actions that lead to other pages or states.
