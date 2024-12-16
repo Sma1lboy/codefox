@@ -76,6 +76,9 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
               id: 'op:FILE:STRUCT',
               name: 'file structure generation',
               requires: ['op:UX:SMD', 'op:UX:DATAMAP:DOC'],
+              options: {
+                projectPart: 'frontend',
+              },
             },
           ],
         },

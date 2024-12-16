@@ -110,7 +110,6 @@ export class BuilderContext {
       this.executionState.completed.add(nodeId);
       this.executionState.pending.delete(nodeId);
 
-      // Store the typed data from the node's result
       this.nodeData.set(node.id, result.data);
       return result;
     } catch (error) {
@@ -202,6 +201,7 @@ export class BuilderContext {
     if (!handler) {
       throw new Error(`No handler found for node: ${node.id}`);
     }
-    return handler.run(this);
+
+    return handler.run(this, node.options);
   }
 }
