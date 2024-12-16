@@ -22,7 +22,7 @@ export class ConfigLoader {
 
   private loadConfig() {
     const file = fs.readFileSync(this.configPath, 'utf-8');
-    
+
     this.chatsConfig = JSON.parse(file);
     console.log('Raw file content:', this.chatsConfig);
   }
@@ -30,7 +30,7 @@ export class ConfigLoader {
   get<T>(path: string) {
     if (!path) {
       return this.chatsConfig as unknown as T;
-  }
+    }
     return _.get(this.chatsConfig, path) as T;
   }
 
