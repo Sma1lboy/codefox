@@ -5,7 +5,7 @@ import * as toposort from 'toposort';
 import { VirtualDirectory } from '../../../virtual-dir';
 import { BuilderContext } from 'src/build-system/context';
 import { BuildHandler, BuildResult } from 'src/build-system/types';
-import { FileUtil } from 'src/build-system/utils/util';
+import { FileUtil } from 'src/build-system/utils/strings';
 
 export class FileGeneratorHandler {
   private readonly logger = new Logger('FileGeneratorHandler');

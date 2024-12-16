@@ -2,16 +2,13 @@ import * as path from 'path';
 import * as os from 'os';
 import { existsSync, rmdirSync } from 'fs-extra';
 import * as pathUtil from '../../config/common-path';
-import { saveGeneratedCode } from 'src/build-system/handlers/file-manager/file-generate/file_create';
+import { saveGeneratedCode } from 'src/build-system/utils/files';
 import {
   getRootDir,
   getProjectsDir,
   getProjectPath,
 } from 'src/config/common-path';
 
-// describe('Path Utility Functions', () => {
-
-// });
 describe('Path Utilities', () => {
   const APP_NAME = 'codefox';
   const ROOT_DIR = path.join(os.homedir(), `.${APP_NAME}`);
