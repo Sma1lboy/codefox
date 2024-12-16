@@ -2,7 +2,7 @@ import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { generateFileArchPrompt } from './prompt';
 import { Logger } from '@nestjs/common';
-import { FileUtil } from 'src/build-system/utils/strings';
+import { extractJsonFromMarkdown } from 'src/build-system/utils/strings';
 
 export class FileArchGenerateHandler implements BuildHandler {
   readonly id = 'op:FILE_ARCH::STATE:GENERATE';
@@ -50,7 +50,7 @@ export class FileArchGenerateHandler implements BuildHandler {
       );
 
       // validation test
-      jsonData = FileUtil.extractJsonFromMarkdown(fileArchContent);
+      jsonData = extractJsonFromMarkdown(fileArchContent);
       if (jsonData == null) {
         retry += 1;
         this.logger.error('Extract Json From Markdown fail');
