@@ -7,7 +7,7 @@ import { BuilderContext } from 'src/build-system/context';
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { extractJsonFromMarkdown } from 'src/build-system/utils/strings';
 import { getProjectPath } from 'src/config/common-path';
-import * as normalizePath from 'normalize-path';
+import normalizePath from 'normalize-path';
 
 export class FileGeneratorHandler implements BuildHandler<string> {
   readonly id = 'op:FILE:GENERATE';
@@ -17,11 +17,10 @@ export class FileGeneratorHandler implements BuildHandler<string> {
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.virtualDir = context.virtualDirectory;
     const fileArchDoc = context.getNodeData('op:FILE:ARCH');
-    const uuid = context.getData('projectUUID');
+    const uuid = context.getGlobalContext('projectUUID');
 
     const projectSrcPath = getProjectPath(uuid);
 
-    const projectSrcPath = '';
     try {
       await this.generateFiles(fileArchDoc, projectSrcPath);
     } catch (error) {
