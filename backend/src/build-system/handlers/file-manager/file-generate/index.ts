@@ -5,7 +5,9 @@ import * as toposort from 'toposort';
 import { VirtualDirectory } from '../../../virtual-dir';
 import { BuilderContext } from 'src/build-system/context';
 import { BuildHandler, BuildResult } from 'src/build-system/types';
-import { FileUtil } from 'src/build-system/utils/util';
+import { extractJsonFromMarkdown } from 'src/build-system/utils/strings';
+import { getProjectPath } from 'src/config/common-path';
+import * as normalizePath from 'normalize-path';
 
 export class FileGeneratorHandler implements BuildHandler<string> {
   readonly id = 'op:FILE:GENERATE';
@@ -15,6 +17,9 @@ export class FileGeneratorHandler implements BuildHandler<string> {
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.virtualDir = context.virtualDirectory;
     const fileArchDoc = context.getNodeData('op:FILE:ARCH');
+    const uuid = context.getData('projectUUID');
+
+    const projectSrcPath = getProjectPath(uuid);
 
     const projectSrcPath = '';
     try {
@@ -42,7 +47,7 @@ export class FileGeneratorHandler implements BuildHandler<string> {
     markdownContent: string,
     projectSrcPath: string,
   ): Promise<void> {
-    const jsonData = FileUtil.extractJsonFromMarkdown(markdownContent);
+    const jsonData = extractJsonFromMarkdown(markdownContent);
 
     // Build the dependency graph and detect cycles before any file operations
     const { graph, nodes } = this.buildDependencyGraph(jsonData);
@@ -56,7 +61,7 @@ export class FileGeneratorHandler implements BuildHandler<string> {
 
     // Generate files in dependency order
     for (const file of sortedFiles) {
-      const fullPath = path.resolve(projectSrcPath, file);
+      const fullPath = normalizePath(path.resolve(projectSrcPath, file));
       this.logger.log(`Generating file in dependency order: ${fullPath}`);
       await this.createFile(fullPath);
     }

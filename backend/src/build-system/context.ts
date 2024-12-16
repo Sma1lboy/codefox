@@ -1,4 +1,3 @@
-import { ModelProvider } from 'src/common/model-provider';
 import { BuildHandlerManager } from './hanlder-manager';
 import {
   BuildExecutionState,
@@ -9,15 +8,19 @@ import {
 } from './types';
 import { Logger } from '@nestjs/common';
 import { VirtualDirectory } from './virtual-dir';
+import { ModelProvider } from 'src/common/model-provider';
 
 /**
  * Predefined global keys for context.
  */
+import { v4 as uuidv4 } from 'uuid';
+
 export type GlobalDataKeys =
   | 'projectName'
   | 'description'
   | 'platform'
-  | 'databaseType';
+  | 'databaseType'
+  | 'projectUUID';
 
 /**
  * ContextData type, allowing dynamic keys and predefined keys.
@@ -61,6 +64,8 @@ export class BuilderContext {
     this.globalContext.set('description', sequence.description || '');
     this.globalContext.set('platform', 'web');
     this.globalContext.set('databaseType', sequence.databaseType || 'SQLite');
+    const projectUUID = uuidv4();
+    this.globalContext.set('projectUUID', projectUUID);
   }
 
   /**

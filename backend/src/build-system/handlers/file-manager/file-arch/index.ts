@@ -2,7 +2,7 @@ import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { generateFileArchPrompt } from './prompt';
 import { Logger } from '@nestjs/common';
-import { FileUtil } from 'src/build-system/utils/util';
+import { extractJsonFromMarkdown } from 'src/build-system/utils/strings';
 
 export class FileArchGenerateHandler implements BuildHandler<string> {
   readonly id = 'op:FILE:ARCH';
@@ -50,7 +50,6 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
           ),
         };
       }
-
       try {
         fileArchContent = await context.model.chatSync(
           {
@@ -58,20 +57,12 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
           },
           'gpt-4o-mini',
         );
-      } catch (error) {
-        this.logger.error('Error generating file architecture content', error);
-        return {
-          success: false,
-          error: new Error('Error generating file architecture content'),
-        };
-      }
 
-      // Extract JSON data from markdown content
-      try {
-        jsonData = FileUtil.extractJsonFromMarkdown(fileArchContent);
+        // validation test
+        jsonData = extractJsonFromMarkdown(fileArchContent);
         if (jsonData == null) {
           retry += 1;
-          this.logger.error('Failed to extract JSON from Markdown');
+          this.logger.error('Extract Json From Markdown fail');
           continue;
         }
 
