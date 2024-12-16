@@ -166,6 +166,13 @@ export class BuilderContext {
     return this.nodeData.get(nodeId);
   }
 
+  setNodeData<NodeId extends keyof NodeOutputMap>(
+    nodeId: NodeId,
+    data: any,
+  ): void {
+    this.nodeData.set(nodeId, data);
+  }
+
   /**
    * Builds the virtual directory from a given JSON content.
    */
