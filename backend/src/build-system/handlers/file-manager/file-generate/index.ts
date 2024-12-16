@@ -5,7 +5,7 @@ import * as toposort from 'toposort';
 import { VirtualDirectory } from '../../../virtual-dir';
 import { BuilderContext } from 'src/build-system/context';
 import { BuildHandler, BuildResult } from 'src/build-system/types';
-import { FileUtil } from 'src/build-system/utils/strings';
+import { extractJsonFromMarkdown } from 'src/build-system/utils/strings';
 
 export class FileGeneratorHandler {
   private readonly logger = new Logger('FileGeneratorHandler');
@@ -34,7 +34,7 @@ export class FileGeneratorHandler {
     markdownContent: string,
     projectSrcPath: string,
   ): Promise<{ success: boolean; data: string }> {
-    const jsonData = FileUtil.extractJsonFromMarkdown(markdownContent);
+    const jsonData = extractJsonFromMarkdown(markdownContent);
     // Build the dependency graph and detect cycles before any file operations
     const { graph, nodes } = this.buildDependencyGraph(jsonData);
     this.detectCycles(graph);
