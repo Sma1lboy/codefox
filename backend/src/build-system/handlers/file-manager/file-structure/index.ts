@@ -19,7 +19,7 @@ export class FileStructureHandler implements BuildHandler<string> {
    */
   async run(
     context: BuilderContext,
-    opts: BuildOpts,
+    opts?: BuildOpts,
   ): Promise<BuildResult<string>> {
     this.logger.log('Generating File Structure Document...');
 
