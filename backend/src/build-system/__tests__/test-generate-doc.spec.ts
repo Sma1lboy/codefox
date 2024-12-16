@@ -4,21 +4,13 @@ import { BuildSequence } from '../types';
 import { BuildSequenceExecutor } from '../executor';
 import * as fs from 'fs';
 import * as path from 'path';
+import { writeToFile } from './utils';
 
 describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
   // Generate a unique folder with a timestamp
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const logFolderPath = `./log-${timestamp}`;
+  const logFolderPath = `./logs/generate-docs-${timestamp}`;
   fs.mkdirSync(logFolderPath, { recursive: true });
-
-  // Utility function to extract Markdown content and write to .md files
-  const writeMarkdownToFile = (handlerName: string, data: any) => {
-    // Extract "data" field and remove surrounding Markdown code block formatting
-    const markdownContent = data?.data?.replace(/```/g, '') || '';
-    const filePath = path.join(logFolderPath, `${handlerName}.md`);
-    fs.writeFileSync(filePath, markdownContent, 'utf8');
-    console.log(`Logged ${handlerName} result data to ${filePath}`);
-  };
 
   it('should execute the full sequence and log results to individual files', async () => {
     const sequence: BuildSequence = {
@@ -99,6 +91,7 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
               name: 'File_Arch',
               requires: [
                 'op:FSTRUCT::STATE:GENERATE',
+                //TODO: here use datamap doc rather than datamap struct, we have to change this
                 'op:UX_DATAMAP::STATE:GENERATE',
               ],
             },
@@ -119,10 +112,10 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
 
       for (const step of sequence.steps) {
         for (const node of step.nodes) {
-          const resultData = await context.getResult(node.id);
+          const resultData = await context.getNodeData(node.id);
           console.log(resultData);
           if (resultData) {
-            writeMarkdownToFile(node.name.replace(/ /g, '_'), resultData);
+            writeToFile(logFolderPath, node.id, resultData);
           }
         }
       }

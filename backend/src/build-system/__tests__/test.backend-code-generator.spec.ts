@@ -1,38 +1,16 @@
 /* eslint-disable no-console */
 import { BuilderContext } from 'src/build-system/context';
-import { BuildResult, BuildSequence } from '../types';
+import { BuildSequence } from '../types';
 import { BuildSequenceExecutor } from '../executor';
 import * as fs from 'fs';
 import * as path from 'path';
+import { writeToFile } from './utils';
 
 describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGenerator', () => {
   // Generate a unique folder with a timestamp
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const logFolderPath = `./logs/backend_code_generator-${timestamp}`;
   fs.mkdirSync(logFolderPath, { recursive: true });
-
-  /**
-   * Utility function to extract content within <GENERATE> tags and write to .md files.
-   * @param handlerName - The name of the handler/node.
-   * @param data - The data returned by the handler/node.
-   */
-  const writeMarkdownToFile = (handlerName: string, data: BuildResult) => {
-    try {
-      // Extract "data" field and ensure it's a string
-      const content: string = data?.data;
-      if (typeof content !== 'string') {
-        throw new Error(`Invalid data format for handler: ${handlerName}`);
-      }
-
-      const sanitizedHandlerName = handlerName.replace(/[^a-zA-Z0-9_-]/g, '_');
-      const filePath = path.join(logFolderPath, `${sanitizedHandlerName}.md`);
-      fs.writeFileSync(filePath, content, 'utf8');
-      console.log(`Logged ${handlerName} result data to ${filePath}`);
-    } catch (error) {
-      console.error(`Failed to write markdown for ${handlerName}:`, error);
-      throw error;
-    }
-  };
 
   it('should execute the backend code generation sequence and log results to individual files', async () => {
     // Define the build sequence up to Backend Code Generator
@@ -141,17 +119,16 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
       // Iterate through each step and node to retrieve and log results
       for (const step of sequence.steps) {
         for (const node of step.nodes) {
-          const resultData = await context.getResult(node.id);
+          const resultData = await context.getNodeData(node.id);
           console.log(`Result for ${node.name}:`, resultData);
 
-          if (resultData && resultData.success) {
-            writeMarkdownToFile(node.name, resultData);
-          } else if (resultData && !resultData.success) {
+          if (resultData) {
+            writeToFile(logFolderPath, node.name, resultData);
+          } else {
             console.error(
               `Handler ${node.name} failed with error:`,
               resultData.error,
             );
-            // Optionally, you can log this to a separate file or handle it as needed
           }
         }
       }
