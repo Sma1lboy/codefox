@@ -4,21 +4,13 @@ import { BuildSequence } from '../types';
 import { BuildSequenceExecutor } from '../executor';
 import * as fs from 'fs';
 import * as path from 'path';
+import { writeToFile } from './utils';
 
 describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
   // Generate a unique folder with a timestamp
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const logFolderPath = `./log-${timestamp}`;
+  const logFolderPath = `./logs/generate-docs-${timestamp}`;
   fs.mkdirSync(logFolderPath, { recursive: true });
-
-  // Utility function to extract Markdown content and write to .md files
-  const writeMarkdownToFile = (handlerName: string, data: any) => {
-    // Extract "data" field and remove surrounding Markdown code block formatting
-    const markdownContent = data?.data?.replace(/```/g, '') || '';
-    const filePath = path.join(logFolderPath, `${handlerName}.md`);
-    fs.writeFileSync(filePath, markdownContent, 'utf8');
-    console.log(`Logged ${handlerName} result data to ${filePath}`);
-  };
 
   it('should execute the full sequence and log results to individual files', async () => {
     const sequence: BuildSequence = {
@@ -32,7 +24,7 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
           name: 'Generate PRD',
           nodes: [
             {
-              id: 'op:PRD::STATE:GENERATE',
+              id: 'op:PRD',
               name: 'PRD Generation Node',
               type: 'ANALYSIS',
               subType: 'PRD',
@@ -44,11 +36,11 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
           name: 'Generate UX Sitemap Document',
           nodes: [
             {
-              id: 'op:UXSMD::STATE:GENERATE',
+              id: 'op:UX:SMD',
               name: 'UX Sitemap Document Node',
               type: 'UX',
               subType: 'SITEMAP',
-              requires: ['op:PRD::STATE:GENERATE'],
+              requires: ['op:PRD'],
             },
           ],
         },
@@ -57,11 +49,11 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
           name: 'Generate UX Sitemap Structure',
           nodes: [
             {
-              id: 'op:UXSMS::STATE:GENERATE',
+              id: 'op:UX:SMS',
               name: 'UX Sitemap Structure Node',
               type: 'UX',
               subType: 'VIEWS',
-              requires: ['op:UXSMD::STATE:GENERATE'],
+              requires: ['op:UX:SMD'],
             },
           ],
         },
@@ -70,9 +62,9 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
           name: 'UX Data Map Document',
           nodes: [
             {
-              id: 'op:UX_DATAMAP::STATE:GENERATE',
+              id: 'op:UX:DATAMAP:DOC',
               name: 'UX Data Map Document node',
-              requires: ['op:UXSMD::STATE:GENERATE'],
+              requires: ['op:UX:SMD'],
             },
           ],
         },
@@ -81,12 +73,12 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
           name: 'file structure generation',
           nodes: [
             {
-              id: 'op:FSTRUCT::STATE:GENERATE',
+              id: 'op:FILE:STRUCT',
               name: 'file structure generation',
-              requires: [
-                'op:UXSMD::STATE:GENERATE',
-                'op:UX_DATAMAP::STATE:GENERATE',
-              ],
+              requires: ['op:UX:SMD', 'op:UX:DATAMAP:DOC'],
+              options: {
+                projectPart: 'frontend',
+              },
             },
           ],
         },
@@ -95,11 +87,12 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
           name: 'File_Arch Document',
           nodes: [
             {
-              id: 'op:FILE_ARCH::STATE:GENERATE',
+              id: 'op:FILE:ARCH',
               name: 'File_Arch',
               requires: [
-                'op:FSTRUCT::STATE:GENERATE',
-                'op:UX_DATAMAP::STATE:GENERATE',
+                'op:FILE:STRUCT',
+                //TODO: here use datamap doc rather than datamap struct, we have to change this
+                'op:UX:DATAMAP:DOC',
               ],
             },
           ],
@@ -110,19 +103,19 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
     const context = new BuilderContext(sequence, 'test');
 
     // Set input data for context
-    context.setData('projectName', 'spotify like music web');
-    context.setData('description', 'user can play music');
-    context.setData('platform', 'web');
+    context.setGlobalContext('projectName', 'spotify like music web');
+    context.setGlobalContext('description', 'user can play music');
+    context.setGlobalContext('platform', 'web');
 
     try {
       await BuildSequenceExecutor.executeSequence(sequence, context);
 
       for (const step of sequence.steps) {
         for (const node of step.nodes) {
-          const resultData = await context.getResult(node.id);
+          const resultData = await context.getNodeData(node.id);
           console.log(resultData);
           if (resultData) {
-            writeMarkdownToFile(node.name.replace(/ /g, '_'), resultData);
+            writeToFile(logFolderPath, node.id, resultData);
           }
         }
       }

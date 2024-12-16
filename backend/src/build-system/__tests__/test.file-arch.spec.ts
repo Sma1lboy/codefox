@@ -1,7 +1,7 @@
 import { BuilderContext } from 'src/build-system/context';
-import { FileArchGenerateHandler } from '../handlers/file-arch';
 import markdownToTxt from 'markdown-to-txt';
 import { readFileSync } from 'fs-extra';
+import { FileArchGenerateHandler } from '../handlers/file-manager/file-arch';
 
 describe('FileArchGenerateHandler', () => {
   it('should generate file architecture document', async () => {
@@ -23,8 +23,9 @@ describe('FileArchGenerateHandler', () => {
     const dataMapStruct = markdownToTxt(
       readFileSync('./datamap-structure.md', 'utf-8'),
     );
-
-    const result = await handler.run(context, fileStructure, dataMapStruct);
+    context.setNodeData('op:FILE:STRUCT', fileStructure);
+    context.setNodeData('op:UX:DATAMAP:DOC', dataMapStruct);
+    const result = await handler.run(context);
     console.log(result);
   }, 30000);
 });

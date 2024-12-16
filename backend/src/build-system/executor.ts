@@ -9,35 +9,32 @@ export class BuildSequenceExecutor {
   );
 
   /**
-   * 执行单个节点
+   * Execute a single node.
+   * If the node is completed, do nothing.
+   * If dependencies aren't ready, wait and retry.
    */
   static async executeNode(
     node: BuildNode,
     context: BuilderContext,
   ): Promise<void> {
     try {
-      if (context.getState().completed.has(node.id)) {
-        return; // 如果节点已完成，跳过
+      // Check if node is already completed
+      if (context.getExecutionState().completed.has(node.id)) {
+        return;
       }
 
+      // If dependencies are not met, wait and retry
       if (!context.canExecute(node.id)) {
         this.logger.log(
-          `Waiting for dependencies: ${node.requires?.join(', ')}`,
+          `Waiting for dependencies of node ${node.id}: ${node.requires?.join(', ')}`,
         );
         await new Promise((resolve) => setTimeout(resolve, 100));
         return;
       }
 
-      const dependenciesResults = node.requires?.map((depId) =>
-        context.getResult(depId),
-      );
-
-      this.logger.log(
-        `Executing node ${node.id} with dependencies:`,
-        dependenciesResults,
-      );
-
-      await context.run(node.id, dependenciesResults);
+      this.logger.log(`Executing node ${node.id}`);
+      // Execute the node using the updated context method
+      await context.executeNodeById(node.id);
     } catch (error) {
       this.logger.error(`Error executing node ${node.id}:`, error);
       throw error;
@@ -45,7 +42,9 @@ export class BuildSequenceExecutor {
   }
 
   /**
-   * 执行单个步骤
+   * Execute a single step.
+   * If the step is parallel, attempt to run all nodes concurrently (respecting dependencies).
+   * If not parallel, run nodes in sequence.
    */
   static async executeStep(
     step: BuildStep,
@@ -60,19 +59,23 @@ export class BuildSequenceExecutor {
       const maxRetries = 10;
 
       while (remainingNodes.length > 0 && retryCount < maxRetries) {
+        // Identify nodes that can be executed now
         const executableNodes = remainingNodes.filter((node) =>
           context.canExecute(node.id),
         );
 
         if (executableNodes.length > 0) {
+          // Execute all currently executable nodes in parallel
           await Promise.all(
             executableNodes.map((node) => this.executeNode(node, context)),
           );
 
+          // Filter out completed nodes
           remainingNodes = remainingNodes.filter(
-            (node) => !context.getState().completed.has(node.id),
+            (node) => !context.getExecutionState().completed.has(node.id),
           );
 
+          // If progress is made, reset retryCount
           if (remainingNodes.length < lastLength) {
             retryCount = 0;
             lastLength = remainingNodes.length;
@@ -80,11 +83,13 @@ export class BuildSequenceExecutor {
             retryCount++;
           }
         } else {
+          // No executable nodes currently, wait and retry
           await new Promise((resolve) => setTimeout(resolve, 100));
           retryCount++;
         }
       }
 
+      // If after max retries some nodes are still not completed, throw an error
       if (remainingNodes.length > 0) {
         throw new Error(
           `Unable to complete all nodes in step ${step.id}. Remaining: ${remainingNodes
@@ -93,23 +98,24 @@ export class BuildSequenceExecutor {
         );
       }
     } else {
+      // Sequential execution
       for (const node of step.nodes) {
         let retryCount = 0;
         const maxRetries = 10;
 
         while (
-          !context.getState().completed.has(node.id) &&
+          !context.getExecutionState().completed.has(node.id) &&
           retryCount < maxRetries
         ) {
           await this.executeNode(node, context);
 
-          if (!context.getState().completed.has(node.id)) {
+          if (!context.getExecutionState().completed.has(node.id)) {
             await new Promise((resolve) => setTimeout(resolve, 100));
             retryCount++;
           }
         }
 
-        if (!context.getState().completed.has(node.id)) {
+        if (!context.getExecutionState().completed.has(node.id)) {
           this.logger.warn(
             `Failed to execute node ${node.id} after ${maxRetries} attempts`,
           );
@@ -119,7 +125,9 @@ export class BuildSequenceExecutor {
   }
 
   /**
-   * 执行整个序列
+   * Execute the entire build sequence.
+   * Iterates through each step, executing them in order.
+   * If a step fails to complete all its nodes, logs a warning and returns.
    */
   static async executeSequence(
     sequence: BuildSequence,
@@ -131,7 +139,7 @@ export class BuildSequenceExecutor {
       await this.executeStep(step, context);
 
       const incompletedNodes = step.nodes.filter(
-        (node) => !context.getState().completed.has(node.id),
+        (node) => !context.getExecutionState().completed.has(node.id),
       );
 
       if (incompletedNodes.length > 0) {
@@ -145,6 +153,6 @@ export class BuildSequenceExecutor {
     }
 
     this.logger.log(`Build sequence completed: ${sequence.id}`);
-    this.logger.log('Final state:', context.getState());
+    this.logger.log('Final execution state:', context.getExecutionState());
   }
 }
