@@ -95,17 +95,17 @@ export interface BuildHandler<T = any> {
 }
 
 export interface NodeOutputMap {
-  'op:DATABASE_REQ::STATE:GENERATE': string;
-  'op:PRD::STATE:GENERATE': string;
-  'op:UXSMD::STATE:GENERATE': string;
-  'op:UXSMS::STATE:GENERATE': string;
-  'op:LEVEL2_UXSMS::STATE:GENERATE': string;
-  'op:UX_DATAMAP::STATE:GENERATE': string;
-  'op:FSTRUCT::STATE:GENERATE': string;
-  'op:FILE_ARCH::STATE:GENERATE': string;
-  'op:FILE_GENERATE::STATE:CREATE': string;
-  'op:BACKEND_CODE::STATE:GENERATE': string;
-  'op:BACKEND_REQ::STATE:GENERATE': {
+  'op:DATABASE_REQ': string;
+  'op:PRD': string;
+  'op:UX:SMD': string;
+  'op:UX:SMS': string;
+  'op:UX:SMS:LEVEL2': string;
+  'op:UX:DATAMAP:DOC': string;
+  'op:FILE:STRUCT': string;
+  'op:FILE:ARCH': string;
+  'op:FILE:GENERATE': string;
+  'op:BACKEND:CODE': string;
+  'op:BACKEND:REQ': {
     overview: string;
     implementation: string;
     config: {

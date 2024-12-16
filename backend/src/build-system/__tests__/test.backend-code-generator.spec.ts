@@ -26,7 +26,7 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
           name: 'Generate PRD',
           nodes: [
             {
-              id: 'op:PRD::STATE:GENERATE',
+              id: 'op:PRD',
               name: 'PRD Generation Node',
               type: 'ANALYSIS',
               subType: 'PRD',
@@ -38,11 +38,11 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
           name: 'Generate UX Sitemap Document',
           nodes: [
             {
-              id: 'op:UXSMD::STATE:GENERATE',
+              id: 'op:UX:SMD',
               name: 'UX Sitemap Document Node',
               type: 'UX',
               subType: 'SITEMAP',
-              requires: ['op:PRD::STATE:GENERATE'],
+              requires: ['op:PRD'],
             },
           ],
         },
@@ -51,11 +51,11 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
           name: 'Generate UX Data Map Document',
           nodes: [
             {
-              id: 'op:UX_DATAMAP::STATE:GENERATE',
+              id: 'op:UX:DATAMAP:DOC',
               name: 'UX Data Map Document Node',
               type: 'UX',
               subType: 'DATAMAP',
-              requires: ['op:UXSMD::STATE:GENERATE'],
+              requires: ['op:UX:SMD'],
             },
           ],
         },
@@ -64,11 +64,11 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
           name: 'Generate Database Requirements',
           nodes: [
             {
-              id: 'op:DATABASE_REQ::STATE:GENERATE',
+              id: 'op:DATABASE_REQ',
               name: 'Database Requirements Node',
               type: 'DATABASE',
               subType: 'SCHEMAS',
-              requires: ['op:UX_DATAMAP::STATE:GENERATE'],
+              requires: ['op:UX:DATAMAP:DOC'],
             },
           ],
         },
@@ -81,7 +81,7 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
               name: 'Database Schemas Node',
               type: 'DATABASE',
               subType: 'SCHEMAS',
-              requires: ['op:DATABASE_REQ::STATE:GENERATE'],
+              requires: ['op:DATABASE_REQ'],
             },
           ],
         },
@@ -90,13 +90,10 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
           name: 'Generate Backend Code',
           nodes: [
             {
-              id: 'op:BACKEND_CODE::STATE:GENERATE',
+              id: 'op:BACKEND:CODE',
               name: 'Backend Code Generator Node',
               type: 'BACKEND',
-              requires: [
-                'op:DATABASE:SCHEMAS',
-                'op:UX_DATAMAP::STATE:GENERATE',
-              ],
+              requires: ['op:DATABASE:SCHEMAS', 'op:UX:DATAMAP:DOC'],
             },
           ],
         },

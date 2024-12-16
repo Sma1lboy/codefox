@@ -12,7 +12,7 @@ import {
  * based on the provided sitemap and data mapping documents.
  */
 export class BackendCodeHandler implements BuildHandler<string> {
-  readonly id = 'op:BACKEND_CODE::STATE:GENERATE';
+  readonly id = 'op:BACKEND:CODE';
   readonly logger: Logger = new Logger('BackendCodeHandler');
 
   /**
@@ -31,8 +31,8 @@ export class BackendCodeHandler implements BuildHandler<string> {
       context.getGlobalContext('databaseType') || 'Default database type';
 
     // Destructure arguments with default values for optional parameters
-    const sitemapDoc = context.getNodeData('op:UXSMD::STATE:GENERATE');
-    const datamapDoc = context.getNodeData('op:UX_DATAMAP::STATE:GENERATE');
+    const sitemapDoc = context.getNodeData('op:UX:SMD');
+    const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
     //TODO: make this backend generate similar as FileGenerateHandler, do file arch, and then generate each backend code
     const currentFile = 'backend.js';
     const dependencyFile = 'dependencies.json';

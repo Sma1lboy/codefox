@@ -5,7 +5,7 @@ import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
 
 export class UXSMDHandler implements BuildHandler<string> {
-  readonly id = 'op:UXSMD::STATE:GENERATE';
+  readonly id = 'op:UX:SMD';
   readonly logger: Logger = new Logger('UXSMDHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -15,7 +15,7 @@ export class UXSMDHandler implements BuildHandler<string> {
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
     const platform = context.getGlobalContext('platform') || 'Default Platform';
-    const prdContent = context.getNodeData('op:PRD::STATE:GENERATE');
+    const prdContent = context.getNodeData('op:PRD');
 
     // Generate the prompt dynamically
     const prompt = prompts.generateUxsmdrompt(

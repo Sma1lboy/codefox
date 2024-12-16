@@ -8,7 +8,7 @@ import { Logger } from '@nestjs/common';
  * based on the provided documentation.
  */
 export class FileStructureHandler implements BuildHandler<string> {
-  readonly id = 'op:FSTRUCT::STATE:GENERATE';
+  readonly id = 'op:FILE:STRUCT';
   private readonly logger: Logger = new Logger('FileStructureHandler');
 
   /**
@@ -28,8 +28,8 @@ export class FileStructureHandler implements BuildHandler<string> {
       context.getGlobalContext('projectName') || 'Default Project Name';
     this.logger.debug(`Project Name: ${projectName}`);
 
-    const sitemapDoc = context.getNodeData('op:UXSMD::STATE:GENERATE');
-    const datamapDoc = context.getNodeData('op:UX_DATAMAP::STATE:GENERATE');
+    const sitemapDoc = context.getNodeData('op:UX:SMD');
+    const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
     // TODO: make sure passing this parameter is correct
     const projectPart = opts.projectPart ?? 'frontend';
     const framework = context.getGlobalContext('framework');

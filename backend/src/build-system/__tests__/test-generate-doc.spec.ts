@@ -24,7 +24,7 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
           name: 'Generate PRD',
           nodes: [
             {
-              id: 'op:PRD::STATE:GENERATE',
+              id: 'op:PRD',
               name: 'PRD Generation Node',
               type: 'ANALYSIS',
               subType: 'PRD',
@@ -36,11 +36,11 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
           name: 'Generate UX Sitemap Document',
           nodes: [
             {
-              id: 'op:UXSMD::STATE:GENERATE',
+              id: 'op:UX:SMD',
               name: 'UX Sitemap Document Node',
               type: 'UX',
               subType: 'SITEMAP',
-              requires: ['op:PRD::STATE:GENERATE'],
+              requires: ['op:PRD'],
             },
           ],
         },
@@ -49,11 +49,11 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
           name: 'Generate UX Sitemap Structure',
           nodes: [
             {
-              id: 'op:UXSMS::STATE:GENERATE',
+              id: 'op:UX:SMS',
               name: 'UX Sitemap Structure Node',
               type: 'UX',
               subType: 'VIEWS',
-              requires: ['op:UXSMD::STATE:GENERATE'],
+              requires: ['op:UX:SMD'],
             },
           ],
         },
@@ -62,9 +62,9 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
           name: 'UX Data Map Document',
           nodes: [
             {
-              id: 'op:UX_DATAMAP::STATE:GENERATE',
+              id: 'op:UX:DATAMAP:DOC',
               name: 'UX Data Map Document node',
-              requires: ['op:UXSMD::STATE:GENERATE'],
+              requires: ['op:UX:SMD'],
             },
           ],
         },
@@ -73,12 +73,9 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
           name: 'file structure generation',
           nodes: [
             {
-              id: 'op:FSTRUCT::STATE:GENERATE',
+              id: 'op:FILE:STRUCT',
               name: 'file structure generation',
-              requires: [
-                'op:UXSMD::STATE:GENERATE',
-                'op:UX_DATAMAP::STATE:GENERATE',
-              ],
+              requires: ['op:UX:SMD', 'op:UX:DATAMAP:DOC'],
             },
           ],
         },
@@ -87,12 +84,12 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
           name: 'File_Arch Document',
           nodes: [
             {
-              id: 'op:FILE_ARCH::STATE:GENERATE',
+              id: 'op:FILE:ARCH',
               name: 'File_Arch',
               requires: [
-                'op:FSTRUCT::STATE:GENERATE',
+                'op:FILE:STRUCT',
                 //TODO: here use datamap doc rather than datamap struct, we have to change this
-                'op:UX_DATAMAP::STATE:GENERATE',
+                'op:UX:DATAMAP:DOC',
               ],
             },
           ],

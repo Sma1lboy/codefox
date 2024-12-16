@@ -7,7 +7,7 @@ import { prompts } from './prompt';
  * Handler for generating the UX Data Map document.
  */
 export class UXDatamapHandler implements BuildHandler<string> {
-  readonly id = 'op:UX_DATAMAP::STATE:GENERATE';
+  readonly id = 'op:UX:DATAMAP:DOC';
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     console.log('Generating UX Data Map Document...');
@@ -15,7 +15,7 @@ export class UXDatamapHandler implements BuildHandler<string> {
     // Extract relevant data from the context
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
-    const sitemapDoc = context.getNodeData('op:UXSMD::STATE:GENERATE');
+    const sitemapDoc = context.getNodeData('op:UX:SMD');
 
     const prompt = prompts.generateUXDataMapPrompt(
       projectName,

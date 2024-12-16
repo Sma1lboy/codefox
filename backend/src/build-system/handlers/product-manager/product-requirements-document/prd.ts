@@ -5,7 +5,7 @@ import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
 
 export class PRDHandler implements BuildHandler {
-  readonly id = 'op:PRD::STATE:GENERATE';
+  readonly id = 'op:PRD';
   readonly logger: Logger = new Logger('PRDHandler');
   async run(context: BuilderContext): Promise<BuildResult> {
     this.logger.log('Generating PRD...');

@@ -6,7 +6,7 @@ import { Logger } from '@nestjs/common';
 
 // UXSMS: UX Sitemap Structure
 export class UXSitemapStructureHandler implements BuildHandler<string> {
-  readonly id = 'op:UXSMS::STATE:GENERATE';
+  readonly id = 'op:UX:SMS';
   readonly logger = new Logger('UXSitemapStructureHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -15,7 +15,7 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
     // extract relevant data from the context
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
-    const sitemapDoc = context.getNodeData('op:UXSMD::STATE:GENERATE');
+    const sitemapDoc = context.getNodeData('op:UX:SMD');
 
     if (!sitemapDoc) {
       return {
@@ -45,7 +45,7 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
   }
 }
 export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
-  readonly id = 'op:LEVEL2_UXSMS::STATE:GENERATE';
+  readonly id = 'op:UX:SMS:LEVEL2';
   readonly logger = new Logger('Level2UXSitemapStructureHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -53,8 +53,8 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
 
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
-    const sitemapDoc = context.getNodeData('op:UXSMS::STATE:GENERATE');
-    const uxStructureDoc = context.getNodeData('op:UXSMS::STATE:GENERATE');
+    const sitemapDoc = context.getNodeData('op:UX:SMS');
+    const uxStructureDoc = context.getNodeData('op:UX:SMS');
 
     if (!projectName || !sitemapDoc || !uxStructureDoc) {
       return {

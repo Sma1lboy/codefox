@@ -8,13 +8,13 @@ import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { FileUtil } from 'src/build-system/utils/util';
 
 export class FileGeneratorHandler implements BuildHandler<string> {
-  readonly id = 'op:FILE_GENERATE::STATE:CREATE';
+  readonly id = 'op:FILE:GENERATE';
   private readonly logger = new Logger('FileGeneratorHandler');
   private virtualDir: VirtualDirectory;
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.virtualDir = context.virtualDirectory;
-    const fileArchDoc = context.getNodeData('op:FILE_ARCH::STATE:GENERATE');
+    const fileArchDoc = context.getNodeData('op:FILE:ARCH');
 
     const projectSrcPath = '';
     try {

@@ -19,7 +19,7 @@ type BackendRequirementResult = {
 export class BackendRequirementHandler
   implements BuildHandler<BackendRequirementResult>
 {
-  readonly id = 'op:BACKEND_REQ::STATE:GENERATE';
+  readonly id = 'op:BACKEND:REQ';
   readonly logger: Logger = new Logger('BackendRequirementHandler');
 
   async run(
@@ -32,9 +32,7 @@ export class BackendRequirementHandler
     const framework = context.getGlobalContext('framework') || 'express';
     const packages = context.getGlobalContext('packages') || {};
 
-    const dbRequirements = context.getNodeData(
-      'op:DATABASE_REQ::STATE:GENERATE',
-    );
+    const dbRequirements = context.getNodeData('op:DATABASE_REQ');
 
     // Generate backend overview
     const overviewPrompt = generateBackendOverviewPrompt(

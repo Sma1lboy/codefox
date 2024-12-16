@@ -33,9 +33,7 @@ export class DBSchemaHandler implements BuildHandler {
     const databaseType =
       context.getGlobalContext('databaseType') || 'PostgreSQL';
 
-    const dbRequirements = context.getNodeData(
-      'op:DATABASE_REQ::STATE:GENERATE',
-    );
+    const dbRequirements = context.getNodeData('op:DATABASE_REQ');
 
     this.logger.debug('Database requirements are provided.');
 

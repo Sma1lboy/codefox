@@ -5,16 +5,16 @@ import { Logger } from '@nestjs/common';
 import { FileUtil } from 'src/build-system/utils/util';
 
 export class FileArchGenerateHandler implements BuildHandler<string> {
-  readonly id = 'op:FILE_ARCH::STATE:GENERATE';
+  readonly id = 'op:FILE:ARCH';
   private readonly logger: Logger = new Logger('FileArchGenerateHandler');
 
   // TODO: adding page by page analysis
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Generating File Architecture Document...');
 
-    const fileStructure = context.getNodeData('op:FSTRUCT::STATE:GENERATE');
+    const fileStructure = context.getNodeData('op:FILE:STRUCT');
     // TODO: here should use datamap struct
-    const dataMapStruct = context.getNodeData('op:UX_DATAMAP::STATE:GENERATE');
+    const dataMapStruct = context.getNodeData('op:UX:DATAMAP:DOC');
     // TODO: adding page by page analysis
 
     if (!fileStructure || !dataMapStruct) {
