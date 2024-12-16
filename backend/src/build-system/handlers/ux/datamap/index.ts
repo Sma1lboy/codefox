@@ -14,7 +14,7 @@ export class UXDatamapHandler implements BuildHandler<string> {
 
     // Extract relevant data from the context
     const projectName =
-      context.getData('projectName') || 'Default Project Name';
+      context.getGlobalContext('projectName') || 'Default Project Name';
     const sitemapDoc = context.getNodeData('op:UXSMD::STATE:GENERATE');
 
     const prompt = prompts.generateUXDataMapPrompt(

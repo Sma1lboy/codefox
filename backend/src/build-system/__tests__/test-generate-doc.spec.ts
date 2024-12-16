@@ -103,9 +103,9 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
     const context = new BuilderContext(sequence, 'test');
 
     // Set input data for context
-    context.setData('projectName', 'spotify like music web');
-    context.setData('description', 'user can play music');
-    context.setData('platform', 'web');
+    context.setGlobalContext('projectName', 'spotify like music web');
+    context.setGlobalContext('description', 'user can play music');
+    context.setGlobalContext('platform', 'web');
 
     try {
       await BuildSequenceExecutor.executeSequence(sequence, context);

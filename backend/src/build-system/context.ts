@@ -31,7 +31,7 @@ export class BuilderContext {
   };
 
   private logger: Logger;
-  private data: Record<string, any> = {};
+  private globalContext: Record<string, any> = {};
   private nodeData: Map<string, any> = new Map(); // Stores node outputs
 
   private handlerManager: BuildHandlerManager;
@@ -112,20 +112,20 @@ export class BuilderContext {
   /**
    * Store global context data.
    */
-  setData<Key extends keyof ContextData>(
+  setGlobalContext<Key extends keyof ContextData>(
     key: Key,
     value: ContextData[Key],
   ): void {
-    this.data[key] = value;
+    this.globalContext[key] = value;
   }
 
   /**
    * Retrieve global context data.
    */
-  getData<Key extends keyof ContextData>(
+  getGlobalContext<Key extends keyof ContextData>(
     key: Key,
   ): ContextData[Key] | undefined {
-    return this.data[key];
+    return this.globalContext[key];
   }
 
   /**

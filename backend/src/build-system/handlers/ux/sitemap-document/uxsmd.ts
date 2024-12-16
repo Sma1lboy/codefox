@@ -13,8 +13,8 @@ export class UXSMDHandler implements BuildHandler<string> {
 
     // Extract project data from the context
     const projectName =
-      context.getData('projectName') || 'Default Project Name';
-    const platform = context.getData('platform') || 'Default Platform';
+      context.getGlobalContext('projectName') || 'Default Project Name';
+    const platform = context.getGlobalContext('platform') || 'Default Platform';
     const prdContent = context.getNodeData('op:PRD::STATE:GENERATE');
 
     // Generate the prompt dynamically
@@ -28,7 +28,7 @@ export class UXSMDHandler implements BuildHandler<string> {
     const uxsmdContent = await this.generateUXSMDFromLLM(prompt);
 
     // Store the generated document in the context
-    context.setData('uxsmdDocument', uxsmdContent);
+    context.setGlobalContext('uxsmdDocument', uxsmdContent);
 
     // Return the generated document
     return {

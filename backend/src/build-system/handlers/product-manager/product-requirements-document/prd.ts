@@ -12,9 +12,10 @@ export class PRDHandler implements BuildHandler {
 
     // Extract project data from the context
     const projectName =
-      context.getData('projectName') || 'Default Project Name';
-    const description = context.getData('description') || 'Default Description';
-    const platform = context.getData('platform') || 'Default Platform';
+      context.getGlobalContext('projectName') || 'Default Project Name';
+    const description =
+      context.getGlobalContext('description') || 'Default Description';
+    const platform = context.getGlobalContext('platform') || 'Default Platform';
 
     // Generate the prompt dynamically
     const prompt = prompts.generatePRDPrompt(

@@ -14,7 +14,7 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
 
     // extract relevant data from the context
     const projectName =
-      context.getData('projectName') || 'Default Project Name';
+      context.getGlobalContext('projectName') || 'Default Project Name';
     const sitemapDoc = context.getNodeData('op:UXSMD::STATE:GENERATE');
 
     if (!sitemapDoc) {
@@ -52,7 +52,7 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
     this.logger.log('Generating Level 2 UX Sitemap Structure Document...');
 
     const projectName =
-      context.getData('projectName') || 'Default Project Name';
+      context.getGlobalContext('projectName') || 'Default Project Name';
     const sitemapDoc = context.getNodeData('op:UXSMS::STATE:GENERATE');
     const uxStructureDoc = context.getNodeData('op:UXSMS::STATE:GENERATE');
 

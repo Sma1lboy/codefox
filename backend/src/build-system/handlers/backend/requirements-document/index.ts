@@ -28,9 +28,9 @@ export class BackendRequirementHandler
     this.logger.log('Generating Backend Requirements Document...');
 
     // Retrieve backend configuration from context
-    const language = context.getData('language') || 'javascript';
-    const framework = context.getData('framework') || 'express';
-    const packages = context.getData('packages') || {};
+    const language = context.getGlobalContext('language') || 'javascript';
+    const framework = context.getGlobalContext('framework') || 'express';
+    const packages = context.getGlobalContext('packages') || {};
 
     const dbRequirements = context.getNodeData(
       'op:DATABASE_REQ::STATE:GENERATE',
@@ -38,7 +38,7 @@ export class BackendRequirementHandler
 
     // Generate backend overview
     const overviewPrompt = generateBackendOverviewPrompt(
-      context.getData('projectName') || 'Default Project Name',
+      context.getGlobalContext('projectName') || 'Default Project Name',
       dbRequirements,
       language,
       framework,

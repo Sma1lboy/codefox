@@ -29,8 +29,9 @@ export class DBSchemaHandler implements BuildHandler {
 
     // Retrieve projectName and databaseType from context
     const projectName =
-      context.getData('projectName') || 'Default Project Name';
-    const databaseType = context.getData('databaseType') || 'PostgreSQL';
+      context.getGlobalContext('projectName') || 'Default Project Name';
+    const databaseType =
+      context.getGlobalContext('databaseType') || 'PostgreSQL';
 
     const dbRequirements = context.getNodeData(
       'op:DATABASE_REQ::STATE:GENERATE',

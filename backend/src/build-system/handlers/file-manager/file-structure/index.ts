@@ -25,14 +25,14 @@ export class FileStructureHandler implements BuildHandler<string> {
 
     // Retrieve projectName from context
     const projectName =
-      context.getData('projectName') || 'Default Project Name';
+      context.getGlobalContext('projectName') || 'Default Project Name';
     this.logger.debug(`Project Name: ${projectName}`);
 
     const sitemapDoc = context.getNodeData('op:UXSMD::STATE:GENERATE');
     const datamapDoc = context.getNodeData('op:UX_DATAMAP::STATE:GENERATE');
     // TODO: make sure passing this parameter is correct
     const projectPart = opts.projectPart ?? 'frontend';
-    const framework = context.getData('framework');
+    const framework = context.getGlobalContext('framework');
 
     // Validate required arguments
     if (!sitemapDoc || typeof sitemapDoc !== 'string') {

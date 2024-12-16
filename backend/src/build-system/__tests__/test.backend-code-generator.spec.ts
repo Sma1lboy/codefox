@@ -107,10 +107,10 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
     const context = new BuilderContext(sequence, 'test-env');
 
     // Set input data for context
-    context.setData('projectName', 'Spotify-like Music Web');
-    context.setData('description', 'Users can play music');
-    context.setData('platform', 'web');
-    context.setData('databaseType', 'SQLite'); // Can be 'PostgreSQL', 'MongoDB', etc., based on your needs
+    context.setGlobalContext('projectName', 'Spotify-like Music Web');
+    context.setGlobalContext('description', 'Users can play music');
+    context.setGlobalContext('platform', 'web');
+    context.setGlobalContext('databaseType', 'SQLite'); // Can be 'PostgreSQL', 'MongoDB', etc., based on your needs
 
     try {
       // Execute the build sequence

@@ -10,7 +10,7 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Generating Database Requirements Document...');
     const projectName =
-      context.getData('projectName') || 'Default Project Name';
+      context.getGlobalContext('projectName') || 'Default Project Name';
 
     const datamapDoc = context.getNodeData('op:UX_DATAMAP::STATE:GENERATE');
 

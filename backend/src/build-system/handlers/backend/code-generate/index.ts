@@ -26,9 +26,9 @@ export class BackendCodeHandler implements BuildHandler<string> {
 
     // Retrieve project name and database type from context
     const projectName =
-      context.getData('projectName') || 'Default Project Name';
+      context.getGlobalContext('projectName') || 'Default Project Name';
     const databaseType =
-      context.getData('databaseType') || 'Default database type';
+      context.getGlobalContext('databaseType') || 'Default database type';
 
     // Destructure arguments with default values for optional parameters
     const sitemapDoc = context.getNodeData('op:UXSMD::STATE:GENERATE');
