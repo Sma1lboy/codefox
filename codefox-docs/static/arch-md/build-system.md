@@ -14,7 +14,6 @@ sequenceDiagram
     Executor-->>Context: Update execution state
 ```
 
-
 The complete version for know
 
 ```mermaid
