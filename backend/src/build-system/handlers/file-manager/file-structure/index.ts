@@ -1,30 +1,14 @@
-import { BuildHandler, BuildResult } from 'src/build-system/types';
+import { BuildHandler, BuildOpts, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 
 /**
- * Defines the expected order and types of arguments for FileStructureHandler.
- *
- * Expected argument order:
- * 0 - sitemapDoc: string
- * 1 - dataAnalysisDoc: string
- * 2 - framework: string
- * 3 - projectPart: 'frontend' | 'backend'
- */
-type FileStructureArgs = [
-  sitemapDoc: string,
-  dataAnalysisDoc: string,
-  framework: string,
-  projectPart: 'frontend' | 'backend',
-];
-
-/**
  * FileStructureHandler is responsible for generating the project's file and folder structure
  * based on the provided documentation.
  */
-export class FileStructureHandler implements BuildHandler {
-  readonly id = 'op:FSTRUCT::STATE:GENERATE';
+export class FileStructureHandler implements BuildHandler<string> {
+  readonly id = 'op:FILE:STRUCT';
   private readonly logger: Logger = new Logger('FileStructureHandler');
 
   /**
@@ -33,24 +17,22 @@ export class FileStructureHandler implements BuildHandler {
    * @param args - The variadic arguments required for generating the file structure.
    * @returns A BuildResult containing the generated file structure JSON and related data.
    */
-  async run(context: BuilderContext, ...args: any[]): Promise<BuildResult> {
+  async run(
+    context: BuilderContext,
+    opts?: BuildOpts,
+  ): Promise<BuildResult<string>> {
     this.logger.log('Generating File Structure Document...');
 
     // Retrieve projectName from context
     const projectName =
-      context.getData('projectName') || 'Default Project Name';
+      context.getGlobalContext('projectName') || 'Default Project Name';
     this.logger.debug(`Project Name: ${projectName}`);
 
-    // Validate and extract args
-    if (!args || !Array.isArray(args)) {
-      throw new Error(
-        'File structure generation requires specific configuration arguments as an array.',
-      );
-    }
-
-    // Destructure arguments with type assertion
-    const [sitemapDoc, dataAnalysisDoc, framework, projectPart] =
-      args as FileStructureArgs;
+    const sitemapDoc = context.getNodeData('op:UX:SMD');
+    const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
+    // TODO: make sure passing this parameter is correct
+    const projectPart = opts.projectPart ?? 'frontend';
+    const framework = context.getGlobalContext('framework');
 
     // Validate required arguments
     if (!sitemapDoc || typeof sitemapDoc !== 'string') {
@@ -58,9 +40,9 @@ export class FileStructureHandler implements BuildHandler {
         'The first argument (sitemapDoc) is required and must be a string.',
       );
     }
-    if (!dataAnalysisDoc || typeof dataAnalysisDoc !== 'string') {
+    if (!datamapDoc || typeof datamapDoc !== 'string') {
       throw new Error(
-        'The second argument (dataAnalysisDoc) is required and must be a string.',
+        'The second argument (datamapDoc) is required and must be a string.',
       );
     }
     if (!framework || typeof framework !== 'string') {
@@ -86,7 +68,7 @@ export class FileStructureHandler implements BuildHandler {
     const prompt = prompts.generateCommonFileStructurePrompt(
       projectName,
       sitemapDoc,
-      dataAnalysisDoc,
+      datamapDoc,
       framework,
       projectPart,
     );

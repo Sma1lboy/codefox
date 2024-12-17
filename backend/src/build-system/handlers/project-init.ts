@@ -13,7 +13,7 @@ export class ProjectInitHandler implements BuildHandler {
       Platform: 'Web',
       path: '/path/to/project',
     };
-    context.setData('projectConfig', result);
+    context.setGlobalContext('projectConfig', result);
     return {
       success: true,
       data: result,

@@ -6,58 +6,86 @@ import {
 } from './prompt';
 import { Logger } from '@nestjs/common';
 
-export class BackendRequirementHandler implements BuildHandler {
-  readonly id = 'op:BACKEND_REQ::STATE:GENERATE';
+type BackendRequirementResult = {
+  overview: string;
+  implementation: string;
+  config: {
+    language: string;
+    framework: string;
+    packages: Record<string, string>;
+  };
+};
 
+export class BackendRequirementHandler
+  implements BuildHandler<BackendRequirementResult>
+{
+  readonly id = 'op:BACKEND:REQ';
   readonly logger: Logger = new Logger('BackendRequirementHandler');
-  async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
+
+  async run(
+    context: BuilderContext,
+  ): Promise<BuildResult<BackendRequirementResult>> {
     this.logger.log('Generating Backend Requirements Document...');
 
-    // Validate and extract args
-    if (!args || typeof args !== 'object') {
-      throw new Error('Backend configuration is required');
-    }
-    // TODO: init language, framework, packages later in context
-    const language = context.getData('language') || 'javascript';
-    const framework = context.getData('framework') || 'express';
-    const packages = context.getData('packages') || {};
-    // TODO: adding graphql/restful later
+    // Retrieve backend configuration from context
+    const language = context.getGlobalContext('language') || 'javascript';
+    const framework = context.getGlobalContext('framework') || 'express';
+    const packages = context.getGlobalContext('packages') || {};
 
-    const { dbRequirements } = args as {
-      dbRequirements: string;
-      language: string;
-      framework: string;
-      packages: Record<string, string>;
-    };
+    const dbRequirements = context.getNodeData('op:DATABASE_REQ');
 
+    // Generate backend overview
     const overviewPrompt = generateBackendOverviewPrompt(
-      context.getData('projectName') || 'Default Project Name',
+      context.getGlobalContext('projectName') || 'Default Project Name',
       dbRequirements,
       language,
       framework,
       packages,
     );
 
-    const backendOverview = await context.model.chatSync(
-      {
-        content: overviewPrompt,
-      },
-      'gpt-4o-mini',
-    );
+    let backendOverview: string;
+    try {
+      backendOverview = await context.model.chatSync(
+        {
+          content: overviewPrompt,
+        },
+        'gpt-4o-mini',
+      );
+    } catch (error) {
+      this.logger.error('Error generating backend overview:', error);
+      return {
+        success: false,
+        error: new Error('Failed to generate backend overview.'),
+      };
+    }
 
+    // Generate backend implementation details
     const implementationPrompt = generateBackendImplementationPrompt(
       backendOverview,
       language,
       framework,
     );
 
-    const implementationDetails = await context.model.chatSync(
-      {
-        content: implementationPrompt,
-      },
-      'gpt-4o-mini',
-    );
+    let implementationDetails: string;
+    try {
+      implementationDetails = await context.model.chatSync(
+        {
+          content: implementationPrompt,
+        },
+        'gpt-4o-mini',
+      );
+    } catch (error) {
+      this.logger.error(
+        'Error generating backend implementation details:',
+        error,
+      );
+      return {
+        success: false,
+        error: new Error('Failed to generate backend implementation details.'),
+      };
+    }
 
+    // Return generated data
     return {
       success: true,
       data: {
