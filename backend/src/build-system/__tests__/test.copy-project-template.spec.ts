@@ -10,7 +10,6 @@ describe('Copy Project Template', () => {
       '../../../template/template-backend',
     );
     const projectUUID = uuidv4();
-    console.log(templatePath);
 
     const projectPath = await copyProjectTemplate(templatePath, projectUUID);
 
