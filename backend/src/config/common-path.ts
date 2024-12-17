@@ -5,7 +5,8 @@ import { createHash } from 'crypto';
 
 // Constants for base directories
 const APP_NAME = 'codefox';
-const ROOT_DIR = path.join(os.homedir(), `.${APP_NAME}`);
+const WORKSPACE_ROOT = process.cwd();
+const ROOT_DIR = path.join(WORKSPACE_ROOT, `.${APP_NAME}`);
 
 // Utility function to ensure a directory exists
 const ensureDir = (dirPath: string): string => {
