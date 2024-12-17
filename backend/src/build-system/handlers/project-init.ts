@@ -11,14 +11,6 @@ export class ProjectInitHandler implements BuildHandler {
   async run(context: BuilderContext): Promise<BuildResult> {
     console.log('Setting up project...');
 
-    const result = {
-      projectName: 'online shoping',
-      descreption: 'sell products',
-      Platform: 'Web',
-      path: '/path/to/project',
-    };
-    context.setGlobalContext('projectConfig', result);
-
     // copy project template
     const projectUUID = uuidv4();
 
@@ -37,6 +29,14 @@ export class ProjectInitHandler implements BuildHandler {
         error: new Error('Failed to copy project template'),
       };
     }
+
+    const result = {
+      projectName: 'online shoping',
+      descreption: 'sell products',
+      Platform: 'Web',
+      path: '/path/to/project',
+    };
+    context.setGlobalContext('projectConfig', result);
 
     return {
       success: true,
