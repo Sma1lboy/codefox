@@ -1,10 +1,11 @@
 /* eslint-disable no-console */
 import { BuilderContext } from 'src/build-system/context';
 import { BuildSequence } from '../types';
-import { BuildSequenceExecutor } from '../executor';
 import * as fs from 'fs';
 import * as path from 'path';
 import { writeToFile } from './utils';
+import { BuildMonitor } from '../monitor';
+import { Logger } from '@nestjs/common';
 
 describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> Frontend_File_struct -> Frontend_File_arch -> BackendCodeGenerator', () => {
   // Generate a unique folder with a timestamp
@@ -119,11 +120,7 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
             {
               id: 'op:FILE:ARCH',
               name: 'File_Arch',
-              requires: [
-                'op:FILE:STRUCT',
-                //TODO: here use datamap doc rather than datamap struct, we have to change this
-                'op:UX:DATAMAP:DOC',
-              ],
+              requires: ['op:FILE:STRUCT', 'op:UX:DATAMAP:DOC'],
             },
           ],
         },
@@ -144,38 +141,144 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
 
     // Initialize the BuilderContext with the defined sequence and environment
     const context = new BuilderContext(sequence, 'test-env');
+    const monitor = BuildMonitor.getInstance();
 
     try {
-      // Execute the build sequence
-      await BuildSequenceExecutor.executeSequence(sequence, context);
+      console.log('Starting sequence execution...');
+      console.time('Total Execution Time');
 
-      // Iterate through each step and node to retrieve and log results
+      // Execute the build sequence
+      await context.execute();
+
+      console.timeEnd('Total Execution Time');
+
+      const monitorReport = monitor.generateReport(sequence.id);
+      fs.writeFileSync(
+        path.join(logFolderPath, 'execution-metrics.txt'),
+        monitorReport,
+        'utf8',
+      );
+      console.log('\nExecution Metrics Report:');
+      console.log(monitorReport);
+
+      const sequenceMetrics = monitor.getSequenceMetrics(sequence.id);
+      if (sequenceMetrics) {
+        const metricsJson = {
+          totalDuration: `${sequenceMetrics.duration}ms`,
+          successRate: `${sequenceMetrics.successRate.toFixed(2)}%`,
+          totalSteps: sequenceMetrics.totalSteps,
+          completedSteps: sequenceMetrics.completedSteps,
+          failedSteps: sequenceMetrics.failedSteps,
+          totalNodes: sequenceMetrics.totalNodes,
+          startTime: new Date(sequenceMetrics.startTime).toISOString(),
+          endTime: new Date(sequenceMetrics.endTime).toISOString(),
+        };
+
+        fs.writeFileSync(
+          path.join(logFolderPath, 'metrics.json'),
+          JSON.stringify(metricsJson, null, 2),
+          'utf8',
+        );
+
+        console.log('\nSequence Metrics:');
+        console.table(metricsJson);
+      }
+
+      console.log('\nProcessing individual node results and metrics...');
       for (const step of sequence.steps) {
+        const stepMetrics = sequenceMetrics?.stepMetrics.get(step.id);
+        console.log(`\nStep: ${step.name} (${step.id})`);
+        console.log(`Duration: ${stepMetrics?.duration}ms`);
+        console.log(
+          `Completed Nodes: ${stepMetrics?.completedNodes}/${stepMetrics?.totalNodes}`,
+        );
+
         for (const node of step.nodes) {
           const resultData = await context.getNodeData(node.id);
-          console.log(`Result for ${node.name}:`, resultData);
+          const nodeMetrics = stepMetrics?.nodeMetrics.get(node.id);
+
+          console.log(`\n  Node: ${node.name} (${node.id})`);
+          console.log(`  Status: ${nodeMetrics?.status}`);
+          console.log(`  Duration: ${nodeMetrics?.duration}ms`);
+          console.log(`  Retry Count: ${nodeMetrics?.retryCount}`);
 
           if (resultData) {
-            writeToFile(logFolderPath, node.name, resultData);
+            const combinedData = {
+              result: resultData,
+              metrics: nodeMetrics
+                ? {
+                    duration: nodeMetrics.duration,
+                    status: nodeMetrics.status,
+                    retryCount: nodeMetrics.retryCount,
+                    startTime: new Date(nodeMetrics.startTime).toISOString(),
+                    endTime: new Date(nodeMetrics.endTime).toISOString(),
+                  }
+                : null,
+            };
+
+            writeToFile(
+              logFolderPath,
+              `${node.name}-with-metrics`,
+              combinedData,
+            );
           } else {
             console.error(
-              `Handler ${node.name} failed with error:`,
-              resultData.error,
+              `  Error: Handler ${node.name} failed to produce result data`,
             );
+            writeToFile(logFolderPath, `${node.name}-error`, {
+              error: 'No result data',
+              metrics: nodeMetrics,
+            });
           }
         }
       }
 
-      console.log(
-        'Sequence executed successfully. Logs stored in:',
-        logFolderPath,
-      );
-    } catch (error) {
-      console.error('Error during sequence execution:', error);
+      // 生成执行摘要
+      const summary = {
+        timestamp: new Date().toISOString(),
+        sequenceId: sequence.id,
+        sequenceName: sequence.name,
+        totalExecutionTime: `${sequenceMetrics?.duration}ms`,
+        successRate: `${sequenceMetrics?.successRate.toFixed(2)}%`,
+        nodesExecuted: sequenceMetrics?.totalNodes,
+        completedNodes: sequenceMetrics?.stepMetrics.size,
+        logFolder: logFolderPath,
+      };
+
       fs.writeFileSync(
-        path.join(logFolderPath, 'error.txt'),
-        `Error: ${error.message}\n${error.stack}`,
+        path.join(logFolderPath, 'execution-summary.json'),
+        JSON.stringify(summary, null, 2),
         'utf8',
+      );
+
+      console.log('\nExecution Summary:');
+      console.table(summary);
+
+      console.log('\nDetailed logs and metrics stored in:', logFolderPath);
+    } catch (error) {
+      console.timeEnd('Total Execution Time');
+
+      // 保存错误信息和当前的执行状态
+      const errorReport = {
+        error: {
+          message: error.message,
+          stack: error.stack,
+        },
+        metrics: monitor.getSequenceMetrics(sequence.id),
+        timestamp: new Date().toISOString(),
+      };
+
+      fs.writeFileSync(
+        path.join(logFolderPath, 'error-with-metrics.json'),
+        JSON.stringify(errorReport, null, 2),
+        'utf8',
+      );
+
+      console.error('\nError during sequence execution:');
+      console.error(error);
+      console.error(
+        '\nError report saved to:',
+        path.join(logFolderPath, 'error-with-metrics.json'),
       );
       throw new Error('Sequence execution failed.');
     }

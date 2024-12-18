@@ -32,8 +32,10 @@ export class FileStructureHandler implements BuildHandler<string> {
     const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
     // TODO: make sure passing this parameter is correct
     const projectPart = opts.projectPart ?? 'frontend';
-    const framework = context.getGlobalContext('framework');
-
+    const framework = context.getGlobalContext('framework') ?? 'react';
+    this.logger.warn(
+      "there is no default framework setup, using 'react', plz fix it ASAP",
+    );
     // Validate required arguments
     if (!sitemapDoc || typeof sitemapDoc !== 'string') {
       throw new Error(

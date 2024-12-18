@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 import { BuilderContext } from 'src/build-system/context';
 import { BuildSequence } from '../types';
-import { BuildSequenceExecutor } from '../executor';
 import * as fs from 'fs';
 import * as path from 'path';
 import { writeToFile } from './utils';
@@ -105,7 +104,7 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
 
     try {
       // Execute the build sequence
-      await BuildSequenceExecutor.executeSequence(sequence, context);
+      await context.execute();
 
       // Iterate through each step and node to retrieve and log results
       for (const step of sequence.steps) {
