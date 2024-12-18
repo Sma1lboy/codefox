@@ -1,5 +1,48 @@
 import { Logger } from '@nestjs/common';
 import { BuildNode, BuildStep, BuildSequence } from './types';
+import { ProjectEventLogger } from './logger';
+
+/**
+ * Metrics for sequence, step, and node execution
+ */
+export interface BuildReport {
+  metadata: {
+    projectId: string;
+    sequenceId: string;
+    timestamp: string;
+    duration: number;
+  };
+  summary: {
+    totalSteps: number;
+    completedSteps: number;
+    failedSteps: number;
+    totalNodes: number;
+    completedNodes: number;
+    failedNodes: number;
+    successRate: number;
+  };
+  steps: Array<{
+    id: string;
+    name: string;
+    duration: number;
+    parallel: boolean;
+    status: 'completed' | 'failed';
+    nodesTotal: number;
+    nodesCompleted: number;
+    nodesFailed: number;
+    nodes: Array<{
+      id: string;
+      name: string;
+      duration: number;
+      status: 'completed' | 'failed' | 'pending';
+      retryCount: number;
+      error?: {
+        message: string;
+        stack?: string;
+      };
+    }>;
+  }>;
+}
 
 export interface NodeMetrics {
   nodeId: string;
@@ -40,7 +83,7 @@ export interface SequenceMetrics {
 
 export class BuildMonitor {
   private static instance: BuildMonitor;
-  private logger: Logger;
+  private logger: Logger; // TODO: adding more logger
   private sequenceMetrics: Map<string, SequenceMetrics> = new Map();
 
   private constructor() {
@@ -131,7 +174,10 @@ export class BuildMonitor {
     this.sequenceMetrics.set(sequence.id, metrics);
   }
 
-  endSequenceExecution(sequenceId: string): void {
+  async endSequenceExecution(
+    sequenceId: string,
+    projectUUID: string,
+  ): Promise<void> {
     const metrics = this.sequenceMetrics.get(sequenceId);
     if (metrics) {
       metrics.endTime = Date.now();
@@ -147,6 +193,19 @@ export class BuildMonitor {
       });
 
       metrics.successRate = (completedNodes / totalNodes) * 100;
+
+      const report = await this.generateStructuredReport(
+        sequenceId,
+        projectUUID,
+      );
+      // log the event
+      await ProjectEventLogger.getInstance().logEvent({
+        timestamp: report.metadata.timestamp,
+        projectId: report.metadata.projectId,
+        eventId: `build-${report.metadata.sequenceId}`,
+        type: 'BUILD_METRICS',
+        data: report,
+      });
     }
   }
 
@@ -207,7 +266,92 @@ export class BuildMonitor {
     return this.sequenceMetrics.get(sequenceId);
   }
 
-  generateReport(sequenceId: string): string {
+  /**
+   * Return a structured report for a sequence
+   * @param sequenceId sequenceId
+   * @param projectUUID unique identifier for the project
+   * @returns BuildReport
+   */
+  async generateStructuredReport(
+    sequenceId: string,
+    projectUUID: string,
+  ): Promise<BuildReport> {
+    const metrics = this.getSequenceMetrics(sequenceId);
+    if (!metrics) {
+      throw new Error(`No metrics found for sequence ${sequenceId}`);
+    }
+
+    let totalCompletedNodes = 0;
+    let totalFailedNodes = 0;
+
+    const steps = Array.from(metrics.stepMetrics.entries()).map(
+      ([stepId, stepMetric]) => {
+        const nodes = Array.from(stepMetric.nodeMetrics.entries()).map(
+          ([nodeId, nodeMetric]) => ({
+            id: nodeId,
+            name: nodeId,
+            duration: nodeMetric.duration,
+            status: nodeMetric.status,
+            retryCount: nodeMetric.retryCount,
+            error: nodeMetric.error
+              ? {
+                  message: nodeMetric.error.message,
+                  stack: nodeMetric.error.stack,
+                }
+              : undefined,
+          }),
+        );
+
+        const completed = nodes.filter((n) => n.status === 'completed').length;
+        const failed = nodes.filter((n) => n.status === 'failed').length;
+
+        totalCompletedNodes += completed;
+        totalFailedNodes += failed;
+
+        return {
+          id: stepId,
+          name: stepId,
+          duration: stepMetric.duration,
+          parallel: stepMetric.parallel,
+          status: (failed > 0 ? 'failed' : 'completed') as
+            | 'completed'
+            | 'failed',
+          nodesTotal: stepMetric.totalNodes,
+          nodesCompleted: completed,
+          nodesFailed: failed,
+          nodes,
+        };
+      },
+    );
+
+    const report: BuildReport = {
+      metadata: {
+        projectId: projectUUID,
+        sequenceId: metrics.sequenceId,
+        timestamp: new Date().toISOString(),
+        duration: metrics.duration,
+      },
+      summary: {
+        totalSteps: metrics.totalSteps,
+        completedSteps: steps.filter((s) => s.status === 'completed').length,
+        failedSteps: steps.filter((s) => s.status === 'failed').length,
+        totalNodes: metrics.totalNodes,
+        completedNodes: totalCompletedNodes,
+        failedNodes: totalFailedNodes,
+        successRate: (totalCompletedNodes / metrics.totalNodes) * 100,
+      },
+      steps,
+    };
+
+    return report;
+  }
+
+  /**
+   * Get Report for a sequence as string, using for test
+   * @param sequenceId sequenceId
+   * @returns string report
+   */
+  public generateTextReport(sequenceId: string): string {
     const metrics = this.getSequenceMetrics(sequenceId);
     if (!metrics) {
       return `No metrics found for sequence ${sequenceId}`;

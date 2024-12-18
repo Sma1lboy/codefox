@@ -12,6 +12,7 @@ import { ModelProvider } from 'src/common/model-provider';
 import { v4 as uuidv4 } from 'uuid';
 import { BuildMonitor } from './monitor';
 import { BuildHandlerManager } from './hanlder-manager';
+import { ProjectEventLogger } from './logger';
 
 export type GlobalDataKeys =
   | 'projectName'
@@ -82,7 +83,10 @@ export class BuilderContext {
       this.logger.log(`Build sequence completed: ${this.sequence.id}`);
       this.logger.log('Final execution state:', this.executionState);
     } finally {
-      this.monitor.endSequenceExecution(this.sequence.id);
+      this.monitor.endSequenceExecution(
+        this.sequence.id,
+        this.globalContext.get('projectUUID'),
+      );
     }
   }
 

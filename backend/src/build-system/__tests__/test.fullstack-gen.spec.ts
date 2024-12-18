@@ -152,7 +152,7 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
 
       console.timeEnd('Total Execution Time');
 
-      const monitorReport = monitor.generateReport(sequence.id);
+      const monitorReport = monitor.generateTextReport(sequence.id);
       fs.writeFileSync(
         path.join(logFolderPath, 'execution-metrics.txt'),
         monitorReport,
