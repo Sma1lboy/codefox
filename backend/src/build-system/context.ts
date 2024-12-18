@@ -1,19 +1,17 @@
-import { BuildHandlerManager } from './hanlder-manager';
 import {
   BuildExecutionState,
   BuildNode,
   BuildResult,
   BuildSequence,
+  BuildStep,
   NodeOutputMap,
 } from './types';
 import { Logger } from '@nestjs/common';
 import { VirtualDirectory } from './virtual-dir';
 import { ModelProvider } from 'src/common/model-provider';
-
-/**
- * Predefined global keys for context.
- */
 import { v4 as uuidv4 } from 'uuid';
+import { BuildMonitor } from './monitor';
+import { BuildHandlerManager } from './hanlder-manager';
 
 export type GlobalDataKeys =
   | 'projectName'
@@ -22,18 +20,8 @@ export type GlobalDataKeys =
   | 'databaseType'
   | 'projectUUID';
 
-/**
- * ContextData type, allowing dynamic keys and predefined keys.
- */
 type ContextData = Record<GlobalDataKeys | string, any>;
 
-/**
- * BuilderContext manages:
- * - Execution state of nodes (completed, pending, failed, waiting)
- * - Global and arbitrary data (projectName, description, etc.)
- * - Node output data, stored after successful execution
- * - References to model provider, handler manager, virtual directory
- */
 export class BuilderContext {
   private executionState: BuildExecutionState = {
     completed: new Set(),
@@ -43,10 +31,11 @@ export class BuilderContext {
   };
 
   private logger: Logger;
-  private globalContext: Map<GlobalDataKeys | string, any> = new Map(); // Stores global context data
-  private nodeData: Map<string, any> = new Map(); // Stores node outputs
+  private globalContext: Map<GlobalDataKeys | string, any> = new Map();
+  private nodeData: Map<string, any> = new Map();
 
   private handlerManager: BuildHandlerManager;
+  private monitor: BuildMonitor;
   public model: ModelProvider;
   public virtualDirectory: VirtualDirectory;
 
@@ -56,6 +45,7 @@ export class BuilderContext {
   ) {
     this.handlerManager = BuildHandlerManager.getInstance();
     this.model = ModelProvider.getInstance();
+    this.monitor = BuildMonitor.getInstance();
     this.logger = new Logger(`builder-context-${id}`);
     this.virtualDirectory = new VirtualDirectory();
 
@@ -64,14 +54,169 @@ export class BuilderContext {
     this.globalContext.set('description', sequence.description || '');
     this.globalContext.set('platform', 'web');
     this.globalContext.set('databaseType', sequence.databaseType || 'SQLite');
-    const projectUUID = uuidv4();
-    this.globalContext.set('projectUUID', projectUUID);
+    this.globalContext.set('projectUUID', uuidv4());
   }
 
-  /**
-   * Checks if a node can be executed.
-   * @param nodeId The ID of the node.
-   */
+  async execute(): Promise<void> {
+    this.logger.log(`Starting build sequence: ${this.sequence.id}`);
+    this.monitor.startSequenceExecution(this.sequence);
+
+    try {
+      for (const step of this.sequence.steps) {
+        await this.executeStep(step);
+
+        const incompletedNodes = step.nodes.filter(
+          (node) => !this.executionState.completed.has(node.id),
+        );
+
+        if (incompletedNodes.length > 0) {
+          this.logger.warn(
+            `Step ${step.id} failed to complete nodes: ${incompletedNodes
+              .map((n) => n.id)
+              .join(', ')}`,
+          );
+          return;
+        }
+      }
+
+      this.logger.log(`Build sequence completed: ${this.sequence.id}`);
+      this.logger.log('Final execution state:', this.executionState);
+    } finally {
+      this.monitor.endSequenceExecution(this.sequence.id);
+    }
+  }
+
+  private async executeStep(step: BuildStep): Promise<void> {
+    this.logger.log(`Executing build step: ${step.id}`);
+    this.monitor.setCurrentStep(step);
+    this.monitor.startStepExecution(
+      step.id,
+      this.sequence.id,
+      step.parallel,
+      step.nodes.length,
+    );
+
+    try {
+      if (step.parallel) {
+        await this.executeParallelNodes(step);
+      } else {
+        await this.executeSequentialNodes(step);
+      }
+    } finally {
+      this.monitor.endStepExecution(step.id, this.sequence.id);
+    }
+  }
+
+  private async executeParallelNodes(step: BuildStep): Promise<void> {
+    let remainingNodes = [...step.nodes];
+    let lastLength = remainingNodes.length;
+    let retryCount = 0;
+    const maxRetries = 10;
+
+    while (remainingNodes.length > 0 && retryCount < maxRetries) {
+      const executableNodes = remainingNodes.filter((node) =>
+        this.canExecute(node.id),
+      );
+
+      if (executableNodes.length > 0) {
+        await Promise.all(
+          executableNodes.map((node) => this.executeNode(node)),
+        );
+
+        remainingNodes = remainingNodes.filter(
+          (node) => !this.executionState.completed.has(node.id),
+        );
+
+        if (remainingNodes.length < lastLength) {
+          retryCount = 0;
+          lastLength = remainingNodes.length;
+        } else {
+          retryCount++;
+        }
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        retryCount++;
+      }
+    }
+
+    if (remainingNodes.length > 0) {
+      throw new Error(
+        `Unable to complete all nodes in step ${step.id}. Remaining: ${remainingNodes
+          .map((n) => n.id)
+          .join(', ')}`,
+      );
+    }
+  }
+
+  private async executeSequentialNodes(step: BuildStep): Promise<void> {
+    for (const node of step.nodes) {
+      let retryCount = 0;
+      const maxRetries = 10;
+
+      while (
+        !this.executionState.completed.has(node.id) &&
+        retryCount < maxRetries
+      ) {
+        await this.executeNode(node);
+
+        if (!this.executionState.completed.has(node.id)) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          retryCount++;
+        }
+      }
+
+      if (!this.executionState.completed.has(node.id)) {
+        this.logger.warn(
+          `Failed to execute node ${node.id} after ${maxRetries} attempts`,
+        );
+      }
+    }
+  }
+
+  private async executeNode(node: BuildNode): Promise<void> {
+    if (this.executionState.completed.has(node.id)) {
+      return;
+    }
+
+    const currentStep = this.monitor.getCurrentStep();
+    this.monitor.startNodeExecution(node.id, this.sequence.id, currentStep.id);
+
+    try {
+      if (!this.canExecute(node.id)) {
+        this.logger.log(
+          `Waiting for dependencies of node ${node.id}: ${node.requires?.join(
+            ', ',
+          )}`,
+        );
+        this.monitor.incrementNodeRetry(
+          node.id,
+          this.sequence.id,
+          currentStep.id,
+        );
+        return;
+      }
+
+      this.logger.log(`Executing node ${node.id}`);
+      await this.executeNodeById(node.id);
+
+      this.monitor.endNodeExecution(
+        node.id,
+        this.sequence.id,
+        currentStep.id,
+        true,
+      );
+    } catch (error) {
+      this.monitor.endNodeExecution(
+        node.id,
+        this.sequence.id,
+        currentStep.id,
+        false,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      throw error;
+    }
+  }
+
   canExecute(nodeId: string): boolean {
     const node = this.findNode(nodeId);
 
@@ -90,11 +235,9 @@ export class BuilderContext {
     );
   }
 
-  /**
-   * Executes a node by its ID. Upon success, stores node output data.
-   * @param nodeId The ID of the node to execute.
-   */
-  async executeNodeById<T = any>(nodeId: string): Promise<BuildResult<T>> {
+  private async executeNodeById<T = any>(
+    nodeId: string,
+  ): Promise<BuildResult<T>> {
     const node = this.findNode(nodeId);
     if (!node) {
       throw new Error(`Node not found: ${nodeId}`);
@@ -119,18 +262,10 @@ export class BuilderContext {
     }
   }
 
-  /**
-   * Returns the current execution state of the build sequence.
-   */
   getExecutionState(): BuildExecutionState {
     return { ...this.executionState };
   }
 
-  /**
-   * Store global context data.
-   * @param key The key to store.
-   * @param value The value to store.
-   */
   setGlobalContext<Key extends GlobalDataKeys | string>(
     key: Key,
     value: ContextData[Key],
@@ -138,29 +273,16 @@ export class BuilderContext {
     this.globalContext.set(key, value);
   }
 
-  /**
-   * Retrieve global context data.
-   * @param key The key to retrieve.
-   */
   getGlobalContext<Key extends GlobalDataKeys | string>(
     key: Key,
   ): ContextData[Key] | undefined {
     return this.globalContext.get(key);
   }
 
-  /**
-   * Retrieve the stored output data for a given node (typed if defined in NodeOutputMap).
-   * Overload 1: If nodeId is a key of NodeOutputMap, return strong-typed data.
-   */
   getNodeData<NodeId extends keyof NodeOutputMap>(
     nodeId: NodeId,
   ): NodeOutputMap[NodeId];
-
-  /**
-   * Overload 2: If nodeId is not in NodeOutputMap, return any.
-   */
   getNodeData(nodeId: string): any;
-
   getNodeData(nodeId: string) {
     return this.nodeData.get(nodeId);
   }
@@ -172,17 +294,10 @@ export class BuilderContext {
     this.nodeData.set(nodeId, data);
   }
 
-  /**
-   * Builds the virtual directory from a given JSON content.
-   */
   buildVirtualDirectory(jsonContent: string): boolean {
     return this.virtualDirectory.parseJsonStructure(jsonContent);
   }
 
-  /**
-   * Finds a node in the sequence by its ID.
-   * @param nodeId Node ID to find
-   */
   private findNode(nodeId: string): BuildNode | null {
     for (const step of this.sequence.steps) {
       const node = step.nodes.find((n) => n.id === nodeId);
@@ -191,10 +306,6 @@ export class BuilderContext {
     return null;
   }
 
-  /**
-   * Invokes the node's handler and returns its BuildResult.
-   * @param node The node to execute.
-   */
   private async invokeNodeHandler<T>(node: BuildNode): Promise<BuildResult<T>> {
     this.logger.log(`Executing node handler: ${node.id}`);
     const handler = this.handlerManager.getHandler(node.id);
