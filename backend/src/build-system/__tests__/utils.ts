@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 /**
@@ -20,9 +21,9 @@ export const writeToFile = (
 
     // Write the formatted content to the file
     fs.writeFileSync(filePath, formattedContent, 'utf8');
-    console.log(`Successfully wrote data for ${handlerName} to ${filePath}`);
+    Logger.log(`Successfully wrote data for ${handlerName} to ${filePath}`);
   } catch (error) {
-    console.error(`Failed to write data for ${handlerName}:`, error);
+    Logger.error(`Failed to write data for ${handlerName}:`, error);
     throw error;
   }
 };

@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { ChatMessageInput, LLMProvider } from './llm-provider';
 import express, { Express, Request, Response } from 'express';
-import { GenerateMessageParams } from './type/GenerateMessage';
+import { GenerateMessageParams } from './types';
 
 export class App {
   private readonly logger = new Logger(App.name);
@@ -31,9 +31,9 @@ export class App {
       const { content, model } = req.body as ChatMessageInput & {
         model: string;
       };
-
+      this.logger.log(`Received chat request for model: ${model}`);
       const params: GenerateMessageParams = {
-        model: model || 'gpt-3.5-turbo', // Default to 'gpt-3.5-turbo' if model is not provided
+        model: model || 'gpt-3.5-turbo',
         message: content,
         role: 'user',
       };

@@ -140,42 +140,106 @@ export class BuilderContext {
    */
   private async executeParallelNodes(step: BuildStep): Promise<void> {
     let remainingNodes = [...step.nodes];
-    let lastLength = remainingNodes.length;
-    let retryCount = 0;
-    const maxRetries = 10;
+    const concurrencyLimit = 3; // TODO: current is manually set to 3 for testing purposes
 
-    while (remainingNodes.length > 0 && retryCount < maxRetries) {
+    while (remainingNodes.length > 0) {
       const executableNodes = remainingNodes.filter((node) =>
         this.canExecute(node.id),
       );
 
       if (executableNodes.length > 0) {
-        await Promise.all(
-          executableNodes.map((node) => this.executeNode(node)),
-        );
+        for (let i = 0; i < executableNodes.length; i += concurrencyLimit) {
+          const batch = executableNodes.slice(i, i + concurrencyLimit);
+
+          try {
+            const nodeExecutionPromises = batch.map(async (node) => {
+              if (this.executionState.completed.has(node.id)) {
+                return;
+              }
+
+              const currentStep = this.monitor.getCurrentStep();
+              this.monitor.startNodeExecution(
+                node.id,
+                this.sequence.id,
+                currentStep.id,
+              );
+
+              try {
+                if (!this.canExecute(node.id)) {
+                  this.logger.log(
+                    `Waiting for dependencies of node ${node.id}: ${node.requires?.join(
+                      ', ',
+                    )}`,
+                  );
+                  this.monitor.incrementNodeRetry(
+                    node.id,
+                    this.sequence.id,
+                    currentStep.id,
+                  );
+                  return;
+                }
+
+                this.logger.log(`Executing node ${node.id} in parallel batch`);
+                await this.executeNodeById(node.id);
+
+                this.monitor.endNodeExecution(
+                  node.id,
+                  this.sequence.id,
+                  currentStep.id,
+                  true,
+                );
+              } catch (error) {
+                this.monitor.endNodeExecution(
+                  node.id,
+                  this.sequence.id,
+                  currentStep.id,
+                  false,
+                  error instanceof Error ? error : new Error(String(error)),
+                );
+                throw error;
+              }
+            });
+
+            await Promise.all(nodeExecutionPromises);
+
+            const activeModelPromises = this.model.getAllActivePromises();
+            if (activeModelPromises.length > 0) {
+              this.logger.debug(
+                `Waiting for ${activeModelPromises.length} active LLM requests to complete`,
+              );
+              await Promise.all(activeModelPromises);
+            }
+          } catch (error) {
+            this.logger.error(
+              `Error executing parallel nodes batch: ${error}`,
+              error instanceof Error ? error.stack : undefined,
+            );
+            throw error;
+          }
+        }
 
         remainingNodes = remainingNodes.filter(
           (node) => !this.executionState.completed.has(node.id),
         );
-
-        if (remainingNodes.length < lastLength) {
-          retryCount = 0;
-          lastLength = remainingNodes.length;
-        } else {
-          retryCount++;
-        }
       } else {
         await new Promise((resolve) => setTimeout(resolve, 100));
-        retryCount++;
+
+        const activeModelPromises = this.model.getAllActivePromises();
+        if (activeModelPromises.length > 0) {
+          this.logger.debug(
+            `Waiting for ${activeModelPromises.length} active LLM requests during retry`,
+          );
+          await Promise.all(activeModelPromises);
+        }
       }
     }
 
-    if (remainingNodes.length > 0) {
-      throw new Error(
-        `Unable to complete all nodes in step ${step.id}. Remaining: ${remainingNodes
-          .map((n) => n.id)
-          .join(', ')}`,
+    const finalActivePromises = this.model.getAllActivePromises();
+    if (finalActivePromises.length > 0) {
+      this.logger.debug(
+        `Final wait for ${finalActivePromises.length} remaining LLM requests`,
       );
+      await Promise.all(finalActivePromises);
     }
   }
 
@@ -368,7 +432,6 @@ export class BuilderContext {
   }
 
   private async invokeNodeHandler<T>(node: BuildNode): Promise<BuildResult<T>> {
-    this.logger.log(`Executing node handler: ${node.id}`);
     const handler = this.handlerManager.getHandler(node.id);
     if (!handler) {
       throw new Error(`No handler found for node: ${node.id}`);

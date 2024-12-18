@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { Subject, Subscription } from 'rxjs';
 
 export interface ModelProviderConfig {
   endpoint: string;
@@ -13,11 +14,26 @@ export interface CustomAsyncIterableIterator<T> extends AsyncIterator<T> {
 export class ModelProvider {
   private readonly logger = new Logger('ModelProvider');
   private isDone = false;
-  private responseSubscription: any;
+  private responseSubscription: Subscription | null = null;
   private chunkQueue: ChatCompletionChunk[] = [];
   private resolveNextChunk:
     | ((value: IteratorResult<ChatCompletionChunk>) => void)
     | null = null;
+
+  // Track active requests
+  private activeRequests = new Map<
+    string,
+    {
+      startTime: number;
+      subscription: Subscription;
+      stream: Subject<any>;
+      promise: Promise<string>;
+    }
+  >();
+
+  // Concurrent request management
+  private concurrentLimit = 3;
+  private currentRequests = 0;
 
   private static instance: ModelProvider | undefined = undefined;
 
@@ -25,7 +41,6 @@ export class ModelProvider {
     if (this.instance) {
       return this.instance;
     }
-
     return new ModelProvider(new HttpService(), {
       endpoint: 'http://localhost:3001',
     });
@@ -36,50 +51,75 @@ export class ModelProvider {
     private readonly config: ModelProviderConfig,
   ) {}
 
+  /**
+   * Synchronous chat method that returns a complete response
+   */
   async chatSync(
     input: ChatInput | string,
     model: string,
     chatId?: string,
   ): Promise<string> {
-    this.logger.debug('Starting chatSync', { model, chatId });
+    while (this.currentRequests >= this.concurrentLimit) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
 
-    this.resetState();
+    const requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.currentRequests++;
 
-    try {
-      const chatStream = this.chat(input, model, chatId);
-      let content = '';
+    this.logger.debug(
+      `Starting request ${requestId}. Active: ${this.currentRequests}/${this.concurrentLimit}`,
+    );
 
-      this.logger.debug('Starting to process chat stream');
-      for await (const chunk of chatStream) {
-        if (chunk.status === StreamStatus.STREAMING) {
-          const newContent = chunk.choices
-            .map((choice) => choice.delta?.content || '')
-            .join('');
-          content += newContent;
+    const normalizedInput = this.normalizeChatInput(input);
+
+    let resolvePromise: (value: string) => void;
+    let rejectPromise: (error: any) => void;
+
+    const promise = new Promise<string>((resolve, reject) => {
+      resolvePromise = resolve;
+      rejectPromise = reject;
+    });
+
+    const stream = new Subject<any>();
+    let content = '';
+    let isCompleted = false;
+
+    const subscription = stream.subscribe({
+      next: (chunk) => {
+        if (chunk?.choices?.[0]?.delta?.content) {
+          content += chunk.choices[0].delta.content;
         }
-      }
+      },
+      error: (error) => {
+        if (!isCompleted) {
+          isCompleted = true;
+          this.cleanupRequest(requestId);
+          rejectPromise(error);
+        }
+      },
+      complete: () => {
+        if (!isCompleted) {
+          isCompleted = true;
+          this.cleanupRequest(requestId);
+          resolvePromise(content);
+        }
+      },
+    });
 
-      return content;
-    } catch (error) {
-      this.logger.error('Error in chatSync:', error);
-      throw error;
-    } finally {
-      this.cleanup();
-      this.logger.debug('ChatSync cleanup completed');
-    }
+    this.activeRequests.set(requestId, {
+      startTime: Date.now(),
+      subscription,
+      stream,
+      promise,
+    });
+
+    this.processRequest(normalizedInput, model, chatId, requestId, stream);
+    return promise;
   }
 
-  private resetState() {
-    this.logger.debug('Resetting provider state');
-    this.isDone = false;
-    this.chunkQueue = [];
-    this.resolveNextChunk = null;
-    if (this.responseSubscription) {
-      this.responseSubscription.unsubscribe();
-      this.responseSubscription = null;
-    }
-  }
-
+  /**
+   * Stream-based chat method that returns an async iterator
+   */
   chat(
     input: ChatInput | string,
     model: string,
@@ -89,9 +129,7 @@ export class ModelProvider {
     const selectedModel = model || this.config.defaultModel;
 
     if (!selectedModel) {
-      const error = new Error('No model selected for chat request');
-      this.logger.error(error.message);
-      throw error;
+      throw new Error('No model selected for chat request');
     }
 
     const iterator: CustomAsyncIterableIterator<ChatCompletionChunk> = {
@@ -107,15 +145,146 @@ export class ModelProvider {
     return iterator;
   }
 
-  private normalizeChatInput(input: ChatInput | string): ChatInput {
-    return typeof input === 'string' ? { content: input } : input;
+  /**
+   * Get all active promises for concurrent request management
+   */
+  public getAllActivePromises(): Promise<string>[] {
+    return Array.from(this.activeRequests.values()).map(
+      (request) => request.promise,
+    );
+  }
+
+  private async processRequest(
+    input: ChatInput,
+    model: string,
+    chatId: string | undefined,
+    requestId: string,
+    stream: Subject<any>,
+  ) {
+    let isCompleted = false;
+
+    try {
+      const response = await this.httpService
+        .post(
+          `${this.config.endpoint}/chat/completion`,
+          this.createRequestPayload(input, model, chatId),
+          {
+            responseType: 'stream',
+            headers: { 'Content-Type': 'application/json' },
+          },
+        )
+        .toPromise();
+
+      let buffer = '';
+
+      response.data.on('data', (chunk: Buffer) => {
+        if (isCompleted) return;
+
+        buffer += chunk.toString();
+
+        let newlineIndex;
+        while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+          const line = buffer.slice(0, newlineIndex).trim();
+          buffer = buffer.slice(newlineIndex + 1);
+
+          if (line.startsWith('data: ')) {
+            const jsonStr = line.slice(6);
+            if (jsonStr === '[DONE]') {
+              if (!isCompleted) {
+                isCompleted = true;
+                this.logger.debug(
+                  `Request ${requestId} received [DONE] signal`,
+                );
+                stream.complete();
+              }
+              return;
+            }
+            try {
+              const parsed = JSON.parse(jsonStr);
+              if (!isCompleted) {
+                stream.next(parsed);
+              }
+            } catch (error) {
+              this.logger.error(
+                `Error parsing chunk for request ${requestId}:`,
+                error,
+              );
+            }
+          }
+        }
+      });
+
+      response.data.on('end', () => {
+        if (!isCompleted) {
+          isCompleted = true;
+          stream.complete();
+        }
+      });
+
+      response.data.on('error', (error) => {
+        if (!isCompleted) {
+          isCompleted = true;
+          stream.error(error);
+        }
+      });
+    } catch (error) {
+      if (!isCompleted) {
+        isCompleted = true;
+        stream.error(error);
+      }
+    }
+  }
+
+  private startChat(input: ChatInput, model: string, chatId?: string) {
+    this.resetState();
+    const payload = this.createRequestPayload(input, model, chatId);
+
+    this.responseSubscription = this.httpService
+      .post(`${this.config.endpoint}/chat/completion`, payload, {
+        responseType: 'stream',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      .subscribe({
+        next: (response) => {
+          let buffer = '';
+          response.data.on('data', (chunk: Buffer) => {
+            buffer += chunk.toString();
+            let newlineIndex;
+
+            while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+              const line = buffer.slice(0, newlineIndex).trim();
+              buffer = buffer.slice(newlineIndex + 1);
+
+              if (line.startsWith('data: ')) {
+                const jsonStr = line.slice(6);
+                if (jsonStr === '[DONE]') {
+                  this.handleStreamEnd(model);
+                  return;
+                }
+                try {
+                  const parsed = JSON.parse(jsonStr);
+                  this.handleChunk(parsed);
+                } catch (error) {
+                  this.logger.error('Error parsing chunk:', error);
+                }
+              }
+            }
+          });
+
+          response.data.on('end', () => {
+            this.handleStreamEnd(model);
+          });
+        },
+        error: (error) => {
+          this.handleStreamError(error, model);
+        },
+      });
   }
 
   private async handleNext(): Promise<IteratorResult<ChatCompletionChunk>> {
     return new Promise<IteratorResult<ChatCompletionChunk>>((resolve) => {
       if (this.chunkQueue.length > 0) {
-        const chunk = this.chunkQueue.shift()!;
-        resolve({ done: false, value: chunk });
+        resolve({ done: false, value: this.chunkQueue.shift()! });
       } else if (this.isDone) {
         resolve({ done: true, value: undefined });
       } else {
@@ -136,8 +305,82 @@ export class ModelProvider {
     return Promise.reject(error);
   }
 
+  private handleChunk(chunk: any) {
+    if (this.isValidChunk(chunk)) {
+      const parsedChunk: ChatCompletionChunk = {
+        ...chunk,
+        status: StreamStatus.STREAMING,
+      };
+
+      if (this.resolveNextChunk) {
+        this.resolveNextChunk({ done: false, value: parsedChunk });
+        this.resolveNextChunk = null;
+      } else {
+        this.chunkQueue.push(parsedChunk);
+      }
+    }
+  }
+
+  private handleStreamEnd(model: string) {
+    if (!this.isDone) {
+      const doneChunk = this.createDoneChunk(model);
+      if (this.resolveNextChunk) {
+        this.resolveNextChunk({ done: false, value: doneChunk });
+        this.resolveNextChunk = null;
+      } else {
+        this.chunkQueue.push(doneChunk);
+      }
+    }
+
+    Promise.resolve().then(() => {
+      this.isDone = true;
+      if (this.resolveNextChunk) {
+        this.resolveNextChunk({ done: true, value: undefined });
+        this.resolveNextChunk = null;
+      }
+    });
+  }
+
+  private handleStreamError(error: any, model: string) {
+    const doneChunk = this.createDoneChunk(model);
+    if (this.resolveNextChunk) {
+      this.resolveNextChunk({ done: false, value: doneChunk });
+      this.isDone = true;
+    } else {
+      this.chunkQueue.push(doneChunk);
+      this.isDone = true;
+    }
+  }
+
+  private cleanupRequest(requestId: string) {
+    const request = this.activeRequests.get(requestId);
+    if (request) {
+      try {
+        const duration = Date.now() - request.startTime;
+        this.logger.debug(
+          `Completed request ${requestId}. Duration: ${duration}ms`,
+        );
+
+        if (request.subscription && !request.subscription.closed) {
+          request.subscription.unsubscribe();
+        }
+
+        this.activeRequests.delete(requestId);
+        this.currentRequests--;
+
+        this.logger.debug(
+          `Remaining active requests: ${this.currentRequests}/${this.concurrentLimit}`,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Error during cleanup of request ${requestId}:`,
+          error,
+        );
+      }
+    }
+  }
+
   private cleanup() {
-    this.logger.debug('Cleaning up provider');
     this.isDone = true;
     if (this.responseSubscription) {
       this.responseSubscription.unsubscribe();
@@ -145,6 +388,16 @@ export class ModelProvider {
     }
     this.chunkQueue = [];
     this.resolveNextChunk = null;
+  }
+
+  private resetState() {
+    this.isDone = false;
+    this.chunkQueue = [];
+    this.resolveNextChunk = null;
+    if (this.responseSubscription) {
+      this.responseSubscription.unsubscribe();
+      this.responseSubscription = null;
+    }
   }
 
   private createRequestPayload(
@@ -171,137 +424,18 @@ export class ModelProvider {
     };
   }
 
-  private handleChunk(chunk: any) {
-    if (this.isValidChunk(chunk)) {
-      const parsedChunk: ChatCompletionChunk = {
-        ...chunk,
-        status: StreamStatus.STREAMING,
-      };
-
-      if (this.resolveNextChunk) {
-        this.resolveNextChunk({ done: false, value: parsedChunk });
-        this.resolveNextChunk = null;
-      } else {
-        this.chunkQueue.push(parsedChunk);
-      }
-    } else {
-      this.logger.warn('Invalid chunk received:', chunk);
-    }
-  }
-
-  private handleStreamEnd(model: string) {
-    this.logger.debug('Stream ended, handling completion');
-
-    if (!this.isDone) {
-      const doneChunk = this.createDoneChunk(model);
-
-      if (this.resolveNextChunk) {
-        this.resolveNextChunk({ done: false, value: doneChunk });
-        this.resolveNextChunk = null;
-      } else {
-        this.chunkQueue.push(doneChunk);
-      }
-    }
-
-    Promise.resolve().then(() => {
-      this.logger.debug('Setting done state');
-      this.isDone = true;
-      if (this.resolveNextChunk) {
-        this.resolveNextChunk({ done: true, value: undefined });
-        this.resolveNextChunk = null;
-      }
-    });
-  }
-
-  private handleStreamError(error: any, model: string) {
-    this.logger.error('Stream error occurred:', error);
-    const doneChunk = this.createDoneChunk(model);
-
-    if (this.resolveNextChunk) {
-      this.logger.debug('Resolving waiting promise with error done chunk');
-      this.resolveNextChunk({ done: false, value: doneChunk });
-      Promise.resolve().then(() => {
-        this.isDone = true;
-        if (this.resolveNextChunk) {
-          this.resolveNextChunk({ done: true, value: undefined });
-          this.resolveNextChunk = null;
-        }
-      });
-    } else {
-      this.logger.debug('Queueing error done chunk');
-      this.chunkQueue.push(doneChunk);
-      Promise.resolve().then(() => {
-        this.isDone = true;
-      });
-    }
-  }
-
-  private startChat(input: ChatInput, model: string, chatId?: string) {
-    this.resetState();
-
-    const payload = this.createRequestPayload(input, model, chatId);
-
-    this.responseSubscription = this.httpService
-      .post(`${this.config.endpoint}/chat/completion`, payload, {
-        responseType: 'stream',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      .subscribe({
-        next: (response) => {
-          let buffer = '';
-
-          response.data.on('data', (chunk: Buffer) => {
-            buffer += chunk.toString();
-            let newlineIndex;
-
-            while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-              const line = buffer.slice(0, newlineIndex).trim();
-              buffer = buffer.slice(newlineIndex + 1);
-
-              if (line.startsWith('data: ')) {
-                const jsonStr = line.slice(6);
-                if (jsonStr === '[DONE]') {
-                  this.logger.debug('Received [DONE] signal');
-                  this.handleStreamEnd(model);
-                  return;
-                }
-                try {
-                  const parsed = JSON.parse(jsonStr);
-                  this.handleChunk(parsed);
-                } catch (error) {
-                  this.logger.error('Error parsing chunk:', error);
-                }
-              }
-            }
-          });
-
-          response.data.on('end', () => {
-            this.logger.debug('Response stream ended');
-            this.handleStreamEnd(model);
-          });
-        },
-        error: (error) => {
-          this.logger.error('Error in chat request:', error);
-          this.handleStreamError(error, model);
-        },
-      });
-  }
-
   private isValidChunk(chunk: any): boolean {
-    const isValid =
+    return (
       chunk &&
       typeof chunk.id === 'string' &&
       typeof chunk.object === 'string' &&
       typeof chunk.created === 'number' &&
-      typeof chunk.model === 'string';
+      typeof chunk.model === 'string'
+    );
+  }
 
-    if (!isValid) {
-      this.logger.warn('Invalid chunk structure', chunk);
-    }
-
-    return isValid;
+  private normalizeChatInput(input: ChatInput | string): ChatInput {
+    return typeof input === 'string' ? { content: input } : input;
   }
 
   public async fetchModelsName() {

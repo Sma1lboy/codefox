@@ -20,7 +20,8 @@
     "express": "^4.21.1",
     "node-fetch": "^3.3.2",
     "node-llama-cpp": "^3.1.1",
-    "nodemon": "^3.1.7"
+    "nodemon": "^3.1.7",
+    "p-queue": "^8.0.1"
   },
   "devDependencies": {
     "@types/express": "^4.17.13",
