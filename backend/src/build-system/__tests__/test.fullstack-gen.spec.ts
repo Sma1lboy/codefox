@@ -196,31 +196,8 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
         for (const node of step.nodes) {
           const resultData = await context.getNodeData(node.id);
           const nodeMetrics = stepMetrics?.nodeMetrics.get(node.id);
-
-          console.log(`\n  Node: ${node.name} (${node.id})`);
-          console.log(`  Status: ${nodeMetrics?.status}`);
-          console.log(`  Duration: ${nodeMetrics?.duration}ms`);
-          console.log(`  Retry Count: ${nodeMetrics?.retryCount}`);
-
           if (resultData) {
-            const combinedData = {
-              result: resultData,
-              metrics: nodeMetrics
-                ? {
-                    duration: nodeMetrics.duration,
-                    status: nodeMetrics.status,
-                    retryCount: nodeMetrics.retryCount,
-                    startTime: new Date(nodeMetrics.startTime).toISOString(),
-                    endTime: new Date(nodeMetrics.endTime).toISOString(),
-                  }
-                : null,
-            };
-
-            writeToFile(
-              logFolderPath,
-              `${node.name}-with-metrics`,
-              combinedData,
-            );
+            writeToFile(logFolderPath, `${node.name}`, resultData);
           } else {
             console.error(
               `  Error: Handler ${node.name} failed to produce result data`,
@@ -233,7 +210,6 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
         }
       }
 
-      // 生成执行摘要
       const summary = {
         timestamp: new Date().toISOString(),
         sequenceId: sequence.id,
