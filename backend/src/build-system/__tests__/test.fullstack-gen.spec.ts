@@ -5,7 +5,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { writeToFile } from './utils';
 import { BuildMonitor } from '../monitor';
-import { Logger } from '@nestjs/common';
 
 describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> Frontend_File_struct -> Frontend_File_arch -> BackendCodeGenerator', () => {
   // Generate a unique folder with a timestamp
@@ -24,85 +23,54 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
       steps: [
         {
           id: 'step-1',
-          name: 'Generate PRD',
+          name: 'Initial Analysis',
+          parallel: false,
           nodes: [
             {
               id: 'op:PRD',
               name: 'PRD Generation Node',
-              type: 'ANALYSIS',
-              subType: 'PRD',
             },
           ],
         },
         {
           id: 'step-2',
-          name: 'Generate UX Sitemap Document',
+          name: 'UX Base Document Generation',
+          parallel: false,
           nodes: [
             {
               id: 'op:UX:SMD',
               name: 'UX Sitemap Document Node',
-              type: 'UX',
-              subType: 'SITEMAP',
               requires: ['op:PRD'],
             },
           ],
         },
         {
-          id: 'step-4',
-          name: 'Generate UX Sitemap Structure',
+          id: 'step-3',
+          name: 'Parallel UX Processing',
+          parallel: true,
           nodes: [
             {
               id: 'op:UX:SMS',
               name: 'UX Sitemap Structure Node',
-              type: 'UX',
-              subType: 'VIEWS',
               requires: ['op:UX:SMD'],
             },
-          ],
-        },
-        {
-          id: 'step-5',
-          name: 'Generate UX Data Map Document',
-          nodes: [
             {
               id: 'op:UX:DATAMAP:DOC',
               name: 'UX Data Map Document Node',
-              type: 'UX',
-              subType: 'DATAMAP',
               requires: ['op:UX:SMD'],
             },
           ],
         },
         {
-          id: 'step-6',
-          name: 'Generate Database Requirements',
+          id: 'step-4',
+          name: 'Parallel Project Structure',
+          parallel: true,
           nodes: [
             {
               id: 'op:DATABASE_REQ',
               name: 'Database Requirements Node',
-              type: 'DATABASE',
-              subType: 'SCHEMAS',
               requires: ['op:UX:DATAMAP:DOC'],
             },
-          ],
-        },
-        {
-          id: 'step-7',
-          name: 'Generate Database Schemas',
-          nodes: [
-            {
-              id: 'op:DATABASE:SCHEMAS',
-              name: 'Database Schemas Node',
-              type: 'DATABASE',
-              subType: 'SCHEMAS',
-              requires: ['op:DATABASE_REQ'],
-            },
-          ],
-        },
-        {
-          id: 'step-8',
-          name: 'file structure generation',
-          nodes: [
             {
               id: 'op:FILE:STRUCT',
               name: 'file structure generation',
@@ -114,9 +82,15 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
           ],
         },
         {
-          id: 'step-9',
-          name: 'File_Arch Document',
+          id: 'step-5',
+          name: 'Parallel Implementation',
+          parallel: true,
           nodes: [
+            {
+              id: 'op:DATABASE:SCHEMAS',
+              name: 'Database Schemas Node',
+              requires: ['op:DATABASE_REQ'],
+            },
             {
               id: 'op:FILE:ARCH',
               name: 'File_Arch',
@@ -125,29 +99,25 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
           ],
         },
         {
-          id: 'step-10',
-          name: 'Generate Backend Code',
+          id: 'step-6',
+          name: 'Final Code Generation',
+          parallel: false,
           nodes: [
             {
               id: 'op:BACKEND:CODE',
               name: 'Backend Code Generator Node',
-              type: 'BACKEND',
               requires: ['op:DATABASE:SCHEMAS', 'op:UX:DATAMAP:DOC'],
             },
           ],
         },
       ],
     };
-
-    // Initialize the BuilderContext with the defined sequence and environment
     const context = new BuilderContext(sequence, 'test-env');
     const monitor = BuildMonitor.getInstance();
 
     try {
-      console.log('Starting sequence execution...');
       console.time('Total Execution Time');
 
-      // Execute the build sequence
       await context.execute();
 
       console.timeEnd('Total Execution Time');
@@ -158,8 +128,6 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
         monitorReport,
         'utf8',
       );
-      console.log('\nExecution Metrics Report:');
-      console.log(monitorReport);
 
       const sequenceMetrics = monitor.getSequenceMetrics(sequence.id);
       if (sequenceMetrics) {
@@ -184,15 +152,8 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
         console.table(metricsJson);
       }
 
-      console.log('\nProcessing individual node results and metrics...');
       for (const step of sequence.steps) {
         const stepMetrics = sequenceMetrics?.stepMetrics.get(step.id);
-        console.log(`\nStep: ${step.name} (${step.id})`);
-        console.log(`Duration: ${stepMetrics?.duration}ms`);
-        console.log(
-          `Completed Nodes: ${stepMetrics?.completedNodes}/${stepMetrics?.totalNodes}`,
-        );
-
         for (const node of step.nodes) {
           const resultData = await context.getNodeData(node.id);
           const nodeMetrics = stepMetrics?.nodeMetrics.get(node.id);
@@ -226,15 +187,7 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
         JSON.stringify(summary, null, 2),
         'utf8',
       );
-
-      console.log('\nExecution Summary:');
-      console.table(summary);
-
-      console.log('\nDetailed logs and metrics stored in:', logFolderPath);
     } catch (error) {
-      console.timeEnd('Total Execution Time');
-
-      // 保存错误信息和当前的执行状态
       const errorReport = {
         error: {
           message: error.message,
@@ -258,5 +211,5 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
       );
       throw new Error('Sequence execution failed.');
     }
-  }, 600000); // Timeout set to 10 minutes
+  }, 300000); // Timeout set to 10 minutes
 });

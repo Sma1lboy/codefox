@@ -25,8 +25,6 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
             {
               id: 'op:PRD',
               name: 'PRD Generation Node',
-              type: 'ANALYSIS',
-              subType: 'PRD',
             },
           ],
         },
@@ -37,8 +35,6 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
             {
               id: 'op:UX:SMD',
               name: 'UX Sitemap Document Node',
-              type: 'UX',
-              subType: 'SITEMAP',
               requires: ['op:PRD'],
             },
           ],
@@ -50,8 +46,6 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
             {
               id: 'op:UX:SMS',
               name: 'UX Sitemap Structure Node',
-              type: 'UX',
-              subType: 'VIEWS',
               requires: ['op:UX:SMD'],
             },
           ],

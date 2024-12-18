@@ -27,8 +27,6 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
             {
               id: 'op:PRD',
               name: 'PRD Generation Node',
-              type: 'ANALYSIS',
-              subType: 'PRD',
             },
           ],
         },
@@ -39,8 +37,6 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
             {
               id: 'op:UX:SMD',
               name: 'UX Sitemap Document Node',
-              type: 'UX',
-              subType: 'SITEMAP',
               requires: ['op:PRD'],
             },
           ],
@@ -52,8 +48,6 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
             {
               id: 'op:UX:DATAMAP:DOC',
               name: 'UX Data Map Document Node',
-              type: 'UX',
-              subType: 'DATAMAP',
               requires: ['op:UX:SMD'],
             },
           ],
@@ -65,8 +59,6 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
             {
               id: 'op:DATABASE_REQ',
               name: 'Database Requirements Node',
-              type: 'DATABASE',
-              subType: 'SCHEMAS',
               requires: ['op:UX:DATAMAP:DOC'],
             },
           ],
@@ -78,8 +70,6 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
             {
               id: 'op:DATABASE:SCHEMAS',
               name: 'Database Schemas Node',
-              type: 'DATABASE',
-              subType: 'SCHEMAS',
               requires: ['op:DATABASE_REQ'],
             },
           ],
@@ -91,7 +81,6 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGener
             {
               id: 'op:BACKEND:CODE',
               name: 'Backend Code Generator Node',
-              type: 'BACKEND',
               requires: ['op:DATABASE:SCHEMAS', 'op:UX:DATAMAP:DOC'],
             },
           ],
