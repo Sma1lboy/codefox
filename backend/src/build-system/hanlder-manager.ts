@@ -11,6 +11,15 @@ import { DBSchemaHandler } from './handlers/database/schemas/schemas';
 import { DatabaseRequirementHandler } from './handlers/database/requirements-document';
 import { FileGeneratorHandler } from './handlers/file-manager/file-generate';
 
+/**
+ * Manages the registration and retrieval of build handlers in the system
+ * @class BuildHandlerManager
+ * @description Singleton class responsible for:
+ * - Maintaining a registry of all build handlers
+ * - Providing access to specific handlers by ID
+ * - Managing the lifecycle of built-in handlers
+ * - Implementing the singleton pattern for global handler management
+ */
 export class BuildHandlerManager {
   private static instance: BuildHandlerManager;
   private handlers: Map<string, BuildHandler> = new Map();
