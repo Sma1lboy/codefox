@@ -3,6 +3,15 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { PROJECT_EVENT_PATH } from 'src/config/common-path';
 
+/**
+ * Interface representing a project event with associated metadata
+ * @interface ProjectEvent
+ * @property {string} timestamp - ISO timestamp of when the event occurred
+ * @property {string} projectId - Unique identifier for the project
+ * @property {string} eventId - Unique identifier for the event
+ * @property {'BUILD_START' | 'BUILD_END' | 'BUILD_ERROR' | 'BUILD_METRICS'} type - Type of build event
+ * @property {any} data - Additional event-specific data
+ */
 export interface ProjectEvent {
   timestamp: string;
   projectId: string;
@@ -11,6 +20,11 @@ export interface ProjectEvent {
   data: any;
 }
 
+/**
+ * Singleton class responsible for logging project build events to JSON files
+ * @class ProjectEventLogger
+ * @description Handles creation, reading and writing of project event logs organized by date
+ */
 export class ProjectEventLogger {
   private static instance: ProjectEventLogger;
   private logger: Logger;

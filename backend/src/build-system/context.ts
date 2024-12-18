@@ -12,8 +12,11 @@ import { ModelProvider } from 'src/common/model-provider';
 import { v4 as uuidv4 } from 'uuid';
 import { BuildMonitor } from './monitor';
 import { BuildHandlerManager } from './hanlder-manager';
-import { ProjectEventLogger } from './logger';
 
+/**
+ * Global data keys used throughout the build process
+ * @type GlobalDataKeys
+ */
 export type GlobalDataKeys =
   | 'projectName'
   | 'description'
@@ -21,8 +24,22 @@ export type GlobalDataKeys =
   | 'databaseType'
   | 'projectUUID';
 
+/**
+ * Generic context data type mapping keys to any value
+ * @type ContextData
+ */
 type ContextData = Record<GlobalDataKeys | string, any>;
 
+/**
+ * Core build context class that manages the execution of build sequences
+ * @class BuilderContext
+ * @description Responsible for:
+ * - Managing build execution state
+ * - Handling node dependencies and execution order
+ * - Managing global and node-specific context data
+ * - Coordinating with build handlers and monitors
+ * - Managing virtual directory operations
+ */
 export class BuilderContext {
   private executionState: BuildExecutionState = {
     completed: new Set(),
@@ -90,6 +107,11 @@ export class BuilderContext {
     }
   }
 
+  /**
+   * Executes a build step, handling both parallel and sequential node execution
+   * @param step The build step to execute
+   * @private
+   */
   private async executeStep(step: BuildStep): Promise<void> {
     this.logger.log(`Executing build step: ${step.id}`);
     this.monitor.setCurrentStep(step);
@@ -111,6 +133,11 @@ export class BuilderContext {
     }
   }
 
+  /**
+   * Executes nodes in parallel within a build step
+   * @param step The build step containing nodes to execute in parallel
+   * @private
+   */
   private async executeParallelNodes(step: BuildStep): Promise<void> {
     let remainingNodes = [...step.nodes];
     let lastLength = remainingNodes.length;
@@ -152,6 +179,11 @@ export class BuilderContext {
     }
   }
 
+  /**
+   * Executes nodes sequentially within a build step
+   * @param step The build step containing nodes to execute sequentially
+   * @private
+   */
   private async executeSequentialNodes(step: BuildStep): Promise<void> {
     for (const node of step.nodes) {
       let retryCount = 0;
@@ -221,6 +253,11 @@ export class BuilderContext {
     }
   }
 
+  /**
+   * Checks if a node can be executed based on its dependencies
+   * @param nodeId The ID of the node to check
+   * @returns boolean indicating if the node can be executed
+   */
   canExecute(nodeId: string): boolean {
     const node = this.findNode(nodeId);
 
@@ -270,6 +307,11 @@ export class BuilderContext {
     return { ...this.executionState };
   }
 
+  /**
+   * Sets data in the global context
+   * @param key The key to set
+   * @param value The value to set
+   */
   setGlobalContext<Key extends GlobalDataKeys | string>(
     key: Key,
     value: ContextData[Key],
@@ -277,12 +319,22 @@ export class BuilderContext {
     this.globalContext.set(key, value);
   }
 
+  /**
+   * Gets data from the global context
+   * @param key The key to retrieve
+   * @returns The value associated with the key, or undefined
+   */
   getGlobalContext<Key extends GlobalDataKeys | string>(
     key: Key,
   ): ContextData[Key] | undefined {
     return this.globalContext.get(key);
   }
 
+  /**
+   * Retrieves node-specific data
+   * @param nodeId The ID of the node
+   * @returns The data associated with the node
+   */
   getNodeData<NodeId extends keyof NodeOutputMap>(
     nodeId: NodeId,
   ): NodeOutputMap[NodeId];
@@ -291,6 +343,11 @@ export class BuilderContext {
     return this.nodeData.get(nodeId);
   }
 
+  /**
+   * Sets node-specific data
+   * @param nodeId The ID of the node
+   * @param data The data to associate with the node
+   */
   setNodeData<NodeId extends keyof NodeOutputMap>(
     nodeId: NodeId,
     data: any,
