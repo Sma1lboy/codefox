@@ -14,21 +14,21 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
 
     const fileStructure = context.getNodeData('op:FILE:STRUCT');
     // TODO: here should use datamap struct
-    const dataMapStruct = context.getNodeData('op:UX:DATAMAP:DOC');
+    const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
     // TODO: adding page by page analysis
 
-    if (!fileStructure || !dataMapStruct) {
+    if (!fileStructure || !datamapDoc) {
       return {
         success: false,
         error: new Error(
-          'Missing required parameters: fileStructure or dataMapStruct',
+          'Missing required parameters: fileStructure or datamapDoc',
         ),
       };
     }
 
     const prompt = generateFileArchPrompt(
       JSON.stringify(fileStructure, null, 2),
-      JSON.stringify(dataMapStruct, null, 2),
+      JSON.stringify(datamapDoc, null, 2),
     );
 
     // fileArchContent generate
