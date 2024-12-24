@@ -10,7 +10,7 @@ import { ModelProvider } from './model-provider.js';
 import { Logger } from '@nestjs/common';
 import { systemPrompts } from '../prompt/systemPrompt';
 import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
-import { GenerateMessageParams } from '../type/GenerateMessage';
+import { GenerateMessageParams } from '../types.js';
 
 //TODO: using protocol class
 export class LlamaModelProvider extends ModelProvider {
