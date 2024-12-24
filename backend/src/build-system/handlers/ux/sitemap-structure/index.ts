@@ -29,7 +29,6 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
       sitemapDoc,
       'web', // TODO: Change platform dynamically if necessary
     );
-    this.logger.log(prompt);
 
     const uxStructureContent = await context.model.chatSync(
       {

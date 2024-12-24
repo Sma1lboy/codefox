@@ -1,23 +1,4 @@
-import { ModelProvider } from 'src/common/model-provider';
 import { BuilderContext } from './context';
-import { BuildOptions } from 'typescript';
-
-export type BuildNodeType =
-  | 'PROJECT_SETUP'
-  | 'ANALYSIS'
-  | 'DATABASE'
-  | 'BACKEND'
-  | 'UX'
-  | 'WEBAPP';
-
-export type BuildSubType = {
-  ANALYSIS: 'PRD' | 'FRD' | 'DRD' | 'BRD' | 'UXSD' | 'UXDD';
-  DATABASE: 'SCHEMAS' | 'POSTGRES';
-  BACKEND: 'OPENAPI' | 'ASYNCAPI' | 'SERVER';
-  UX: 'SITEMAP' | 'DATAMAP' | 'VIEWS';
-  WEBAPP: 'STORE' | 'ROOT' | 'VIEW';
-  PROJECT_SETUP: never;
-};
 
 export interface BuildBase {
   id: string;
@@ -28,8 +9,6 @@ export interface BuildBase {
 }
 
 export interface BuildNode extends BuildBase {
-  type?: BuildNodeType;
-  subType?: BuildSubType[BuildNodeType];
   config?: Record<string, any>;
 }
 
