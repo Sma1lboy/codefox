@@ -12,14 +12,6 @@ import { writeFile } from 'fs-extra';
 import { prompts } from './prompt';
 
 /**
- * Defines the expected order and types of arguments for DBSchemaHandler.
- *
- * Expected argument order:
- * 0 - dbRequirements: string
- */
-type DBSchemaArgs = [dbRequirements: string];
-
-/**
  * DBSchemaHandler is responsible for generating database schemas based on provided requirements.
  */
 export class DBSchemaHandler implements BuildHandler {
@@ -32,24 +24,16 @@ export class DBSchemaHandler implements BuildHandler {
    * @param args - The variadic arguments required for generating the database schemas.
    * @returns A BuildResult containing the generated schema content and related data.
    */
-  async run(context: BuilderContext, ...args: any[]): Promise<BuildResult> {
+  async run(context: BuilderContext): Promise<BuildResult> {
     this.logger.log('Generating Database Schemas...');
 
     // Retrieve projectName and databaseType from context
     const projectName =
-      context.getData('projectName') || 'Default Project Name';
-    const databaseType = context.getData('databaseType') || 'PostgreSQL';
-    this.logger.debug(`Project Name: ${projectName}`);
-    this.logger.debug(`Database Type: ${databaseType}`);
+      context.getGlobalContext('projectName') || 'Default Project Name';
+    const databaseType =
+      context.getGlobalContext('databaseType') || 'PostgreSQL';
 
-    // Validate and extract args
-    if (!args || !Array.isArray(args)) {
-      throw new Error(
-        'Database schema generation requires specific configuration arguments as an array.',
-      );
-    }
-
-    const [dbRequirements] = args as DBSchemaArgs;
+    const dbRequirements = context.getNodeData('op:DATABASE_REQ');
 
     this.logger.debug('Database requirements are provided.');
 
