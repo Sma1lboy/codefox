@@ -38,6 +38,12 @@ export const getModelsDir = (): string =>
 export const getModelPath = (modelName: string): string =>
   path.join(getModelsDir(), modelName);
 
+// Embs Directory
+export const getEmbDir = (): string =>
+  ensureDir(path.join(getRootDir(), 'embeddings'));
+export const getEmbPath = (modelName: string): string =>
+  path.join(getModelsDir(), modelName);
+
 // Project-Specific Paths
 export const getProjectsDir = (): string =>
   ensureDir(path.join(getRootDir(), 'projects'));

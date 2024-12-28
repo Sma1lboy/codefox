@@ -1,27 +1,28 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { getConfigPath } from 'src/config/common-path';
-
-export interface ModelStatus {
+  
+export interface UniversalStatus {
   isDownloaded: boolean;
   lastChecked: Date;
 }
 
-export class ModelStatusManager {
-  private static instance: ModelStatusManager;
-  private status: Record<string, ModelStatus>;
+export class UniversalStatusManager {
+  private static instances: Map<string, UniversalStatusManager> = new Map();
+  private status: Record<string, UniversalStatus>;
   private readonly statusPath: string;
 
-  private constructor() {
-    this.statusPath = getConfigPath('model-status');
+  private constructor(path: string) {
+    this.statusPath = path;
     this.loadStatus();
   }
 
-  public static getInstance(): ModelStatusManager {
-    if (!ModelStatusManager.instance) {
-      ModelStatusManager.instance = new ModelStatusManager();
+  public static getInstance(type: string): UniversalStatusManager {
+    if (!UniversalStatusManager.instances.has(type)) {
+      const statusFilePath = getConfigPath(`${type}-status`);
+      UniversalStatusManager.instances.set(type, new UniversalStatusManager(statusFilePath));
     }
-    return ModelStatusManager.instance;
+    return UniversalStatusManager.instances.get(type)!;
   }
 
   private loadStatus() {
@@ -38,7 +39,7 @@ export class ModelStatusManager {
           };
           return acc;
         },
-        {} as Record<string, ModelStatus>,
+        {} as Record<string, UniversalStatus>,
       );
     } catch (error) {
       this.status = {};
@@ -57,19 +58,19 @@ export class ModelStatusManager {
     );
   }
 
-  updateStatus(modelName: string, isDownloaded: boolean) {
-    this.status[modelName] = {
+  updateStatus(UniversalName: string, isDownloaded: boolean) {
+    this.status[UniversalName] = {
       isDownloaded,
       lastChecked: new Date(),
     };
     this.saveStatus();
   }
 
-  getStatus(modelName: string): ModelStatus | null {
-    return this.status[modelName] || null;
+  getStatus(UniversalName: string): UniversalStatus | undefined {
+    return this.status[UniversalName];
   }
 
-  getAllStatus(): Record<string, ModelStatus> {
+  getAllStatus(): Record<string, UniversalStatus> {
     return { ...this.status };
   }
 }

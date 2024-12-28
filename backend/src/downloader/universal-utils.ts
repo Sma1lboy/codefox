@@ -1,17 +1,33 @@
 // model-utils.ts
-import { ModelDownloader } from './model-downloader';
+import { UniversalDownloader } from './universal-downloader';
 import { Logger } from '@nestjs/common';
-import { ModelStatusManager } from './model-status';
+import { UniversalStatusManager } from './universal-status';
+import {ModelConfig} from '../config/config-loader';
 import { ConfigLoader } from 'src/config/config-loader';
+import { getEmbDir, getModelsDir } from 'src/config/common-path';
 
 const logger = new Logger('model-utils');
 
-export async function downloadAllModels(): Promise<void> {
-  const configLoader = ConfigLoader.getInstance();
-  const statusManager = ModelStatusManager.getInstance();
-  const downloader = ModelDownloader.getInstance();
+export enum ConfigType {
+  EMBEDDINGS = 'embeddings',
+  CHATS = 'models',
+}
+export enum TaskType{
+  CHAT = "text2text-generation",
+  EMBEDDING = "feature-extraction",
+}
+export async function downloadAllConfig(): Promise<void> {
+  downloadAll(ConfigType.CHATS);
+  downloadAll(ConfigType.EMBEDDINGS);
+  
+}
+export async function downloadAll(type: ConfigType): Promise<void> {
+  const configLoader = ConfigLoader.getInstance(type);
+  const statusManager = UniversalStatusManager.getInstance(type);
+  const downloader = UniversalDownloader.getInstance();
+  let storePath: string = (type ==  ConfigType.EMBEDDINGS) ? getEmbDir() : getModelsDir();
 
-  const chatConfigs = configLoader.getAllChatConfigs();
+  const chatConfigs = configLoader.getAllConfigs();
   logger.log('Loaded chat configurations:', chatConfigs);
 
   if (!chatConfigs.length) {
@@ -31,7 +47,7 @@ export async function downloadAllModels(): Promise<void> {
 
     try {
       logger.log(`Downloading model: ${model} for task: ${task || 'chat'}`);
-      await downloader.downloadModel(task || 'chat', model);
+      await downloader.getPipeline(task || 'text2text-generation', model, storePath);
 
       statusManager.updateStatus(model, true);
       logger.log(`Successfully downloaded model: ${model}`);
@@ -51,19 +67,21 @@ export async function downloadAllModels(): Promise<void> {
   }
 }
 
-export async function downloadModel(modelName: string): Promise<void> {
-  const configLoader = ConfigLoader.getInstance();
-  const statusManager = ModelStatusManager.getInstance();
-  const downloader = ModelDownloader.getInstance();
+export async function downloadModel(type: ConfigType, modelName: string): Promise<void> {
+  const configLoader = ConfigLoader.getInstance(type);
+  const statusManager = UniversalStatusManager.getInstance(type);
+  const downloader =  UniversalDownloader.getInstance();
+  
 
-  const chatConfig = configLoader.getChatConfig(modelName);
-  if (!chatConfig) {
+  const config = configLoader.getConfig(modelName);
+  if (!config) {
     throw new Error(`Model configuration not found for: ${modelName}`);
   }
-
+  const task = type === ConfigType.EMBEDDINGS ? TaskType.EMBEDDING : (config as ModelConfig).task || TaskType.CHAT;
+  const path = type === ConfigType.EMBEDDINGS ? getEmbDir() : getModelsDir();
   try {
     logger.log(`Downloading model: ${modelName}`);
-    await downloader.downloadModel(chatConfig.task || 'chat', modelName);
+    await downloader.getPipeline(task, modelName, path);
     statusManager.updateStatus(modelName, true);
     logger.log(`Successfully downloaded model: ${modelName}`);
   } catch (error) {

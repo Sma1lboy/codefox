@@ -1,8 +1,8 @@
 import path from 'path';
 import * as fs from 'fs';
-import { ConfigLoader } from '../../config/config-loader';
-import { ModelDownloader } from '../model-downloader';
-import { downloadAllModels } from '../utils';
+import { ConfigLoader, ModelConfig, EmbeddingConfig  } from '../../config/config-loader';
+import { UniversalDownloader } from '../universal-downloader';
+import { ConfigType, downloadAll } from '../universal-utils';
 import { getConfigDir, getConfigPath } from 'src/config/common-path';
 
 const originalIsArray = Array.isArray;
@@ -36,24 +36,34 @@ Array.isArray = jest.fn((type: any): type is any[] => {
 // });
 
 describe('loadAllChatsModels with real model loading', () => {
-  let configLoader: ConfigLoader;
+  let modelConfigLoader: ConfigLoader;
+  let embConfigLoader: ConfigLoader;
   beforeAll(async () => {
-    const testConfig = [
-      {
-        model: 'Felladrin/onnx-flan-alpaca-base',
-        task: 'text2text-generation',
-      },
-    ];
-    const configPath = getConfigPath('config');
-    fs.writeFileSync(configPath, JSON.stringify(testConfig, null, 2), 'utf8');
+    ConfigLoader.initConfigFile(getConfigPath("config"));
+    modelConfigLoader = ConfigLoader.getInstance(ConfigType.CHATS);
+    embConfigLoader = ConfigLoader.getInstance(ConfigType.EMBEDDINGS);
+    const modelConfig: ModelConfig = {
+      model: "Felladrin/onnx-flan-alpaca-base",
+      endpoint: 'http://localhost:11434/v1',
+      token: 'your-token-here',
+      default: true, // Set to true if it's the default model
+      task: 'text2text-generation',
+    };
+    modelConfigLoader.addConfig(modelConfig);
 
-    configLoader = new ConfigLoader();
-    await downloadAllModels();
+    const embConfig: EmbeddingConfig = {
+      model: 'jinaai/jina-clip-v2',
+      endpoint: 'http://localhost:11434/v1',
+      default: true, // Set to true if it's the default model
+      token: 'your-token-here',
+    };
+    embConfigLoader.addConfig(embConfig);
+    await downloadAll(ConfigType.CHATS);
+    await downloadAll(ConfigType.EMBEDDINGS);
   }, 600000);
 
   it('should load real models specified in config', async () => {
-    const downloader = ModelDownloader.getInstance();
-
+    const downloader = UniversalDownloader.getInstance();
     const chat1Model = await downloader.getLocalModel(
       'text2text-generation',
       'Felladrin/onnx-flan-alpaca-base',

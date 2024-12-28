@@ -6,7 +6,6 @@ import { GenerateMessageParams } from '../types';
 import { Response } from 'express';
 import { EmbProvider } from "./embedding-provider";
 
-
 export class OpenAIEmbProvider extends EmbProvider {
     private logger = new Logger(OpenAIEmbProvider.name);
     private openai: OpenAI;
