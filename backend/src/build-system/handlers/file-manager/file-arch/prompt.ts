@@ -1,6 +1,6 @@
 export const generateFileArchPrompt = (
   fileStructure: string,
-  pageByPageAnalysis: string,
+  datamapDoc: string,
 ): string => {
   return `You are a File Architecture Analyzer. Your task is to analyze the given project directory structure and the detailed page-by-page analysis, then output a JSON object detailing the file dependencies. The output JSON must be wrapped in <GENERATEDCODE></GENERATEDCODE> tags.
 
@@ -15,7 +15,7 @@ ${fileStructure}
 The following is a detailed analysis of each page. Use this information to understand specific roles, interactions, and dependencies.
 
 \`\`\`
-${pageByPageAnalysis}
+${datamapDoc}
 \`\`\`
 
 ### Instructions

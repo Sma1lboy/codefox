@@ -1,12 +1,17 @@
 import * as path from 'path';
-import * as os from 'os';
 import { existsSync, mkdirSync, promises } from 'fs-extra';
-import { createHash } from 'crypto';
 
 // Constants for base directories
 const APP_NAME = 'codefox';
-const ROOT_DIR = path.join(os.homedir(), `.${APP_NAME}`);
+// TODO: hack way to get the root directory of the workspace
+const WORKSPACE_ROOT = path.resolve(__dirname, '../../../');
+const ROOT_DIR = path.join(WORKSPACE_ROOT, `.${APP_NAME}`);
 
+export const TEMPLATE_PATH = path.join(WORKSPACE_ROOT, 'backend/template');
+export const PROJECT_EVENT_PATH = path.join(ROOT_DIR, 'project-events');
+
+export const getTemplatePath = (templateName: string): string =>
+  path.join(TEMPLATE_PATH, templateName);
 // Utility function to ensure a directory exists
 const ensureDir = (dirPath: string): string => {
   if (!existsSync(dirPath)) {

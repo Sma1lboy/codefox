@@ -1,4 +1,5 @@
 packages:
-  - "backend"
-  - "frontend"
-  - "llm-server"
+  - 'backend'
+  - 'frontend'
+  - 'llm-server'
+  - 'codefox-docs'

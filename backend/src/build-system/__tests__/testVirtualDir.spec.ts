@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { VirtualDirectory } from '../virtual-dir';
-import * as normalizePath from 'normalize-path';
+import normalizePath from 'normalize-path';
 
 describe('VirtualDirectory', () => {
   const structMdFilePath = normalizePath(

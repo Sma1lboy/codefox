@@ -2,22 +2,24 @@ import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
+import { Logger } from '@nestjs/common';
 
-export class UXDatamapHandler implements BuildHandler {
-  readonly id = 'op:UX_DATAMAP::STATE:GENERATE';
+/**
+ * Handler for generating the UX Data Map document.
+ */
+export class UXDatamapHandler implements BuildHandler<string> {
+  readonly id = 'op:UX:DATAMAP:DOC';
 
-  async run(context: BuilderContext, args: unknown): Promise<BuildResult> {
-    console.log('Generating UX Data Map Document...');
-
-    // extract relevant data from the context
+  async run(context: BuilderContext): Promise<BuildResult<string>> {
+    // Extract relevant data from the context
     const projectName =
-      context.getData('projectName') || 'Default Project Name';
+      context.getGlobalContext('projectName') || 'Default Project Name';
+    const sitemapDoc = context.getNodeData('op:UX:SMD');
 
     const prompt = prompts.generateUXDataMapPrompt(
       projectName,
-      args as string,
-      // TODO: change later
-      'web',
+      sitemapDoc,
+      'web', // TODO: change platform dynamically if needed
     );
 
     const uxDatamapContent = await context.model.chatSync(
@@ -26,6 +28,8 @@ export class UXDatamapHandler implements BuildHandler {
       },
       'gpt-4o-mini',
     );
+    Logger.log('UX Data Map Content: ', uxDatamapContent);
+
     return {
       success: true,
       data: uxDatamapContent,
