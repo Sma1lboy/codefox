@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { getConfigPath } from 'src/config/common-path';
+import { getConfigPath, getModelStatusPath } from 'src/config/common-path';
 
 export interface ModelStatus {
   isDownloaded: boolean;
@@ -13,7 +13,7 @@ export class ModelStatusManager {
   private readonly statusPath: string;
 
   private constructor() {
-    this.statusPath = getConfigPath('model-status');
+    this.statusPath = getModelStatusPath();
     this.loadStatus();
   }
 

@@ -1,9 +1,9 @@
 import path from 'path';
 import * as fs from 'fs';
 import { ConfigLoader } from '../../config/config-loader';
-import { ModelDownloader } from '../model-downloader';
+import { ModelDownloader } from '../downloader/downloader';
 import { downloadAllModels } from '../utils';
-import { getConfigDir, getConfigPath } from 'src/config/common-path';
+import { getConfigPath, getConfigPath } from 'src/config/common-path';
 
 const originalIsArray = Array.isArray;
 

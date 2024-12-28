@@ -1,8 +1,8 @@
-// config-loader.ts
 import * as fs from 'fs';
 import * as path from 'path';
 import * as _ from 'lodash';
 import { getConfigPath } from './common-path';
+import { Logger } from '@nestjs/common';
 
 export interface ChatConfig {
   model: string;
@@ -56,29 +56,32 @@ export class ConfigLoader {
   private config: AppConfig;
   private readonly configPath: string;
 
-  private constructor(configPath?: string) {
-    this.configPath = configPath || getConfigPath('config');
+  private constructor() {
+    this.configPath = getConfigPath();
+    this.initConfigFile();
     this.loadConfig();
   }
 
-  public static getInstance(configPath?: string): ConfigLoader {
+  public static getInstance(): ConfigLoader {
     if (!ConfigLoader.instance) {
-      ConfigLoader.instance = new ConfigLoader(configPath);
+      ConfigLoader.instance = new ConfigLoader();
     }
     return ConfigLoader.instance;
   }
 
-  public static initConfigFile(configPath: string): void {
-    if (fs.existsSync(configPath)) {
-      throw new Error('Config file already exists');
+  public initConfigFile(): void {
+    Logger.log('Creating example config file', 'ConfigLoader');
+
+    const config = getConfigPath();
+    if (fs.existsSync(config)) {
+      return;
     }
 
-    const configDir = path.dirname(configPath);
-    if (!fs.existsSync(configDir)) {
-      fs.mkdirSync(configDir, { recursive: true });
+    if (!fs.existsSync(config)) {
+      //make file
+      fs.writeFileSync(config, exampleConfigContent, 'utf-8');
     }
-
-    fs.writeFileSync(configPath, exampleConfigContent, 'utf-8');
+    Logger.log('Creating example config file', 'ConfigLoader');
   }
 
   public reload(): void {
@@ -87,6 +90,10 @@ export class ConfigLoader {
 
   private loadConfig() {
     try {
+      Logger.log(
+        `Loading configuration from ${this.configPath}`,
+        'ConfigLoader',
+      );
       const file = fs.readFileSync(this.configPath, 'utf-8');
       const jsonContent = file.replace(
         /\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g,
@@ -233,5 +240,9 @@ export class ConfigLoader {
         throw new Error("Invalid embedding configuration: 'model' is required");
       }
     }
+  }
+
+  getConfig(): AppConfig {
+    return this.config;
   }
 }
