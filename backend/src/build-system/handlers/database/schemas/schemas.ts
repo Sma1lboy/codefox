@@ -10,6 +10,8 @@ import {
 } from '../../../utils/database-utils';
 import { writeFile } from 'fs-extra';
 import { prompts } from './prompt';
+import { saveGeneratedCode } from 'src/build-system/utils/files';
+import * as path from 'path';
 
 /**
  * DBSchemaHandler is responsible for generating database schemas based on provided requirements.
@@ -68,16 +70,11 @@ export class DBSchemaHandler implements BuildHandler {
 
     let dbAnalysis: string;
     try {
-      // Invoke the language model to analyze database requirements
       const analysisResponse = await context.model.chatSync(
-        {
-          content: analysisPrompt,
-        },
-        'gpt-4o-mini', // Specify the model variant as needed
+        { content: analysisPrompt },
+        'gpt-4o-mini',
       );
-
-      // Parse the <GENERATE> tag to extract DBAnalysis content
-      dbAnalysis = parseGenerateTag(analysisResponse);
+      dbAnalysis = analysisResponse;
     } catch (error) {
       this.logger.error('Error during database requirements analysis:', error);
       return {
@@ -106,15 +103,10 @@ export class DBSchemaHandler implements BuildHandler {
 
     let schemaContent: string;
     try {
-      // Invoke the language model to generate the database schema
       const schemaResponse = await context.model.chatSync(
-        {
-          content: schemaPrompt,
-        },
-        'gpt-4o-mini', // Specify the model variant as needed
+        { content: schemaPrompt },
+        'gpt-4o-mini',
       );
-
-      // Parse the <GENERATE> tag to extract schema content
       schemaContent = parseGenerateTag(schemaResponse);
     } catch (error) {
       this.logger.error('Error during schema generation:', error);
@@ -126,12 +118,48 @@ export class DBSchemaHandler implements BuildHandler {
 
     this.logger.debug('Database schema generated successfully.');
 
+    // Step 3: Validate the generated schema
+    const validationPrompt = prompts.validateDatabaseSchema(
+      schemaContent,
+      databaseType,
+    );
+
+    let validationResponse: string;
+    try {
+      const validationResult = await context.model.chatSync(
+        { content: validationPrompt },
+        'gpt-4o-mini',
+      );
+      validationResponse = parseGenerateTag(validationResult);
+    } catch (error) {
+      this.logger.error('Error during schema validation:', error);
+      return {
+        success: false,
+        error: new Error('Failed to validate the generated database schema.'),
+      };
+    }
+
+    if (validationResponse.includes('Error')) {
+      this.logger.error('Schema validation failed:', validationResponse);
+      return {
+        success: false,
+        error: new Error(`Schema validation failed: ${validationResponse}`),
+      };
+    }
+
+    this.logger.debug('Schema validation passed.');
+
     // Define the schema file name
     const schemaFileName = `schema.${fileExtension}`;
 
     // Write the schemaContent to a file
+    const uuid = context.getGlobalContext('projectUUID');
+
     try {
-      await writeFile(schemaFileName, schemaContent, 'utf-8');
+      saveGeneratedCode(
+        path.join(uuid, 'backend', schemaFileName),
+        schemaContent,
+      );
       this.logger.log(`Schema file (${schemaFileName}) written successfully.`);
     } catch (error) {
       this.logger.error('Error writing schema file:', error);
@@ -143,7 +171,6 @@ export class DBSchemaHandler implements BuildHandler {
 
     this.logger.debug(`Schema file (${schemaFileName}) prepared.`);
 
-    // Return the generated schema content and file information
     return {
       success: true,
       data: schemaContent,
