@@ -1,12 +1,10 @@
 // src/build-system/__tests__/project-init-sequence.spec.ts
 import { BuilderContext } from '../context';
-import { BuildSequenceExecutor } from '../executor';
 import { BuildHandlerManager } from '../hanlder-manager';
 import { ProjectInitHandler } from '../handlers/project-init';
 import { BuildSequence } from '../types';
 describe('Project Init Handler Test', () => {
   let context: BuilderContext;
-  let executor: BuildSequenceExecutor;
   let handlerManager: BuildHandlerManager;
 
   const testSequence: BuildSequence = {
@@ -35,7 +33,6 @@ describe('Project Init Handler Test', () => {
     handlerManager.clear();
 
     context = new BuilderContext(testSequence, 'id');
-    executor = new BuildSequenceExecutor(context);
   });
 
   describe('Handler Registration', () => {

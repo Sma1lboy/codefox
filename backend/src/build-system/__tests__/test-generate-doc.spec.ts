@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 import { BuilderContext } from 'src/build-system/context';
 import { BuildSequence } from '../types';
-import { BuildSequenceExecutor } from '../executor';
 import * as fs from 'fs';
 import * as path from 'path';
 import { writeToFile } from './utils';
@@ -26,8 +25,6 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
             {
               id: 'op:PRD',
               name: 'PRD Generation Node',
-              type: 'ANALYSIS',
-              subType: 'PRD',
             },
           ],
         },
@@ -38,8 +35,6 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
             {
               id: 'op:UX:SMD',
               name: 'UX Sitemap Document Node',
-              type: 'UX',
-              subType: 'SITEMAP',
               requires: ['op:PRD'],
             },
           ],
@@ -51,8 +46,6 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
             {
               id: 'op:UX:SMS',
               name: 'UX Sitemap Structure Node',
-              type: 'UX',
-              subType: 'VIEWS',
               requires: ['op:UX:SMD'],
             },
           ],
@@ -108,7 +101,7 @@ describe('Sequence: PRD -> UXSD -> UXDD -> UXSS', () => {
     context.setGlobalContext('platform', 'web');
 
     try {
-      await BuildSequenceExecutor.executeSequence(sequence, context);
+      await context.execute();
 
       for (const step of sequence.steps) {
         for (const node of step.nodes) {

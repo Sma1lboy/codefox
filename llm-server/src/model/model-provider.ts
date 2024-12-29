@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { GenerateMessageParams } from '../type/GenerateMessage';
+import { GenerateMessageParams } from '../types';
 
 export abstract class ModelProvider {
   abstract initialize(): Promise<void>;

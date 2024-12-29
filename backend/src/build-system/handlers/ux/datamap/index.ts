@@ -2,6 +2,7 @@ import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
+import { Logger } from '@nestjs/common';
 
 /**
  * Handler for generating the UX Data Map document.
@@ -10,8 +11,6 @@ export class UXDatamapHandler implements BuildHandler<string> {
   readonly id = 'op:UX:DATAMAP:DOC';
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
-    console.log('Generating UX Data Map Document...');
-
     // Extract relevant data from the context
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
@@ -29,6 +28,7 @@ export class UXDatamapHandler implements BuildHandler<string> {
       },
       'gpt-4o-mini',
     );
+    Logger.log('UX Data Map Content: ', uxDatamapContent);
 
     return {
       success: true,
