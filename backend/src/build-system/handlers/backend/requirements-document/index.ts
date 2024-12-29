@@ -16,6 +16,10 @@ type BackendRequirementResult = {
   };
 };
 
+/**
+ * BackendRequirementHandler is responsible for generating the backend requirements document
+ * Core Content Generation: API Endpoints, System Overview
+ */
 export class BackendRequirementHandler
   implements BuildHandler<BackendRequirementResult>
 {
@@ -31,13 +35,18 @@ export class BackendRequirementHandler
     const language = context.getGlobalContext('language') || 'javascript';
     const framework = context.getGlobalContext('framework') || 'express';
     const packages = context.getGlobalContext('packages') || {};
+    const projectName =
+      context.getGlobalContext('projectName') || 'Default Project Name';
 
     const dbRequirements = context.getNodeData('op:DATABASE_REQ');
+    const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
+    const sitemapDoc = context.getNodeData('op:UX:SMD');
 
-    // Generate backend overview
     const overviewPrompt = generateBackendOverviewPrompt(
-      context.getGlobalContext('projectName') || 'Default Project Name',
+      projectName,
       dbRequirements,
+      datamapDoc,
+      sitemapDoc,
       language,
       framework,
       packages,
@@ -59,38 +68,39 @@ export class BackendRequirementHandler
       };
     }
 
-    // Generate backend implementation details
-    const implementationPrompt = generateBackendImplementationPrompt(
-      backendOverview,
-      language,
-      framework,
-    );
+    // // Generate backend implementation details
+    // const implementationPrompt = generateBackendImplementationPrompt(
+    //   backendOverview,
+    //   language,
+    //   framework,
+    // );
 
-    let implementationDetails: string;
-    try {
-      implementationDetails = await context.model.chatSync(
-        {
-          content: implementationPrompt,
-        },
-        'gpt-4o-mini',
-      );
-    } catch (error) {
-      this.logger.error(
-        'Error generating backend implementation details:',
-        error,
-      );
-      return {
-        success: false,
-        error: new Error('Failed to generate backend implementation details.'),
-      };
-    }
+    // let implementationDetails: string;
+    // try {
+    //   implementationDetails = await context.model.chatSync(
+    //     {
+    //       content: implementationPrompt,
+    //     },
+    //     'gpt-4o-mini',
+    //   );
+    // } catch (error) {
+    //   this.logger.error(
+    //     'Error generating backend implementation details:',
+    //     error,
+    //   );
+    //   return {
+    //     success: false,
+    //     error: new Error('Failed to generate backend implementation details.'),
+    //   };
+    // }
 
     // Return generated data
     return {
       success: true,
       data: {
         overview: backendOverview,
-        implementation: implementationDetails,
+        // TODO: consider remove implementation
+        implementation: '',
         config: {
           language,
           framework,
