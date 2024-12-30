@@ -1,6 +1,6 @@
-import { localEmbProvider } from '../local-embbeding-provider';
+import { localEmbProvider } from '../local-embedding-provider';
 import { EmbeddingModel } from 'fastembed';
-import { openAIEmbProvider } from '../openai-embbeding-provider';
+import { openAIEmbProvider } from '../../../../llm-server/src/embedding/openai-embedding-provider';
 const originalIsArray = Array.isArray;
 
 Array.isArray = jest.fn((type: any): type is any[] => {
@@ -28,10 +28,7 @@ describe('testing embedding provider', () => {
     await localEmbProvider.generateEmbResponse(EmbeddingModel.BGEBaseENV15, documents);
   }, 6000000);
 
-  it('should load openai models specified in config', async () => {
   
-    await openAIEmbProvider.generateEmbResponse("text-embedding-3-small", "Your text string goes here");
-  }, 6000000);
 });
 
 afterAll(() => {

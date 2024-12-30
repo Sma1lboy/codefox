@@ -2,26 +2,58 @@ import { Logger } from '@nestjs/common';
 import { ChatMessageInput, LLMProvider } from './llm-provider';
 import express, { Express, Request, Response } from 'express';
 import { GenerateMessageParams } from './types';
+import { EmbeddingModelProvider } from './emb-provider';
 
 export class App {
   private readonly logger = new Logger(App.name);
   private app: Express;
   private readonly PORT: number;
   private llmProvider: LLMProvider;
+  private embProvider: EmbeddingModelProvider;
 
-  constructor(llmProvider: LLMProvider) {
+  constructor(llmProvider: LLMProvider, embProvider: EmbeddingModelProvider) {
     this.app = express();
     this.app.use(express.json());
     this.PORT = parseInt(process.env.PORT || '3001', 10);
     this.llmProvider = llmProvider;
+    this.embProvider = embProvider;
     this.logger.log(`App initialized with PORT: ${this.PORT}`);
   }
 
   setupRoutes(): void {
     this.logger.log('Setting up routes...');
     this.app.post('/chat/completion', this.handleChatRequest.bind(this));
+    this.app.post('/embedding', this.handleEmbRequest.bind(this));
     this.app.get('/tags', this.handleModelTagsRequest.bind(this));
     this.logger.log('Routes set up successfully.');
+  }
+
+  private async handleEmbRequest(req: Request, res: Response): Promise<void> {
+    this.logger.log('Received embedding request.');
+    try {
+      this.logger.debug(JSON.stringify(req.body));
+      const { content, model } = req.body as ChatMessageInput & {
+        model: string;
+      };
+      if (!content || !model) {
+        res.status(400).json({ error: 'Content and model are required' });
+      }
+      
+      this.logger.log(`Received chat request for model: ${model}`);
+      const params: GenerateMessageParams = {
+        model: model || 'text-embedding-ada-002',
+        message: content
+      };
+
+      this.logger.debug(`Request content: "${content}"`);
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Cache-Control', 'no-cache');
+      this.logger.debug('Response headers set for streaming.');
+      await this.embProvider.generateEmbeddingResponse(params, res);
+    } catch (error) {
+      this.logger.error('Error in chat endpoint:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 
   private async handleChatRequest(req: Request, res: Response): Promise<void> {
@@ -83,7 +115,10 @@ async function main() {
   try {
     const llmProvider = new LLMProvider('openai');
     await llmProvider.initialize();
-    const app = new App(llmProvider);
+    
+    const embProvider = new EmbeddingModelProvider('openai');
+    await embProvider.initialize();
+    const app = new App(llmProvider, embProvider);
     await app.start();
   } catch (error) {
     logger.error('Failed to start the application:', error);

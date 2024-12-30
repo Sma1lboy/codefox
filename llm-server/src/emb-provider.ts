@@ -1,6 +1,6 @@
 import { Response } from 'express';
-import { OpenAIModelProvider } from './model/openai-model-provider';
-import { LlamaModelProvider } from './model/llama-model-provider';
+import { openAIEmbProvider } from './embedding/openai-embedding-provider';
+import { LlamaModelProvider } from './model/llama-model-provider';  // 如果支持Llama模型
 import { Logger } from '@nestjs/common';
 import {
   ModelProviderType,
@@ -9,19 +9,20 @@ import {
   GenerateMessageParams,
 } from './types';
 import { ModelProvider } from './model/model-provider';
+import { EmbeddingProvider } from './embedding/emb-provider';
 
-export interface ChatMessageInput {
+export interface EmbeddingInput {
   content: string;
 }
 
-export interface ChatMessage {
-  role: string;
-  content: string;
+export interface Embedding {
+  model: string;
+  embedding: number[];
 }
 
-export class LLMProvider {
-  private readonly logger = new Logger(LLMProvider.name);
-  private modelProvider: ModelProvider;
+export class EmbeddingModelProvider {
+  private readonly logger = new Logger(EmbeddingModelProvider.name);
+  private modelProvider: EmbeddingProvider;
   private readonly options: ModelProviderOptions;
   private initialized: boolean = false;
 
@@ -39,42 +40,42 @@ export class LLMProvider {
     this.modelProvider = this.createModelProvider(modelProviderType);
   }
 
-  private createModelProvider(type: ModelProviderType): ModelProvider {
+  private createModelProvider(type: ModelProviderType): EmbeddingProvider {
     switch (type) {
       case 'openai':
-        return new OpenAIModelProvider(this.options);
-      case 'llama':
-        // TODO: need to support concurrent requests
-        return new LlamaModelProvider();
+        return new openAIEmbProvider({apiKey: process.env.OPEN_API_KEY});
+      // case 'llama':
+      //  
+      //   // return new LlamaModelProvider();
       default:
-        throw new Error(`Unsupported model provider type: ${type}`);
+        throw new Error(`Unsupported embedding model provider type: ${type}`);
     }
   }
 
   async initialize(): Promise<void> {
     try {
-      this.logger.log('Initializing LLM provider...');
+      this.logger.log('Initializing embedding provider...');
       await this.modelProvider.initialize();
       this.initialized = true;
-      this.logger.log('LLM provider fully initialized and ready.');
+      this.logger.log('Embedding provider fully initialized and ready.');
     } catch (error) {
       const modelError = this.normalizeError(error);
-      this.logger.error('Failed to initialize LLM provider:', modelError);
+      this.logger.error('Failed to initialize embedding provider:', modelError);
       throw modelError;
     }
   }
 
-  async generateStreamingResponse(
-    params: GenerateMessageParams,
+  async generateEmbeddingResponse(
+    params: GenerateMessageParams, 
     res: Response,
   ): Promise<void> {
     this.ensureInitialized();
 
     try {
-      await this.modelProvider.generateStreamingResponse(params, res);
+      await this.modelProvider.generateEmbResponse(params, res);
     } catch (error) {
       const modelError = this.normalizeError(error);
-      this.logger.error('Error in streaming response:', modelError);
+      this.logger.error('Error in generating embedding response:', modelError);
 
       if (!res.writableEnded) {
         this.sendErrorResponse(res, modelError);
@@ -82,14 +83,14 @@ export class LLMProvider {
     }
   }
 
-  async getModelTags(res: Response): Promise<void> {
+  async getEmbeddingModels(res: Response): Promise<void> {
     this.ensureInitialized();
 
     try {
-      await this.modelProvider.getModelTagsResponse(res);
+      await this.modelProvider.getEmbList(res);
     } catch (error) {
       const modelError = this.normalizeError(error);
-      this.logger.error('Error getting model tags:', modelError);
+      this.logger.error('Error getting embedding models:', modelError);
 
       if (!res.writableEnded) {
         this.sendErrorResponse(res, modelError);
@@ -99,7 +100,7 @@ export class LLMProvider {
 
   private ensureInitialized(): void {
     if (!this.initialized) {
-      throw new Error('LLM provider not initialized. Call initialize() first.');
+      throw new Error('Embedding provider not initialized. Call initialize() first.');
     }
   }
 
