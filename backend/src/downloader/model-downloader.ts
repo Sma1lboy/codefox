@@ -13,7 +13,7 @@ export class UniversalDownloader {
 
   public static getInstance(): UniversalDownloader {
     if (!UniversalDownloader.instance) {
-        UniversalDownloader.instance = new UniversalDownloader();
+      UniversalDownloader.instance = new UniversalDownloader();
     }
     return UniversalDownloader.instance;
   }
@@ -47,11 +47,13 @@ export class UniversalDownloader {
       const pipelineInstance = await pipeline(task as PipelineType, model, {
         local_files_only: true,
         revision: 'local',
-        cache_dir: getModelsDir()
+        cache_dir: getModelsDir(),
       });
       return pipelineInstance;
     } catch (error) {
-      this.logger.error(`Failed to load local model: ${model} with error: ${error.message || error}`);
+      this.logger.error(
+        `Failed to load local model: ${model} with error: ${error.message || error}`,
+      );
       return null;
     }
   }

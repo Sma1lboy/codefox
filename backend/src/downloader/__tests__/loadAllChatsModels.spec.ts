@@ -1,6 +1,10 @@
 import path from 'path';
 import * as fs from 'fs';
-import { ConfigLoader, ModelConfig, EmbeddingConfig  } from '../../config/config-loader';
+import {
+  ConfigLoader,
+  ModelConfig,
+  EmbeddingConfig,
+} from '../../config/config-loader';
 import { UniversalDownloader } from '../model-downloader';
 import { ConfigType, downloadAll, TaskType } from '../universal-utils';
 
@@ -41,7 +45,7 @@ describe('loadAllChatsModels with real model loading', () => {
     modelConfigLoader = ConfigLoader.getInstance(ConfigType.CHATS);
     embConfigLoader = ConfigLoader.getInstance(ConfigType.EMBEDDINGS);
     const modelConfig: ModelConfig = {
-      model: "Xenova/flan-t5-small",
+      model: 'Xenova/flan-t5-small',
       endpoint: 'http://localhost:11434/v1',
       token: 'your-token-here',
       task: 'text2text-generation',
@@ -54,9 +58,9 @@ describe('loadAllChatsModels with real model loading', () => {
       token: 'your-token-here',
     };
     embConfigLoader.addConfig(embConfig);
-    console.log("preload starts");
+    console.log('preload starts');
     await downloadAll();
-    console.log("preload successfully");
+    console.log('preload successfully');
   }, 60000000);
 
   it('should load real models specified in config', async () => {

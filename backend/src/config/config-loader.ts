@@ -5,7 +5,6 @@ import { getConfigPath } from './common-path';
 import { ConfigType } from 'src/downloader/universal-utils';
 import { Logger } from '@nestjs/common';
 
-
 export interface ModelConfig {
   model: string;
   endpoint?: string;
@@ -54,14 +53,13 @@ export const exampleConfigContent = `{
   }]
 }`;
 
-
 export class ConfigLoader {
   readonly logger = new Logger(ConfigLoader.name);
   private type: string;
   private static instances: Map<ConfigType, ConfigLoader> = new Map();
   private static config: AppConfig;
   private readonly configPath: string;
-    
+
   private constructor(type: ConfigType) {
     this.type = type;
     this.configPath = getConfigPath();
@@ -119,7 +117,7 @@ export class ConfigLoader {
         throw error;
       }
     }
-    
+
     this.logger.log(ConfigLoader.config);
   }
 
@@ -188,7 +186,7 @@ export class ConfigLoader {
   }
 
   getAllConfigs(): EmbeddingConfig[] | ModelConfig[] | null {
-    let res = ConfigLoader.config[this.type];
+    const res = ConfigLoader.config[this.type];
     return Array.isArray(res) ? res : null;
   }
 
@@ -214,7 +212,9 @@ export class ConfigLoader {
         }
       });
 
-      const defaultChats = ConfigLoader.config.models.filter((chat) => chat.default);
+      const defaultChats = ConfigLoader.config.models.filter(
+        (chat) => chat.default,
+      );
       if (defaultChats.length > 1) {
         throw new Error(
           'Invalid configuration: Multiple default chat configurations found',
@@ -223,7 +223,7 @@ export class ConfigLoader {
     }
 
     if (ConfigLoader.config[ConfigType.EMBEDDINGS]) {
-      this.logger.log(ConfigLoader.config[ConfigType.EMBEDDINGS])
+      this.logger.log(ConfigLoader.config[ConfigType.EMBEDDINGS]);
       if (!Array.isArray(ConfigLoader.config[ConfigType.EMBEDDINGS])) {
         throw new Error("Invalid configuration: 'embeddings' must be an array");
       }
@@ -236,7 +236,9 @@ export class ConfigLoader {
         }
       });
 
-      const defaultChats = ConfigLoader.config[ConfigType.EMBEDDINGS].filter((chat) => chat.default);
+      const defaultChats = ConfigLoader.config[ConfigType.EMBEDDINGS].filter(
+        (chat) => chat.default,
+      );
       if (defaultChats.length > 1) {
         throw new Error(
           'Invalid configuration: Multiple default emb configurations found',
