@@ -1,9 +1,12 @@
 import path from 'path';
 import * as fs from 'fs';
-import { ConfigLoader } from '../../config/config-loader';
-import { ModelDownloader } from '../model-downloader';
-import { downloadAllModels } from '../utils';
-import { getConfigDir, getConfigPath } from 'src/config/common-path';
+import {
+  ConfigLoader,
+  ModelConfig,
+  EmbeddingConfig,
+} from '../../config/config-loader';
+import { UniversalDownloader } from '../model-downloader';
+import { ConfigType, downloadAll, TaskType } from '../universal-utils';
 
 const originalIsArray = Array.isArray;
 
@@ -36,27 +39,35 @@ Array.isArray = jest.fn((type: any): type is any[] => {
 // });
 
 describe('loadAllChatsModels with real model loading', () => {
-  let configLoader: ConfigLoader;
+  let modelConfigLoader: ConfigLoader;
+  let embConfigLoader: ConfigLoader;
   beforeAll(async () => {
-    const testConfig = [
-      {
-        model: 'Felladrin/onnx-flan-alpaca-base',
-        task: 'text2text-generation',
-      },
-    ];
-    const configPath = getConfigPath('config');
-    fs.writeFileSync(configPath, JSON.stringify(testConfig, null, 2), 'utf8');
+    modelConfigLoader = ConfigLoader.getInstance(ConfigType.CHATS);
+    embConfigLoader = ConfigLoader.getInstance(ConfigType.EMBEDDINGS);
+    const modelConfig: ModelConfig = {
+      model: 'Xenova/flan-t5-small',
+      endpoint: 'http://localhost:11434/v1',
+      token: 'your-token-here',
+      task: 'text2text-generation',
+    };
+    modelConfigLoader.addConfig(modelConfig);
 
-    configLoader = new ConfigLoader();
-    await downloadAllModels();
-  }, 600000);
+    const embConfig: EmbeddingConfig = {
+      model: 'fast-bge-base-en-v1.5',
+      endpoint: 'http://localhost:11434/v1',
+      token: 'your-token-here',
+    };
+    embConfigLoader.addConfig(embConfig);
+    console.log('preload starts');
+    await downloadAll();
+    console.log('preload successfully');
+  }, 60000000);
 
   it('should load real models specified in config', async () => {
-    const downloader = ModelDownloader.getInstance();
-
+    const downloader = UniversalDownloader.getInstance();
     const chat1Model = await downloader.getLocalModel(
-      'text2text-generation',
-      'Felladrin/onnx-flan-alpaca-base',
+      TaskType.CHAT,
+      'Xenova/flan-t5-small',
     );
     expect(chat1Model).toBeDefined();
     console.log('Loaded Model:', chat1Model);
@@ -82,7 +93,7 @@ describe('loadAllChatsModels with real model loading', () => {
     } catch (error) {
       console.error('Error during model inference:', error);
     }
-  }, 600000);
+  }, 6000000);
 });
 
 afterAll(() => {
