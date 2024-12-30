@@ -2,6 +2,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as _ from 'lodash';
 import { getConfigPath } from './common-path';
+import { ConfigType } from 'src/downloader/universal-utils';
+import { Logger } from '@nestjs/common';
+
 
 export interface ModelConfig {
   model: string;
@@ -58,15 +61,17 @@ export class ConfigLoader {
   private static instances: Map<ConfigType, ConfigLoader> = new Map();
   private static config: AppConfig;
   private readonly configPath: string;
-
-  private constructor(configPath?: string) {
-    this.configPath = configPath || getConfigPath('config');
+    
+  private constructor(type: ConfigType) {
+    this.type = type;
+    this.configPath = getConfigPath();
+    this.initConfigFile();
     this.loadConfig();
   }
 
-  public static getInstance(configPath?: string): ConfigLoader {
-    if (!ConfigLoader.instance) {
-      ConfigLoader.instance = new ConfigLoader(configPath);
+  public static getInstance(type: ConfigType): ConfigLoader {
+    if (!ConfigLoader.instances.has(type)) {
+      ConfigLoader.instances.set(type, new ConfigLoader(type));
     }
     return ConfigLoader.instances.get(type)!;
   }
@@ -241,6 +246,6 @@ export class ConfigLoader {
   }
 
   getConfig(): AppConfig {
-    return this.config;
+    return ConfigLoader.config;
   }
 }

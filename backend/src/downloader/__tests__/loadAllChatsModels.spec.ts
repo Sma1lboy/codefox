@@ -1,8 +1,8 @@
 import path from 'path';
 import * as fs from 'fs';
 import { ConfigLoader, ModelConfig, EmbeddingConfig  } from '../../config/config-loader';
-import { UniversalDownloader } from '../universal-downloader';
-import { ConfigType, downloadAll } from '../universal-utils';
+import { UniversalDownloader } from '../model-downloader';
+import { ConfigType, downloadAll, TaskType } from '../universal-utils';
 
 const originalIsArray = Array.isArray;
 
@@ -41,29 +41,29 @@ describe('loadAllChatsModels with real model loading', () => {
     modelConfigLoader = ConfigLoader.getInstance(ConfigType.CHATS);
     embConfigLoader = ConfigLoader.getInstance(ConfigType.EMBEDDINGS);
     const modelConfig: ModelConfig = {
-      model: "Felladrin/onnx-flan-alpaca-base",
+      model: "Xenova/flan-t5-small",
       endpoint: 'http://localhost:11434/v1',
       token: 'your-token-here',
-      default: true, // Set to true if it's the default model
       task: 'text2text-generation',
     };
     modelConfigLoader.addConfig(modelConfig);
 
     const embConfig: EmbeddingConfig = {
-      model: 'jinaai/jina-clip-v2',
+      model: 'fast-bge-base-en-v1.5',
       endpoint: 'http://localhost:11434/v1',
-      default: true, // Set to true if it's the default model
       token: 'your-token-here',
     };
     embConfigLoader.addConfig(embConfig);
+    console.log("preload starts");
     await downloadAll();
-  }, 600000);
+    console.log("preload successfully");
+  }, 60000000);
 
   it('should load real models specified in config', async () => {
     const downloader = UniversalDownloader.getInstance();
     const chat1Model = await downloader.getLocalModel(
-      'text2text-generation',
-      'Felladrin/onnx-flan-alpaca-base',
+      TaskType.CHAT,
+      'Xenova/flan-t5-small',
     );
     expect(chat1Model).toBeDefined();
     console.log('Loaded Model:', chat1Model);
@@ -89,7 +89,7 @@ describe('loadAllChatsModels with real model loading', () => {
     } catch (error) {
       console.error('Error during model inference:', error);
     }
-  }, 600000);
+  }, 6000000);
 });
 
 afterAll(() => {

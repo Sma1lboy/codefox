@@ -8,7 +8,7 @@ export interface UniversalStatus {
 }
 
 export class UniversalStatusManager {
-  private static instances: Map<string, UniversalStatusManager> = new Map();
+  private static instance: UniversalStatusManager;
   private status: Record<string, UniversalStatus>;
   private readonly statusPath: string;
 
@@ -17,11 +17,11 @@ export class UniversalStatusManager {
     this.loadStatus();
   }
 
-  public static getInstance(type: string): UniversalStatusManager {
-    if (!UniversalStatusManager.instances.has(type)) {
-      UniversalStatusManager.instances.set(type, new UniversalStatusManager());
+  public static getInstance(): UniversalStatusManager {
+    if (!UniversalStatusManager.instance) {
+      UniversalStatusManager.instance = new UniversalStatusManager();
     }
-    return UniversalStatusManager.instances.get(type)!;
+    return UniversalStatusManager.instance;
   }
 
   private loadStatus() {

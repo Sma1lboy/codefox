@@ -1,10 +1,11 @@
 // model-utils.ts
-import { UniversalDownloader } from './universal-downloader';
+import { UniversalDownloader } from './model-downloader';
 import { Logger } from '@nestjs/common';
 import { UniversalStatusManager } from './universal-status';
 import {ModelConfig} from '../config/config-loader';
 import { ConfigLoader } from 'src/config/config-loader';
 import { getEmbDir, getModelsDir } from 'src/config/common-path';
+import { EmbeddingDownloader } from './embedding-downloader';
 
 const logger = new Logger('model-utils');
 
@@ -18,40 +19,59 @@ export enum TaskType{
 }
 
 export async function downloadAll(){
-  checkAndDownloadAllModels(ConfigType.CHATS);
-  checkAndDownloadAllModels(ConfigType.EMBEDDINGS);
+  await checkAndDownloadAllModels(ConfigType.CHATS);
+  
+  console.log("embedding load starts");
+  await checkAndDownloadAllModels(ConfigType.EMBEDDINGS);
+  console.log("embedding load ends");
 }
-async function downloadModelForType(type: ConfigType, modelName: string, task: string, storePath: string) {
-  const statusManager = UniversalStatusManager.getInstance(type);
-  const downloader = UniversalDownloader.getInstance();
-  const status = statusManager.getStatus(modelName);
-
-  if (status?.isDownloaded) {
+async function downloadModelForType(type: ConfigType, modelName: string, task: string) {
+  const statusManager = UniversalStatusManager.getInstance();
+  const storePath = type === ConfigType.EMBEDDINGS ? getEmbDir() : getModelsDir();
+  
+  if (type === ConfigType.EMBEDDINGS) {
+    const embeddingDownloader = EmbeddingDownloader.getInstance();
     try {
-      await downloader.getLocalModel(task, modelName);
-      logger.log(`Model ${modelName} is already downloaded and verified, skipping...`);
-      return;
+      logger.log(`Downloading embedding model: ${modelName}`);
+      await embeddingDownloader.getPipeline(modelName);
+      statusManager.updateStatus(modelName, true);
+      logger.log(`Successfully downloaded embedding model: ${modelName}`);
+      
+      console.log("embedding load finished");
     } catch (error) {
-      logger.warn(`Model ${modelName} was marked as downloaded but not found locally, re-downloading...`);
+      logger.error(`Failed to download embedding model ${modelName}:`, error.message);
+      statusManager.updateStatus(modelName, false);
+      throw error;
     }
-  }
+  } else {
+    const downloader = UniversalDownloader.getInstance();
+    const status = statusManager.getStatus(modelName);
 
-  try {
-    logger.log(`Downloading model: ${modelName} for task: ${task}`);
-    await downloader.getPipeline(task, modelName, storePath);
-    statusManager.updateStatus(modelName, true);
-    logger.log(`Successfully downloaded model: ${modelName}`);
-  } catch (error) {
-    logger.error(`Failed to download model ${modelName}:`, error.message);
-    statusManager.updateStatus(modelName, false);
-    throw error;
+    if (status?.isDownloaded) {
+      try {
+        await downloader.getLocalModel(task, modelName);
+        logger.log(`Model ${modelName} is already downloaded and verified, skipping...`);
+        return;
+      } catch (error) {
+        logger.warn(`Model ${modelName} was marked as downloaded but not found locally, re-downloading...`);
+      }
+    }
+
+    try {
+      logger.log(`Downloading chat model: ${modelName} for task: ${task} in path: ${storePath}`);
+      await downloader.getPipeline(task, modelName, storePath);
+      statusManager.updateStatus(modelName, true);
+      logger.log(`Successfully downloaded chat model: ${modelName}`);
+    } catch (error) {
+      logger.error(`Failed to download model ${modelName}:`, error.message);
+      statusManager.updateStatus(modelName, false);
+      throw error;
+    }
   }
 }
 
 export async function checkAndDownloadAllModels(type: ConfigType): Promise<void> {
   const configLoader = ConfigLoader.getInstance(type);
-
-  const storePath = type === ConfigType.EMBEDDINGS ? getEmbDir() : getModelsDir();
   const modelsConfig = configLoader.getAllConfigs();
 
   logger.log('Checking and downloading configured models...');
@@ -64,8 +84,7 @@ export async function checkAndDownloadAllModels(type: ConfigType): Promise<void>
   const downloadTasks = modelsConfig.map(async (config) => {
     const { model, task } = config;
     const taskType = task || (type === ConfigType.EMBEDDINGS ? TaskType.EMBEDDING : TaskType.CHAT);
-
-    await downloadModelForType(type, model, taskType, storePath);
+    await downloadModelForType(type, model, taskType);
   });
 
   try {

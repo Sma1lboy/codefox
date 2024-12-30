@@ -1,10 +1,11 @@
 import * as path from 'path';
 import { existsSync, mkdirSync, promises, writeFileSync } from 'fs-extra';
+import { ConfigType } from '@nestjs/config';
 
 // Constants for base directories
 const APP_NAME = 'codefox';
 // TODO: hack way to get the root directory of the workspace
-const WORKSPACE_ROOT = path.resolve(__dirname, '../../../../');
+const WORKSPACE_ROOT = path.resolve(__dirname, '../../../');
 const ROOT_DIR = path.join(WORKSPACE_ROOT, `.${APP_NAME}`);
 
 export const TEMPLATE_PATH = path.join(WORKSPACE_ROOT, 'backend/template');
@@ -34,7 +35,7 @@ export const getConfigPath = (): string => {
 
 export const getModelStatusPath = (): string => {
   const rootPath = ensureDir(getRootDir());
-  const modelStatusPath = path.join(rootPath, 'model-status.json');
+  const modelStatusPath = path.join(rootPath, `model-status.json`);
   writeFileSync(modelStatusPath, '{}');
   return modelStatusPath;
 };
