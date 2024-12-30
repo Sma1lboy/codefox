@@ -1,13 +1,13 @@
-// backend-overview-prompt.ts
 export const generateBackendOverviewPrompt = (
   projectName: string,
   dbRequirements: string,
+  datamapDoc: string,
+  sitemapDoc: string,
   language: string,
   framework: string,
   packages: Record<string, string>,
 ): string => {
   return `You are a Senior Backend Architect specializing in backend systems. Generate the System Overview and API Endpoints specifications based on the following inputs.
-.
 
 ### Inputs
 Project Name: ${projectName}
@@ -20,17 +20,31 @@ ${Object.entries(packages)
   .map(([pkg, version]) => `  - ${pkg}@${version}`)
   .join('\n')}
 
-### Database Requirements
+### Requirements Documentation
+1. Database Requirements:
 ${dbRequirements}
+
+2. Frontend Data Requirements:
+${datamapDoc}
+
+3. Site Structure:
+${sitemapDoc}
 
 Generate a Backend Overview Document following these guidelines:
 
 ### Instructions and Rules:
-1. Design a clear system architecture based on the technology stack
-2. Define all necessary API endpoints based on database requirements
+1. Design a clear system architecture based on the technology stack and requirements
+2. Define API endpoints based on:
+   - Database entity relationships
+   - Frontend data requirements from the DataMap
+   - Site structure and navigation flows from the SiteMap
 3. Follow RESTful or GraphQL conventions as appropriate
-4. Consider the relationships between different entities
-5. Focus on clean and maintainable API design
+4. Consider:
+   - Data flow between frontend pages
+   - Required data transformations
+   - Real-time update requirements
+   - Caching strategies
+   - Authentication and authorization needs
 
 Your reply must start with: "\`\`\`BackendOverview" and end with "\`\`\`".
 
@@ -48,13 +62,24 @@ Include these sections:
   - Dependency management
   - Configuration management
   - Service organization
+- **Data Flow Architecture**
+  - Frontend-Backend data interactions
+  - Caching strategy
+  - Real-time updates handling
+  - Data transformation layers
 
 #### 2. API Endpoints
+Group endpoints by functional areas based on site structure.
 For each endpoint:
 \`\`\`
 Route: /api/resource
-Method: GET|POST|PUT/DELETE
+Method: GET|POST|PUT|DELETE
 Purpose: Functional description
+Frontend Usage: Which pages/components use this endpoint
+Data Requirements:
+  - Required data transformations
+  - Caching requirements
+  - Real-time update needs
 Request:
   Headers: {
     "Authorization": "Bearer {token}"
@@ -77,6 +102,8 @@ Response:
     // Error response schemas
   }
 Required Auth: Yes/No
+Rate Limiting: Specifications if needed
+Cache Strategy: Caching rules if applicable
 \`\`\``;
 };
 

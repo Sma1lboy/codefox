@@ -10,6 +10,8 @@ import { BackendCodeHandler } from './handlers/backend/code-generate';
 import { DBSchemaHandler } from './handlers/database/schemas/schemas';
 import { DatabaseRequirementHandler } from './handlers/database/requirements-document';
 import { FileGeneratorHandler } from './handlers/file-manager/file-generate';
+import { BackendRequirementHandler } from './handlers/backend/requirements-document';
+import { BackendFileReviewHandler } from './handlers/backend/file-review/file-review';
 
 /**
  * Manages the registration and retrieval of build handlers in the system
@@ -41,6 +43,8 @@ export class BuildHandlerManager {
       new DBSchemaHandler(),
       new DatabaseRequirementHandler(),
       new FileGeneratorHandler(),
+      new BackendRequirementHandler(),
+      new BackendFileReviewHandler(),
     ];
 
     for (const handler of builtInHandlers) {
