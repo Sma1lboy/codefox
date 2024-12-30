@@ -17,15 +17,18 @@ Array.isArray = jest.fn((type: any): type is any[] => {
 
 describe('testing embedding provider', () => {
   it('should load real models specified in config', async () => {
-    let documents = [
-      "passage: Hello, World!",
-      "query: Hello, World!",
-      "passage: This is an example passage.",
+    const documents = [
+      'passage: Hello, World!',
+      'query: Hello, World!',
+      'passage: This is an example passage.',
       // You can leave out the prefix but it's recommended
-      "fastembed-js is licensed under MIT" 
-  ];
-  
-    await localEmbProvider.generateEmbResponse(EmbeddingModel.BGEBaseENV15, documents);
+      'fastembed-js is licensed under MIT',
+    ];
+
+    await localEmbProvider.generateEmbResponse(
+      EmbeddingModel.BGEBaseENV15,
+      documents,
+    );
   }, 6000000);
 
   

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { getModelStatusPath } from 'src/config/common-path';
-  
+
 export interface UniversalStatus {
   isDownloaded: boolean;
   lastChecked: Date;
