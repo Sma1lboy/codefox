@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { getConfigPath } from 'src/config/common-path';
+import { getModelStatusPath } from 'src/config/common-path';
   
 export interface UniversalStatus {
   isDownloaded: boolean;
@@ -12,15 +12,14 @@ export class UniversalStatusManager {
   private status: Record<string, UniversalStatus>;
   private readonly statusPath: string;
 
-  private constructor(path: string) {
-    this.statusPath = path;
+  private constructor() {
+    this.statusPath = getModelStatusPath();
     this.loadStatus();
   }
 
   public static getInstance(type: string): UniversalStatusManager {
     if (!UniversalStatusManager.instances.has(type)) {
-      const statusFilePath = getConfigPath(`${type}-status`);
-      UniversalStatusManager.instances.set(type, new UniversalStatusManager(statusFilePath));
+      UniversalStatusManager.instances.set(type, new UniversalStatusManager());
     }
     return UniversalStatusManager.instances.get(type)!;
   }

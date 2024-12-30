@@ -1,11 +1,7 @@
-// config-loader.ts
 import * as fs from 'fs';
 import * as path from 'path';
 import * as _ from 'lodash';
 import { getConfigPath } from './common-path';
-import { ConfigType } from 'src/downloader/universal-utils';
-import { Logger } from '@nestjs/common';
-
 
 export interface ModelConfig {
   model: string;
@@ -63,30 +59,31 @@ export class ConfigLoader {
   private static config: AppConfig;
   private readonly configPath: string;
 
-  private constructor(type: ConfigType, configPath?: string) {
-    this.type = type;
+  private constructor(configPath?: string) {
     this.configPath = configPath || getConfigPath('config');
     this.loadConfig();
   }
 
-  public static getInstance(type: ConfigType, configPath?: string): ConfigLoader {
-    if (!ConfigLoader.instances.has(type)) {
-      ConfigLoader.instances.set(type, new ConfigLoader(type, configPath));
+  public static getInstance(configPath?: string): ConfigLoader {
+    if (!ConfigLoader.instance) {
+      ConfigLoader.instance = new ConfigLoader(configPath);
     }
     return ConfigLoader.instances.get(type)!;
   }
 
-  public static initConfigFile(configPath: string): void {
-    if (fs.existsSync(configPath)) {
-      throw new Error('Config file already exists');
+  public initConfigFile(): void {
+    Logger.log('Creating example config file', 'ConfigLoader');
+
+    const config = getConfigPath();
+    if (fs.existsSync(config)) {
+      return;
     }
 
-    const configDir = path.dirname(configPath);
-    if (!fs.existsSync(configDir)) {
-      fs.mkdirSync(configDir, { recursive: true });
+    if (!fs.existsSync(config)) {
+      //make file
+      fs.writeFileSync(config, exampleConfigContent, 'utf-8');
     }
-
-    fs.writeFileSync(configPath, exampleConfigContent, 'utf-8');
+    Logger.log('Creating example config file', 'ConfigLoader');
   }
 
   public reload(): void {
@@ -95,6 +92,10 @@ export class ConfigLoader {
 
   private loadConfig() {
     try {
+      Logger.log(
+        `Loading configuration from ${this.configPath}`,
+        'ConfigLoader',
+      );
       const file = fs.readFileSync(this.configPath, 'utf-8');
       const jsonContent = file.replace(
         /\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g,
@@ -186,17 +187,6 @@ export class ConfigLoader {
     return Array.isArray(res) ? res : null;
   }
 
-  getConfig(name: string): EmbeddingConfig | ModelConfig | null{
-    const res = ConfigLoader.config[this.type];
-  
-  if (!Array.isArray(res)) {
-    return null;
-  }
-
-  const config = res.find((item: EmbeddingConfig | ModelConfig) => item.model === name);
-  return config || null;
-  }
-
   validateConfig() {
     if (!ConfigLoader.config) {
       ConfigLoader.config = {};
@@ -248,5 +238,9 @@ export class ConfigLoader {
         );
       }
     }
+  }
+
+  getConfig(): AppConfig {
+    return this.config;
   }
 }

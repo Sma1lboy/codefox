@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import { ConfigLoader, ModelConfig, EmbeddingConfig  } from '../../config/config-loader';
 import { UniversalDownloader } from '../universal-downloader';
 import { ConfigType, downloadAll } from '../universal-utils';
-import { getConfigDir, getConfigPath } from 'src/config/common-path';
 
 const originalIsArray = Array.isArray;
 
@@ -39,7 +38,6 @@ describe('loadAllChatsModels with real model loading', () => {
   let modelConfigLoader: ConfigLoader;
   let embConfigLoader: ConfigLoader;
   beforeAll(async () => {
-    ConfigLoader.initConfigFile(getConfigPath("config"));
     modelConfigLoader = ConfigLoader.getInstance(ConfigType.CHATS);
     embConfigLoader = ConfigLoader.getInstance(ConfigType.EMBEDDINGS);
     const modelConfig: ModelConfig = {
@@ -58,8 +56,7 @@ describe('loadAllChatsModels with real model loading', () => {
       token: 'your-token-here',
     };
     embConfigLoader.addConfig(embConfig);
-    await downloadAll(ConfigType.CHATS);
-    await downloadAll(ConfigType.EMBEDDINGS);
+    await downloadAll();
   }, 600000);
 
   it('should load real models specified in config', async () => {
