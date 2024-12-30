@@ -5,7 +5,7 @@ import { cwd } from 'process';
 // Constants for base directories
 const APP_NAME = 'codefox';
 // TODO: hack way to get the root directory of the workspace
-const WORKSPACE_ROOT = path.resolve(cwd());
+const WORKSPACE_ROOT = path.resolve(path.join(__dirname, '..', '..', '..'));
 const ROOT_DIR = path.join(WORKSPACE_ROOT, `.${APP_NAME}`);
 
 export const TEMPLATE_PATH = path.join(WORKSPACE_ROOT, 'backend/template');

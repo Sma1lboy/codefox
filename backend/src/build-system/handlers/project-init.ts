@@ -1,6 +1,7 @@
 import { BuilderContext } from '../context';
 import { BuildHandler, BuildResult } from '../types';
 import { Logger } from '@nestjs/common';
+import * as path from 'path';
 import { buildProjectPath, copyProjectTemplate } from '../utils/files';
 export class ProjectInitHandler implements BuildHandler {
   readonly id = 'op:PROJECT::STATE:SETUP';
@@ -13,8 +14,16 @@ export class ProjectInitHandler implements BuildHandler {
     const uuid = context.getGlobalContext('projectUUID');
     // FIXME: default convention of frontend and backend folders
 
-    copyProjectTemplate('../../../template/react-ts', uuid, 'frontend');
-    copyProjectTemplate('../../../template/template-backend', uuid, 'backend');
+    copyProjectTemplate(
+      path.join(__dirname, '..', '..', '..', 'template', 'react-ts'),
+      uuid,
+      'frontend',
+    );
+    copyProjectTemplate(
+      path.join(__dirname, '..', '..', '..', 'template', 'template-backend'),
+      uuid,
+      'backend',
+    );
     context.setGlobalContext(
       'frontendPath',
       buildProjectPath(uuid, 'frontend'),
