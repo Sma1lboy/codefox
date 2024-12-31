@@ -1,8 +1,10 @@
 export const generateFrontEndCodePrompt = (
   sitemapDoc: string,
   uxDatamapDoc: string,
+  backendRequirementDoc: string,
   currentFile: string,
-  dependencyFile: string,
+  dependencyFilePath: string,
+  dependenciesContext: string,
 ): string => {
   return `You are an expert frontend developer. 
   Your task is to generate complete and production-ready React or Next.js frontend code based on the provided inputs.
@@ -12,8 +14,10 @@ export const generateFrontEndCodePrompt = (
 
    - Sitemap Documentation: ${sitemapDoc}
    - UX Datamap Documentation: ${uxDatamapDoc}
-   - Current File Context: ${currentFile}
-   - Dependency File: ${dependencyFile}
+   - Backend Requirement Documentation: ${backendRequirementDoc}
+   - Current File: ${currentFile}
+   - dependencyFilePath: ${dependencyFilePath}
+   - Dependency File: ${dependenciesContext}
 
     ### Instructions and Rules:
         File Requirements:
