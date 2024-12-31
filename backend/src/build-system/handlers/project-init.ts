@@ -1,8 +1,8 @@
 import { BuilderContext } from '../context';
-import { BuildHandlerManager } from '../hanlder-manager';
 import { BuildHandler, BuildResult } from '../types';
 import { Logger } from '@nestjs/common';
-
+import * as path from 'path';
+import { buildProjectPath, copyProjectTemplate } from '../utils/files';
 export class ProjectInitHandler implements BuildHandler {
   readonly id = 'op:PROJECT::STATE:SETUP';
   private readonly logger = new Logger('ProjectInitHandler');
@@ -10,17 +10,60 @@ export class ProjectInitHandler implements BuildHandler {
   async run(context: BuilderContext): Promise<BuildResult> {
     this.logger.log('Setting up project...');
 
-    const result = {
-      projectName: 'online shoping',
-      descreption: 'sell products',
-      Platform: 'Web',
-      path: '/path/to/project',
-    };
-    context.setGlobalContext('projectConfig', result);
+    // setup project workspaces
+    const uuid = context.getGlobalContext('projectUUID');
+    // FIXME: default convention of frontend and backend folders
+
+    copyProjectTemplate(
+      path.join(__dirname, '..', '..', '..', 'template', 'react-ts'),
+      uuid,
+      'frontend',
+    );
+    copyProjectTemplate(
+      path.join(__dirname, '..', '..', '..', 'template', 'template-backend'),
+      uuid,
+      'backend',
+    );
+    context.setGlobalContext(
+      'frontendPath',
+      buildProjectPath(uuid, 'frontend'),
+    );
+    context.setGlobalContext('backendPath', buildProjectPath(uuid, 'backend'));
+    // TODO: setup allInOne, frontend-backend, etc
+    context.setGlobalContext('projectStructure', 'frontend-backend');
+    // TODO: setup project path
+    /*
+    if (projectStructure === 'frontend-backend') {
+      // setup frontend and backend folders
+      copyProjectTemplate('../../../template/react-ts', uuid, 'frontend');
+      copyProjectTemplate('../../../template/template-backend', uuid, 'backend');
+          context.setGlobalContext(
+      'frontendPath',
+      path.join(getProjectsDir(), uuid, 'frontend'),
+    );
+    context.setGlobalContext(
+      'backendPath',
+      path.join(getProjectsDir(), uuid, 'backend'),
+    );
+    } else if (projectStructure === 'allInOne') {
+      // setup all in one folder
+      copyProjectTemplate('../../../template/allInOne', uuid);
+          context.setGlobalContext(
+      'frontendPath',
+      path.join(getProjectsDir(), uuid),
+    );
+    context.setGlobalContext(
+      'backendPath',
+      path.join(getProjectsDir(), uuid),
+    );
+
+  }
+
+    */
 
     return {
       success: true,
-      data: result,
+      data: 'Project setup completed successfully',
     };
   }
 }

@@ -3,3 +3,5 @@ packages:
   - 'frontend'
   - 'llm-server'
   - 'codefox-docs'
+  - '!backend/src/build-system/__tests__'
+  - '!.codefox'

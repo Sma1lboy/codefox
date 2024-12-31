@@ -94,4 +94,6 @@ export interface NodeOutputMap {
       packages: Record<string, string>;
     };
   };
+  'op:DATABASE:SCHEMAS': string;
+  'op:BACKEND:FILE:REVIEW': string;
 }

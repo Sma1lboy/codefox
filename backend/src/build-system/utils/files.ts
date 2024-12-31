@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import * as fs from 'fs-extra';
-import { getProjectPath } from 'src/config/common-path';
+import * as path from 'path';
+import { getProjectPath, getProjectsDir } from 'src/config/common-path';
 
 const logger = new Logger('file-utils');
 /**
@@ -18,7 +19,7 @@ export async function saveGeneratedCode(
 ): Promise<string> {
   try {
     // fs-extra's outputFile creates all directories if they don't exist
-    await fs.outputFile(filePath, content, 'utf8');
+    await fs.outputFile(path.join(getProjectsDir(), filePath), content, 'utf8');
     return filePath;
   } catch (error) {
     logger.error('Error saving generated code:', error);
@@ -36,6 +37,7 @@ export async function saveGeneratedCode(
 export async function copyProjectTemplate(
   templatePath: string,
   projectUUID: string,
+  newFolderName?: string,
 ): Promise<string> {
   try {
     // Validate the template path
@@ -46,16 +48,17 @@ export async function copyProjectTemplate(
     if (!templateExists) {
       throw new Error(`Template path does not exist: ${templatePath}`);
     }
-
-    // Resolve the destination path and ensure path exist
-    const destinationPath = getProjectPath(projectUUID);
-
+    // Get the template folder name, use newFolderName if provided
+    const templateName = newFolderName || templatePath.split('/').pop();
+    const destinationPath = path.join(
+      getProjectPath(projectUUID),
+      templateName,
+    );
     // Copy the template to the destination
     logger.log(
       `Copying template from ${templatePath} to ${destinationPath}...`,
     );
     await fs.copy(templatePath, destinationPath);
-
     // Return the destination path
     logger.log(`Template copied successfully to ${destinationPath}`);
     return destinationPath;
@@ -63,4 +66,11 @@ export async function copyProjectTemplate(
     logger.error('Error copying project template:', error);
     throw error;
   }
+}
+
+export function buildProjectPath(
+  projectUUID: string,
+  folderName?: string,
+): string {
+  return path.join(getProjectsDir(), projectUUID, folderName || '');
 }

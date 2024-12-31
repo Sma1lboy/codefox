@@ -22,6 +22,17 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
       databaseType: 'SQLite',
       steps: [
         {
+          id: 'step-0',
+          name: 'Project Initialization',
+          parallel: false,
+          nodes: [
+            {
+              id: 'op:PROJECT::STATE:SETUP',
+              name: 'set up project folders',
+            },
+          ],
+        },
+        {
           id: 'step-1',
           name: 'Initial Analysis',
           parallel: false,
@@ -96,6 +107,11 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
               name: 'File_Arch',
               requires: ['op:FILE:STRUCT', 'op:UX:DATAMAP:DOC'],
             },
+            {
+              id: 'op:BACKEND:REQ',
+              name: 'Backend Requirements Node',
+              requires: ['op:DATABASE_REQ', 'op:UX:DATAMAP:DOC', 'op:UX:SMD'],
+            },
           ],
         },
         {
@@ -106,7 +122,24 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
             {
               id: 'op:BACKEND:CODE',
               name: 'Backend Code Generator Node',
-              requires: ['op:DATABASE:SCHEMAS', 'op:UX:DATAMAP:DOC'],
+              requires: [
+                'op:DATABASE:SCHEMAS',
+                'op:UX:DATAMAP:DOC',
+                'op:BACKEND:REQ',
+              ],
+            },
+          ],
+        },
+        // TODO: code reviewer
+        {
+          id: 'step-7',
+          name: 'Backend Code Review',
+          parallel: false,
+          nodes: [
+            {
+              id: 'op:BACKEND:FILE:REVIEW',
+              name: 'Backend File Review Node',
+              requires: ['op:BACKEND:CODE', 'op:BACKEND:REQ'],
             },
           ],
         },

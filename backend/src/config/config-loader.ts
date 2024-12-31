@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import * as _ from 'lodash';
 import { getConfigPath } from './common-path';
 export interface ChatConfig {
@@ -24,7 +23,6 @@ export class ConfigLoader {
     const file = fs.readFileSync(this.configPath, 'utf-8');
 
     this.chatsConfig = JSON.parse(file);
-    console.log('Raw file content:', this.chatsConfig);
   }
 
   get<T>(path: string) {
