@@ -22,17 +22,18 @@ export class EmbeddingProvider {
         return this.instance;
     }
 
-    public async generateEmbResponse(input: string, model: string){
+    // return embedding array
+    public async generateEmbResponse(input: string, model: string): Promise<any[] | null>{
         try{
             const res = this.httpService.post(`${this.config.endpoint}/embedding`, {
                 content: input,
                 model: model,
             });
-            await new Promise((resolve, rejects) => {
+            return await new Promise((resolve, rejects) => {
                 res.subscribe({
                 next: (value) => {
-                    console.log(value);
-                    resolve(value);
+                    console.log(value.data.embedding);
+                    resolve(value.data.embedding);
                 },
                 error: (error) => {
                     this.logger.error(error);
