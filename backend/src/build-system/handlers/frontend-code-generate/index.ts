@@ -2,6 +2,14 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { Logger } from '@nestjs/common';
+import {
+  generateFilesDependency,
+  createFile,
+} from '../../utils/file_generator_util';
+import { VirtualDirectory } from '../../virtual-dir';
+import normalizePath from 'normalize-path';
+import * as path from 'path';
+import { readFile } from 'fs/promises';
 
 // Utility functions (similar to your parseGenerateTag, removeCodeBlockFences)
 import {
@@ -20,6 +28,7 @@ import { generateFrontEndCodePrompt } from './prompt';
 export class FrontendCodeHandler implements BuildHandler<string> {
   readonly id = 'op:FRONTEND:CODE';
   readonly logger: Logger = new Logger('FrontendCodeHandler');
+  private virtualDir: VirtualDirectory;
 
   /**
    * Executes the handler to generate frontend code.
@@ -34,56 +43,95 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     const sitemapDoc = context.getNodeData('op:UX:SMD');
     const uxDataMapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
     const backendRequirementDoc = context.getNodeData('op:BACKEND:REQ');
+    const fileArchDoc = context.getNodeData('op:FILE:ARCH');
 
     // 2. Grab any globally stored context as needed
-    const currentFilePath =
-      context.getGlobalContext('currentFrontendFile') ||
-      'src/pages/Home/index.tsx';
-    const dependencyFilePath =
-      context.getGlobalContext('frontendDependencyFile') || 'dependencies.json';
-    const dependenciesContext =
-      context.getGlobalContext('frontendDependenciesContext') || '';
+    this.virtualDir = context.virtualDirectory;
+    const frontendPath = context.getGlobalContext('frontendPath');
 
-    // 3. Generate the prompt
-    const frontendCodePrompt = generateFrontEndCodePrompt(
-      sitemapDoc,
-      uxDataMapDoc,
-      backendRequirementDoc.overview,
-      currentFilePath,
-      dependencyFilePath,
-      dependenciesContext,
+    // Dependency
+    const { sortedFiles, fileInfos } = await generateFilesDependency(
+      fileArchDoc,
+      this.virtualDir,
     );
 
-    this.logger.debug('Generated frontend code prompt.');
-
-    try {
-      // 4. Call the model
-      const modelResponse = await context.model.chatSync(
-        {
-          content: frontendCodePrompt,
-        },
-        'gpt-4o-mini', // or whichever model you need
+    // Iterate the sortedFiles
+    for (const file of sortedFiles) {
+      const currentFullFilePath = normalizePath(
+        path.resolve(frontendPath, file),
+      );
+      this.logger.log(
+        `Generating file in dependency order: ${currentFullFilePath}`,
       );
 
-      // 5. Parse the output
-      const generatedCode = removeCodeBlockFences(
-        parseGenerateTag(modelResponse),
+      // Retrieve the direct dependencies for this file
+      const directDepsArray = fileInfos[file]?.dependsOn || [];
+
+      //gather the contents of each dependency into a single string.
+      let dependenciesContext = '';
+      for (const dep of directDepsArray) {
+        try {
+          // Resolve against frontendPath to get the absolute path
+          const resolvedDepPath = normalizePath(
+            path.resolve(frontendPath, dep),
+          );
+
+          // Read the file. (may want to guard so only read certain file types.)
+          const fileContent = await readFile(resolvedDepPath, 'utf-8');
+
+          //just append a code:
+          dependenciesContext += `\n\n[Dependency: ${dep}]\n\`\`\`\n${fileContent}\n\`\`\`\n`;
+        } catch (readError) {
+          // If the file doesn't exist or can't be read, log a warning.
+          this.logger.warn(
+            `Failed to read dependency "${dep}" for file "${file}": ${readError}`,
+          );
+        }
+      }
+
+      // Format for the prompt
+      const directDependencies = directDepsArray.join('\n');
+
+      // Generate the prompt
+      const frontendCodePrompt = generateFrontEndCodePrompt(
+        sitemapDoc,
+        uxDataMapDoc,
+        backendRequirementDoc.overview,
+        currentFullFilePath,
+        directDependencies,
+        dependenciesContext,
       );
+      this.logger.debug('Generated frontend code prompt.');
 
-      this.logger.debug('Frontend code generated and parsed successfully.');
+      let generatedCode = '';
+      try {
+        // Call the model
+        const modelResponse = await context.model.chatSync(
+          {
+            content: frontendCodePrompt,
+          },
+          'gpt-4o-mini', // or whichever model you need
+        );
 
-      // 6. Return success
-      return {
-        success: true,
-        data: generatedCode,
-      };
-    } catch (error) {
-      // 7. Return error
-      this.logger.error('Error during frontend code generation:', error);
-      return {
-        success: false,
-        error: new Error('Failed to generate frontend code.'),
-      };
+        // Parse the output
+        generatedCode = removeCodeBlockFences(parseGenerateTag(modelResponse));
+
+        this.logger.debug('Frontend code generated and parsed successfully.');
+      } catch (error) {
+        // Return error
+        this.logger.error('Error during frontend code generation:', error);
+        return {
+          success: false,
+          error: new Error('Failed to generate frontend code.'),
+        };
+      }
+
+      await createFile(currentFullFilePath, generatedCode);
     }
+
+    return {
+      success: true,
+      error: new Error('Frontend code generated and parsed successfully.'),
+    };
   }
 }

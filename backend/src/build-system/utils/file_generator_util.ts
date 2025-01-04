@@ -6,6 +6,16 @@ import { extractJsonFromMarkdown } from 'src/build-system/utils/strings';
 import normalizePath from 'normalize-path';
 import toposort from 'toposort';
 
+interface FileDependencyInfo {
+  filePath: string;
+  dependsOn: string[];
+}
+
+interface GenerateFilesDependencyResult {
+  sortedFiles: string[];
+  fileInfos: Record<string, FileDependencyInfo>;
+}
+
 const logger = new Logger('FileGeneratorUtil');
 let virtualDir: VirtualDirectory;
 
@@ -13,27 +23,25 @@ let virtualDir: VirtualDirectory;
  * Generates files based on JSON extracted from a Markdown document.
  * Ensures dependency order is maintained during file creation.
  */
-export async function generateFiles(
+export async function generateFilesDependency(
   markdownContent: string,
-  projectSrcPath: string,
   virtualDirectory: VirtualDirectory,
-): Promise<void> {
+): Promise<GenerateFilesDependencyResult> {
   virtualDir = virtualDirectory;
   const jsonData = extractJsonFromMarkdown(markdownContent);
 
-  const { graph, nodes } = buildDependencyGraph(jsonData);
+  const { graph, nodes, fileInfos } = buildDependencyGraph(jsonData);
   detectCycles(graph);
   validateAgainstVirtualDirectory(nodes);
 
   const sortedFiles = getSortedFiles(graph, nodes);
 
-  for (const file of sortedFiles) {
-    const fullPath = normalizePath(path.resolve(projectSrcPath, file));
-    logger.log(`Generating file in dependency order: ${fullPath}`);
-    await createFile(fullPath);
-  }
+  logger.log('All files dependency generated successfully.');
 
-  logger.log('All files generated successfully.');
+  return {
+    sortedFiles,
+    fileInfos,
+  };
 }
 
 /**
@@ -42,22 +50,38 @@ export async function generateFiles(
  */
 export function buildDependencyGraph(jsonData: {
   files: Record<string, { dependsOn: string[] }>;
-}): { graph: [string, string][]; nodes: Set<string> } {
+}): {
+  graph: [string, string][];
+  nodes: Set<string>;
+  fileInfos: Record<string, { filePath: string; dependsOn: string[] }>;
+} {
   const graph: [string, string][] = [];
   const nodes = new Set<string>();
+  const fileInfos: Record<string, { filePath: string; dependsOn: string[] }> =
+    {};
 
   logger.log('Parsing JSON data to build dependency graph');
 
   Object.entries(jsonData.files).forEach(([fileName, details]) => {
     nodes.add(fileName);
+
+    // store file info
+    fileInfos[fileName] = {
+      filePath: fileName,
+      dependsOn: [],
+    };
+
     details.dependsOn.forEach((dep) => {
       const resolvedDep = resolveDependency(fileName, dep);
       graph.push([resolvedDep, fileName]);
       nodes.add(resolvedDep);
+
+      // store dependsOn
+      fileInfos[fileName].dependsOn.push(resolvedDep);
     });
   });
 
-  return { graph, nodes };
+  return { graph, nodes, fileInfos };
 }
 
 /**
@@ -137,12 +161,14 @@ export function validateAgainstVirtualDirectory(nodes: Set<string>): void {
  * Creates a file at the specified path, ensuring required directories exist first.
  * The file is created with a simple placeholder comment.
  */
-export async function createFile(filePath: string): Promise<void> {
+export async function createFile(
+  filePath: string,
+  generatedCode: string,
+): Promise<void> {
   const dir = path.dirname(filePath);
   await fs.mkdir(dir, { recursive: true });
 
-  const content = `// Generated file: ${path.basename(filePath)}`;
-  await fs.writeFile(filePath, content, 'utf8');
+  await fs.writeFile(filePath, generatedCode, 'utf8');
 
   logger.log(`File created: ${filePath}`);
 }
