@@ -128,6 +128,10 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
                 'op:BACKEND:REQ',
               ],
             },
+            {
+              id: 'op:FRONTEND:CODE',
+              name: 'Frontend Code Generator Node',
+            },
           ],
         },
         // TODO: code reviewer
