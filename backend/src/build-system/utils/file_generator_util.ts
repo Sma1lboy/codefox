@@ -105,7 +105,7 @@ export function getSortedFiles(
   graph: [string, string][],
   nodes: Set<string>,
 ): string[] {
-  const sortedFiles = toposort(graph).reverse();
+  const sortedFiles = toposort(graph);
 
   Array.from(nodes).forEach((node) => {
     if (!sortedFiles.includes(node)) {
