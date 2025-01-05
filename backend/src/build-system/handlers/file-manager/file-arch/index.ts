@@ -3,14 +3,22 @@ import { BuilderContext } from 'src/build-system/context';
 import { generateFileArchPrompt } from './prompt';
 import { Logger } from '@nestjs/common';
 import { extractJsonFromMarkdown } from 'src/build-system/utils/strings';
+import { VirtualDirectory } from '../../../virtual-dir';
+import {
+  buildDependencyGraph,
+  validateAgainstVirtualDirectory,
+} from '../../../utils/file_generator_util';
 
 export class FileArchGenerateHandler implements BuildHandler<string> {
   readonly id = 'op:FILE:ARCH';
   private readonly logger: Logger = new Logger('FileArchGenerateHandler');
+  private virtualDir: VirtualDirectory;
 
   // TODO: adding page by page analysis
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Generating File Architecture Document...');
+
+    this.virtualDir = context.virtualDirectory;
 
     const fileStructure = context.getNodeData('op:FILE:STRUCT');
     // TODO: here should use datamap struct
@@ -70,6 +78,14 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
         if (!this.validateJsonData(jsonData)) {
           retry += 1;
           this.logger.error('File architecture JSON validation failed');
+          continue;
+        }
+        console.log(jsonData);
+        // validate with virutual dir
+        const { graph, nodes, fileInfos } = buildDependencyGraph(jsonData);
+        if (!validateAgainstVirtualDirectory(nodes, this.virtualDir)) {
+          retry += 1;
+          this.logger.error('Validate Against Virtual Directory Fail !!!');
           continue;
         }
 
