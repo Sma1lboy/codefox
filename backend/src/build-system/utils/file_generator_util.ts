@@ -17,7 +17,6 @@ interface GenerateFilesDependencyResult {
 }
 
 const logger = new Logger('FileGeneratorUtil');
-let virtualDir: VirtualDirectory;
 
 /**
  * Generates files based on JSON extracted from a Markdown document.
@@ -27,12 +26,11 @@ export async function generateFilesDependency(
   markdownContent: string,
   virtualDirectory: VirtualDirectory,
 ): Promise<GenerateFilesDependencyResult> {
-  virtualDir = virtualDirectory;
   const jsonData = extractJsonFromMarkdown(markdownContent);
 
   const { graph, nodes, fileInfos } = buildDependencyGraph(jsonData);
   detectCycles(graph);
-  validateAgainstVirtualDirectory(nodes);
+  validateAgainstVirtualDirectory(nodes, virtualDirectory);
 
   const sortedFiles = getSortedFiles(graph, nodes);
 
@@ -73,7 +71,7 @@ export function buildDependencyGraph(jsonData: {
 
     details.dependsOn.forEach((dep) => {
       const resolvedDep = resolveDependency(fileName, dep);
-      graph.push([resolvedDep, fileName]);
+      graph.push([resolvedDep, fileName]); // [dependency, dependent]
       nodes.add(resolvedDep);
 
       // store dependsOn
@@ -141,7 +139,10 @@ export function resolveDependency(
 /**
  * Validates that all dependencies exist within the virtual directory structure before file generation.
  */
-export function validateAgainstVirtualDirectory(nodes: Set<string>): void {
+export function validateAgainstVirtualDirectory(
+  nodes: Set<string>,
+  virtualDir: VirtualDirectory,
+): boolean {
   const invalidFiles: string[] = [];
 
   nodes.forEach((filePath) => {
@@ -155,6 +156,7 @@ export function validateAgainstVirtualDirectory(nodes: Set<string>): void {
       `The following files do not exist in the project structure:\n${invalidFiles.join('\n')}`,
     );
   }
+  return true;
 }
 
 /**

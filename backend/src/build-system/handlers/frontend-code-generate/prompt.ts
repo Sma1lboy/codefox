@@ -7,7 +7,7 @@ export const generateFrontEndCodePrompt = (
   dependenciesContext: string,
 ): string => {
   return `You are an expert frontend developer. 
-  Your task is to generate complete and production-ready React or Next.js frontend code based on the provided inputs.
+  Your task is to generate complete and production-ready React frontend code based on the provided inputs using typescript.
   The code should include all necessary files, folders, and logic to cover UI components, API integration, routing, and state management while ensuring scalability and maintainability.
   
   Based on following inputs:
@@ -47,6 +47,16 @@ export const generateFrontEndCodePrompt = (
         The generated file must be functional and complete, ready to be added directly to the project.
 
         This final result must be 100% complete. Will be directly use in the production
+
+    ### Output Format:
+       
+       DO NOT include any code fences (no \`\`\`).
+
+        Output your final code wrapped in <GENERATE> tags ONLY, like:
+
+        <GENERATE>
+        ...full code...
+        </GENERATE>
 
   `;
 };

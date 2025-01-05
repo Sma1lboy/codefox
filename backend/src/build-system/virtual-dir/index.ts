@@ -59,7 +59,7 @@ export class VirtualDirectory {
     }
   }
 
-  isValidFile(filePath: string): boolean {
+  public isValidFile(filePath: string): boolean {
     const node = this.findNode(filePath);
     return node?.isFile ?? false;
   }
@@ -69,17 +69,35 @@ export class VirtualDirectory {
     return node !== null && !node.isFile;
   }
 
+  // private findNode(inputPath: string): VirtualNode | null {
+  //   const normalizedPath = this.normalizePath(inputPath);
+  //   const parts = normalizedPath.split('/').filter(Boolean);
+
+  //   if (parts[0] !== 'src') {
+  //     return null;
+  //   }
+
+  //   let current = this.root;
+  //   for (let i = 1; i < parts.length; i++) {
+  //     const next = current.children.get(parts[i]);
+  //     if (!next) return null;
+  //     current = next;
+  //   }
+  //   return current;
+  // }
+
   private findNode(inputPath: string): VirtualNode | null {
     const normalizedPath = this.normalizePath(inputPath);
     const parts = normalizedPath.split('/').filter(Boolean);
 
-    if (parts[0] !== 'src') {
-      return null;
+    // If the path starts with 'src', remove that segment
+    if (parts[0] === 'src') {
+      parts.shift(); // Remove the 'src' segment
     }
 
     let current = this.root;
-    for (let i = 1; i < parts.length; i++) {
-      const next = current.children.get(parts[i]);
+    for (const part of parts) {
+      const next = current.children.get(part);
       if (!next) return null;
       current = next;
     }

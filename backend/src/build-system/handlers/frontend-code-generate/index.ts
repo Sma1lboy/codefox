@@ -58,10 +58,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     // Iterate the sortedFiles
     for (const file of sortedFiles) {
       const currentFullFilePath = normalizePath(
-        path.resolve(frontendPath, file),
-      );
-      this.logger.log(
-        `Generating file in dependency order: ${currentFullFilePath}`,
+        path.resolve(frontendPath, 'src', file),
       );
 
       // Retrieve the direct dependencies for this file
@@ -73,7 +70,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         try {
           // Resolve against frontendPath to get the absolute path
           const resolvedDepPath = normalizePath(
-            path.resolve(frontendPath, dep),
+            path.resolve(frontendPath, 'src', dep),
           );
 
           // Read the file. (may want to guard so only read certain file types.)
@@ -91,6 +88,13 @@ export class FrontendCodeHandler implements BuildHandler<string> {
 
       // Format for the prompt
       const directDependencies = directDepsArray.join('\n');
+
+      this.logger.log(
+        `Generating file in dependency order: ${currentFullFilePath}`,
+      );
+      this.logger.log(
+        `2 Generating file in dependency order directDependencies: ${directDependencies}`,
+      );
 
       // Generate the prompt
       const frontendCodePrompt = generateFrontEndCodePrompt(
@@ -114,7 +118,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         );
 
         // Parse the output
-        generatedCode = removeCodeBlockFences(parseGenerateTag(modelResponse));
+        generatedCode = parseGenerateTag(modelResponse);
 
         this.logger.debug('Frontend code generated and parsed successfully.');
       } catch (error) {
@@ -131,6 +135,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
 
     return {
       success: true,
+      data: 'test',
       error: new Error('Frontend code generated and parsed successfully.'),
     };
   }
