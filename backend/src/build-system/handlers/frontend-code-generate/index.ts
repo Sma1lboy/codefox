@@ -18,7 +18,7 @@ import {
 } from 'src/build-system/utils/database-utils';
 
 // The function from step #1
-import { generateFrontEndCodePrompt } from './prompt';
+import { generateFrontEndCodePrompt, generateCSSPrompt } from './prompt';
 
 /**
  * FrontendCodeHandler is responsible for generating the frontend codebase
@@ -61,6 +61,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         path.resolve(frontendPath, 'src', file),
       );
 
+      const extension = currentFullFilePath.split('.').pop() || '';
+
       // Retrieve the direct dependencies for this file
       const directDepsArray = fileInfos[file]?.dependsOn || [];
 
@@ -96,15 +98,30 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         `2 Generating file in dependency order directDependencies: ${directDependencies}`,
       );
 
-      // Generate the prompt
-      const frontendCodePrompt = generateFrontEndCodePrompt(
-        sitemapDoc,
-        uxDataMapDoc,
-        backendRequirementDoc.overview,
-        currentFullFilePath,
-        directDependencies,
-        dependenciesContext,
+      let frontendCodePrompt = '';
+
+      if (extension === 'css') {
+        frontendCodePrompt = generateCSSPrompt(
+          file,
+          directDependencies,
+          dependenciesContext,
+        );
+      } else {
+        // Generate the prompt
+        frontendCodePrompt = generateFrontEndCodePrompt(
+          sitemapDoc,
+          uxDataMapDoc,
+          backendRequirementDoc.overview,
+          file,
+          directDependencies,
+          dependenciesContext,
+        );
+      }
+      this.logger.log(
+        'generate code prompt for frontendCodePrompt or css: ' +
+          frontendCodePrompt,
       );
+
       this.logger.debug('Generated frontend code prompt.');
 
       let generatedCode = '';

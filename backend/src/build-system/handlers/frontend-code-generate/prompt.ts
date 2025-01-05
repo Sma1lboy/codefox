@@ -60,3 +60,33 @@ export const generateFrontEndCodePrompt = (
 
   `;
 };
+
+export function generateCSSPrompt(
+  fileName: string,
+  directDependencies: string,
+  dependenciesContext: string,
+): string {
+  return `
+  You are an expert CSS developer. Generate valid, production-ready CSS for the file "${fileName}".
+
+    ## Context
+    - Direct Dependencies (if any and may include references to other styles or partials):
+    ${directDependencies}
+
+    - Direct Dependencies Context (if any):
+    ${dependenciesContext}
+
+  ## Rules & Guidelines
+    1. **Do NOT** include any JavaScript or React code—only plain CSS.
+    2. **Do NOT** wrap your output in code fences (\`\`\`).
+    3. You may define classes, IDs, or any selectors you need, but **be sure** to keep it purely CSS.
+    4. Ensure the output is well-structured, readable, and adheres to best practices (e.g., BEM if you prefer).
+    5. Include comments for clarity if needed, but keep them concise.
+  
+  ## Output Format
+    Please produce the complete CSS content in the format described:
+    <GENERATE>
+    /* Your CSS content here */
+    </GENERATE>
+  `;
+}
