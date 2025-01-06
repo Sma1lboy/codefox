@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { ChatMessageInput, LLMProvider } from './llm-provider';
 import express, { Express, Request, Response } from 'express';
 import { GenerateMessageParams } from './types';
@@ -59,23 +59,16 @@ export class App {
   private async handleChatRequest(req: Request, res: Response): Promise<void> {
     this.logger.log('Received chat request.');
     try {
-      this.logger.debug(JSON.stringify(req.body));
-      const { content, model } = req.body as ChatMessageInput & {
-        model: string;
-      };
+      const input = req.body as GenerateMessageParams;
+      const model = input.model;
       this.logger.log(`Received chat request for model: ${model}`);
-      const params: GenerateMessageParams = {
-        model: model || 'gpt-3.5-turbo',
-        message: content,
-        role: 'user',
-      };
 
-      this.logger.debug(`Request content: "${content}"`);
+      this.logger.debug(`Request messages: "${input.messages}"`);
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       this.logger.debug('Response headers set for streaming.');
-      await this.llmProvider.generateStreamingResponse(params, res);
+      await this.llmProvider.generateStreamingResponse(input, res);
     } catch (error) {
       this.logger.error('Error in chat endpoint:', error);
       res.status(500).json({ error: 'Internal server error' });

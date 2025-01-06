@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import * as _ from 'lodash';
 import { getConfigPath } from './common-path';
 import { ConfigType } from 'src/downloader/universal-utils';
@@ -119,6 +118,7 @@ export class ConfigLoader {
     }
 
     this.logger.log(ConfigLoader.config);
+
   }
 
   get<T>(path?: string): T {

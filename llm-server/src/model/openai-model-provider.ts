@@ -89,7 +89,10 @@ export class OpenAIModelProvider {
 
   private async processRequest(request: QueuedRequest): Promise<void> {
     const { params, res, retries } = request;
-    const { model, message, role = 'user' } = params;
+    const { model, messages } = params as {
+      model: string;
+      messages: ChatCompletionMessageParam[];
+    };
 
     this.logger.log(`Processing request (attempt ${retries + 1})`);
     const startTime = Date.now();
@@ -103,14 +106,14 @@ export class OpenAIModelProvider {
 
       const systemPrompt =
         systemPrompts[this.options.systemPromptKey]?.systemPrompt || '';
-      const messages: ChatCompletionMessageParam[] = [
+      const allMessages: ChatCompletionMessageParam[] = [
         { role: 'system', content: systemPrompt },
-        { role: role as 'user' | 'system' | 'assistant', content: message },
+        ...messages,
       ];
-
+      console.log(allMessages);
       const stream = await this.openai.chat.completions.create({
         model,
-        messages,
+        messages: allMessages,
         stream: true,
       });
 
@@ -171,8 +174,7 @@ export class OpenAIModelProvider {
         error: errorResponse,
         params: {
           model,
-          messageLength: message.length,
-          role,
+          messageLength: messages.length,
         },
       });
 

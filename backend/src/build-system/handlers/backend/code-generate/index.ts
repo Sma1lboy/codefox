@@ -6,6 +6,8 @@ import {
   parseGenerateTag,
   removeCodeBlockFences,
 } from 'src/build-system/utils/database-utils';
+import { saveGeneratedCode } from 'src/build-system/utils/files';
+import * as path from 'path';
 
 /**
  * BackendCodeHandler is responsible for generating the backend codebase
@@ -33,8 +35,13 @@ export class BackendCodeHandler implements BuildHandler<string> {
     // Destructure arguments with default values for optional parameters
     const sitemapDoc = context.getNodeData('op:UX:SMD');
     const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
+    const databaseSchemas = context.getNodeData('op:DATABASE:SCHEMAS');
     //TODO: make this backend generate similar as FileGenerateHandler, do file arch, and then generate each backend code
-    const currentFile = 'backend.js';
+    //TODO: backend requirement
+    const backendRequirementDoc =
+      context.getNodeData('op:BACKEND:REQ').overview;
+
+    const currentFile = 'index.js';
     const dependencyFile = 'dependencies.json';
 
     // Generate the prompt using the provided documents and project name
@@ -42,8 +49,11 @@ export class BackendCodeHandler implements BuildHandler<string> {
       projectName,
       sitemapDoc,
       datamapDoc,
+      backendRequirementDoc,
       databaseType,
+      databaseSchemas,
       currentFile,
+      'javascript',
       dependencyFile,
     );
 
@@ -63,8 +73,12 @@ export class BackendCodeHandler implements BuildHandler<string> {
         parseGenerateTag(modelResponse),
       );
 
+      const uuid = context.getGlobalContext('projectUUID');
+      saveGeneratedCode(path.join(uuid, 'backend', currentFile), generatedCode);
+
       this.logger.debug('Backend code generated and parsed successfully.');
 
+      // TODO: return backend api as output
       return {
         success: true,
         data: generatedCode,

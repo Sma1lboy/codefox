@@ -22,7 +22,9 @@ export type GlobalDataKeys =
   | 'description'
   | 'platform'
   | 'databaseType'
-  | 'projectUUID';
+  | 'projectUUID'
+  | 'backendPath'
+  | 'frontendPath';
 
 /**
  * Generic context data type mapping keys to any value
@@ -72,7 +74,10 @@ export class BuilderContext {
     this.globalContext.set('description', sequence.description || '');
     this.globalContext.set('platform', 'web');
     this.globalContext.set('databaseType', sequence.databaseType || 'SQLite');
-    this.globalContext.set('projectUUID', uuidv4());
+    this.globalContext.set(
+      'projectUUID',
+      new Date().toISOString().slice(0, 10).replace(/:/g, '-') + '-' + uuidv4(),
+    );
   }
 
   async execute(): Promise<void> {

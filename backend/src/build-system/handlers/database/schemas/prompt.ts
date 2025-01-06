@@ -29,7 +29,7 @@ For each entity in the requirements:
  
 Example output format:
  
-<GENERATE>DBAnalysis
+DBAnalysis
 Database: ${projectName}
 Type: ${databaseType}
 
@@ -64,11 +64,11 @@ Performance Considerations:
 1. User table needs hash indexes on email and username
 2. Playlist_songs needs index on position for queue management
 3. Songs table needs full text search capability
-</GENERATE>`;
+`;
   },
 
   /**
-   * Generates the database schema based on the analysis.
+   * Generates the database schema based on the analysis, ensuring idempotency.
    * @param dbAnalysis - The database analysis as a string.
    * @param databaseType - The type of the database (e.g., PostgreSQL, MongoDB, SQLite).
    * @param fileExtension - The file extension to use for the schema file.
@@ -88,12 +88,60 @@ ${dbAnalysis}
  
 Rules for generation:
 1. Use ${databaseType}-specific data types and features.
-2. Do not include any comments in the output.
-3. Use standardized naming conventions.
-4. Include all necessary constraints and indexes.
+2. Ensure all schema operations are idempotent. For example:
+   - Use "CREATE TABLE IF NOT EXISTS" for table creation.
+   - Use "CREATE INDEX IF NOT EXISTS" for index creation (if supported by ${databaseType}).
+   - Ensure foreign keys, constraints, and other objects are created without duplication.
+3. Do not include any comments in the output.
+4. Use standardized naming conventions.
 5. Generate schema in the correct creation order for dependencies.
- 
-Your reply must start with "<GENERATE>" and end with "</GENERATE>".
-`;
+
+Example output:
+<GENERATE>
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  subscription_type VARCHAR(50),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+
+CREATE TABLE IF NOT EXISTS playlists (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  user_id INT NOT NULL,
+  is_system_generated BOOLEAN DEFAULT FALSE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_playlists_user_id ON playlists(user_id);
+</GENERATE>
+
+Your reply must start with "<GENERATE>" and end with "</GENERATE>".`;
+  },
+
+  validateDatabaseSchema: (
+    schemaContent: string,
+    databaseType: string = 'PostgreSQL',
+  ): string => {
+    return `You are a Database Expert specializing in ${databaseType}. Validate the following database schema for correctness, syntax, and logical consistency:
+  
+<GENERATE>
+${schemaContent}
+</GENERATE>
+  
+Rules for validation:
+1. Ensure the schema syntax is valid for ${databaseType}.
+2. Check that all necessary tables, fields, indexes, and constraints are present based on standard best practices.
+3. Verify that dependencies (e.g., foreign keys) are properly handled and in the correct order.
+4. Confirm that all schema operations are idempotent and will not cause issues if executed multiple times.
+5. Return 'Validation Passed' if everything is correct. If there are issues, return 'Validation Failed' followed by a detailed explanation of errors.
+  
+Your reply must start with "<GENERATE>" and end with "</GENERATE>".`;
   },
 };

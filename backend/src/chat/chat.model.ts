@@ -38,8 +38,8 @@ export class Chat extends SystemBaseModel {
   @Column({ nullable: true })
   title: string;
 
-  @Field(() => [Message], { nullable: true })
-  @OneToMany(() => Message, (message) => message.chat, { cascade: true })
+  @Field({ nullable: true })
+  @Column('simple-json', { nullable: true, default: '[]' })
   messages: Message[];
 
   @ManyToOne(() => User, (user) => user.chats)

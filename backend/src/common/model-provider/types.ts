@@ -1,3 +1,5 @@
+import { MessageRole } from 'src/chat/message.model';
+
 export interface ModelChatStreamConfig {
   endpoint: string;
   model?: string;
@@ -5,3 +7,18 @@ export interface ModelChatStreamConfig {
 export type CustomAsyncIterableIterator<T> = AsyncIterator<T> & {
   [Symbol.asyncIterator](): AsyncIterableIterator<T>;
 };
+
+export interface ModelProviderConfig {
+  endpoint: string;
+  defaultModel?: string;
+}
+
+export interface MessageInterface {
+  content: string;
+  role: MessageRole;
+}
+
+export interface ChatInput {
+  model: string;
+  messages: MessageInterface[];
+}
