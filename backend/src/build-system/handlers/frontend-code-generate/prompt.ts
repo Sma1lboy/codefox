@@ -62,9 +62,9 @@ export const generateFrontEndCodePrompt = (
 };
 
 export function generateCSSPrompt(
-  fileName: string,
   sitemapDoc: string,
   uxDatamapDoc: string,
+  fileName: string,
   directDependencies: string,
   dependenciesContext: string,
 ): string {

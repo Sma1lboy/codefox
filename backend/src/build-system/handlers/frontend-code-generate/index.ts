@@ -102,6 +102,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
 
       if (extension === 'css') {
         frontendCodePrompt = generateCSSPrompt(
+          sitemapDoc,
+          uxDataMapDoc,
           file,
           directDependencies,
           dependenciesContext,
