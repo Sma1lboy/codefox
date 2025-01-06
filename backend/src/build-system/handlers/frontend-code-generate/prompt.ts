@@ -63,6 +63,8 @@ export const generateFrontEndCodePrompt = (
 
 export function generateCSSPrompt(
   fileName: string,
+  sitemapDoc: string,
+  uxDatamapDoc: string,
   directDependencies: string,
   dependenciesContext: string,
 ): string {
@@ -70,6 +72,9 @@ export function generateCSSPrompt(
   You are an expert CSS developer. Generate valid, production-ready CSS for the file "${fileName}".
 
     ## Context
+    - Sitemap Documentation: ${sitemapDoc}
+    - UX Datamap Documentation: ${uxDatamapDoc}
+
     - Direct Dependencies (if any and may include references to other styles or partials):
     ${directDependencies}
 
