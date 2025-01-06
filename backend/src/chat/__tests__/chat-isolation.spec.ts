@@ -35,14 +35,13 @@ describe('ChatService', () => {
       imports:[
         TypeOrmModule.forRoot({
           type: 'sqlite',
-          database: '../../database.sqlite',
+          database: ':memory:',
           synchronize: true,
-          entities: ['../../' + '/**/*.model{.ts,.js}'],
+          entities: [Chat, User, Menu, Role],
         }),
         TypeOrmModule.forFeature([Chat, User, Menu, Role]),
       ],
       providers: [
-        Repository<Menu>,
         ChatService,
         AuthService,
         UserService,
