@@ -18,6 +18,7 @@
   "dependencies": {
     "@nestjs/common": "^10.4.5",
     "express": "^4.21.1",
+    "fastembed": "^1.14.1",
     "node-fetch": "^3.3.2",
     "node-llama-cpp": "^3.1.1",
     "nodemon": "^3.1.7",
@@ -31,7 +32,7 @@
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
-    "openai": "^4.68.1",
+    "openai": "^4.77.0",
     "prettier": "^3.0.0",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.4.0",
