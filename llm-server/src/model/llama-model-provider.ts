@@ -36,7 +36,7 @@ export class LlamaModelProvider extends ModelProvider {
   }
 
   async generateStreamingResponse(
-    { model, messages}: GenerateMessageParams,
+    { model, messages }: GenerateMessageParams,
     res: Response,
   ): Promise<void> {
     this.logger.log('Generating streaming response with Llama...');
@@ -50,10 +50,7 @@ export class LlamaModelProvider extends ModelProvider {
     // Get the system prompt based on the model
     const systemPrompt = systemPrompts['codefox-basic']?.systemPrompt || '';
 
-    const allMessage = [
-      { role: 'system', content: systemPrompt },
-      ...messages,
-    ];
+    const allMessage = [{ role: 'system', content: systemPrompt }, ...messages];
 
     // Convert messages array to a single formatted string for Llama
     const formattedPrompt = allMessage

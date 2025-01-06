@@ -10,7 +10,6 @@ import {
 } from './types';
 import { ModelProvider } from './model/model-provider';
 
-
 export interface ChatMessageInput {
   role: string;
   content: string;

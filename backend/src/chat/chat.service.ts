@@ -17,9 +17,10 @@ import { ModelProvider } from 'src/common/model-provider';
 export class ChatProxyService {
   private readonly logger = new Logger('ChatProxyService');
 
-  constructor(private httpService: HttpService, private readonly models: ModelProvider) {
-    
-  }
+  constructor(
+    private httpService: HttpService,
+    private readonly models: ModelProvider,
+  ) {}
 
   streamChat(
     input: ChatInput,
@@ -38,7 +39,7 @@ export class ChatService {
     @InjectRepository(Chat)
     private chatRepository: Repository<Chat>,
     @InjectRepository(User)
-    private userRepository: Repository<User>
+    private userRepository: Repository<User>,
   ) {}
 
   async getChatHistory(chatId: string): Promise<Message[]> {
@@ -46,7 +47,6 @@ export class ChatService {
       where: { id: chatId, isDeleted: false },
     });
     console.log(chat);
-    
 
     if (chat && chat.messages) {
       // Sort messages by createdAt in ascending order
@@ -150,13 +150,13 @@ export class ChatService {
   ): Promise<Message> {
     // Find the chat instance
     const chat = await this.chatRepository.findOne({ where: { id: chatId } });
-    
+
     const message = {
       id: `${chat.id}/${chat.messages.length}`,
       content: messageContent,
       role: role,
       createdAt: new Date(),
-      updatedAt: new Date(), 
+      updatedAt: new Date(),
       isActive: true,
       isDeleted: false,
     };

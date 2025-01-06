@@ -17,7 +17,7 @@ import { Menu } from 'src/auth/menu/menu.model';
 import { Role } from 'src/auth/role/role.model';
 import { RegisterUserInput } from 'src/user/dto/register-user.input';
 import { NewChatInput } from '../dto/chat.input';
-import { ModelProvider} from 'src/common/model-provider';
+import { ModelProvider } from 'src/common/model-provider';
 import { HttpService } from '@nestjs/axios';
 import { MessageInterface } from 'src/common/model-provider/types';
 
@@ -28,11 +28,11 @@ describe('ChatService', () => {
   let mockedChatService: jest.Mocked<Repository<Chat>>;
   let modelProvider: ModelProvider;
   let user: User;
-  let userid='1';
+  let userid = '1';
 
-  beforeAll(async()=>{
+  beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports:[
+      imports: [
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: '../../database.sqlite',
@@ -50,48 +50,66 @@ describe('ChatService', () => {
         JwtService,
         JwtCacheService,
         ConfigService,
-      ]
+      ],
     }).compile();
     chatService = module.get(ChatService);
     userService = module.get(UserService);
     userResolver = module.get(UserResolver);
-    
+
     modelProvider = ModelProvider.getInstance();
     mockedChatService = module.get(getRepositoryToken(Chat));
-  })
-  it('should excute curd in chat service', async() => {
-    
-    try{
+  });
+  it('should excute curd in chat service', async () => {
+    try {
       user = await userResolver.registerUser({
         username: 'testuser',
         password: 'securepassword',
         email: 'testuser@example.com',
       } as RegisterUserInput);
       userid = user.id;
-    }catch(error){
-
-    }
-    const chat= await chatService.createChat(userid, {title: 'test'} as NewChatInput);
-    let chatId = chat.id;
+    } catch (error) {}
+    const chat = await chatService.createChat(userid, {
+      title: 'test',
+    } as NewChatInput);
+    const chatId = chat.id;
     console.log(await chatService.getChatHistory(chatId));
-    
-    console.log(await chatService.saveMessage(chatId, 'Hello, this is a test message.', MessageRole.User));
-    console.log(await chatService.saveMessage(chatId, 'Hello, hello, im gpt.', MessageRole.Model));
-    
-    console.log(await chatService.saveMessage(chatId, 'write me the system prompt', MessageRole.User));
 
-    let history = await chatService.getChatHistory(chatId);
-    let messages = history.map((message) => {
+    console.log(
+      await chatService.saveMessage(
+        chatId,
+        'Hello, this is a test message.',
+        MessageRole.User,
+      ),
+    );
+    console.log(
+      await chatService.saveMessage(
+        chatId,
+        'Hello, hello, im gpt.',
+        MessageRole.Model,
+      ),
+    );
+
+    console.log(
+      await chatService.saveMessage(
+        chatId,
+        'write me the system prompt',
+        MessageRole.User,
+      ),
+    );
+
+    const history = await chatService.getChatHistory(chatId);
+    const messages = history.map((message) => {
       return {
         role: message.role,
-        content: message.content
+        content: message.content,
       } as MessageInterface;
-    })
+    });
     console.log(history);
     console.log(
       await modelProvider.chatSync({
         model: 'gpt-4o',
-        messages
-      }));
-  })
+        messages,
+      }),
+    );
+  });
 });
