@@ -17,8 +17,8 @@ import { Chat } from 'src/chat/chat.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
 
 export enum MessageRole {
-  User = 'User',
-  Model = 'Model',
+  User = 'user',
+  Model = 'assistant',
 }
 
 registerEnumType(MessageRole, {
@@ -43,8 +43,4 @@ export class Message extends SystemBaseModel {
   @Field({ nullable: true })
   @Column({ nullable: true })
   modelId?: string;
-
-  @ManyToOne(() => Chat, (chat) => chat.messages)
-  @JoinColumn({ name: 'chatId' })
-  chat: Chat;
 }

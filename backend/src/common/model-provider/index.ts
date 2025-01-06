@@ -1,11 +1,9 @@
 import { Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { Subject, Subscription } from 'rxjs';
+import { MessageRole } from 'src/chat/message.model';
+import { LLMInterface, ModelProviderConfig } from './types';
 
-export interface ModelProviderConfig {
-  endpoint: string;
-  defaultModel?: string;
-}
 
 export interface CustomAsyncIterableIterator<T> extends AsyncIterator<T> {
   [Symbol.asyncIterator](): AsyncIterableIterator<T>;
@@ -55,9 +53,7 @@ export class ModelProvider {
    * Synchronous chat method that returns a complete response
    */
   async chatSync(
-    input: ChatInput | string,
-    model: string,
-    chatId?: string,
+    input: LLMInterface,
   ): Promise<string> {
     while (this.currentRequests >= this.concurrentLimit) {
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -70,7 +66,6 @@ export class ModelProvider {
       `Starting request ${requestId}. Active: ${this.currentRequests}/${this.concurrentLimit}`,
     );
 
-    const normalizedInput = this.normalizeChatInput(input);
 
     let resolvePromise: (value: string) => void;
     let rejectPromise: (error: any) => void;
@@ -113,7 +108,7 @@ export class ModelProvider {
       promise,
     });
 
-    this.processRequest(normalizedInput, model, chatId, requestId, stream);
+    this.processRequest(input, requestId, stream);
     return promise;
   }
 
@@ -155,9 +150,7 @@ export class ModelProvider {
   }
 
   private async processRequest(
-    input: ChatInput,
-    model: string,
-    chatId: string | undefined,
+    input: LLMInterface,
     requestId: string,
     stream: Subject<any>,
   ) {
@@ -167,7 +160,7 @@ export class ModelProvider {
       const response = await this.httpService
         .post(
           `${this.config.endpoint}/chat/completion`,
-          this.createRequestPayload(input, model, chatId),
+          input,
           {
             responseType: 'stream',
             headers: { 'Content-Type': 'application/json' },

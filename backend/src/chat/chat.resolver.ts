@@ -103,16 +103,6 @@ export class ChatResolver {
     const user = await this.userService.getUserChats(userId);
     return user ? user.chats : [];
   }
-
-  @JWTAuth()
-  @Query(() => Message, { nullable: true })
-  async getMessageDetail(
-    @GetUserIdFromToken() userId: string,
-    @Args('messageId') messageId: string,
-  ): Promise<Message> {
-    return this.chatService.getMessageById(messageId);
-  }
-
   // To do: message need a update resolver
 
   @JWTAuth()
