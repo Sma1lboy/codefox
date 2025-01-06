@@ -11,10 +11,6 @@ import {
 import { ModelProvider } from './model/model-provider';
 
 export interface ChatMessageInput {
-  content: string;
-}
-
-export interface ChatMessage {
   role: string;
   content: string;
 }
