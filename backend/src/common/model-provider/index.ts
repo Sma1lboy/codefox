@@ -4,7 +4,6 @@ import { Subject, Subscription } from 'rxjs';
 import { MessageRole } from 'src/chat/message.model';
 import { ChatInput, ModelProviderConfig } from './types';
 
-
 export interface CustomAsyncIterableIterator<T> extends AsyncIterator<T> {
   [Symbol.asyncIterator](): AsyncIterableIterator<T>;
 }
@@ -65,7 +64,6 @@ export class ModelProvider {
     this.logger.debug(
       `Starting request ${requestId}. Active: ${this.currentRequests}/${this.concurrentLimit}`,
     );
-
 
     let resolvePromise: (value: string) => void;
     let rejectPromise: (error: any) => void;
@@ -158,14 +156,10 @@ export class ModelProvider {
 
     try {
       const response = await this.httpService
-        .post(
-          `${this.config.endpoint}/chat/completion`,
-          input,
-          {
-            responseType: 'stream',
-            headers: { 'Content-Type': 'application/json' },
-          },
-        )
+        .post(`${this.config.endpoint}/chat/completion`, input, {
+          responseType: 'stream',
+          headers: { 'Content-Type': 'application/json' },
+        })
         .toPromise();
 
       let buffer = '';

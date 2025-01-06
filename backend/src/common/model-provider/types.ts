@@ -1,4 +1,4 @@
-import { MessageRole } from "src/chat/message.model";
+import { MessageRole } from 'src/chat/message.model';
 
 export interface ModelChatStreamConfig {
   endpoint: string;
@@ -22,4 +22,3 @@ export interface ChatInput {
   model: string;
   messages: MessageInterface[];
 }
-
