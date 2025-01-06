@@ -35,7 +35,7 @@ export class OpenAIModelProvider {
       retryDelay: 1000,
       queueInterval: 1000,
       intervalCap: 10,
-      apiKey: process.env.OPEN_API_KEY,
+      apiKey: process.env.OPENAI_API_KEY,
       systemPromptKey: 'codefox-basic',
       ...options,
     };
