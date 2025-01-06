@@ -51,9 +51,7 @@ export class ModelProvider {
   /**
    * Synchronous chat method that returns a complete response
    */
-  async chatSync(
-    input: ChatInput,
-  ): Promise<string> {
+  async chatSync(input: ChatInput): Promise<string> {
     while (this.currentRequests >= this.concurrentLimit) {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
@@ -421,11 +419,21 @@ export class ModelProvider {
     );
   }
 
-  private normalizeChatInput(input: ChatInput | string, model: string): ChatInput {
-    return typeof input === 'string' ? { model, messages:[{
-      content: input,
-      role: MessageRole.User,
-    }] } : input;
+  private normalizeChatInput(
+    input: ChatInput | string,
+    model: string,
+  ): ChatInput {
+    return typeof input === 'string'
+      ? {
+          model,
+          messages: [
+            {
+              content: input,
+              role: MessageRole.User,
+            },
+          ],
+        }
+      : input;
   }
 
   public async fetchModelsName() {
