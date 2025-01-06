@@ -18,7 +18,7 @@ export interface MessageInterface {
   role: MessageRole;
 }
 
-export interface LLMInterface {
+export interface ChatInput {
   model: string;
   messages: MessageInterface[];
 }

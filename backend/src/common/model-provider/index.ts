@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { Subject, Subscription } from 'rxjs';
 import { MessageRole } from 'src/chat/message.model';
-import { LLMInterface, ModelProviderConfig } from './types';
+import { ChatInput, ModelProviderConfig } from './types';
 
 
 export interface CustomAsyncIterableIterator<T> extends AsyncIterator<T> {
@@ -53,7 +53,7 @@ export class ModelProvider {
    * Synchronous chat method that returns a complete response
    */
   async chatSync(
-    input: LLMInterface,
+    input: ChatInput,
   ): Promise<string> {
     while (this.currentRequests >= this.concurrentLimit) {
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -120,7 +120,7 @@ export class ModelProvider {
     model: string,
     chatId?: string,
   ): CustomAsyncIterableIterator<ChatCompletionChunk> {
-    const chatInput = this.normalizeChatInput(input);
+    const chatInput = this.normalizeChatInput(input, model);
     const selectedModel = model || this.config.defaultModel;
 
     if (!selectedModel) {
@@ -150,7 +150,7 @@ export class ModelProvider {
   }
 
   private async processRequest(
-    input: LLMInterface,
+    input: ChatInput,
     requestId: string,
     stream: Subject<any>,
   ) {
@@ -427,8 +427,11 @@ export class ModelProvider {
     );
   }
 
-  private normalizeChatInput(input: ChatInput | string): ChatInput {
-    return typeof input === 'string' ? { content: input } : input;
+  private normalizeChatInput(input: ChatInput | string, model: string): ChatInput {
+    return typeof input === 'string' ? { model, messages:[{
+      content: input,
+      role: MessageRole.User,
+    }] } : input;
   }
 
   public async fetchModelsName() {
@@ -459,17 +462,6 @@ export class ChatCompletionChunk {
   systemFingerprint: string | null;
   choices: ChatCompletionChoice[];
   status: StreamStatus;
-}
-
-export interface ChatInput {
-  content: string;
-  attachments?: Array<{
-    type: string;
-    content: string | Buffer;
-    name?: string;
-  }>;
-  contextLength?: number;
-  temperature?: number;
 }
 
 class ChatCompletionDelta {

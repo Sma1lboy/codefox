@@ -17,7 +17,7 @@ async function bootstrap() {
       'Access-Control-Allow-Credentials',
     ],
   });
-  // await downloadAllModels();
+  await downloadAllModels();
   await app.listen(process.env.PORT ?? 3000);
 }
 
