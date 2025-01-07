@@ -12,6 +12,7 @@ import { DatabaseRequirementHandler } from './handlers/database/requirements-doc
 import { FileGeneratorHandler } from './handlers/file-manager/file-generate';
 import { BackendRequirementHandler } from './handlers/backend/requirements-document';
 import { BackendFileReviewHandler } from './handlers/backend/file-review/file-review';
+import { Level2UXSitemapStructureHandler } from './handlers/ux/sitemap-structure/sms-page';
 
 /**
  * Manages the registration and retrieval of build handlers in the system
@@ -35,6 +36,7 @@ export class BuildHandlerManager {
       new ProjectInitHandler(),
       new PRDHandler(),
       new UXSitemapStructureHandler(),
+      new Level2UXSitemapStructureHandler(),
       new UXDatamapHandler(),
       new UXSMDHandler(),
       new FileStructureHandler(),
