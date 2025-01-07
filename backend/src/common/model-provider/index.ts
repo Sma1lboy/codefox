@@ -112,7 +112,7 @@ export class ModelProvider {
    * Stream-based chat method that returns an async iterator
    */
   chat(
-    input: ChatInput | string,
+    input: ChatInput,
     model: string,
     chatId?: string,
   ): CustomAsyncIterableIterator<ChatCompletionChunk> {

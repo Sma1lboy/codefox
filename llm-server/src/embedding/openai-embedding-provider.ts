@@ -1,13 +1,11 @@
-
 import { Logger } from '@nestjs/common';
 import OpenAI from 'openai';
 import PQueue from 'p-queue';
-import { Response } from 'express'
+import { Response } from 'express';
 import { EmbeddingProvider } from './emb-provider';
 import { GenerateMessageParams } from '../types';
 
 export class openAIEmbProvider implements EmbeddingProvider {
-  
   private logger = new Logger(openAIEmbProvider.name);
 
   private openai: OpenAI;
@@ -39,7 +37,9 @@ export class openAIEmbProvider implements EmbeddingProvider {
     });
 
     this.requestQueue.on('active', () => {
-      this.logger.debug(`Queue size: ${this.requestQueue.size}, Pending: ${this.requestQueue.pending}`);
+      this.logger.debug(
+        `Queue size: ${this.requestQueue.size}, Pending: ${this.requestQueue.pending}`,
+      );
     });
   }
 
@@ -53,7 +53,9 @@ export class openAIEmbProvider implements EmbeddingProvider {
       apiKey: this.options.apiKey,
     });
 
-    this.logger.log(`OpenAI model initialized with options: ${JSON.stringify(this.options)}`);
+    this.logger.log(
+      `OpenAI model initialized with options: ${JSON.stringify(this.options)}`,
+    );
   }
 
   async generateEmbResponse(
@@ -63,31 +65,38 @@ export class openAIEmbProvider implements EmbeddingProvider {
     try {
       const embedding = await this.openai.embeddings.create({
         model: params.model,
-        input: params.message,
-        encoding_format: "float",
+        input: params.messages[0].content, // FIXME: this should be messages, might cause error
+        encoding_format: 'float',
       });
       console.log(embedding.data[0].embedding);
       res.json({
-        embedding: embedding.data[0].embedding
-      })
+        embedding: embedding.data[0].embedding,
+      });
     } catch (error) {
-      this.logger.error(`Error generating embedding for model ${params.model}:`, error);
+      this.logger.error(
+        `Error generating embedding for model ${params.model}:`,
+        error,
+      );
       res.status(500).json({
         error: error,
-      })
+      });
     }
   }
 
   async getEmbList(res: Response): Promise<void> {
     try {
       const models = await this.openai.models.list();
-      const embeddingModels = models.data.filter(model => (model.object as string) === "embedding");
+      const embeddingModels = models.data.filter(
+        model => (model.object as string) === 'embedding',
+      );
 
       res.json({ models: embeddingModels });
       this.logger.log(`Fetched ${embeddingModels.length} embedding models.`);
     } catch (error) {
       this.logger.error('Error fetching models:', error);
-      res.status(500).json({ error: 'Error fetching models', message: error.message });
+      res
+        .status(500)
+        .json({ error: 'Error fetching models', message: error.message });
     }
   }
 }
