@@ -3,7 +3,7 @@ import { BuilderContext } from 'src/build-system/context';
 import { BuildSequence } from '../types';
 import * as fs from 'fs';
 import * as path from 'path';
-import { writeToFile } from './utils';
+import { objectToMarkdown, writeToFile } from './utils';
 import { BuildMonitor } from '../monitor';
 
 describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> Frontend_File_struct -> Frontend_File_arch -> BackendCodeGenerator', () => {
@@ -28,7 +28,7 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
           nodes: [
             {
               id: 'op:PROJECT::STATE:SETUP',
-              name: 'set up project folders',
+              name: 'Project Folders Setup',
             },
           ],
         },
@@ -39,7 +39,7 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
           nodes: [
             {
               id: 'op:PRD',
-              name: 'PRD Generation Node',
+              name: 'Project Requirements Document Node',
             },
           ],
         },
@@ -67,7 +67,7 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
             },
             {
               id: 'op:UX:DATAMAP:DOC',
-              name: 'UX Data Map Document Node',
+              name: 'UX DataMap Document Node',
               requires: ['op:UX:SMD'],
             },
           ],
@@ -84,7 +84,7 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
             },
             {
               id: 'op:FILE:STRUCT',
-              name: 'file structure generation',
+              name: 'File Structure Generation',
               requires: ['op:UX:SMD', 'op:UX:DATAMAP:DOC'],
               options: {
                 projectPart: 'frontend',
@@ -104,7 +104,7 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
             },
             {
               id: 'op:FILE:ARCH',
-              name: 'File_Arch',
+              name: 'File Arch',
               requires: ['op:FILE:STRUCT', 'op:UX:DATAMAP:DOC'],
             },
             {
@@ -190,16 +190,26 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
         for (const node of step.nodes) {
           const resultData = await context.getNodeData(node.id);
           const nodeMetrics = stepMetrics?.nodeMetrics.get(node.id);
+
           if (resultData) {
-            writeToFile(logFolderPath, `${node.name}`, resultData);
+            const content =
+              typeof resultData === 'object'
+                ? objectToMarkdown(resultData)
+                : resultData;
+
+            writeToFile(logFolderPath, `${node.name}`, content);
           } else {
             console.error(
               `  Error: Handler ${node.name} failed to produce result data`,
             );
-            writeToFile(logFolderPath, `${node.name}-error`, {
-              error: 'No result data',
-              metrics: nodeMetrics,
-            });
+            writeToFile(
+              logFolderPath,
+              `${node.name}-error`,
+              objectToMarkdown({
+                error: 'No result data',
+                metrics: nodeMetrics,
+              }),
+            );
           }
         }
       }

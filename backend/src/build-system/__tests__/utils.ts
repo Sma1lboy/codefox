@@ -47,3 +47,38 @@ export const formatContent = (data: string | object): string => {
     return String(data);
   }
 };
+
+export function objectToMarkdown(obj: any, depth = 1): string {
+  if (!obj || typeof obj !== 'object') {
+    return String(obj);
+  }
+
+  let markdown = '';
+  const prefix = '#'.repeat(depth);
+
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === null || value === undefined) {
+      continue;
+    }
+
+    markdown += `${prefix} ${key}\n`;
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      markdown += objectToMarkdown(value, depth + 1);
+    } else if (Array.isArray(value)) {
+      markdown +=
+        value
+          .map((item) => {
+            if (typeof item === 'object') {
+              return objectToMarkdown(item, depth + 1);
+            }
+            return String(item);
+          })
+          .join('\n') + '\n';
+    } else {
+      markdown += `${value}\n`;
+    }
+    markdown += '\n';
+  }
+
+  return markdown;
+}

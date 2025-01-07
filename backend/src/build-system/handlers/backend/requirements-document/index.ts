@@ -5,6 +5,7 @@ import {
   generateBackendOverviewPrompt,
 } from './prompt';
 import { Logger } from '@nestjs/common';
+import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 
 type BackendRequirementResult = {
   overview: string;
@@ -31,7 +32,6 @@ export class BackendRequirementHandler
   ): Promise<BuildResult<BackendRequirementResult>> {
     this.logger.log('Generating Backend Requirements Document...');
 
-    // Retrieve backend configuration from context
     const language = context.getGlobalContext('language') || 'javascript';
     const framework = context.getGlobalContext('framework') || 'express';
     const packages = context.getGlobalContext('packages') || {};
@@ -96,7 +96,7 @@ export class BackendRequirementHandler
     return {
       success: true,
       data: {
-        overview: backendOverview,
+        overview: removeCodeBlockFences(backendOverview),
         // TODO: consider remove implementation
         implementation: '',
         config: {
