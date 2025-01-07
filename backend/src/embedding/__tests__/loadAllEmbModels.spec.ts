@@ -30,8 +30,6 @@ describe('testing embedding provider', () => {
       documents,
     );
   }, 6000000);
-
-  
 });
 
 afterAll(() => {

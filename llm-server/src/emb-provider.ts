@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { openAIEmbProvider } from './embedding/openai-embedding-provider';
-import { LlamaModelProvider } from './model/llama-model-provider';  // 如果支持Llama模型
+import { LlamaModelProvider } from './model/llama-model-provider'; // 如果支持Llama模型
 import { Logger } from '@nestjs/common';
 import {
   ModelProviderType,
@@ -43,9 +43,9 @@ export class EmbeddingModelProvider {
   private createModelProvider(type: ModelProviderType): EmbeddingProvider {
     switch (type) {
       case 'openai':
-        return new openAIEmbProvider({apiKey: process.env.OPEN_API_KEY});
+        return new openAIEmbProvider({ apiKey: process.env.OPEN_API_KEY });
       // case 'llama':
-      //  
+      //
       //   // return new LlamaModelProvider();
       default:
         throw new Error(`Unsupported embedding model provider type: ${type}`);
@@ -66,7 +66,7 @@ export class EmbeddingModelProvider {
   }
 
   async generateEmbeddingResponse(
-    params: GenerateMessageParams, 
+    params: GenerateMessageParams,
     res: Response,
   ): Promise<void> {
     this.ensureInitialized();
@@ -100,7 +100,9 @@ export class EmbeddingModelProvider {
 
   private ensureInitialized(): void {
     if (!this.initialized) {
-      throw new Error('Embedding provider not initialized. Call initialize() first.');
+      throw new Error(
+        'Embedding provider not initialized. Call initialize() first.',
+      );
     }
   }
 
