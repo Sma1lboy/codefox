@@ -118,7 +118,6 @@ export class ConfigLoader {
     }
 
     this.logger.log(ConfigLoader.config);
-
   }
 
   get<T>(path?: string): T {
