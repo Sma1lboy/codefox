@@ -1,5 +1,5 @@
 export const generateFrontEndCodePrompt = (
-  sitemapDoc: string,
+  sitemapStruct: string,
   uxDatamapDoc: string,
   backendRequirementDoc: string,
   currentFile: string,
@@ -12,7 +12,7 @@ export const generateFrontEndCodePrompt = (
   
   Based on following inputs:
 
-   - Sitemap Documentation: ${sitemapDoc}
+   - Sitemap Structure: ${sitemapStruct}
    - UX Datamap Documentation: ${uxDatamapDoc}
    - Backend Requirement Documentation: ${backendRequirementDoc}
    - Current File: ${currentFile}
@@ -62,7 +62,7 @@ export const generateFrontEndCodePrompt = (
 };
 
 export function generateCSSPrompt(
-  sitemapDoc: string,
+  sitemapStruct: string,
   uxDatamapDoc: string,
   fileName: string,
   directDependencies: string,
@@ -72,7 +72,7 @@ export function generateCSSPrompt(
   You are an expert CSS developer. Generate valid, production-ready CSS for the file "${fileName}".
 
     ## Context
-    - Sitemap Documentation: ${sitemapDoc}
+    - Sitemap Strucutrue: ${sitemapStruct}
     - UX Datamap Documentation: ${uxDatamapDoc}
 
     - Direct Dependencies (if any and may include references to other styles or partials):

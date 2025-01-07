@@ -40,7 +40,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     this.logger.log('Generating Frontend Code...');
 
     // 1. Retrieve the necessary input from context
-    const sitemapDoc = context.getNodeData('op:UX:SMD');
+    const sitemapStruct = context.getNodeData('op:UX:SMS');
     const uxDataMapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
     const backendRequirementDoc = context.getNodeData('op:BACKEND:REQ');
     const fileArchDoc = context.getNodeData('op:FILE:ARCH');
@@ -102,7 +102,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
 
       if (extension === 'css') {
         frontendCodePrompt = generateCSSPrompt(
-          sitemapDoc,
+          sitemapStruct,
           uxDataMapDoc,
           file,
           directDependencies,
@@ -111,7 +111,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       } else {
         // Generate the prompt
         frontendCodePrompt = generateFrontEndCodePrompt(
-          sitemapDoc,
+          sitemapStruct,
           uxDataMapDoc,
           backendRequirementDoc.overview,
           file,
