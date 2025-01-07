@@ -8,13 +8,13 @@ export class OpenAIEmbProvider {
   private static instance: OpenAIEmbProvider;
   private openAi: OpenAI;
   static openAi: any;
-  static getInstance(){
-    if(this.instance){
+  static getInstance() {
+    if (this.instance) {
       return this.instance;
     }
     return new OpenAIEmbProvider();
   }
-  constructor(){
+  constructor() {
     this.openAi = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
@@ -30,10 +30,12 @@ export class OpenAIEmbProvider {
     return embedding.data[0].embedding;
   }
 
-  async getEmbList() : Promise<any>{
+  async getEmbList(): Promise<any> {
     try {
       const models = await this.openAi.models.list();
-      const modelList = Object.values(models).filter((model) => model.object === 'embedding');
+      const modelList = Object.values(models).filter(
+        (model) => model.object === 'embedding',
+      );
       this.logger.log(`Models fetched: ${models.data.length}`);
       return modelList;
     } catch (error) {
