@@ -3,6 +3,7 @@ import { BuilderContext } from 'src/build-system/context';
 import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
+import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 
 // UXSMS: UX Sitemap Structure
 export class UXSitemapStructureHandler implements BuildHandler<string> {
@@ -30,16 +31,14 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
       'web', // TODO: Change platform dynamically if necessary
     );
 
-    const uxStructureContent = await context.model.chatSync(
-      {
-        content: prompt,
-      },
-      'gpt-4o-mini',
-    );
+    const uxStructureContent = await context.model.chatSync({
+      model: 'gpt-4o-mini',
+      messages: [{ content: prompt, role: 'system' }],
+    });
 
     return {
       success: true,
-      data: uxStructureContent,
+      data: removeCodeBlockFences(uxStructureContent),
     };
   }
 }
@@ -87,10 +86,10 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
         'web', // TODO: Replace with dynamic platform if necessary
       );
 
-      const refinedContent = await modelProvider.chatSync(
-        { content: prompt },
-        'gpt-4o-mini',
-      );
+      const refinedContent = await modelProvider.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: prompt, role: 'system' }],
+      });
 
       refinedSections.push({
         title: section.title,
@@ -107,7 +106,7 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
 
     return {
       success: true,
-      data: refinedDocument,
+      data: removeCodeBlockFences(refinedDocument),
     };
   }
 

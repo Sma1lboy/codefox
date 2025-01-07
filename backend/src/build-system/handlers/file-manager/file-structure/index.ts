@@ -2,6 +2,7 @@ import { BuildHandler, BuildOpts, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
+import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 
 /**
  * FileStructureHandler is responsible for generating the project's file and folder structure
@@ -78,12 +79,10 @@ export class FileStructureHandler implements BuildHandler<string> {
     let fileStructureContent: string;
     try {
       // Invoke the language model to generate the file structure content
-      fileStructureContent = await context.model.chatSync(
-        {
-          content: prompt,
-        },
-        'gpt-4o-mini', // Specify the model variant as needed
-      );
+      fileStructureContent = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: prompt, role: 'system' }],
+      });
     } catch (error) {
       this.logger.error('Error during file structure generation:', error);
       return {
@@ -118,12 +117,10 @@ export class FileStructureHandler implements BuildHandler<string> {
 
       try {
         // Invoke the language model to convert tree structure to JSON
-        fileStructureJsonContent = await context.model.chatSync(
-          {
-            content: convertToJsonPrompt,
-          },
-          'gpt-4o-mini', // Specify the model variant as needed
-        );
+        fileStructureJsonContent = await context.model.chatSync({
+          model: 'gpt-4o-mini',
+          messages: [{ content: convertToJsonPrompt, role: 'system' }],
+        });
       } catch (error) {
         this.logger.error('Error during tree to JSON conversion:', error);
         return {
@@ -156,7 +153,7 @@ export class FileStructureHandler implements BuildHandler<string> {
 
     return {
       success: true,
-      data: fileStructureJsonContent,
+      data: removeCodeBlockFences(fileStructureJsonContent),
     };
   }
 }

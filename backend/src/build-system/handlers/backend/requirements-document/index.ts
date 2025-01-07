@@ -54,12 +54,10 @@ export class BackendRequirementHandler
 
     let backendOverview: string;
     try {
-      backendOverview = await context.model.chatSync(
-        {
-          content: overviewPrompt,
-        },
-        'gpt-4o-mini',
-      );
+      backendOverview = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: overviewPrompt, role: 'system' }],
+      });
     } catch (error) {
       this.logger.error('Error generating backend overview:', error);
       return {
