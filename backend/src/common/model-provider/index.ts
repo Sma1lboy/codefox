@@ -1,11 +1,8 @@
 import { Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { Subject, Subscription } from 'rxjs';
-
-export interface ModelProviderConfig {
-  endpoint: string;
-  defaultModel?: string;
-}
+import { MessageRole } from 'src/chat/message.model';
+import { ChatInput, ModelProviderConfig } from './types';
 
 export interface CustomAsyncIterableIterator<T> extends AsyncIterator<T> {
   [Symbol.asyncIterator](): AsyncIterableIterator<T>;
@@ -54,11 +51,7 @@ export class ModelProvider {
   /**
    * Synchronous chat method that returns a complete response
    */
-  async chatSync(
-    input: ChatInput | string,
-    model: string,
-    chatId?: string,
-  ): Promise<string> {
+  async chatSync(input: ChatInput): Promise<string> {
     while (this.currentRequests >= this.concurrentLimit) {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
@@ -69,8 +62,6 @@ export class ModelProvider {
     this.logger.debug(
       `Starting request ${requestId}. Active: ${this.currentRequests}/${this.concurrentLimit}`,
     );
-
-    const normalizedInput = this.normalizeChatInput(input);
 
     let resolvePromise: (value: string) => void;
     let rejectPromise: (error: any) => void;
@@ -113,7 +104,7 @@ export class ModelProvider {
       promise,
     });
 
-    this.processRequest(normalizedInput, model, chatId, requestId, stream);
+    this.processRequest(input, requestId, stream);
     return promise;
   }
 
@@ -121,11 +112,11 @@ export class ModelProvider {
    * Stream-based chat method that returns an async iterator
    */
   chat(
-    input: ChatInput | string,
+    input: ChatInput,
     model: string,
     chatId?: string,
   ): CustomAsyncIterableIterator<ChatCompletionChunk> {
-    const chatInput = this.normalizeChatInput(input);
+    const chatInput = this.normalizeChatInput(input, model);
     const selectedModel = model || this.config.defaultModel;
 
     if (!selectedModel) {
@@ -156,8 +147,6 @@ export class ModelProvider {
 
   private async processRequest(
     input: ChatInput,
-    model: string,
-    chatId: string | undefined,
     requestId: string,
     stream: Subject<any>,
   ) {
@@ -165,14 +154,10 @@ export class ModelProvider {
 
     try {
       const response = await this.httpService
-        .post(
-          `${this.config.endpoint}/chat/completion`,
-          this.createRequestPayload(input, model, chatId),
-          {
-            responseType: 'stream',
-            headers: { 'Content-Type': 'application/json' },
-          },
-        )
+        .post(`${this.config.endpoint}/chat/completion`, input, {
+          responseType: 'stream',
+          headers: { 'Content-Type': 'application/json' },
+        })
         .toPromise();
 
       let buffer = '';
@@ -434,8 +419,21 @@ export class ModelProvider {
     );
   }
 
-  private normalizeChatInput(input: ChatInput | string): ChatInput {
-    return typeof input === 'string' ? { content: input } : input;
+  private normalizeChatInput(
+    input: ChatInput | string,
+    model: string,
+  ): ChatInput {
+    return typeof input === 'string'
+      ? {
+          model,
+          messages: [
+            {
+              content: input,
+              role: MessageRole.User,
+            },
+          ],
+        }
+      : input;
   }
 
   public async fetchModelsName() {
@@ -466,17 +464,6 @@ export class ChatCompletionChunk {
   systemFingerprint: string | null;
   choices: ChatCompletionChoice[];
   status: StreamStatus;
-}
-
-export interface ChatInput {
-  content: string;
-  attachments?: Array<{
-    type: string;
-    content: string | Buffer;
-    name?: string;
-  }>;
-  contextLength?: number;
-  temperature?: number;
 }
 
 class ChatCompletionDelta {

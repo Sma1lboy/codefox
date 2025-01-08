@@ -11,10 +11,6 @@ import {
 import { ModelProvider } from './model/model-provider';
 
 export interface ChatMessageInput {
-  content: string;
-}
-
-export interface ChatMessage {
   role: string;
   content: string;
 }
@@ -26,7 +22,7 @@ export class LLMProvider {
   private initialized: boolean = false;
 
   constructor(
-    modelProviderType: ModelProviderType = 'llama',
+    modelProviderType: ModelProviderType = 'openai',
     options: ModelProviderOptions = {},
   ) {
     this.options = {

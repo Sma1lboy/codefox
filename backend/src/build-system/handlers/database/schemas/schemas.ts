@@ -6,12 +6,12 @@ import {
   getSchemaFileExtension,
   getSupportedDatabaseTypes,
   isSupportedDatabaseType,
-  parseGenerateTag,
 } from '../../../utils/database-utils';
 import { writeFile } from 'fs-extra';
 import { prompts } from './prompt';
 import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
+import { formatResponse } from 'src/build-system/utils/strings';
 
 /**
  * DBSchemaHandler is responsible for generating database schemas based on provided requirements.
@@ -70,10 +70,10 @@ export class DBSchemaHandler implements BuildHandler {
 
     let dbAnalysis: string;
     try {
-      const analysisResponse = await context.model.chatSync(
-        { content: analysisPrompt },
-        'gpt-4o-mini',
-      );
+      const analysisResponse = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: analysisPrompt, role: 'system' }],
+      });
       dbAnalysis = analysisResponse;
     } catch (error) {
       this.logger.error('Error during database requirements analysis:', error);
@@ -103,11 +103,11 @@ export class DBSchemaHandler implements BuildHandler {
 
     let schemaContent: string;
     try {
-      const schemaResponse = await context.model.chatSync(
-        { content: schemaPrompt },
-        'gpt-4o-mini',
-      );
-      schemaContent = parseGenerateTag(schemaResponse);
+      const schemaResponse = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: schemaPrompt, role: 'system' }],
+      });
+      schemaContent = formatResponse(schemaResponse);
     } catch (error) {
       this.logger.error('Error during schema generation:', error);
       return {
@@ -126,11 +126,11 @@ export class DBSchemaHandler implements BuildHandler {
 
     let validationResponse: string;
     try {
-      const validationResult = await context.model.chatSync(
-        { content: validationPrompt },
-        'gpt-4o-mini',
-      );
-      validationResponse = parseGenerateTag(validationResult);
+      const validationResult = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: validationPrompt, role: 'system' }],
+      });
+      validationResponse = formatResponse(validationResult);
     } catch (error) {
       this.logger.error('Error during schema validation:', error);
       return {

@@ -3,11 +3,9 @@ import { BuilderContext } from 'src/build-system/context';
 import { Logger } from '@nestjs/common';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import {
-  parseGenerateTag,
-  removeCodeBlockFences,
-} from 'src/build-system/utils/database-utils';
+
 import { prompts } from './prompt';
+import { formatResponse } from 'src/build-system/utils/strings';
 
 // TODO(Sma1lboy): we need a better way to handle handler pre requirements
 /**
@@ -50,10 +48,10 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
         backendCode,
       );
 
-      const modelResponse = await context.model.chatSync(
-        { content: filePrompt },
-        'gpt-4o-mini',
-      );
+      const modelResponse = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: filePrompt, role: 'system' }],
+      });
 
       const filesToModify = this.parseFileIdentificationResponse(modelResponse);
       this.logger.log(`Files to modify: ${filesToModify.join(', ')}`);
@@ -75,13 +73,13 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
           );
 
           // Get modified content
-          const response = await context.model.chatSync(
-            { content: modificationPrompt },
-            'gpt-4o-mini',
-          );
+          const response = await context.model.chatSync({
+            model: 'gpt-4o-mini',
+            messages: [{ content: modificationPrompt, role: 'system' }],
+          });
 
           // Extract new content and write back
-          const newContent = removeCodeBlockFences(parseGenerateTag(response));
+          const newContent = formatResponse(response);
           await fs.writeFile(filePath, newContent, 'utf-8');
 
           this.logger.log(`Successfully modified ${fileName}`);
@@ -105,9 +103,7 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
   }
 
   parseFileIdentificationResponse(response: string): string[] {
-    const parsedResponse = JSON.parse(
-      removeCodeBlockFences(parseGenerateTag(response)),
-    );
+    const parsedResponse = JSON.parse(formatResponse(response));
     this.logger.log('Parsed file identification response:', parsedResponse);
     return parsedResponse;
   }

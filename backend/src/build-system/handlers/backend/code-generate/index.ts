@@ -2,12 +2,13 @@ import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { generateBackendCodePrompt } from './prompt';
 import { Logger } from '@nestjs/common';
-import {
-  parseGenerateTag,
-  removeCodeBlockFences,
-} from 'src/build-system/utils/database-utils';
 import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
+import {
+  formatResponse,
+  parseGenerateTag,
+  removeCodeBlockFences,
+} from 'src/build-system/utils/strings';
 
 /**
  * BackendCodeHandler is responsible for generating the backend codebase
@@ -62,16 +63,12 @@ export class BackendCodeHandler implements BuildHandler<string> {
 
     try {
       // Invoke the language model to generate the backend code
-      const modelResponse = await context.model.chatSync(
-        {
-          content: backendCodePrompt,
-        },
-        'gpt-4o-mini', // Specify the model variant as needed
-      );
+      const modelResponse = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: backendCodePrompt, role: 'system' }],
+      });
 
-      const generatedCode = removeCodeBlockFences(
-        parseGenerateTag(modelResponse),
-      );
+      const generatedCode = formatResponse(modelResponse);
 
       const uuid = context.getGlobalContext('projectUUID');
       saveGeneratedCode(path.join(uuid, 'backend', currentFile), generatedCode);
