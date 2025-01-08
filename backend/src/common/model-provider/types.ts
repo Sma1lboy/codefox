@@ -1,5 +1,3 @@
-import { MessageRole } from 'src/chat/message.model';
-
 export interface ModelChatStreamConfig {
   endpoint: string;
   model?: string;
@@ -15,7 +13,7 @@ export interface ModelProviderConfig {
 
 export interface MessageInterface {
   content: string;
-  role: MessageRole;
+  role: 'user' | 'assistant' | 'system';
 }
 
 export interface ChatInput {

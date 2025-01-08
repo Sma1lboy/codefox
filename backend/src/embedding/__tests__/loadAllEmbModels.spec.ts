@@ -1,6 +1,6 @@
 import { localEmbProvider } from '../local-embedding-provider';
 import { EmbeddingModel } from 'fastembed';
-import { openAIEmbProvider } from '../../../../llm-server/src/embedding/openai-embedding-provider';
+import { OpenAIEmbProvider } from '../openai-embbeding-provider';
 const originalIsArray = Array.isArray;
 
 Array.isArray = jest.fn((type: any): type is any[] => {
@@ -16,7 +16,8 @@ Array.isArray = jest.fn((type: any): type is any[] => {
 }) as unknown as (arg: any) => arg is any[];
 
 describe('testing embedding provider', () => {
-  it('should load real models specified in config', async () => {
+  let openAiProvider: OpenAIEmbProvider;
+  it('should load real local models specified in config', async () => {
     const documents = [
       'passage: Hello, World!',
       'query: Hello, World!',
@@ -31,7 +32,14 @@ describe('testing embedding provider', () => {
     );
   }, 6000000);
 
-  
+  it('should load real openai embedding models', async () => {
+    openAiProvider = OpenAIEmbProvider.getInstance();
+    const res = await openAiProvider.generateEmbResponse(
+      'text-embedding-3-small',
+      'test document',
+    );
+    console.log(res);
+  }, 6000000);
 });
 
 afterAll(() => {

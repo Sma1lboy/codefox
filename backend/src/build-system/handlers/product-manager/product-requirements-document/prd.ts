@@ -3,6 +3,7 @@ import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
 import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
+import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 
 export class PRDHandler implements BuildHandler {
   readonly id = 'op:PRD';
@@ -29,14 +30,16 @@ export class PRDHandler implements BuildHandler {
 
     return {
       success: true,
-      data: prdContent,
+      data: removeCodeBlockFences(prdContent),
     };
   }
 
   private async generatePRDFromLLM(prompt: string): Promise<string> {
     const modelProvider = ModelProvider.getInstance();
-    const model = 'gpt-4o-mini';
-    const prdContent = await modelProvider.chatSync({ content: prompt }, model);
+    const prdContent = await modelProvider.chatSync({
+      model: 'gpt-4o-mini',
+      messages: [{ content: prompt, role: 'system' }],
+    });
     this.logger.log('Received full PRD content from LLM server.');
     return prdContent;
   }
