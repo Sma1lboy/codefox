@@ -1,6 +1,7 @@
 import * as path from 'path';
-import { existsSync, mkdirSync, promises } from 'fs-extra';
-import { cwd } from 'process';
+
+import { existsSync, mkdirSync, promises, writeFileSync } from 'fs-extra';
+import { ConfigType } from '@nestjs/config';
 
 // Constants for base directories
 const APP_NAME = 'codefox';
@@ -29,15 +30,28 @@ const ensureDir = (dirPath: string): string => {
 export const getRootDir = (): string => ensureDir(ROOT_DIR);
 
 // Configuration Paths
-export const getConfigDir = (): string =>
-  ensureDir(path.join(getRootDir(), 'config'));
-export const getConfigPath = (configName: string): string =>
-  path.join(getConfigDir(), `${configName}.json`);
+export const getConfigPath = (): string => {
+  const rootPath = ensureDir(path.join(getRootDir()));
+  return path.join(rootPath, 'config.json');
+};
+
+export const getModelStatusPath = (): string => {
+  const rootPath = ensureDir(getRootDir());
+  const modelStatusPath = path.join(rootPath, `model-status.json`);
+  writeFileSync(modelStatusPath, '{}');
+  return modelStatusPath;
+};
 
 // Models Directory
 export const getModelsDir = (): string =>
   ensureDir(path.join(getRootDir(), 'models'));
 export const getModelPath = (modelName: string): string =>
+  path.join(getModelsDir(), modelName);
+
+// Embs Directory
+export const getEmbDir = (): string =>
+  ensureDir(path.join(getRootDir(), 'embeddings'));
+export const getEmbPath = (modelName: string): string =>
   path.join(getModelsDir(), modelName);
 
 // Project-Specific Paths

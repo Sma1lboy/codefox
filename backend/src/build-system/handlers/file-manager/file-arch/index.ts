@@ -2,12 +2,11 @@ import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { generateFileArchPrompt } from './prompt';
 import { Logger } from '@nestjs/common';
-import { extractJsonFromMarkdown } from 'src/build-system/utils/strings';
-import { VirtualDirectory } from '../../../virtual-dir';
 import {
-  buildDependencyGraph,
-  validateAgainstVirtualDirectory,
-} from '../../../utils/file_generator_util';
+  extractJsonFromText,
+  formatResponse,
+  parseGenerateTag,
+} from 'src/build-system/utils/strings';
 
 export class FileArchGenerateHandler implements BuildHandler<string> {
   readonly id = 'op:FILE:ARCH';
@@ -35,7 +34,7 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     }
 
     const prompt = generateFileArchPrompt(
-      JSON.stringify(fileStructure, null, 2),
+      JSON.stringify(fileStructure.jsonFileStructure, null, 2),
       JSON.stringify(datamapDoc, null, 2),
     );
 
@@ -46,6 +45,7 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     let retry = 0;
     const retryChances = 2;
 
+    // TODO: not ideal, should implement a better global retry mechanism
     while (!successBuild) {
       if (retry > retryChances) {
         this.logger.error(
@@ -59,18 +59,17 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
         };
       }
       try {
-        fileArchContent = await context.model.chatSync(
-          {
-            content: prompt,
-          },
-          'gpt-4o-mini',
-        );
+        fileArchContent = await context.model.chatSync({
+          model: 'gpt-4o-mini',
+          messages: [{ content: prompt, role: 'system' }],
+        });
 
-        // validation test
-        jsonData = extractJsonFromMarkdown(fileArchContent);
+        const tagContent = parseGenerateTag(fileArchContent);
+        jsonData = extractJsonFromText(tagContent);
+
         if (jsonData == null) {
           retry += 1;
-          this.logger.error('Extract Json From Markdown fail');
+          this.logger.error('Extract Json From Text fail');
           continue;
         }
 
@@ -102,7 +101,7 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     this.logger.log('File architecture document generated successfully');
     return {
       success: true,
-      data: fileArchContent,
+      data: formatResponse(fileArchContent),
     };
   }
 

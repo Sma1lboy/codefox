@@ -3,6 +3,7 @@ import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
 import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
+import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 
 export class UXSMDHandler implements BuildHandler<string> {
   readonly id = 'op:UX:SMD';
@@ -33,7 +34,7 @@ export class UXSMDHandler implements BuildHandler<string> {
     // Return the generated document
     return {
       success: true,
-      data: uxsmdContent,
+      data: removeCodeBlockFences(uxsmdContent),
     };
   }
 
@@ -41,12 +42,10 @@ export class UXSMDHandler implements BuildHandler<string> {
     const modelProvider = ModelProvider.getInstance();
     const model = 'gpt-4o-mini';
 
-    const uxsmdContent = await modelProvider.chatSync(
-      {
-        content: prompt,
-      },
+    const uxsmdContent = await modelProvider.chatSync({
       model,
-    );
+      messages: [{ content: prompt, role: 'system' }],
+    });
 
     this.logger.log('Received full UXSMD content from LLM server.');
     return uxsmdContent;

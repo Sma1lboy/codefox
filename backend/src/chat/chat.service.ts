@@ -16,11 +16,11 @@ import { ModelProvider } from 'src/common/model-provider';
 @Injectable()
 export class ChatProxyService {
   private readonly logger = new Logger('ChatProxyService');
-  private models: ModelProvider;
 
-  constructor(private httpService: HttpService) {
-    this.models = ModelProvider.getInstance();
-  }
+  constructor(
+    private httpService: HttpService,
+    private readonly models: ModelProvider,
+  ) {}
 
   streamChat(
     input: ChatInput,
@@ -40,30 +40,30 @@ export class ChatService {
     private chatRepository: Repository<Chat>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    @InjectRepository(Message)
-    private messageRepository: Repository<Message>,
   ) {}
 
   async getChatHistory(chatId: string): Promise<Message[]> {
     const chat = await this.chatRepository.findOne({
       where: { id: chatId, isDeleted: false },
-      relations: ['messages'],
     });
+    console.log(chat);
 
     if (chat && chat.messages) {
       // Sort messages by createdAt in ascending order
       chat.messages = chat.messages
         .filter((message) => !message.isDeleted)
-        .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+        .map((message) => {
+          if (!(message.createdAt instanceof Date)) {
+            message.createdAt = new Date(message.createdAt);
+          }
+          return message;
+        })
+        .sort((a, b) => {
+          return a.createdAt.getTime() - b.createdAt.getTime();
+        });
     }
 
     return chat ? chat.messages : [];
-  }
-
-  async getMessageById(messageId: string): Promise<Message> {
-    return await this.messageRepository.findOne({
-      where: { id: messageId, isDeleted: false },
-    });
   }
 
   async getChatDetails(chatId: string): Promise<Chat> {
@@ -111,12 +111,6 @@ export class ChatService {
       chat.isActive = false;
       await this.chatRepository.save(chat);
 
-      // Soft delete all associated messages
-      await this.messageRepository.update(
-        { chat: { id: chatId }, isDeleted: false },
-        { isDeleted: true, isActive: false },
-      );
-
       return true;
     }
     return false;
@@ -125,13 +119,8 @@ export class ChatService {
   async clearChatHistory(chatId: string): Promise<boolean> {
     const chat = await this.chatRepository.findOne({
       where: { id: chatId, isDeleted: false },
-      relations: ['messages'],
     });
     if (chat) {
-      await this.messageRepository.update(
-        { chat: { id: chatId }, isDeleted: false },
-        { isDeleted: true, isActive: false },
-      );
       chat.updatedAt = new Date();
       await this.chatRepository.save(chat);
       return true;
@@ -161,21 +150,24 @@ export class ChatService {
   ): Promise<Message> {
     // Find the chat instance
     const chat = await this.chatRepository.findOne({ where: { id: chatId } });
+
+    const message = {
+      id: `${chat.id}/${chat.messages.length}`,
+      content: messageContent,
+      role: role,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isActive: true,
+      isDeleted: false,
+    };
     //if the chat id not exist, dont save this messages
     if (!chat) {
       return null;
     }
-
-    // Create a new message associated with the chat
-    const message = this.messageRepository.create({
-      content: messageContent,
-      role: role,
-      chat,
-      createdAt: new Date(),
-    });
-
+    chat.messages.push(message);
+    await this.chatRepository.save(chat);
     // Save the message to the database
-    return await this.messageRepository.save(message);
+    return message;
   }
 
   async getChatWithUser(chatId: string): Promise<Chat | null> {
