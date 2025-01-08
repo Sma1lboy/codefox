@@ -31,7 +31,7 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     }
 
     const prompt = generateFileArchPrompt(
-      JSON.stringify(fileStructure, null, 2),
+      JSON.stringify(fileStructure.jsonFileStructure, null, 2),
       JSON.stringify(datamapDoc, null, 2),
     );
 

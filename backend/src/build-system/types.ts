@@ -74,6 +74,19 @@ export interface BuildHandler<T = any> {
   run(context: BuilderContext, opts?: BuildOpts): Promise<BuildResult<T>>;
 }
 
+export interface FileStructOutput {
+  /**
+   * Tree File Structure:
+   * src:
+   *  - components:
+   */
+  fileStructure: string;
+  /**
+   * Example JSON file structure:
+   *
+   */
+  jsonFileStructure: string;
+}
 export interface NodeOutputMap {
   'op:DATABASE_REQ': string;
   'op:PRD': string;
@@ -81,7 +94,7 @@ export interface NodeOutputMap {
   'op:UX:SMS': string;
   'op:UX:SMS:LEVEL2': string;
   'op:UX:DATAMAP:DOC': string;
-  'op:FILE:STRUCT': string;
+  'op:FILE:STRUCT': FileStructOutput;
   'op:FILE:ARCH': string;
   'op:FILE:GENERATE': string;
   'op:BACKEND:CODE': string;
