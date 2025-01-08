@@ -13,6 +13,7 @@ import { FileGeneratorHandler } from './handlers/file-manager/file-generate';
 import { BackendRequirementHandler } from './handlers/backend/requirements-document';
 import { BackendFileReviewHandler } from './handlers/backend/file-review/file-review';
 import { Level2UXSitemapStructureHandler } from './handlers/ux/sitemap-structure/sms-page';
+import { FrontendCodeHandler } from './handlers/frontend-code-generate';
 
 /**
  * Manages the registration and retrieval of build handlers in the system
