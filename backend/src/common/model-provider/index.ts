@@ -79,7 +79,10 @@ export class ModelProvider {
       next: (chunk) => {
         if (chunk?.choices?.[0]?.delta?.content) {
           content += chunk.choices[0].delta.content;
-        }
+        };
+        if(chunk?.content){
+          content += chunk?.content
+        };
       },
       error: (error) => {
         if (!isCompleted) {
@@ -104,7 +107,7 @@ export class ModelProvider {
       promise,
     });
 
-    this.processRequest(input, requestId, stream);
+    await this.processRequest(input, requestId, stream);
     return promise;
   }
 
@@ -159,21 +162,21 @@ export class ModelProvider {
           headers: { 'Content-Type': 'application/json' },
         })
         .toPromise();
-
       let buffer = '';
 
       response.data.on('data', (chunk: Buffer) => {
         if (isCompleted) return;
 
         buffer += chunk.toString();
-
         let newlineIndex;
         while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
           const line = buffer.slice(0, newlineIndex).trim();
           buffer = buffer.slice(newlineIndex + 1);
 
           if (line.startsWith('data: ')) {
+            
             const jsonStr = line.slice(6);
+            
             if (jsonStr === '[DONE]') {
               if (!isCompleted) {
                 isCompleted = true;
@@ -186,6 +189,7 @@ export class ModelProvider {
             }
             try {
               const parsed = JSON.parse(jsonStr);
+              
               if (!isCompleted) {
                 stream.next(parsed);
               }

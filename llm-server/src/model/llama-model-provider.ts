@@ -1,7 +1,9 @@
 import { Response } from 'express';
 import path from 'path';
 import {
+  ChatHistoryItem,
   getLlama,
+  LlamaChat,
   LlamaChatSession,
   LlamaContext,
   LlamaModel,
@@ -17,13 +19,15 @@ export class LlamaModelProvider extends ModelProvider {
   private readonly logger = new Logger(LlamaModelProvider.name);
   private model: LlamaModel;
   private context: LlamaContext;
+  
+  private session: LlamaChat;
 
   async initialize(): Promise<void> {
     this.logger.log('Initializing Llama model...');
     const llama = await getLlama();
     const modelPath = path.join(
       process.cwd(),
-      'models',
+      '../.codefox/models',
       'LLAMA-3.2-1B-OpenHermes2.5.IQ4_XS.gguf',
     );
     this.logger.log(`Loading model from path: ${modelPath}`);
@@ -33,6 +37,10 @@ export class LlamaModelProvider extends ModelProvider {
     this.logger.log('Model loaded successfully.');
     this.context = await this.model.createContext();
     this.logger.log('Llama model initialized and context created.');
+    
+    this.session = new LlamaChat({
+      contextSequence: this.context.getSequence(),
+    });
   }
 
   async generateStreamingResponse(
@@ -40,9 +48,13 @@ export class LlamaModelProvider extends ModelProvider {
     res: Response,
   ): Promise<void> {
     this.logger.log('Generating streaming response with Llama...');
-    const session = new LlamaChatSession({
-      contextSequence: this.context.getSequence(),
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
     });
+    
+    
     this.logger.log('LlamaChatSession created.');
     let chunkCount = 0;
     const startTime = Date.now();
@@ -51,19 +63,45 @@ export class LlamaModelProvider extends ModelProvider {
     const systemPrompt = systemPrompts['codefox-basic']?.systemPrompt || '';
 
     const allMessage = [{ role: 'system', content: systemPrompt }, ...messages];
-
     // Convert messages array to a single formatted string for Llama
-    const formattedPrompt = allMessage
-      .map(({ role, content }) => `${role}: ${content}`)
-      .join('\n');
-
+    let chatHistory = this.session.chatWrapper.generateInitialChatHistory({
+      systemPrompt
+    });
+    
+    let modelResponse = [];
+    messages.map(({role, content}) =>{
+      let pushedContent = () => {
+        if (role === "assistant") {
+          modelResponse.push(content);
+          return;
+      } else if (role === "user") {
+        return {
+          type: "user",
+          text: content,
+        } as ChatHistoryItem;
+      } else {
+        return {
+          type: "system", 
+          text: content,
+        } as ChatHistoryItem;
+      }
+      }
+      if (pushedContent()) chatHistory.push(pushedContent() as ChatHistoryItem);
+    })
+    chatHistory.push({
+      type: "model",
+      response: modelResponse
+    });
+    console.log(chatHistory);
     try {
-      await session.prompt(formattedPrompt, {
+      await this.session.generateResponse(chatHistory, {
+        
+        customStopTriggers: ["\n"," diligently"],
         onTextChunk: chunk => {
           chunkCount++;
           this.logger.debug(`Sending chunk #${chunkCount}: "${chunk}"`);
           res.write(
-            `data: ${JSON.stringify({ role: 'bot', content: chunk })}\n\n`,
+            `data: ${JSON.stringify({content: chunk})}\n\n`,
           );
         },
       });
