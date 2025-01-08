@@ -1,13 +1,9 @@
 // Define and export the system prompts object
 export const prompts = {
-  generateUxsmdrompt: (
-    projectName: string,
-    prdDocument: string,
-    platform: string,
-  ): string => {
-    return `You are an expert frontend develper and ux designer. Your job is to analyze and expand upon the details provided, generating a Full UX Sitemap Document based on the following inputs:  
+  generateUxsmdrompt: (projectName: string, platform: string): string => {
+    return `You are an expert frontend develper and ux designer. Your job is to analyze and expand upon the details provided, generating a Full UX Sitemap Document based on the following inputs provide later:  
        - Project name: ${projectName}
-       - product requirements document: ${prdDocument}
+       - product requirements document: {}
        - Platform: ${platform}
 
     Follow these rules as a guide to ensure clarity and completeness in your UX Sitemap Document.

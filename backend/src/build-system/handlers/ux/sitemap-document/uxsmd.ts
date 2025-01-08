@@ -4,6 +4,7 @@ import { prompts } from './prompt';
 import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { MessageInterface } from 'src/common/model-provider/types';
 
 export class UXSMDHandler implements BuildHandler<string> {
   readonly id = 'op:UX:SMD';
@@ -19,14 +20,10 @@ export class UXSMDHandler implements BuildHandler<string> {
     const prdContent = context.getNodeData('op:PRD');
 
     // Generate the prompt dynamically
-    const prompt = prompts.generateUxsmdrompt(
-      projectName,
-      prdContent,
-      platform,
-    );
+    const prompt = prompts.generateUxsmdrompt(projectName, platform);
 
     // Send the prompt to the LLM server and process the response
-    const uxsmdContent = await this.generateUXSMDFromLLM(prompt);
+    const uxsmdContent = await this.generateUXSMDFromLLM(prompt, prdContent);
 
     // Store the generated document in the context
     context.setGlobalContext('uxsmdDocument', uxsmdContent);
@@ -38,13 +35,35 @@ export class UXSMDHandler implements BuildHandler<string> {
     };
   }
 
-  private async generateUXSMDFromLLM(prompt: string): Promise<string> {
+  private async generateUXSMDFromLLM(
+    prompt: string,
+    prdContent: string,
+  ): Promise<string> {
+    const messages: MessageInterface[] = [
+      {
+        role: 'system',
+        content: prompt,
+      },
+      {
+        role: 'user',
+        content: `This is the product requiremnt ${prdContent}`,
+      },
+      {
+        role: 'assistant',
+        content: 'Here is the initial UX Sitemap Document...',
+      },
+      {
+        role: 'user',
+        content: 'Add more detail about user flows.',
+      },
+    ];
+
     const modelProvider = ModelProvider.getInstance();
     const model = 'gpt-4o-mini';
 
     const uxsmdContent = await modelProvider.chatSync({
       model,
-      messages: [{ content: prompt, role: 'system' }],
+      messages,
     });
 
     this.logger.log('Received full UXSMD content from LLM server.');
