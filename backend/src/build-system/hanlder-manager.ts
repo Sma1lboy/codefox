@@ -3,7 +3,7 @@ import { BuildHandler } from './types';
 import { PRDHandler } from './handlers/product-manager/product-requirements-document/prd';
 import { UXSitemapStructureHandler } from './handlers/ux/sitemap-structure';
 import { UXDatamapHandler } from './handlers/ux/datamap';
-import { UXSMDHandler } from './handlers/ux/sitemap-document/uxsmd';
+import { UXSMDHandler } from './handlers/ux/sitemap-document';
 import { FileStructureHandler } from './handlers/file-manager/file-structure';
 import { FileArchGenerateHandler } from './handlers/file-manager/file-arch';
 import { BackendCodeHandler } from './handlers/backend/code-generate';
