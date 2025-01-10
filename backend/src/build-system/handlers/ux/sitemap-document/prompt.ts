@@ -16,29 +16,28 @@ export const prompts = {
 
 <gen_page>
 P#. [Page Name]
-
     URL Path: /[path]
     Description: [Brief description of page purpose]
     Parent Page: [Parent page if nested, or "None" if top-level]
     Access Level: [e.g., Public/Private/Admin]
 
-#### Core Components
-
+#### Core Components 
     C#.1. [Component Name]
-        Type: [Layout/Interactive/Display/etc.]
-        Purpose: [What does it do?]
-        States: [Possible states, e.g., Default/Hovered/Expanded...]
-        Interactions: [User interactions]
+    - Definition: Core Components are **distinct UI elements** or **functional blocks** on the page that have a clear, identifiable role. Each component must include:
+       1. **Type** (Layout, Interactive, Display, Input, etc.)
+       2. **Purpose** (What does it do for the user or the interface?)
+       3. **States** (Possible UI states: Default, Hover, Clicked, Expanded, Loading, etc.)
+       4. **Interactions** (User actions or system responses: clicking, hovering, dragging, scrolling, etc.)
 
 #### Features & Functionality
-
+    - Focus on how these features tie back to user stories, and which **Core Components** are used to achieve them
     F#.1. [Feature Name]
         Description: [Brief feature description]
         User Stories: [Related user stories from PRD]
         Components Used: [Which components implement this feature?]
 
 #### Page-Specific User Flows
-
+    Step-by-step sequences describing user interactions and system responses
     Flow #. [Flow Name]
         [Step 1]
         [Step 2]

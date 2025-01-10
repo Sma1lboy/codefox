@@ -46,15 +46,22 @@ export class UXSMDHandler implements BuildHandler<string> {
       },
       {
         role: 'user',
-        content: `This is the product requiremnt ${prdContent}`,
-      },
-      {
-        role: 'assistant',
-        content: 'Here is the initial UX Sitemap Document...',
+        content: `
+          Here is the Product Requirements Document (PRD):
+
+          ${prdContent}
+
+          Please generate the Full UX Sitemap Document now, focusing on MVP features but ensuring each page (especially Home) has enough detail to be functional.`,
       },
       {
         role: 'user',
-        content: 'Add more detail about user flows.',
+        content: `Check if you meet all PRD details, add more pages, and details if needed. Focus on MVP (Minimum Viable Product).`,
+      },
+      {
+        role: 'user',
+        content: `Please add more detail about the Core Components in each <gen_page>. 
+      Focus on step-by-step actions the user takes, and any alternative paths mentioned in the PRD. 
+      Also, expand on how these components interrelate to the page's primary features.`,
       },
     ];
 
