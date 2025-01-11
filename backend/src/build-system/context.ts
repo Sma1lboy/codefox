@@ -1,5 +1,6 @@
 import {
   BuildExecutionState,
+  BuildHandler,
   BuildNode,
   BuildResult,
   BuildSequence,
@@ -12,6 +13,7 @@ import { ModelProvider } from 'src/common/model-provider';
 import { v4 as uuidv4 } from 'uuid';
 import { BuildMonitor } from './monitor';
 import { BuildHandlerManager } from './hanlder-manager';
+import { RetryHandler } from './retry-handler';
 
 /**
  * Global data keys used throughout the build process
@@ -50,11 +52,14 @@ export class BuilderContext {
     waiting: new Set(),
   };
 
+  
+  private globalPromises: Set<Promise<any>> = new Set();
   private logger: Logger;
   private globalContext: Map<GlobalDataKeys | string, any> = new Map();
   private nodeData: Map<string, any> = new Map();
 
   private handlerManager: BuildHandlerManager;
+  private retryHandler : RetryHandler;
   private monitor: BuildMonitor;
   public model: ModelProvider;
   public virtualDirectory: VirtualDirectory;
@@ -63,6 +68,7 @@ export class BuilderContext {
     private sequence: BuildSequence,
     id: string,
   ) {
+    this.retryHandler = RetryHandler.getInstance();
     this.handlerManager = BuildHandlerManager.getInstance();
     this.model = ModelProvider.getInstance();
     this.monitor = BuildMonitor.getInstance();
@@ -169,6 +175,7 @@ export class BuilderContext {
                 currentStep.id,
               );
 
+              let res;
               try {
                 if (!this.canExecute(node.id)) {
                   this.logger.log(
@@ -185,8 +192,9 @@ export class BuilderContext {
                 }
 
                 this.logger.log(`Executing node ${node.id} in parallel batch`);
-                await this.executeNodeById(node.id);
-
+                res = this.executeNodeById(node.id);
+                this.globalPromises.add(res);
+                
                 this.monitor.endNodeExecution(
                   node.id,
                   this.sequence.id,
@@ -204,9 +212,10 @@ export class BuilderContext {
                 throw error;
               }
             });
-
+            
             await Promise.all(nodeExecutionPromises);
-
+            
+            await Promise.all(this.globalPromises);
             const activeModelPromises = this.model.getAllActivePromises();
             if (activeModelPromises.length > 0) {
               this.logger.debug(
@@ -336,7 +345,7 @@ export class BuilderContext {
       this.executionState.completed.has(nodeId) ||
       this.executionState.pending.has(nodeId)
     ) {
-      this.logger.debug(`Node ${nodeId} is already completed or pending.`);
+      //this.logger.debug(`Node ${nodeId} is already completed or pending.`);
       return false;
     }
 
@@ -361,6 +370,7 @@ export class BuilderContext {
       this.executionState.pending.add(nodeId);
       const result = await this.invokeNodeHandler<T>(node);
       this.executionState.completed.add(nodeId);
+      this.logger.log(`${nodeId} is completed`);
       this.executionState.pending.delete(nodeId);
 
       this.nodeData.set(node.id, result.data);
@@ -438,10 +448,20 @@ export class BuilderContext {
 
   private async invokeNodeHandler<T>(node: BuildNode): Promise<BuildResult<T>> {
     const handler = this.handlerManager.getHandler(node.id);
+    this.logger.log(`sovling ${node.id}`);
     if (!handler) {
       throw new Error(`No handler found for node: ${node.id}`);
     }
-
-    return handler.run(this, node.options);
+    try{
+      return await handler.run(this, node.options);
+    }catch(e){
+      this.logger.error(`retrying ${node.id}`);
+      const result = await this.retryHandler.retryMethod(e, (node) => this.invokeNodeHandler(node), [node]);
+      if (result === undefined) {
+        throw e;
+      }
+      return result as unknown as BuildResult<T>;
+    }
   }
+
 }
