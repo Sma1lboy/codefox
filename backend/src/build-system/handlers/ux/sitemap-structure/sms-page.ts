@@ -1,47 +1,10 @@
-import { BuildHandler, BuildResult } from 'src/build-system/types';
+import { Logger } from '@nestjs/common';
 import { BuilderContext } from 'src/build-system/context';
+import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
-import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 
-// UXSMS: UX Sitemap Structure
-export class UXSitemapStructureHandler implements BuildHandler<string> {
-  readonly id = 'op:UX:SMS';
-  readonly logger = new Logger('UXSitemapStructureHandler');
-
-  async run(context: BuilderContext): Promise<BuildResult<string>> {
-    this.logger.log('Generating UX Structure Document...');
-
-    // extract relevant data from the context
-    const projectName =
-      context.getGlobalContext('projectName') || 'Default Project Name';
-    const sitemapDoc = context.getNodeData('op:UX:SMD');
-
-    if (!sitemapDoc) {
-      return {
-        success: false,
-        error: new Error('Missing required parameters: sitemap'),
-      };
-    }
-
-    const prompt = prompts.generateUXSiteMapStructrePrompt(
-      projectName,
-      sitemapDoc,
-      'web', // TODO: Change platform dynamically if necessary
-    );
-
-    const uxStructureContent = await context.model.chatSync({
-      model: 'gpt-4o-mini',
-      messages: [{ content: prompt, role: 'system' }],
-    });
-
-    return {
-      success: true,
-      data: uxStructureContent,
-    };
-  }
-}
 export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
   readonly id = 'op:UX:SMS:LEVEL2';
   readonly logger = new Logger('Level2UXSitemapStructureHandler');
@@ -106,7 +69,7 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
 
     return {
       success: true,
-      data: refinedDocument,
+      data: removeCodeBlockFences(refinedDocument),
     };
   }
 

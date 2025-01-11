@@ -34,13 +34,12 @@ describe('testing embedding provider', () => {
 
   it('should load real openai embedding models', async () => {
     openAiProvider = OpenAIEmbProvider.getInstance();
-    let res = await openAiProvider.generateEmbResponse(
-     'text-embedding-3-small','test document'
+    const res = await openAiProvider.generateEmbResponse(
+      'text-embedding-3-small',
+      'test document',
     );
     console.log(res);
   }, 6000000);
-
-  
 });
 
 afterAll(() => {

@@ -1,10 +1,9 @@
-/* eslint-disable no-console */
-import { BuilderContext } from 'src/build-system/context';
 import { BuildSequence } from '../types';
 import * as fs from 'fs';
 import * as path from 'path';
-import { objectToMarkdown, writeToFile } from './utils';
+import { writeToFile } from './utils';
 import { BuildMonitor } from '../monitor';
+import { BuilderContext } from '../context';
 
 describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> Frontend_File_struct -> Frontend_File_arch -> BackendCodeGenerator', () => {
   // Generate a unique folder with a timestamp
@@ -89,6 +88,11 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
               options: {
                 projectPart: 'frontend',
               },
+            },
+            {
+              id: 'op:UX:SMS:LEVEL2',
+              name: 'Level 2 UX Sitemap Structure Node details',
+              requires: ['op:UX:SMS'],
             },
           ],
         },
@@ -190,26 +194,16 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
         for (const node of step.nodes) {
           const resultData = await context.getNodeData(node.id);
           const nodeMetrics = stepMetrics?.nodeMetrics.get(node.id);
-
           if (resultData) {
-            const content =
-              typeof resultData === 'object'
-                ? objectToMarkdown(resultData)
-                : resultData;
-
-            writeToFile(logFolderPath, `${node.name}`, content);
+            writeToFile(logFolderPath, `${node.name}`, resultData);
           } else {
             console.error(
               `  Error: Handler ${node.name} failed to produce result data`,
             );
-            writeToFile(
-              logFolderPath,
-              `${node.name}-error`,
-              objectToMarkdown({
-                error: 'No result data',
-                metrics: nodeMetrics,
-              }),
-            );
+            writeToFile(logFolderPath, `${node.name}-error`, {
+              error: 'No result data',
+              metrics: nodeMetrics,
+            });
           }
         }
       }

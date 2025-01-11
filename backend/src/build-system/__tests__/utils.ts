@@ -1,6 +1,9 @@
 import { Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
+import { BuildSequence } from '../types';
+import { BuilderContext } from '../context';
+import { BuildMonitor } from '../monitor';
 /**
  * Utility function to write content to a file in a clean, formatted manner.
  * @param handlerName - The name of the handler.
@@ -81,4 +84,135 @@ export function objectToMarkdown(obj: any, depth = 1): string {
   }
 
   return markdown;
+}
+
+interface TestResult {
+  success: boolean;
+  logFolderPath: string;
+  error?: Error;
+  metrics?: any;
+}
+
+export async function executeBuildSequence(
+  name: string,
+  sequence: BuildSequence,
+): Promise<TestResult> {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const logFolderPath = `./logs/${name.toLocaleLowerCase().replaceAll(' ', '-')}-${timestamp}`;
+  fs.mkdirSync(logFolderPath, { recursive: true });
+
+  const context = new BuilderContext(sequence, 'test-env');
+  const monitor = BuildMonitor.getInstance();
+
+  try {
+    console.time('Total Execution Time');
+    await context.execute();
+    console.timeEnd('Total Execution Time');
+
+    const monitorReport = monitor.generateTextReport(sequence.id);
+    fs.writeFileSync(
+      path.join(logFolderPath, 'execution-metrics.txt'),
+      monitorReport,
+      'utf8',
+    );
+
+    const sequenceMetrics = monitor.getSequenceMetrics(sequence.id);
+    if (sequenceMetrics) {
+      const metricsJson = {
+        totalDuration: `${sequenceMetrics.duration}ms`,
+        successRate: `${sequenceMetrics.successRate.toFixed(2)}%`,
+        totalSteps: sequenceMetrics.totalSteps,
+        completedSteps: sequenceMetrics.completedSteps,
+        failedSteps: sequenceMetrics.failedSteps,
+        totalNodes: sequenceMetrics.totalNodes,
+        startTime: new Date(sequenceMetrics.startTime).toISOString(),
+        endTime: new Date(sequenceMetrics.endTime).toISOString(),
+      };
+
+      fs.writeFileSync(
+        path.join(logFolderPath, 'metrics.json'),
+        JSON.stringify(metricsJson, null, 2),
+        'utf8',
+      );
+
+      console.log('\nSequence Metrics:');
+      console.table(metricsJson);
+    }
+
+    for (const step of sequence.steps) {
+      const stepMetrics = sequenceMetrics?.stepMetrics.get(step.id);
+      for (const node of step.nodes) {
+        const resultData = await context.getNodeData(node.id);
+        const nodeMetrics = stepMetrics?.nodeMetrics.get(node.id);
+
+        if (resultData) {
+          const content =
+            typeof resultData === 'object'
+              ? objectToMarkdown(resultData)
+              : resultData;
+          writeToFile(logFolderPath, `${node.name}`, content);
+        } else {
+          console.error(
+            `Error: Handler ${node.name} failed to produce result data`,
+          );
+          writeToFile(
+            logFolderPath,
+            `${node.name}-error`,
+            objectToMarkdown({
+              error: 'No result data',
+              metrics: nodeMetrics,
+            }),
+          );
+        }
+      }
+    }
+
+    const summary = {
+      timestamp: new Date().toISOString(),
+      sequenceId: sequence.id,
+      sequenceName: sequence.name,
+      totalExecutionTime: `${sequenceMetrics?.duration}ms`,
+      successRate: `${sequenceMetrics?.successRate.toFixed(2)}%`,
+      nodesExecuted: sequenceMetrics?.totalNodes,
+      completedNodes: sequenceMetrics?.stepMetrics.size,
+      logFolder: logFolderPath,
+    };
+
+    fs.writeFileSync(
+      path.join(logFolderPath, 'execution-summary.json'),
+      JSON.stringify(summary, null, 2),
+      'utf8',
+    );
+
+    return {
+      success: true,
+      logFolderPath,
+      metrics: sequenceMetrics,
+    };
+  } catch (error) {
+    const errorReport = {
+      error: {
+        message: error.message,
+        stack: error.stack,
+      },
+      metrics: monitor.getSequenceMetrics(sequence.id),
+      timestamp: new Date().toISOString(),
+    };
+
+    fs.writeFileSync(
+      path.join(logFolderPath, 'error-with-metrics.json'),
+      JSON.stringify(errorReport, null, 2),
+      'utf8',
+    );
+
+    console.error('\nError during sequence execution:');
+    console.error(error);
+
+    return {
+      success: false,
+      logFolderPath,
+      error: error as Error,
+      metrics: monitor.getSequenceMetrics(sequence.id),
+    };
+  }
 }

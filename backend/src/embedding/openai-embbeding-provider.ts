@@ -30,10 +30,12 @@ export class OpenAIEmbProvider {
     return embedding.data[0].embedding;
   }
 
-  async getEmbList() : Promise<any>{
+  async getEmbList(): Promise<any> {
     try {
       const models = await this.openAi.models.list();
-      const modelList = Object.values(models).filter((model) => model.object === 'embedding');
+      const modelList = Object.values(models).filter(
+        (model) => model.object === 'embedding',
+      );
       this.logger.log(`Models fetched: ${models.data.length}`);
       return modelList;
     } catch (error) {
