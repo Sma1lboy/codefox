@@ -8,13 +8,13 @@ export class OpenAIEmbProvider {
   private static instance: OpenAIEmbProvider;
   private openAi: OpenAI;
   static openAi: any;
-  static getInstance(){
-    if(this.instance){
+  static getInstance() {
+    if (this.instance) {
       return this.instance;
     }
     return new OpenAIEmbProvider();
   }
-  constructor(){
+  constructor() {
     this.openAi = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
