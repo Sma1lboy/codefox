@@ -4,77 +4,61 @@ export const prompts = {
     return `You are an expert frontend develper and ux designer. Your job is to analyze and expand upon the details provided, generating a Full UX Sitemap Document based on the following inputs:  
        - Project name: ${projectName}
        - Platform: ${platform}
-       - Product Requirements Document: (Provided by the user next)
-       - Goal: MVP (Minimum Viable Product)
+       - product requirements document: (Provided by the user next)
 
     Follow these rules as a guide to ensure clarity and completeness in your UX Sitemap Document.
-   Output Requirements:
-    Use plain text (no Markdown).
-    Begin with <UXSitemap> and end with </UXSitemap>.
-    Within <UXSitemap>, generate multiple <gen_page> blocks, one for each page.
-    Each <gen_page> must follow this structure exactly:
-
-<gen_page>
-P#. [Page Name]
-    URL Path: /[path]
-    Description: [Brief description of page purpose]
-    Parent Page: [Parent page if nested, or "None" if top-level]
-    Access Level: [e.g., Public/Private/Admin]
-
-#### Core Components 
-    C#.1. [Component Name]
-    - Definition: Core Components are **distinct UI elements** or **functional blocks** on the page that have a clear, identifiable role. Each component must include:
-       1. **Type** (Layout, Interactive, Display, Input, etc.)
-       2. **Purpose** (What does it do for the user or the interface?)
-       3. **States** (Possible UI states: Default, Hover, Clicked, Expanded, Loading, etc.)
-       4. **Interactions** (User actions or system responses: clicking, hovering, dragging, scrolling, etc.)
-
-#### Features & Functionality
-    - Focus on how these features tie back to user stories, and which **Core Components** are used to achieve them
-    F#.1. [Feature Name]
-        Description: [Brief feature description]
-        User Stories: [Related user stories from PRD]
-        Components Used: [Which components implement this feature?]
-
-#### Page-Specific User Flows
-    Step-by-step sequences describing user interactions and system responses
-    Flow #. [Flow Name]
-        [Step 1]
-        [Step 2]
-</gen_page>
-
-4. **Number** pages sequentially (P1., P2., etc.).  
-5. **Number** each component and feature sequentially within that page (C1.1, C1.2, F1.1, F1.2, etc.).  
-6. Thoroughly parse the PRD to include:
-   - **All** pages.
-   - **All** features, functionalities, user stories, and flows.
-   - **All** major/minor navigation and user journeys.
+    1. Your reply should start with : "<UXSitemap>" and end with "</UXSitemap> ", Use plain text (no Markdown).
+    2. Use <page_gen> tags for each main page or section within the sitemap.
+    3. Use <user_journeys_gen> tags for whole User Journeys
+    4. **Comprehensive Analysis**: Thoroughly parse the PRD to identify all core features, functionalities, and user stories.
+    - Focus on creating a hierarchical sitemap that covers each major section, with relevant sub-sections, pages, and key interactions.
+    - Ensure all primary and secondary user journeys identified in the PRD are clearly reflected.
 
 
-Sitemap Coverage
+    5. **Page and Navigation Structure**: Break down the sitemap into main sections, sub sections, and individual screens.
+    - Identify all main and nested pages.
+    - **Main Sections**: Identify primary sections (e.g., Home, User Account, Product Catalog) based on project requirements.
+    - **Sub Sections**: Include sub-sections under each main section (e.g., "Profile" and "Order History" under "User Account").
+    - **Screens and Interactions**: List specific screens and interactions that users encounter within each flow.
 
-    Comprehensive Analysis:
-        Capture all features, functionalities, and user stories.
-        Represent all primary and secondary user flows.
+    6. **Detailed User Journeys**:
+    - For every user story described in the PRD, map out the step-by-step navigation path.
+    - Highlight sequences (e.g., 1. Home > 1.1. Explore > 1.1.1. Product Details).
 
-    Page & Navigation Structure:
-        Identify all main and nested pages.
-        Ensure clear parent-child relationships.
+    7. **Thorough Coverage**:
+    - Ensure the sitemap is fully comprehensive. If any feature from the PRD is not covered or any user journey is missing, add it to the sitemap.
+    - Consider the target audience and validate that all expected navigation flows and screens meet user needs.
 
-    Detailed User Journeys:
-        Provide step-by-step navigational flows unique to each page.
+    8. Ask Your self:
+        - Am I cover all the product requirement document?
+        - Am I Cover all the gloabal UI?
+        - Am I Cover all unique UI?
+        - Am I cover all the view that expect by user?
+        - what is all the details about UI?
+        - Am I cover all the cases? Is the final result 100% complete?
 
-    Thorough Coverage:
-        Verify every requirement, global UI element, unique UI, and user expectation from the PRD is addressed.
-        No user flow or screen should be missing.
+    9. Example output:
+        <UXSitemap>
+        <page_gen>
+        N. [Main Section Title]
+            N.1. [Sub-section Title]
+                N.1.1. [Further Detail]
+                N.1.2. [Further Detail]
+            N.2. [Another Sub-section Title]
+        </page_gen>
 
-Self-Check Before Submitting
+        <page_gen>
+        2. [Another Main Section]
+            2.1 [Sub-section Title]
+            ...
+        </page_gen>
 
-    Have you accounted for all PRD details?
-    Have you included all major and minor pages/screens?
-    Have you detailed each page's components, features, and flows completely?
+        <user_journeys_gen>
+            Highlight sequences for user journey
+        </user_journeys_gen>
 
-Deliver a single XML-like document that strictly follows the structure above. Start with <UXSitemap> and close with </UXSitemap>, containing one <gen_page> block per page.
-    `;
+        </UXSitemap>
+ 
+Remeber your result will be directly be use in the deveolpment. Make sure is 100% complete.`;
   },
 };
