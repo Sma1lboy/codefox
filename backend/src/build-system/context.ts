@@ -163,7 +163,7 @@ export class BuilderContext {
           const batch = executableNodes.slice(i, i + concurrencyLimit);
 
           try {
-            const nodeExecutionPromises = batch.map(async (node) => {
+            batch.map(async (node) => {
               if (this.executionState.completed.has(node.id)) {
                 return;
               }
@@ -212,8 +212,6 @@ export class BuilderContext {
                 throw error;
               }
             });
-            
-            await Promise.all(nodeExecutionPromises);
             
             await Promise.all(this.globalPromises);
             const activeModelPromises = this.model.getAllActivePromises();
