@@ -41,6 +41,7 @@ export const prompts = {
         <UXSitemap>
         <page_gen>
         N. [Main Section Title]
+            Description: (Brief description of page purpose)
             N.1. [Sub-section Title]
                 N.1.1. [Further Detail]
                 N.1.2. [Further Detail]
@@ -49,6 +50,7 @@ export const prompts = {
 
         <page_gen>
         2. [Another Main Section]
+            Description: (Brief description of page purpose)
             2.1 [Sub-section Title]
             ...
         </page_gen>

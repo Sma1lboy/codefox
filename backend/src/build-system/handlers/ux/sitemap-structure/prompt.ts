@@ -13,7 +13,7 @@ export const prompts = {
    Output Requirements:
     Use plain text (no Markdown).
     Begin with <UXSitemap> and end with </UXSitemap>.
-    Within <UXSitemap>, generate multiple <gen_page> blocks, one for each page.
+    Within <UXSitemap>, start with <global_comp>, and generate multiple <gen_page> blocks, one for each page.
     Each <gen_page> must follow this structure exactly:
 
 <gen_page>
@@ -82,6 +82,7 @@ P#. [Page Name]
      1. One or more \`<global_comp>\` blocks (if relevant).
      2. Multiple \`<page_gen>\` blocks (one per page).
    - Each \`<global_comp>\` or \`<page_gen>\` should include all relevant fields as stated above.
+   **Number** Goal Component in <global_comp> tag sequentially (G1., G2., etc.).
    **Number** pages sequentially (P1., P2., etc.).
    **Number** each component and feature sequentially within that page (C1.1, C1.2, F1.1, F1.2, etc.).
     Thoroughly parse the PRD to include:
