@@ -12,14 +12,11 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
   readonly id = 'op:FILE:ARCH';
   private readonly logger: Logger = new Logger('FileArchGenerateHandler');
 
-  // TODO: adding page by page analysis
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Generating File Architecture Document...');
 
     const fileStructure = context.getNodeData('op:FILE:STRUCT');
-    // TODO: here should use datamap struct
     const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
-    // TODO: adding page by page analysis
 
     if (!fileStructure || !datamapDoc) {
       return {
@@ -35,63 +32,44 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
       JSON.stringify(datamapDoc, null, 2),
     );
 
-    // fileArchContent generate
-    let successBuild = false;
-    let fileArchContent = null;
-    let jsonData = null;
-    let retry = 0;
-    const retryChances = 2;
+    try {
+      const fileArchContent = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: prompt, role: 'system' }],
+      });
 
-    // TODO: not ideal, should implement a better global retry mechanism
-    while (!successBuild) {
-      if (retry > retryChances) {
-        this.logger.error(
-          'Failed to build virtual directory after multiple attempts',
-        );
+      const tagContent = parseGenerateTag(fileArchContent);
+      const jsonData = extractJsonFromText(tagContent);
+
+      if (jsonData == null) {
+        this.logger.error('Failed to extract JSON from text');
         return {
           success: false,
-          error: new Error(
-            'Failed to build virtual directory after multiple attempts',
-          ),
+          error: new Error('Failed to extract JSON from text'),
         };
       }
-      try {
-        fileArchContent = await context.model.chatSync({
-          model: 'gpt-4o-mini',
-          messages: [{ content: prompt, role: 'system' }],
-        });
 
-        const tagContent = parseGenerateTag(fileArchContent);
-        jsonData = extractJsonFromText(tagContent);
-
-        if (jsonData == null) {
-          retry += 1;
-          this.logger.error('Extract Json From Text fail');
-          continue;
-        }
-
-        // Validate the extracted JSON data
-        if (!this.validateJsonData(jsonData)) {
-          retry += 1;
-          this.logger.error('File architecture JSON validation failed');
-          continue;
-        }
-
-        successBuild = true;
-      } catch (error) {
-        this.logger.error('Error during JSON extraction or validation', error);
+      // Validate the extracted JSON data
+      if (!this.validateJsonData(jsonData)) {
+        this.logger.error('File architecture JSON validation failed');
         return {
           success: false,
-          error: new Error('Error during JSON extraction or validation'),
+          error: new Error('File architecture JSON validation failed'),
         };
       }
+
+      this.logger.log('File architecture document generated successfully');
+      return {
+        success: true,
+        data: formatResponse(fileArchContent),
+      };
+    } catch (error) {
+      this.logger.error('Error during JSON extraction or validation', error);
+      return {
+        success: false,
+        error: new Error('Error during JSON extraction or validation'),
+      };
     }
-
-    this.logger.log('File architecture document generated successfully');
-    return {
-      success: true,
-      data: formatResponse(fileArchContent),
-    };
   }
 
   /**
