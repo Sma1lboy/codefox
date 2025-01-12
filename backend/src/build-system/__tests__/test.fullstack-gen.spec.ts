@@ -1,7 +1,7 @@
 import { BuildSequence } from '../types';
 import * as fs from 'fs';
 import * as path from 'path';
-import { writeToFile } from './utils';
+import { executeBuildSequence, writeToFile } from './utils';
 import { BuildMonitor } from '../monitor';
 import { BuilderContext } from '../context';
 
@@ -239,14 +239,10 @@ describe('Sequence: PRD -> UXSD -> UXSS -> UXDD -> DATABASE_REQ -> DBSchemas -> 
         JSON.stringify(errorReport, null, 2),
         'utf8',
       );
-
-      console.error('\nError during sequence execution:');
-      console.error(error);
-      console.error(
-        '\nError report saved to:',
-        path.join(logFolderPath, 'error-with-metrics.json'),
-      );
-      throw new Error('Sequence execution failed.');
+      const result = await executeBuildSequence('fullstack-code-gen', sequence);
+      expect(result.success).toBe(true);
+      expect(result.metrics).toBeDefined();
+      console.log(`Logs saved to: ${result.logFolderPath}`);
     }
   }, 300000); // Timeout set to 10 minutes
 });
