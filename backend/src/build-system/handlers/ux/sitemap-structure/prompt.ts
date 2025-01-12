@@ -16,7 +16,7 @@ export const prompts = {
     Within <UXSitemap>, start with <global_comp>, and generate multiple <gen_page> blocks, one for each page.
     Each <gen_page> must follow this structure exactly:
 
-<gen_page>
+<gen_page id="[id]">
 P#. [Page Name]
     URL Path: /[path]
     Description: [Brief description of page purpose]
@@ -55,6 +55,7 @@ P#. [Page Name]
 3. **Page Definitions**:
    - Use \`<page_gen>\` tags to define each individual page or screen from the Sitemap Documentation.
    - For each \`<page_gen>\`, provide:
+     - **Page id** a unique page id.
      - **Page name** (P#).  
      - **URL Path**: The route or path used to access this page.  
      - **Description**: Explain the purpose of the page, the users goal, and how it supports the user journey.  
@@ -122,8 +123,6 @@ Deliver a single XML-like document that strictly follows the structure above. St
   },
   generateLevel2UXSiteMapStructrePrompt: (
     projectName: string,
-    UXStructure: string,
-    sitemapDoc: string,
     platform: string,
   ): string => {
     return `You are an expert UX Designer. 
@@ -132,10 +131,10 @@ Deliver a single XML-like document that strictly follows the structure above. St
     The output should address all aspects of user interaction, content layout, based on the following inputs:
   
          - Project name: ${projectName}
-         - Sitemap Documentation: ${sitemapDoc}
-         - UX Structure document: ${UXStructure}
          - Platform: ${platform}
-  
+         - Sitemap Documentation: (Provided by the user next)
+         - UX SiteMap Structure: (Provided by the user next)
+         
   Follow these guidelines to analyze requirements from a UX perspective:
   
   ### Instructions and Rules:
@@ -154,7 +153,7 @@ Deliver a single XML-like document that strictly follows the structure above. St
         List all components (e.g., headers, buttons, sidebars) and explain their role on the page.
         Include specific interactions and behaviors for each element.
     Content Display:
-        Identify the information that needs to be visible on the page and why it’s essential for the user.
+        Identify the information that needs to be visible on the page and why it's essential for the user.
     Navigation and Routes:
         Specify all frontend routes required to navigate to this page.
         Include links or actions that lead to other pages or states.
@@ -183,8 +182,6 @@ Deliver a single XML-like document that strictly follows the structure above. St
      - User journy
      - Element purposes
      - Content that needs to be displayed
-
-  Your reply must start with: "\`\`\`UXStructureMap" and end with "\`\`\`". 
 
   Focus on describing the UX Structure from a user experience perspective. For each page:
   1. What element appear on each page and why

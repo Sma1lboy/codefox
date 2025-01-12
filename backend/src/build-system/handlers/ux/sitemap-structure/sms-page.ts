@@ -4,9 +4,12 @@ import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { MessageInterface } from 'src/common/model-provider/types';
 
-export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
-  readonly id = 'op:UX:SMS:LEVEL2';
+export class UXSitemapStructurePagebyPageHandler
+  implements BuildHandler<string>
+{
+  readonly id = 'op:UX:SMS:PAGEBYPAGE';
   readonly logger = new Logger('Level2UXSitemapStructureHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -44,53 +47,68 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
     for (const section of sections) {
       const prompt = prompts.generateLevel2UXSiteMapStructrePrompt(
         projectName,
-        section.content,
-        sitemapDoc,
         'web', // TODO: Replace with dynamic platform if necessary
       );
 
+      const messages: MessageInterface[] = [
+        {
+          role: 'system',
+          content: prompt,
+        },
+        {
+          role: 'user',
+          content: `
+            Here is the UX Sitemap Documentation (SMD):
+          
+            ${sitemapDoc}
+          
+            Next will provide UX SiteMap Structure`,
+        },
+        {
+          role: 'user',
+          content: `
+            Here is the UX SiteMap Structre Section (SMS):
+          
+            ${section}
+          
+            Please generate the Full UX Sitemap Structre for this section now.`,
+        },
+        {
+          role: 'user',
+          content: `Please add more detail about the Core Components within each <page_gen>.
+            Specifically:
+            - Provide a descriptive name for each Core Component (e.g., “C1.1. SearchBar”).
+            - List possible states (Default, Hover, etc.) and typical user interactions (click, scroll, etc.).
+            - Clarify how these components support user goals and why they exist on that page.`,
+        },
+      ];
+
       const refinedContent = await modelProvider.chatSync({
         model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
+        messages,
       });
 
-      refinedSections.push({
-        title: section.title,
-        content: refinedContent,
-      });
+      refinedSections.push(refinedContent);
     }
 
-    // Combine the refined sections into the final document
-    const refinedDocument = refinedSections
-      .map((section) => `## **${section.title}**\n${section.content}`)
-      .join('\n\n');
+    // Convert refinedSections to a stringD
+    const refinedDocument = `<UXStructureMap>\n${refinedSections.join('\n\n')}\n</UXStructureMap>`;
 
     this.logger.log(refinedDocument);
 
     return {
       success: true,
-      data: removeCodeBlockFences(refinedDocument),
+      data: refinedDocument,
     };
   }
 
   /**
-   * Extracts all sections from a given text.
+   * Extracts all <page_gen> sections as raw strings, including the tags.
    * @param text The UX Structure Document content.
-   * @returns Array of extracted sections with title and content.
+   * @returns Array of extracted sections as full strings.
    */
-  private extractAllSections(
-    text: string,
-  ): Array<{ title: string; content: string }> {
-    const regex = /## \*\*(\d+\.\s.*)\*\*([\s\S]*?)(?=\n## \*\*|$)/g;
-    const sections = [];
-    let match;
-
-    while ((match = regex.exec(text)) !== null) {
-      const title = match[1].trim();
-      const content = match[2].trim();
-      sections.push({ title, content });
-    }
-
-    return sections;
+  private extractAllSections(text: string): string[] {
+    const pageRegex = /<gen_page id="[^"]+">[\s\S]*?<\/gen_page>/g;
+    return text.match(pageRegex) || [];
   }
 }
