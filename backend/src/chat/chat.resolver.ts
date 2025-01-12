@@ -17,8 +17,7 @@ import {
   UpdateChatTitleInput,
 } from './dto/chat.input';
 import { GetUserIdFromToken } from 'src/decorator/get-auth-token.decorator';
-import { Inject, Logger, UseGuards } from '@nestjs/common';
-import { ChatGuard, MessageGuard } from 'src/guard/chat.guard';
+import { Inject, Logger } from '@nestjs/common';
 import { JWTAuth } from 'src/decorator/jwt-auth.decorator';
 import { PubSubEngine } from 'graphql-subscriptions';
 @Resolver('Chat')
@@ -76,7 +75,7 @@ export class ChatResolver {
       await this.chatService.saveMessage(
         input.chatId,
         accumulatedContent,
-        MessageRole.Model,
+        MessageRole.Assistant,
       );
 
       return true;

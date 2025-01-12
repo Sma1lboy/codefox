@@ -1,7 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { EmbeddingModel } from 'fastembed';
-import openai, { OpenAI } from 'openai';
-import { EmbeddingDownloader } from 'src/downloader/embedding-downloader';
+import { OpenAI } from 'openai';
 
 export class OpenAIEmbProvider {
   private logger = new Logger(OpenAIEmbProvider.name);
@@ -26,7 +24,6 @@ export class OpenAIEmbProvider {
       input: message,
       encoding_format: 'float',
     });
-    console.log(embedding.data[0].embedding);
     return embedding.data[0].embedding;
   }
 

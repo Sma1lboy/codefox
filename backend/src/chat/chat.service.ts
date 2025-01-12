@@ -16,16 +16,21 @@ import { ModelProvider } from 'src/common/model-provider';
 @Injectable()
 export class ChatProxyService {
   private readonly logger = new Logger('ChatProxyService');
+  private readonly models: ModelProvider = ModelProvider.getInstance();
 
-  constructor(
-    private httpService: HttpService,
-    private readonly models: ModelProvider,
-  ) {}
+  constructor() {}
 
   streamChat(
     input: ChatInput,
   ): CustomAsyncIterableIterator<ChatCompletionChunk> {
-    return this.models.chat(input.message, input.model, input.chatId);
+    return this.models.chat(
+      {
+        messages: [{ role: MessageRole.User, content: input.message }],
+        model: input.model,
+      },
+      input.model,
+      input.chatId,
+    );
   }
 
   async fetchModelTags(): Promise<any> {
