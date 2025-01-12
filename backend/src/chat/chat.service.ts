@@ -51,7 +51,7 @@ export class ChatService {
     const chat = await this.chatRepository.findOne({
       where: { id: chatId, isDeleted: false },
     });
-    console.log(chat);
+    Logger.log(chat);
 
     if (chat && chat.messages) {
       // Sort messages by createdAt in ascending order

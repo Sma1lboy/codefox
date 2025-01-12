@@ -21,9 +21,9 @@ export enum TaskType {
 export async function downloadAll() {
   await checkAndDownloadAllModels(ConfigType.CHATS);
 
-  console.log('embedding load starts');
+  Logger.log('embedding load starts');
   await checkAndDownloadAllModels(ConfigType.EMBEDDINGS);
-  console.log('embedding load ends');
+  Logger.log('embedding load ends');
 }
 async function downloadModelForType(
   type: ConfigType,
@@ -42,7 +42,7 @@ async function downloadModelForType(
       statusManager.updateStatus(modelName, true);
       logger.log(`Successfully downloaded embedding model: ${modelName}`);
 
-      console.log('embedding load finished');
+      Logger.log('embedding load finished');
     } catch (error) {
       logger.error(
         `Failed to download embedding model ${modelName}:`,

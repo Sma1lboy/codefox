@@ -12,7 +12,7 @@ export class localEmbProvider {
       const embeddings = embeddingModel.embed(message);
 
       for await (const batch of embeddings) {
-        console.log(batch);
+        Logger.log(batch);
       }
     } catch (error) {
       this.logger.log(`error when using ${model} api`);

@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import normalizePath from 'normalize-path';
 import * as path from 'path';
 
@@ -37,7 +38,7 @@ export class VirtualDirectory {
       this.buildTree(structure, this.root);
       return true;
     } catch (error) {
-      console.error('Failed to parse JSON structure:', error);
+      Logger.error('Failed to parse JSON structure:', error);
       return false;
     }
   }

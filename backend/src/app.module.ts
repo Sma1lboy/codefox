@@ -10,8 +10,6 @@ import { ProjectModule } from './project/project.module';
 import { TokenModule } from './token/token.module';
 import { UserModule } from './user/user.module';
 import { InitModule } from './init/init.module';
-import { RolesGuard } from './guard/roles.guard';
-import { MenuGuard } from './guard/menu.guard';
 import { User } from './user/user.model';
 import { AppResolver } from './app.resolver';
 import { APP_INTERCEPTOR } from '@nestjs/core';

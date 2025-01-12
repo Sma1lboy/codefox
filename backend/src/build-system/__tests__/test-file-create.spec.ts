@@ -1,25 +1,26 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import normalizePath from 'normalize-path';
 import { FileGeneratorHandler } from '../handlers/file-manager/file-generate';
+import { Logger } from '@nestjs/common';
+import { isIntegrationTest } from 'src/common/utils';
 
-describe('FileGeneratorHandler', () => {
-  const projectSrcPath = normalizePath(
+(isIntegrationTest ? describe : describe.skip)('FileGeneratorHandler', () => {
+  const projectSrcPath = path.normalize(
     path.join('src', 'build-system', '__tests__', 'test-project'),
   );
 
-  const mdFilePath = normalizePath(
+  const mdFilePath = path.normalize(
     path.join('src', 'build-system', '__tests__', 'file-arch.md'),
   );
 
-  const structMdFilePath = normalizePath(
+  const structMdFilePath = path.normalize(
     path.join('src', 'build-system', '__tests__', 'file-structure-document.md'),
   );
 
   beforeEach(async () => {
     // Ensure the project directory is clean
     await fs.remove(
-      normalizePath(
+      path.normalize(
         path.join('src', 'build-system', '__tests__', 'test-project', 'src'),
       ),
     );
@@ -28,7 +29,7 @@ describe('FileGeneratorHandler', () => {
   afterEach(async () => {
     // Clean up the generated test files
     await fs.remove(
-      normalizePath(
+      path.normalize(
         path.join('src', 'build-system', '__tests__', 'test-project', 'src'),
       ),
     );
@@ -36,11 +37,11 @@ describe('FileGeneratorHandler', () => {
 
   it('should generate files based on file-arch.md', async () => {
     const archMarkdownContent = fs.readFileSync(
-      normalizePath(path.resolve(mdFilePath)),
+      path.normalize(path.resolve(mdFilePath)),
       'utf8',
     );
     const structMarkdownContent = fs.readFileSync(
-      normalizePath(path.resolve(structMdFilePath)),
+      path.normalize(path.resolve(structMdFilePath)),
       'utf8',
     );
 
@@ -52,7 +53,7 @@ describe('FileGeneratorHandler', () => {
       projectSrcPath,
     );
 
-    console.log('File generation result:', result);
+    Logger.log('File generation result:', result);
 
     // Verify that all files exist
     const jsonData = JSON.parse(

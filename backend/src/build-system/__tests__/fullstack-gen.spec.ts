@@ -1,7 +1,8 @@
+import { isIntegrationTest } from 'src/common/utils';
 import { BuildSequence } from '../types';
-import { executeBuildSequence, objectToMarkdown, writeToFile } from './utils';
-
-describe('Build Sequence Test', () => {
+import { executeBuildSequence } from './utils';
+import { Logger } from '@nestjs/common';
+(isIntegrationTest ? describe : describe.skip)('Build Sequence Test', () => {
   it('should execute build sequence successfully', async () => {
     const sequence: BuildSequence = {
       id: 'test-backend-sequence',
@@ -143,6 +144,6 @@ describe('Build Sequence Test', () => {
     const result = await executeBuildSequence('fullstack-code-gen', sequence);
     expect(result.success).toBe(true);
     expect(result.metrics).toBeDefined();
-    console.log(`Logs saved to: ${result.logFolderPath}`);
+    Logger.log(`Logs saved to: ${result.logFolderPath}`);
   }, 300000);
 });

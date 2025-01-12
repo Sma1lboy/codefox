@@ -21,14 +21,14 @@ export class UniversalDownloader {
   async getPipeline(task: string, model: string, path: string): Promise<any> {
     if (isRemoteModel(model)) {
       this.logger.log(`Remote model detected: ${model}, marking as downloaded`);
-      console.log(this.statusManager);
+      Logger.log(this.statusManager);
       this.statusManager.updateStatus(model, true);
       return null;
     }
 
     this.logger.log(`Starting download for local model: ${model}`);
     try {
-      console.log(path);
+      Logger.log(path);
       const pipelineInstance = await pipeline(task as PipelineType, model, {
         cache_dir: path,
       });
