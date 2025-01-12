@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ChatService } from '../chat.service';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import { Chat } from '../chat.model';
 import { User } from 'src/user/user.model';
 import { MessageRole } from 'src/chat/message.model';
@@ -13,7 +12,6 @@ import { JwtCacheService } from 'src/auth/jwt-cache.service';
 import { ConfigService } from '@nestjs/config';
 import { Menu } from 'src/auth/menu/menu.model';
 import { Role } from 'src/auth/role/role.model';
-import { ModelProvider } from 'src/common/model-provider';
 
 /**
  * Mock service for JWT cache operations

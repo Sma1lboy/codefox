@@ -2,7 +2,6 @@
 import { UniversalDownloader } from './model-downloader';
 import { Logger } from '@nestjs/common';
 import { UniversalStatusManager } from './universal-status';
-import { ModelConfig } from '../config/config-loader';
 import { ConfigLoader } from 'src/config/config-loader';
 import { getEmbDir, getModelsDir } from 'src/config/common-path';
 import { EmbeddingDownloader } from './embedding-downloader';

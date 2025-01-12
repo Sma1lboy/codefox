@@ -1,12 +1,4 @@
-import {
-  Resolver,
-  Subscription,
-  Args,
-  Field,
-  ObjectType,
-  Query,
-  Mutation,
-} from '@nestjs/graphql';
+import { Resolver, Subscription, Args, Query, Mutation } from '@nestjs/graphql';
 import { Chat, ChatCompletionChunk } from './chat.model';
 import { ChatProxyService, ChatService } from './chat.service';
 import { UserService } from 'src/user/user.service';

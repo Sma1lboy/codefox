@@ -7,7 +7,6 @@ import {
   getSupportedDatabaseTypes,
   isSupportedDatabaseType,
 } from '../../../utils/database-utils';
-import { writeFile } from 'fs-extra';
 import { prompts } from './prompt';
 import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';

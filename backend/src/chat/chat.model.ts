@@ -1,19 +1,5 @@
-import {
-  Field,
-  InputType,
-  ObjectType,
-  ID,
-  registerEnumType,
-} from '@nestjs/graphql';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  OneToMany,
-  JoinColumn,
-} from 'typeorm';
-import { forwardRef } from '@nestjs/common';
+import { Field, ObjectType, ID, registerEnumType } from '@nestjs/graphql';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Message } from 'src/chat/message.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
 import { User } from 'src/user/user.model';

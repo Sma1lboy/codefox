@@ -4,11 +4,7 @@ import { generateBackendCodePrompt } from './prompt';
 import { Logger } from '@nestjs/common';
 import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
-import {
-  formatResponse,
-  parseGenerateTag,
-  removeCodeBlockFences,
-} from 'src/build-system/utils/strings';
+import { formatResponse } from 'src/build-system/utils/strings';
 
 /**
  * BackendCodeHandler is responsible for generating the backend codebase

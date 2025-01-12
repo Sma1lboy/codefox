@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { BuildNode, BuildStep, BuildSequence } from './types';
+import { BuildStep, BuildSequence } from './types';
 import { ProjectEventLogger } from './logger';
 
 /**

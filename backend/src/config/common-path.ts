@@ -1,7 +1,6 @@
 import * as path from 'path';
 
 import { existsSync, mkdirSync, promises, writeFileSync } from 'fs-extra';
-import { ConfigType } from '@nestjs/config';
 
 // Constants for base directories
 const APP_NAME = 'codefox';

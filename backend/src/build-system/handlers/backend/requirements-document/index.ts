@@ -1,9 +1,6 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
-import {
-  generateBackendImplementationPrompt,
-  generateBackendOverviewPrompt,
-} from './prompt';
+import { generateBackendOverviewPrompt } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 

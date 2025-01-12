@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
-import { PipelineType, pipeline, env, cat } from '@huggingface/transformers';
-import { getEmbDir, getModelPath, getModelsDir } from 'src/config/common-path';
+import { PipelineType, pipeline, env } from '@huggingface/transformers';
+import { getModelsDir } from 'src/config/common-path';
 import { isRemoteModel } from './const';
 import { UniversalStatusManager } from './universal-status';
 
