@@ -21,7 +21,7 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
       datamapDoc,
     );
     const model = ModelProvider.getInstance();
-    
+
     const startTime = new Date();
     const dbRequirementsContent = await model.chatSync({
       model: 'gpt-4o-mini',
@@ -29,7 +29,13 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
     });
     const endTime = new Date();
     const duration = endTime.getTime() - startTime.getTime();
-    BuildMonitor.timeRecorder(duration,this.id,'generateDatabaseRequirementPrompt',prompt,dbRequirementsContent);
+    BuildMonitor.timeRecorder(
+      duration,
+      this.id,
+      'generateDatabaseRequirementPrompt',
+      prompt,
+      dbRequirementsContent,
+    );
     return {
       success: true,
       data: removeCodeBlockFences(dbRequirementsContent),

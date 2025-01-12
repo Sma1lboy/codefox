@@ -49,16 +49,21 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
         backendCode,
       );
 
-      
-    const startTime = new Date();
+      const startTime = new Date();
       const modelResponse = await context.model.chatSync({
         model: 'gpt-4o-mini',
         messages: [{ content: filePrompt, role: 'system' }],
       });
-      
-    const endTime = new Date();
-    const duration = endTime.getTime() - startTime.getTime();
-      BuildMonitor.timeRecorder(duration,this.id,'identifyBackendFilesToModify',filePrompt,modelResponse);
+
+      const endTime = new Date();
+      const duration = endTime.getTime() - startTime.getTime();
+      BuildMonitor.timeRecorder(
+        duration,
+        this.id,
+        'identifyBackendFilesToModify',
+        filePrompt,
+        modelResponse,
+      );
       const filesToModify = this.parseFileIdentificationResponse(modelResponse);
       this.logger.log(`Files to modify: ${filesToModify.join(', ')}`);
 
@@ -78,7 +83,6 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
             backendCode,
           );
 
-          
           const startTime = new Date();
           // Get modified content
           const response = await context.model.chatSync({
@@ -88,7 +92,13 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
 
           const endTime = new Date();
           const duration = endTime.getTime() - startTime.getTime();
-          BuildMonitor.timeRecorder(duration,this.id,'generateFileModification',modificationPrompt,modelResponse);
+          BuildMonitor.timeRecorder(
+            duration,
+            this.id,
+            'generateFileModification',
+            modificationPrompt,
+            modelResponse,
+          );
           // Extract new content and write back
           const newContent = formatResponse(response);
           await fs.writeFile(filePath, newContent, 'utf-8');

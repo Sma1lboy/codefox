@@ -43,7 +43,6 @@ export class UXSMDHandler implements BuildHandler<string> {
     const modelProvider = ModelProvider.getInstance();
     const model = 'gpt-4o-mini';
 
-    
     const startTime = new Date();
     const uxsmdContent = await modelProvider.chatSync({
       model,
@@ -51,7 +50,13 @@ export class UXSMDHandler implements BuildHandler<string> {
     });
     const endTime = new Date();
     const duration = endTime.getTime() - startTime.getTime();
-    BuildMonitor.timeRecorder(duration,this.id,'generateUXSMDFromLLM',prompt,uxsmdContent);
+    BuildMonitor.timeRecorder(
+      duration,
+      this.id,
+      'generateUXSMDFromLLM',
+      prompt,
+      uxsmdContent,
+    );
     this.logger.log('Received full UXSMD content from LLM server.');
     return uxsmdContent;
   }

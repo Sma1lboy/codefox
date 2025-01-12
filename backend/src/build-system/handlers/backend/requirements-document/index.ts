@@ -55,16 +55,21 @@ export class BackendRequirementHandler
 
     let backendOverview: string;
     try {
-      
-    const startTime = new Date();
+      const startTime = new Date();
       backendOverview = await context.model.chatSync({
         model: 'gpt-4o-mini',
         messages: [{ content: overviewPrompt, role: 'system' }],
       });
-      
-    const endTime = new Date();
-    const duration = endTime.getTime() - startTime.getTime();
-      BuildMonitor.timeRecorder(duration,this.id,'generateBackendOverviewPrompt',overviewPrompt,backendOverview);
+
+      const endTime = new Date();
+      const duration = endTime.getTime() - startTime.getTime();
+      BuildMonitor.timeRecorder(
+        duration,
+        this.id,
+        'generateBackendOverviewPrompt',
+        overviewPrompt,
+        backendOverview,
+      );
     } catch (error) {
       this.logger.error('Error generating backend overview:', error);
       return {

@@ -85,15 +85,21 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
     let fileStructureContent: string;
     try {
       // Invoke the language model to generate the file structure content
-      
-    const startTime = new Date();
+
+      const startTime = new Date();
       fileStructureContent = await context.model.chatSync({
         model: 'gpt-4o-mini',
         messages: [{ content: prompt, role: 'system' }],
       });
-    const endTime = new Date();
-    const duration = endTime.getTime() - startTime.getTime();
-    BuildMonitor.timeRecorder(duration,this.id,'generateCommonFileStructure',prompt,fileStructureContent);
+      const endTime = new Date();
+      const duration = endTime.getTime() - startTime.getTime();
+      BuildMonitor.timeRecorder(
+        duration,
+        this.id,
+        'generateCommonFileStructure',
+        prompt,
+        fileStructureContent,
+      );
     } catch (error) {
       this.logger.error('Error during file structure generation:', error);
       return {

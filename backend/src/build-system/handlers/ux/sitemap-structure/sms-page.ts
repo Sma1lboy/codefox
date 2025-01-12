@@ -50,15 +50,20 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
         'web', // TODO: Replace with dynamic platform if necessary
       );
 
-      
-    const startTime = new Date();
+      const startTime = new Date();
       const refinedContent = await modelProvider.chatSync({
         model: 'gpt-4o-mini',
         messages: [{ content: prompt, role: 'system' }],
       });
-    const endTime = new Date();
-    const duration = endTime.getTime() - startTime.getTime();
-    BuildMonitor.timeRecorder(duration,this.id,'generateLevel2UXSiteMapStructre',prompt,refinedContent);
+      const endTime = new Date();
+      const duration = endTime.getTime() - startTime.getTime();
+      BuildMonitor.timeRecorder(
+        duration,
+        this.id,
+        'generateLevel2UXSiteMapStructre',
+        prompt,
+        refinedContent,
+      );
 
       refinedSections.push({
         title: section.title,

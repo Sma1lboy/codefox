@@ -32,7 +32,6 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
       'web', // TODO: Change platform dynamically if necessary
     );
 
-    
     const startTime = new Date();
     const uxStructureContent = await context.model.chatSync({
       model: 'gpt-4o-mini',
@@ -40,7 +39,13 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
     });
     const endTime = new Date();
     const duration = endTime.getTime() - startTime.getTime();
-    BuildMonitor.timeRecorder(duration,this.id,'generateUXSiteMapStructre',prompt,uxStructureContent);
+    BuildMonitor.timeRecorder(
+      duration,
+      this.id,
+      'generateUXSiteMapStructre',
+      prompt,
+      uxStructureContent,
+    );
 
     return {
       success: true,

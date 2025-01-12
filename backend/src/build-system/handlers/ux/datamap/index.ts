@@ -24,7 +24,6 @@ export class UXDatamapHandler implements BuildHandler<string> {
       'web', // TODO: change platform dynamically if needed
     );
 
-    
     const startTime = new Date();
     const uxDatamapContent = await context.model.chatSync({
       model: 'gpt-4o-mini',
@@ -32,7 +31,13 @@ export class UXDatamapHandler implements BuildHandler<string> {
     });
     const endTime = new Date();
     const duration = endTime.getTime() - startTime.getTime();
-    BuildMonitor.timeRecorder(duration,this.id,'generateUXDataMap',prompt,uxDatamapContent);
+    BuildMonitor.timeRecorder(
+      duration,
+      this.id,
+      'generateUXDataMap',
+      prompt,
+      uxDatamapContent,
+    );
     Logger.log('UX Data Map Content: ', uxDatamapContent);
 
     return {

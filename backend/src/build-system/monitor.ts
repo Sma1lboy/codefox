@@ -101,14 +101,20 @@ export class BuildMonitor {
     return BuildMonitor.instance;
   }
 
-  public static async timeRecorder(generateDuration: number, id: string, step: string, input: string, output: string){
-    const {encode, decode} = require('gpt-3-encoder')
-    let value = {
+  public static async timeRecorder(
+    generateDuration: number,
+    id: string,
+    step: string,
+    input: string,
+    output: string,
+  ) {
+    const { encode, decode } = require('gpt-3-encoder');
+    const value = {
       step,
       input: encode(input).length,
       output: encode(output).length,
-      generateDuration
-    }
+      generateDuration,
+    };
     if (!this.timeRecorders.has(id)) {
       this.timeRecorders.set(id, []);
     }
