@@ -13,7 +13,7 @@ export interface BuildReport {
     duration: number;
   };
   summary: {
-    spendTime: string[],
+    spendTime: string[];
     totalSteps: number;
     completedSteps: number;
     failedSteps: number;
@@ -87,7 +87,7 @@ export class BuildMonitor {
   private logger: Logger; // TODO: adding more logger
   private sequenceMetrics: Map<string, SequenceMetrics> = new Map();
   private static timeRecorders: Map<string, any[]> = new Map();
-  
+
   private static model = ModelProvider.getInstance();
 
   private constructor() {
@@ -306,21 +306,22 @@ export class BuildMonitor {
       ([stepId, stepMetric]) => {
         const nodes = Array.from(stepMetric.nodeMetrics.entries()).map(
           ([nodeId, nodeMetric]) => {
-            let values = BuildMonitor.timeRecorders.get(nodeId);
+            const values = BuildMonitor.timeRecorders.get(nodeId);
             return {
-            id: nodeId,
-            name: nodeId,
-            duration: nodeMetric.duration,
-            status: nodeMetric.status,
-            retryCount: nodeMetric.retryCount,
-            clock: values,
-            error: nodeMetric.error
-              ? {
-                  message: nodeMetric.error.message,
-                  stack: nodeMetric.error.stack,
-                }
-              : undefined,
-          }},
+              id: nodeId,
+              name: nodeId,
+              duration: nodeMetric.duration,
+              status: nodeMetric.status,
+              retryCount: nodeMetric.retryCount,
+              clock: values,
+              error: nodeMetric.error
+                ? {
+                    message: nodeMetric.error.message,
+                    stack: nodeMetric.error.stack,
+                  }
+                : undefined,
+            };
+          },
         );
 
         const completed = nodes.filter((n) => n.status === 'completed').length;
@@ -353,8 +354,8 @@ export class BuildMonitor {
         duration: metrics.duration,
       },
       summary: {
-        spendTime: Array.from(BuildMonitor.timeRecorders.entries()).map(([id, time]) => 
-          `Step ${id} duration is ${time} ms`
+        spendTime: Array.from(BuildMonitor.timeRecorders.entries()).map(
+          ([id, time]) => `Step ${id} duration is ${time} ms`,
         ),
         totalSteps: metrics.totalSteps,
         completedSteps: steps.filter((s) => s.status === 'completed').length,
@@ -400,18 +401,17 @@ export class BuildMonitor {
         report += `      Status: ${nodeMetric.status}\n`;
         report += `      Duration: ${nodeMetric.duration}ms\n`;
         report += `      Retries: ${nodeMetric.retryCount}\n`;
-        let values = BuildMonitor.timeRecorders.get(nodeId);
-        if(values){
-          
-        report += `       Clock:\n`;
-          values.forEach((value) =>{
+        const values = BuildMonitor.timeRecorders.get(nodeId);
+        if (values) {
+          report += `       Clock:\n`;
+          values.forEach((value) => {
             report += `          ${value.step}:\n`;
             report += `             input token: ${value.input}\n`;
             report += `             output token: ${value.output}\n`;
             report += `             GenerationDuration: ${value.generateDuration}ms\n`;
-          })
+          });
         }
-        
+
         if (nodeMetric.error) {
           report += `      Error: ${nodeMetric.error.message}\n`;
         }
