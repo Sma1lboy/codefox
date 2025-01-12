@@ -4,6 +4,7 @@ import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { BuildMonitor } from 'src/build-system/monitor';
 
 export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
   readonly id = 'op:UX:SMS:LEVEL2';
@@ -49,10 +50,7 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
         'web', // TODO: Replace with dynamic platform if necessary
       );
 
-      const refinedContent = await modelProvider.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
+      const refinedContent = await BuildMonitor.timeRecorder(prompt, this.id, 'level2uxsite map');
 
       refinedSections.push({
         title: section.title,

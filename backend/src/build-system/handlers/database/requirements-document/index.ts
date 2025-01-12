@@ -4,8 +4,10 @@ import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { BuildMonitor } from 'src/build-system/monitor';
 
 export class DatabaseRequirementHandler implements BuildHandler<string> {
+  
   readonly id = 'op:DATABASE_REQ';
   readonly logger = new Logger('DatabaseRequirementHandler');
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -19,11 +21,9 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
       projectName,
       datamapDoc,
     );
-    const model = ModelProvider.getInstance();
-    const dbRequirementsContent = await model.chatSync({
-      model: 'gpt-4o-mini',
-      messages: [{ content: prompt, role: 'system' }],
-    });
+    
+    let dbRequirementsContent = await BuildMonitor.timeRecorder(prompt, this.id, 'database');
+    
     this.logger.debug('Database code generated and parsed successfully.');
     return {
       success: true,

@@ -8,6 +8,7 @@ import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { BuildMonitor } from 'src/build-system/monitor';
 
 /**
  * FileStructureHandler is responsible for generating the project's file and folder structure
@@ -84,10 +85,8 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
     let fileStructureContent: string;
     try {
       // Invoke the language model to generate the file structure content
-      fileStructureContent = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
+      
+      fileStructureContent = await BuildMonitor.timeRecorder(prompt, this.id, 'file struct');
       this.logger.debug('File structure generated and parsed successfully.');
     } catch (error) {
       this.logger.error('Error during file structure generation:', error);

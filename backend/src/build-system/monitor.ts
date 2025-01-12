@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { BuildNode, BuildStep, BuildSequence } from './types';
 import { ProjectEventLogger } from './logger';
-
+import { ModelProvider } from 'src/common/model-provider';
 /**
  * Metrics for sequence, step, and node execution
  */
@@ -13,6 +13,7 @@ export interface BuildReport {
     duration: number;
   };
   summary: {
+    spendTime: string[],
     totalSteps: number;
     completedSteps: number;
     failedSteps: number;
@@ -85,6 +86,9 @@ export class BuildMonitor {
   private static instance: BuildMonitor;
   private logger: Logger; // TODO: adding more logger
   private sequenceMetrics: Map<string, SequenceMetrics> = new Map();
+  private static timeRecorders: Map<string, any[]> = new Map();
+  
+  private static model = ModelProvider.getInstance();
 
   private constructor() {
     this.logger = new Logger('BuildMonitor');
@@ -95,6 +99,29 @@ export class BuildMonitor {
       BuildMonitor.instance = new BuildMonitor();
     }
     return BuildMonitor.instance;
+  }
+
+  public static async timeRecorder(prompt: string, id: string, step: string): Promise<string>{
+    const {encode, decode} = require('gpt-3-encoder')
+    const startTime = new Date();
+    const response = await this.model.chatSync({
+      model: 'gpt-4o-mini',
+      messages: [{ content: prompt, role: 'system' }],
+    });
+    const endTime = new Date();
+    const duration = endTime.getTime() - startTime.getTime();
+    let value = {
+      step,
+      input: encode(prompt).length,
+      output: encode(response).length,
+      generateDuration: duration
+    }
+    if (!this.timeRecorders.has(id)) {
+      this.timeRecorders.set(id, []);
+    }
+  
+    this.timeRecorders.get(id)!.push(value);
+    return response;
   }
 
   // Node-level monitoring
@@ -287,19 +314,22 @@ export class BuildMonitor {
     const steps = Array.from(metrics.stepMetrics.entries()).map(
       ([stepId, stepMetric]) => {
         const nodes = Array.from(stepMetric.nodeMetrics.entries()).map(
-          ([nodeId, nodeMetric]) => ({
+          ([nodeId, nodeMetric]) => {
+            let values = BuildMonitor.timeRecorders.get(nodeId);
+            return {
             id: nodeId,
             name: nodeId,
             duration: nodeMetric.duration,
             status: nodeMetric.status,
             retryCount: nodeMetric.retryCount,
+            clock: values,
             error: nodeMetric.error
               ? {
                   message: nodeMetric.error.message,
                   stack: nodeMetric.error.stack,
                 }
               : undefined,
-          }),
+          }},
         );
 
         const completed = nodes.filter((n) => n.status === 'completed').length;
@@ -332,6 +362,9 @@ export class BuildMonitor {
         duration: metrics.duration,
       },
       summary: {
+        spendTime: Array.from(BuildMonitor.timeRecorders.entries()).map(([id, time]) => 
+          `Step ${id} duration is ${time} ms`
+        ),
         totalSteps: metrics.totalSteps,
         completedSteps: steps.filter((s) => s.status === 'completed').length,
         failedSteps: steps.filter((s) => s.status === 'failed').length,
@@ -376,6 +409,18 @@ export class BuildMonitor {
         report += `      Status: ${nodeMetric.status}\n`;
         report += `      Duration: ${nodeMetric.duration}ms\n`;
         report += `      Retries: ${nodeMetric.retryCount}\n`;
+        let values = BuildMonitor.timeRecorders.get(nodeId);
+        if(values){
+          
+        report += `       Clock:\n`;
+          values.forEach((value) =>{
+            report += `          ${value.step}:\n`;
+            report += `             input token: ${value.input}\n`;
+            report += `             output token: ${value.output}\n`;
+            report += `             GenerationDuration: ${value.generateDuration}ms\n`;
+          })
+        }
+        
         if (nodeMetric.error) {
           report += `      Error: ${nodeMetric.error.message}\n`;
         }

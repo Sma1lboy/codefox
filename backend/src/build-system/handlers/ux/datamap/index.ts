@@ -4,6 +4,7 @@ import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { BuildMonitor } from 'src/build-system/monitor';
 
 /**
  * Handler for generating the UX Data Map document.
@@ -24,16 +25,14 @@ export class UXDatamapHandler implements BuildHandler<string> {
       'web', // TODO: change platform dynamically if needed
     );
 
-    const uxDatamapContent = await context.model.chatSync({
-      model: 'gpt-4o-mini',
-      messages: [{ content: prompt, role: 'system' }],
-    });
+    
+    let modelResponse = await BuildMonitor.timeRecorder(prompt, this.id,'site map');
     this.logger.debug('UX Data Map generated and parsed successfully.');
-    Logger.log('UX Data Map Content: ', uxDatamapContent);
+    Logger.log('UX Data Map Content: ', modelResponse);
 
     return {
       success: true,
-      data: removeCodeBlockFences(uxDatamapContent),
+      data: removeCodeBlockFences(modelResponse),
     };
   }
 }

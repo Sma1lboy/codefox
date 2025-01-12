@@ -6,6 +6,7 @@ import * as path from 'path';
 
 import { prompts } from './prompt';
 import { formatResponse } from 'src/build-system/utils/strings';
+import { BuildMonitor } from 'src/build-system/monitor';
 
 // TODO(Sma1lboy): we need a better way to handle handler pre requirements
 /**
@@ -17,6 +18,8 @@ import { formatResponse } from 'src/build-system/utils/strings';
 export class BackendFileReviewHandler implements BuildHandler<string> {
   readonly id = 'op:BACKEND:FILE:REVIEW';
   readonly logger: Logger = new Logger('BackendFileModificationHandler');
+  
+  private monitor = BuildMonitor.getInstance();
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Starting backend file modification process...');
@@ -48,10 +51,8 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
         backendCode,
       );
 
-      const modelResponse = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: filePrompt, role: 'system' }],
-      });
+      
+      let modelResponse = await BuildMonitor.timeRecorder(filePrompt, this.id, 'file struct');
 
       const filesToModify = this.parseFileIdentificationResponse(modelResponse);
       this.logger.log(`Files to modify: ${filesToModify.join(', ')}`);
@@ -72,11 +73,10 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
             backendCode,
           );
 
+         
+          let response = await BuildMonitor.timeRecorder(modificationPrompt, this.id, 'modification');
           // Get modified content
-          const response = await context.model.chatSync({
-            model: 'gpt-4o-mini',
-            messages: [{ content: modificationPrompt, role: 'system' }],
-          });
+          
           // Extract new content and write back
           const newContent = formatResponse(response);
           await fs.writeFile(filePath, newContent, 'utf-8');

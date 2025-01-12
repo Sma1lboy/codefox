@@ -4,6 +4,7 @@ import { prompts } from './prompt';
 import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { BuildMonitor } from 'src/build-system/monitor';
 
 export class UXSMDHandler implements BuildHandler<string> {
   readonly id = 'op:UX:SMD';
@@ -39,14 +40,9 @@ export class UXSMDHandler implements BuildHandler<string> {
   }
 
   private async generateUXSMDFromLLM(prompt: string): Promise<string> {
-    const modelProvider = ModelProvider.getInstance();
-    const model = 'gpt-4o-mini';
 
-    const uxsmdContent = await modelProvider.chatSync({
-      model,
-      messages: [{ content: prompt, role: 'system' }],
-    });
-    
+    const uxsmdContent = await BuildMonitor.timeRecorder(prompt, this.id, 'uxsmd');
+
 
     this.logger.log('Received full UXSMD content from LLM server.');
     return uxsmdContent;

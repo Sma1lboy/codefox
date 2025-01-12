@@ -9,6 +9,7 @@ import {
   parseGenerateTag,
   removeCodeBlockFences,
 } from 'src/build-system/utils/strings';
+import { BuildMonitor } from 'src/build-system/monitor';
 
 /**
  * BackendCodeHandler is responsible for generating the backend codebase
@@ -63,11 +64,7 @@ export class BackendCodeHandler implements BuildHandler<string> {
 
     try {
       // Invoke the language model to generate the backend code
-      const modelResponse = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: backendCodePrompt, role: 'system' }],
-      });
-
+      let modelResponse = await BuildMonitor.timeRecorder(backendCodePrompt, this.id, 'backend code');
       const generatedCode = formatResponse(modelResponse);
 
       const uuid = context.getGlobalContext('projectUUID');

@@ -1,3 +1,4 @@
+import { BuildMonitor } from '../monitor';
 import { BuildSequence } from '../types';
 import { executeBuildSequence, objectToMarkdown, writeToFile } from './utils';
 

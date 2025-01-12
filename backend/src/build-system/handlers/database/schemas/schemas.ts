@@ -12,6 +12,7 @@ import { prompts } from './prompt';
 import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
 import { formatResponse } from 'src/build-system/utils/strings';
+import { BuildMonitor } from 'src/build-system/monitor';
 
 /**
  * DBSchemaHandler is responsible for generating database schemas based on provided requirements.
@@ -70,12 +71,11 @@ export class DBSchemaHandler implements BuildHandler {
 
     let dbAnalysis: string;
     try {
-      const analysisResponse = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: analysisPrompt, role: 'system' }],
-      });
+
+      
+      let modelResponse = await BuildMonitor.timeRecorder(analysisPrompt, this.id, 'db-analysis');
       this.logger.debug('Analysis code generated and parsed successfully.');
-      dbAnalysis = analysisResponse;
+      dbAnalysis = modelResponse;
     } catch (error) {
       this.logger.error('Error during database requirements analysis:', error);
       return {
@@ -104,12 +104,10 @@ export class DBSchemaHandler implements BuildHandler {
 
     let schemaContent: string;
     try {
-      const schemaResponse = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: schemaPrompt, role: 'system' }],
-      });
+      
+      let modelResponse = await BuildMonitor.timeRecorder(schemaPrompt, this.id, 'schema');
       this.logger.debug('Schema code generated and parsed successfully.');
-      schemaContent = formatResponse(schemaResponse);
+      schemaContent = formatResponse(modelResponse);
     } catch (error) {
       this.logger.error('Error during schema generation:', error);
       return {
@@ -128,12 +126,10 @@ export class DBSchemaHandler implements BuildHandler {
 
     let validationResponse: string;
     try {
-      const validationResult = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: validationPrompt, role: 'system' }],
-      });
+      
+      let modelResponse = await BuildMonitor.timeRecorder(validationPrompt, this.id, 'validation');
       this.logger.debug('Validation code generated and parsed successfully.');
-      validationResponse = formatResponse(validationResult);
+      validationResponse = formatResponse(modelResponse);
     } catch (error) {
       this.logger.error('Error during schema validation:', error);
       return {

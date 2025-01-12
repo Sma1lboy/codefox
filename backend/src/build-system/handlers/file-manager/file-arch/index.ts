@@ -7,6 +7,7 @@ import {
   formatResponse,
   parseGenerateTag,
 } from 'src/build-system/utils/strings';
+import { BuildMonitor } from 'src/build-system/monitor';
 
 export class FileArchGenerateHandler implements BuildHandler<string> {
   readonly id = 'op:FILE:ARCH';
@@ -56,10 +57,7 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
         };
       }
       try {
-        fileArchContent = await context.model.chatSync({
-          model: 'gpt-4o-mini',
-          messages: [{ content: prompt, role: 'system' }],
-        });
+        fileArchContent = await BuildMonitor.timeRecorder(prompt, this.id, 'file struct');
         this.logger.debug('File arch code generated and parsed successfully.');
 
         const tagContent = parseGenerateTag(fileArchContent);

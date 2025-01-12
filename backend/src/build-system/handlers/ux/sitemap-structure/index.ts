@@ -4,6 +4,7 @@ import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { BuildMonitor } from 'src/build-system/monitor';
 
 // UXSMS: UX Sitemap Structure
 export class UXSitemapStructureHandler implements BuildHandler<string> {
@@ -31,10 +32,7 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
       'web', // TODO: Change platform dynamically if necessary
     );
 
-    const uxStructureContent = await context.model.chatSync({
-      model: 'gpt-4o-mini',
-      messages: [{ content: prompt, role: 'system' }],
-    });
+    const uxStructureContent = await BuildMonitor.timeRecorder(prompt, this.id, 'uxsite');
     this.logger.debug('Ux structure generated and parsed successfully.');
 
     return {
