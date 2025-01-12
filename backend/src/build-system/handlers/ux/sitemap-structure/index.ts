@@ -35,6 +35,7 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
       model: 'gpt-4o-mini',
       messages: [{ content: prompt, role: 'system' }],
     });
+    this.logger.debug('Ux structure generated and parsed successfully.');
 
     return {
       success: true,

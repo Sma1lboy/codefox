@@ -58,6 +58,7 @@ export class BackendRequirementHandler
         model: 'gpt-4o-mini',
         messages: [{ content: overviewPrompt, role: 'system' }],
       });
+      this.logger.debug('Overview code generated and parsed successfully.');
     } catch (error) {
       this.logger.error('Error generating backend overview:', error);
       return {

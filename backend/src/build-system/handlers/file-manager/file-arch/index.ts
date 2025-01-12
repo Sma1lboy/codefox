@@ -60,6 +60,7 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
           model: 'gpt-4o-mini',
           messages: [{ content: prompt, role: 'system' }],
         });
+        this.logger.debug('File arch code generated and parsed successfully.');
 
         const tagContent = parseGenerateTag(fileArchContent);
         jsonData = extractJsonFromText(tagContent);

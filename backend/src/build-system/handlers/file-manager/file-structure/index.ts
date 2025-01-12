@@ -88,6 +88,7 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
         model: 'gpt-4o-mini',
         messages: [{ content: prompt, role: 'system' }],
       });
+      this.logger.debug('File structure generated and parsed successfully.');
     } catch (error) {
       this.logger.error('Error during file structure generation:', error);
       return {
@@ -126,6 +127,7 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
           model: 'gpt-4o-mini',
           messages: [{ content: convertToJsonPrompt, role: 'system' }],
         });
+        this.logger.debug('File structure generated and parsed successfully.');
       } catch (error) {
         this.logger.error('Error during tree to JSON conversion:', error);
         return {

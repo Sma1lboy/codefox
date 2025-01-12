@@ -9,6 +9,7 @@ import { removeCodeBlockFences } from 'src/build-system/utils/strings';
  * Handler for generating the UX Data Map document.
  */
 export class UXDatamapHandler implements BuildHandler<string> {
+  private logger = new Logger(UXDatamapHandler.name);
   readonly id = 'op:UX:DATAMAP:DOC';
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -27,6 +28,7 @@ export class UXDatamapHandler implements BuildHandler<string> {
       model: 'gpt-4o-mini',
       messages: [{ content: prompt, role: 'system' }],
     });
+    this.logger.debug('UX Data Map generated and parsed successfully.');
     Logger.log('UX Data Map Content: ', uxDatamapContent);
 
     return {

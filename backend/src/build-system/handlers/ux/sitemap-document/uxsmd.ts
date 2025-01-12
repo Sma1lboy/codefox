@@ -46,6 +46,7 @@ export class UXSMDHandler implements BuildHandler<string> {
       model,
       messages: [{ content: prompt, role: 'system' }],
     });
+    
 
     this.logger.log('Received full UXSMD content from LLM server.');
     return uxsmdContent;

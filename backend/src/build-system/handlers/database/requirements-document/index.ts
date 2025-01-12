@@ -24,6 +24,7 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
       model: 'gpt-4o-mini',
       messages: [{ content: prompt, role: 'system' }],
     });
+    this.logger.debug('Database code generated and parsed successfully.');
     return {
       success: true,
       data: removeCodeBlockFences(dbRequirementsContent),

@@ -74,6 +74,7 @@ export class DBSchemaHandler implements BuildHandler {
         model: 'gpt-4o-mini',
         messages: [{ content: analysisPrompt, role: 'system' }],
       });
+      this.logger.debug('Analysis code generated and parsed successfully.');
       dbAnalysis = analysisResponse;
     } catch (error) {
       this.logger.error('Error during database requirements analysis:', error);
@@ -107,6 +108,7 @@ export class DBSchemaHandler implements BuildHandler {
         model: 'gpt-4o-mini',
         messages: [{ content: schemaPrompt, role: 'system' }],
       });
+      this.logger.debug('Schema code generated and parsed successfully.');
       schemaContent = formatResponse(schemaResponse);
     } catch (error) {
       this.logger.error('Error during schema generation:', error);
@@ -130,6 +132,7 @@ export class DBSchemaHandler implements BuildHandler {
         model: 'gpt-4o-mini',
         messages: [{ content: validationPrompt, role: 'system' }],
       });
+      this.logger.debug('Validation code generated and parsed successfully.');
       validationResponse = formatResponse(validationResult);
     } catch (error) {
       this.logger.error('Error during schema validation:', error);

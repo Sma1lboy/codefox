@@ -40,6 +40,7 @@ export class PRDHandler implements BuildHandler {
       model: 'gpt-4o-mini',
       messages: [{ content: prompt, role: 'system' }],
     });
+    this.logger.debug('Product code generated and parsed successfully.');
     this.logger.log('Received full PRD content from LLM server.');
     return prdContent;
   }
