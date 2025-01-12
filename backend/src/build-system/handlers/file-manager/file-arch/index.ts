@@ -7,6 +7,7 @@ import {
   formatResponse,
   parseGenerateTag,
 } from 'src/build-system/utils/strings';
+import { NonRetryableError, RetryableError } from 'src/build-system/retry-handler';
 
 export class FileArchGenerateHandler implements BuildHandler<string> {
   readonly id = 'op:FILE:ARCH';
@@ -21,7 +22,7 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     if (!fileStructure || !datamapDoc) {
       return {
         success: false,
-        error: new Error(
+        error: new NonRetryableError(
           'Missing required parameters: fileStructure or datamapDoc',
         ),
       };
@@ -43,19 +44,13 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
 
       if (jsonData == null) {
         this.logger.error('Failed to extract JSON from text');
-        return {
-          success: false,
-          error: new Error('Failed to extract JSON from text'),
-        };
+        throw new RetryableError('Failed to extract JSON from text');
       }
 
       // Validate the extracted JSON data
       if (!this.validateJsonData(jsonData)) {
         this.logger.error('File architecture JSON validation failed');
-        return {
-          success: false,
-          error: new Error('File architecture JSON validation failed'),
-        };
+        throw new RetryableError('File architecture JSON validation failed');
       }
 
       this.logger.log('File architecture document generated successfully');
@@ -64,11 +59,20 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
         data: formatResponse(fileArchContent),
       };
     } catch (error) {
-      this.logger.error('Error during JSON extraction or validation', error);
-      return {
-        success: false,
-        error: new Error('Error during JSON extraction or validation'),
-      };
+      if (error instanceof RetryableError) {
+        this.logger.warn(`Retryable error encountered: ${error.message}`);
+        // You can handle retry logic outside of this method
+        return {
+          success: false,
+          error,
+        };
+      } else {
+        this.logger.error('Non-retryable error encountered:', error);
+        return {
+          success: false,
+          error: new NonRetryableError('Unexpected error during JSON processing'),
+        };
+      }
     }
   }
 

@@ -1,5 +1,20 @@
 import { Logger } from '@nestjs/common';
 
+
+export class RetryableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RetryableError';
+  }
+}
+
+export class NonRetryableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'NonRetryableError';
+  }
+}
+
 export class RetryHandler {
   private readonly logger = new Logger(RetryHandler.name);
   private static instance: RetryHandler;
@@ -18,6 +33,7 @@ export class RetryHandler {
     const isRetrying = this.retryCounts.has(errorName);
     let res;
     switch (errorName) {
+      case 'RetryableError':
       case 'GeneratedTagError':
       case 'TimeoutError':
         this.logger.warn(
