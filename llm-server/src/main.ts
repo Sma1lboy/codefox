@@ -2,6 +2,7 @@ import { Logger, Module } from '@nestjs/common';
 import { ChatMessageInput, LLMProvider } from './llm-provider';
 import express, { Express, Request, Response } from 'express';
 import { GenerateMessageParams } from './types';
+import { downloadAll } from './downloader/universal-utils';
 
 export class App {
   private readonly logger = new Logger(App.name);
@@ -105,11 +106,11 @@ export class App {
 async function main() {
   const logger = new Logger('Main');
   try {
+    
+    await downloadAll();
     const llmProvider = new LLMProvider('openai');
     await llmProvider.initialize();
 
-    // const embProvider = new EmbeddingModelProvider('openai');
-    // await embProvider.initialize();
     const app = new App(llmProvider);
     await app.start();
   } catch (error) {

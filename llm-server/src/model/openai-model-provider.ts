@@ -5,6 +5,7 @@ import { systemPrompts } from '../prompt/systemPrompt';
 import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import PQueue from 'p-queue';
 import { GenerateMessageParams } from '../types';
+import { ConfigLoader } from '../config/config-loader';
 
 export interface OpenAIProviderOptions {
   maxConcurrentRequests?: number;
@@ -24,9 +25,9 @@ interface QueuedRequest {
 
 export class OpenAIModelProvider {
   private readonly logger = new Logger(OpenAIModelProvider.name);
-  private openai: OpenAI;
   private requestQueue: PQueue;
   private readonly options: Required<OpenAIProviderOptions>;
+  private openAIcontainer: Map<string, OpenAI>;
 
   constructor(options: OpenAIProviderOptions = {}) {
     this.options = {
@@ -54,23 +55,32 @@ export class OpenAIModelProvider {
   }
 
   async initialize(): Promise<void> {
-    this.logger.log('Initializing OpenAI model...');
+    this.openAIcontainer = new Map();
+    let config  = ConfigLoader.getInstance();
+    let models = config.getAllConfigs();
+    models.forEach((model) => {
+      if(this.openAIcontainer.has(model.model)) return;
+      let openai = new OpenAI({
+        apiKey: model.token? model.token:this.options.apiKey,
+      });
+      this.openAIcontainer.set(model.model, openai);
+    })
+  }
 
-    if (!this.options.apiKey) {
-      throw new Error('OpenAI API key is required');
+  private getInstance(modelName: string): OpenAI{
+    
+    let config  = ConfigLoader.getInstance();
+    let models = config.getAllConfigs();
+    const modelExists = models.some((model) => model.model === modelName);
+    if (!modelExists) {
+      throw new Error(
+        `Model "${modelName}" is not included in the configuration. Please add it under the "models" section in ".codefox/config.json".`
+      );
     }
-
-    this.openai = new OpenAI({
-      apiKey: this.options.apiKey,
-    });
-
-    this.logger.log(
-      `OpenAI model initialized with options:
-      - Max Concurrent Requests: ${this.options.maxConcurrentRequests}
-      - Max Retries: ${this.options.maxRetries}
-      - Queue Interval: ${this.options.queueInterval}ms
-      - Interval Cap: ${this.options.intervalCap}
-      - System Prompt Key: ${this.options.systemPromptKey}`,
+    
+    if(this.openAIcontainer.has(modelName)) return this.openAIcontainer.get(modelName);
+    throw new Error(
+      `Model "${modelName}" is not initialized. Please check.`
     );
   }
 
@@ -98,6 +108,7 @@ export class OpenAIModelProvider {
     const startTime = Date.now();
 
     try {
+      let openai = this.getInstance(model);
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -111,7 +122,7 @@ export class OpenAIModelProvider {
         ...messages,
       ];
       console.log(allMessages);
-      const stream = await this.openai.chat.completions.create({
+      const stream = await openai.chat.completions.create({
         model,
         messages: allMessages,
         stream: true,
@@ -208,8 +219,9 @@ export class OpenAIModelProvider {
       });
 
       try {
+        let openai = this.getInstance('gpt-3.5-turbo');
         const startTime = Date.now();
-        const models = await this.openai.models.list();
+        const models = await openai.models.list();
         const response = {
           models: models,
         };

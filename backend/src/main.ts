@@ -1,7 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import 'reflect-metadata';
-import { downloadAll } from './downloader/universal-utils';
 import * as dotenv from 'dotenv';
 
 async function bootstrap() {
@@ -19,7 +18,6 @@ async function bootstrap() {
       'Access-Control-Allow-Credentials',
     ],
   });
-  await downloadAll();
   await app.listen(process.env.PORT ?? 3000);
 }
 

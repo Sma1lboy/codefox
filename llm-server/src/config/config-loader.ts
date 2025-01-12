@@ -3,27 +3,36 @@ import * as _ from 'lodash';
 import { getConfigPath } from './common-path';
 import { Logger } from '@nestjs/common';
 import * as path from 'path';
+import stripJsonComments from 'strip-json-comments'
 
-export interface EmbeddingConfig {
+export interface ModelConfig {
   model: string;
   endpoint?: string;
-  default?: boolean;
   token?: string;
+  default?: boolean;
+  task?: string;
 }
 
 export interface AppConfig {
-  embeddings?: EmbeddingConfig[];
+  models?: ModelConfig[];
 }
 
 export const exampleConfigContent = `{
-  // Embedding model configuration
-  // You can configure multiple embedding models
-  "embeddings": [
+  // Chat models configuration
+  // You can configure multiple chat models
+  "models": [
+    // Example of OpenAI GPT configuration
     {
-      "model": "text-embedding-ada-002",
+      "model": "gpt-3.5-turbo",
       "endpoint": "https://api.openai.com/v1",
-      "token": "your-openai-token",     // Replace with your OpenAI token
-      "default": true                  // Set as default embedding
+      "token": "your-openai-token",  // Replace with your OpenAI token
+      "default": true                // Set as default chat model
+    },
+    
+    // Example of local model configuration
+    {
+      "model": "llama2",
+      "endpoint": "http://localhost:11434/v1"
     }
   ]
 }`;
@@ -48,14 +57,18 @@ export class ConfigLoader {
   }
 
   public initConfigFile(): void {
-    this.logger.log('Initializing configuration file', 'ConfigLoader');
+    Logger.log('Creating example config file', 'ConfigLoader');
 
-    if (fs.existsSync(this.configPath)) {
+    const config = getConfigPath();
+    if (fs.existsSync(config)) {
       return;
     }
 
-    fs.writeFileSync(this.configPath, exampleConfigContent, 'utf-8');
-    this.logger.log('Example configuration file created', 'ConfigLoader');
+    if (!fs.existsSync(config)) {
+      //make file
+      fs.writeFileSync(config, exampleConfigContent, 'utf-8');
+    }
+    Logger.log('Creating example config file', 'ConfigLoader');
   }
 
   public reload(): void {
@@ -64,12 +77,13 @@ export class ConfigLoader {
 
   private loadConfig() {
     try {
-      this.logger.log(`Loading configuration from ${this.configPath}`, 'ConfigLoader');
-      const file = fs.readFileSync(this.configPath, 'utf-8');
-      const jsonContent = file.replace(
-        /\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g,
-        (m, g) => (g ? '' : m),
+      Logger.log(
+        `Loading configuration from ${this.configPath}`,
+        'ConfigLoader',
       );
+      const file = fs.readFileSync(this.configPath, 'utf-8');
+      const jsonContent = stripJsonComments(file);
+      console.log(jsonContent);
       ConfigLoader.config = JSON.parse(jsonContent);
       this.validateConfig();
     } catch (error) {
@@ -111,39 +125,39 @@ export class ConfigLoader {
     );
   }
 
-  addConfig(config: EmbeddingConfig) {
-    if (!ConfigLoader.config.embeddings) {
-      ConfigLoader.config.embeddings = [];
+  addConfig(config: ModelConfig) {
+    if (!ConfigLoader.config.models) {
+      ConfigLoader.config.models = [];
     }
-
-    const index = ConfigLoader.config.embeddings.findIndex(
-      (emb) => emb.model === config.model,
+    this.logger.log(ConfigLoader.config);
+    const index = ConfigLoader.config.models.findIndex(
+      (chat) => chat.model === config.model,
     );
     if (index !== -1) {
-      ConfigLoader.config.embeddings.splice(index, 1);
+      ConfigLoader.config.models.splice(index, 1);
     }
 
     if (config.default) {
-      ConfigLoader.config.embeddings.forEach((emb) => {
-        emb.default = false;
+      ConfigLoader.config.models.forEach((chat) => {
+        chat.default = false;
       });
     }
 
-    ConfigLoader.config.embeddings.push(config);
+    ConfigLoader.config.models.push(config);
     this.saveConfig();
   }
 
   removeConfig(modelName: string): boolean {
-    if (!ConfigLoader.config.embeddings) {
+    if (!ConfigLoader.config.models) {
       return false;
     }
 
-    const initialLength = ConfigLoader.config.embeddings.length;
-    ConfigLoader.config.embeddings = ConfigLoader.config.embeddings.filter(
-      (emb) => emb.model !== modelName,
+    const initialLength = ConfigLoader.config.models.length;
+    ConfigLoader.config.models = ConfigLoader.config.models.filter(
+      (chat) => chat.model !== modelName,
     );
 
-    if (ConfigLoader.config.embeddings.length !== initialLength) {
+    if (ConfigLoader.config.models.length !== initialLength) {
       this.saveConfig();
       return true;
     }
@@ -151,8 +165,9 @@ export class ConfigLoader {
     return false;
   }
 
-  getAllConfigs(): EmbeddingConfig[] | null {
-    return ConfigLoader.config.embeddings || null;
+  getAllConfigs(): ModelConfig[] | null {
+    const res = ConfigLoader.config.models;
+    return Array.isArray(res) ? res : null;
   }
 
   validateConfig() {
@@ -164,25 +179,25 @@ export class ConfigLoader {
       throw new Error('Invalid configuration: Must be an object');
     }
 
-    if (ConfigLoader.config.embeddings) {
-      if (!Array.isArray(ConfigLoader.config.embeddings)) {
-        throw new Error("Invalid configuration: 'embeddings' must be an array");
+    if (ConfigLoader.config.models) {
+      if (!Array.isArray(ConfigLoader.config.models)) {
+        throw new Error("Invalid configuration: 'models' must be an array");
       }
 
-      ConfigLoader.config.embeddings.forEach((emb, index) => {
-        if (!emb.model) {
+      ConfigLoader.config.models.forEach((chat, index) => {
+        if (!chat.model) {
           throw new Error(
-            `Invalid embedding configuration at index ${index}: 'model' is required`,
+            `Invalid model configuration at index ${index}: 'model' is required`,
           );
         }
       });
 
-      const defaultEmbeddings = ConfigLoader.config.embeddings.filter(
-        (emb) => emb.default,
+      const defaultModels = ConfigLoader.config.models.filter(
+        (chat) => chat.default,
       );
-      if (defaultEmbeddings.length > 1) {
+      if (defaultModels.length > 1) {
         throw new Error(
-          'Invalid configuration: Multiple default embedding configurations found',
+          'Invalid configuration: Multiple default model configurations found',
         );
       }
     }
