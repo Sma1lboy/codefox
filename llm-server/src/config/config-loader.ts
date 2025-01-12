@@ -3,7 +3,7 @@ import * as _ from 'lodash';
 import { getConfigPath } from './common-path';
 import { Logger } from '@nestjs/common';
 import * as path from 'path';
-import stripJsonComments from 'strip-json-comments'
+import stripJsonComments from 'strip-json-comments';
 
 export interface ModelConfig {
   model: string;
@@ -131,14 +131,14 @@ export class ConfigLoader {
     }
     this.logger.log(ConfigLoader.config);
     const index = ConfigLoader.config.models.findIndex(
-      (chat) => chat.model === config.model,
+      chat => chat.model === config.model,
     );
     if (index !== -1) {
       ConfigLoader.config.models.splice(index, 1);
     }
 
     if (config.default) {
-      ConfigLoader.config.models.forEach((chat) => {
+      ConfigLoader.config.models.forEach(chat => {
         chat.default = false;
       });
     }
@@ -154,7 +154,7 @@ export class ConfigLoader {
 
     const initialLength = ConfigLoader.config.models.length;
     ConfigLoader.config.models = ConfigLoader.config.models.filter(
-      (chat) => chat.model !== modelName,
+      chat => chat.model !== modelName,
     );
 
     if (ConfigLoader.config.models.length !== initialLength) {
@@ -193,7 +193,7 @@ export class ConfigLoader {
       });
 
       const defaultModels = ConfigLoader.config.models.filter(
-        (chat) => chat.default,
+        chat => chat.default,
       );
       if (defaultModels.length > 1) {
         throw new Error(

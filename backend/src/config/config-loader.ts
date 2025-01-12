@@ -64,7 +64,10 @@ export class ConfigLoader {
 
   private loadConfig() {
     try {
-      this.logger.log(`Loading configuration from ${this.configPath}`, 'ConfigLoader');
+      this.logger.log(
+        `Loading configuration from ${this.configPath}`,
+        'ConfigLoader',
+      );
       const file = fs.readFileSync(this.configPath, 'utf-8');
       const jsonContent = file.replace(
         /\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g,

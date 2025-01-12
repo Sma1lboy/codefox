@@ -1,4 +1,3 @@
-
 import { ConfigLoader, EmbeddingConfig } from '../../config/config-loader';
 import { EmbeddingDownloader } from '../embedding-downloader';
 import { downloadAllEmbeddings } from '../universal-utils';
@@ -45,12 +44,12 @@ describe('loadAllEmbeddingModels with real model loading', () => {
     expect(embeddingModel).toHaveProperty('model');
 
     try {
-      const embeddingOutput = await embeddingModel.embed(
-        ['Test input sentence for embedding.']
-      );
+      const embeddingOutput = await embeddingModel.embed([
+        'Test input sentence for embedding.',
+      ]);
       for await (const batch of embeddingOutput) {
         console.log(batch);
-    }
+      }
 
       expect(embeddingOutput).toBeDefined();
     } catch (error) {

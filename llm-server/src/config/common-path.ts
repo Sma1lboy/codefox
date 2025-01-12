@@ -12,7 +12,6 @@ const APP_NAME = 'codefox';
 
 const WORKSPACE_ROOT = path.resolve(path.join(__dirname, '..', '..', '..'));
 
-
 const ROOT_DIR = path.join(WORKSPACE_ROOT, `.${APP_NAME}`);
 
 export const TEMPLATE_PATH = path.join(WORKSPACE_ROOT, 'backend/template');
@@ -99,7 +98,7 @@ export const cleanTempDir = async (): Promise<void> => {
   const tempDir = getTempDir();
   const files = await promises.readdir(tempDir);
   await Promise.all(
-    files.map((file) => promises.unlink(path.join(tempDir, file))),
+    files.map(file => promises.unlink(path.join(tempDir, file))),
   );
 };
 

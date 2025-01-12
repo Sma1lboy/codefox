@@ -57,7 +57,7 @@ export async function checkAndDownloadAllModels(): Promise<void> {
     return;
   }
 
-  const downloadTasks = modelsConfig.map(async (config) => {
+  const downloadTasks = modelsConfig.map(async config => {
     const { model, task } = config;
     await downloadModel(model, task);
   });

@@ -106,7 +106,6 @@ export class App {
 async function main() {
   const logger = new Logger('Main');
   try {
-    
     await downloadAll();
     const llmProvider = new LLMProvider('openai');
     await llmProvider.initialize();

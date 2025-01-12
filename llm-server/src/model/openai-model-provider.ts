@@ -56,32 +56,30 @@ export class OpenAIModelProvider {
 
   async initialize(): Promise<void> {
     this.openAIcontainer = new Map();
-    let config  = ConfigLoader.getInstance();
-    let models = config.getAllConfigs();
-    models.forEach((model) => {
-      if(this.openAIcontainer.has(model.model)) return;
-      let openai = new OpenAI({
-        apiKey: model.token? model.token:this.options.apiKey,
+    const config = ConfigLoader.getInstance();
+    const models = config.getAllConfigs();
+    models.forEach(model => {
+      if (this.openAIcontainer.has(model.model)) return;
+      const openai = new OpenAI({
+        apiKey: model.token ? model.token : this.options.apiKey,
       });
       this.openAIcontainer.set(model.model, openai);
-    })
+    });
   }
 
-  private getInstance(modelName: string): OpenAI{
-    
-    let config  = ConfigLoader.getInstance();
-    let models = config.getAllConfigs();
-    const modelExists = models.some((model) => model.model === modelName);
+  private getInstance(modelName: string): OpenAI {
+    const config = ConfigLoader.getInstance();
+    const models = config.getAllConfigs();
+    const modelExists = models.some(model => model.model === modelName);
     if (!modelExists) {
       throw new Error(
-        `Model "${modelName}" is not included in the configuration. Please add it under the "models" section in ".codefox/config.json".`
+        `Model "${modelName}" is not included in the configuration. Please add it under the "models" section in ".codefox/config.json".`,
       );
     }
-    
-    if(this.openAIcontainer.has(modelName)) return this.openAIcontainer.get(modelName);
-    throw new Error(
-      `Model "${modelName}" is not initialized. Please check.`
-    );
+
+    if (this.openAIcontainer.has(modelName))
+      return this.openAIcontainer.get(modelName);
+    throw new Error(`Model "${modelName}" is not initialized. Please check.`);
   }
 
   async generateStreamingResponse(
@@ -108,7 +106,7 @@ export class OpenAIModelProvider {
     const startTime = Date.now();
 
     try {
-      let openai = this.getInstance(model);
+      const openai = this.getInstance(model);
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -219,7 +217,7 @@ export class OpenAIModelProvider {
       });
 
       try {
-        let openai = this.getInstance('gpt-3.5-turbo');
+        const openai = this.getInstance('gpt-3.5-turbo');
         const startTime = Date.now();
         const models = await openai.models.list();
         const response = {

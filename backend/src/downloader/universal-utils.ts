@@ -29,7 +29,10 @@ async function downloadEmbeddingModel(modelName: string) {
     logger.log(`Successfully downloaded embedding model: ${modelName}`);
     console.log('Embedding load finished');
   } catch (error) {
-    logger.error(`Failed to download embedding model ${modelName}:`, error.message);
+    logger.error(
+      `Failed to download embedding model ${modelName}:`,
+      error.message,
+    );
     statusManager.updateStatus(modelName, false);
     throw error;
   }
