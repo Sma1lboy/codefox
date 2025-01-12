@@ -12,13 +12,10 @@ import * as path from 'path';
 import { readFile } from 'fs/promises';
 
 // Utility functions (similar to your parseGenerateTag, removeCodeBlockFences)
-import {
-  parseGenerateTag,
-  removeCodeBlockFences,
-} from 'src/build-system/utils/database-utils';
 
 // The function from step #1
 import { generateFrontEndCodePrompt, generateCSSPrompt } from './prompt';
+import { parseGenerateTag } from 'src/build-system/utils/strings';
 
 /**
  * FrontendCodeHandler is responsible for generating the frontend codebase
@@ -129,12 +126,15 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       let generatedCode = '';
       try {
         // Call the model
-        const modelResponse = await context.model.chatSync(
-          {
-            content: frontendCodePrompt,
-          },
-          'gpt-4o-mini', // or whichever model you need
-        );
+        const modelResponse = await context.model.chatSync({
+          messages: [
+            {
+              content: frontendCodePrompt,
+              role: 'system',
+            },
+          ],
+          model: 'gpt-4o-mini',
+        });
 
         // Parse the output
         generatedCode = parseGenerateTag(modelResponse);
