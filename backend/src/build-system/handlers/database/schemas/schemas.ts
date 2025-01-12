@@ -71,11 +71,16 @@ export class DBSchemaHandler implements BuildHandler {
 
     let dbAnalysis: string;
     try {
-
       
-      let modelResponse = await BuildMonitor.timeRecorder(analysisPrompt, this.id, 'db-analysis');
-      this.logger.debug('Analysis code generated and parsed successfully.');
-      dbAnalysis = modelResponse;
+    const startTime = new Date();
+      const analysisResponse = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: analysisPrompt, role: 'system' }],
+      });
+    const endTime = new Date();
+    const duration = endTime.getTime() - startTime.getTime();
+    BuildMonitor.timeRecorder(duration,this.id,'analyzeDatabaseRequirements',analysisPrompt,analysisResponse);
+      dbAnalysis = analysisResponse;
     } catch (error) {
       this.logger.error('Error during database requirements analysis:', error);
       return {
@@ -105,9 +110,16 @@ export class DBSchemaHandler implements BuildHandler {
     let schemaContent: string;
     try {
       
-      let modelResponse = await BuildMonitor.timeRecorder(schemaPrompt, this.id, 'schema');
-      this.logger.debug('Schema code generated and parsed successfully.');
-      schemaContent = formatResponse(modelResponse);
+    const startTime = new Date();
+      const schemaResponse = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: schemaPrompt, role: 'system' }],
+      });
+      
+    const endTime = new Date();
+    const duration = endTime.getTime() - startTime.getTime();
+    BuildMonitor.timeRecorder(duration,this.id,'generateDatabaseSchema',schemaPrompt,schemaResponse);
+      schemaContent = formatResponse(schemaResponse);
     } catch (error) {
       this.logger.error('Error during schema generation:', error);
       return {
@@ -127,9 +139,16 @@ export class DBSchemaHandler implements BuildHandler {
     let validationResponse: string;
     try {
       
-      let modelResponse = await BuildMonitor.timeRecorder(validationPrompt, this.id, 'validation');
-      this.logger.debug('Validation code generated and parsed successfully.');
-      validationResponse = formatResponse(modelResponse);
+      
+    const startTime = new Date();
+      const validationResult = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: validationPrompt, role: 'system' }],
+      });
+    const endTime = new Date();
+    const duration = endTime.getTime() - startTime.getTime();
+      BuildMonitor.timeRecorder(duration,this.id,'validateDatabaseSchema',validationPrompt,validationResult);
+      validationResponse = formatResponse(validationResult);
     } catch (error) {
       this.logger.error('Error during schema validation:', error);
       return {

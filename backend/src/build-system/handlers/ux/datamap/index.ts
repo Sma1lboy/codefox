@@ -10,7 +10,6 @@ import { BuildMonitor } from 'src/build-system/monitor';
  * Handler for generating the UX Data Map document.
  */
 export class UXDatamapHandler implements BuildHandler<string> {
-  private logger = new Logger(UXDatamapHandler.name);
   readonly id = 'op:UX:DATAMAP:DOC';
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -26,13 +25,19 @@ export class UXDatamapHandler implements BuildHandler<string> {
     );
 
     
-    let modelResponse = await BuildMonitor.timeRecorder(prompt, this.id,'site map');
-    this.logger.debug('UX Data Map generated and parsed successfully.');
-    Logger.log('UX Data Map Content: ', modelResponse);
+    const startTime = new Date();
+    const uxDatamapContent = await context.model.chatSync({
+      model: 'gpt-4o-mini',
+      messages: [{ content: prompt, role: 'system' }],
+    });
+    const endTime = new Date();
+    const duration = endTime.getTime() - startTime.getTime();
+    BuildMonitor.timeRecorder(duration,this.id,'generateUXDataMap',prompt,uxDatamapContent);
+    Logger.log('UX Data Map Content: ', uxDatamapContent);
 
     return {
       success: true,
-      data: removeCodeBlockFences(modelResponse),
+      data: removeCodeBlockFences(uxDatamapContent),
     };
   }
 }

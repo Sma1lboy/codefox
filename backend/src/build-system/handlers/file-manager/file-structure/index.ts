@@ -86,8 +86,14 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
     try {
       // Invoke the language model to generate the file structure content
       
-      fileStructureContent = await BuildMonitor.timeRecorder(prompt, this.id, 'file struct');
-      this.logger.debug('File structure generated and parsed successfully.');
+    const startTime = new Date();
+      fileStructureContent = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: prompt, role: 'system' }],
+      });
+    const endTime = new Date();
+    const duration = endTime.getTime() - startTime.getTime();
+    BuildMonitor.timeRecorder(duration,this.id,'generateCommonFileStructure',prompt,fileStructureContent);
     } catch (error) {
       this.logger.error('Error during file structure generation:', error);
       return {
@@ -126,7 +132,6 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
           model: 'gpt-4o-mini',
           messages: [{ content: convertToJsonPrompt, role: 'system' }],
         });
-        this.logger.debug('File structure generated and parsed successfully.');
       } catch (error) {
         this.logger.error('Error during tree to JSON conversion:', error);
         return {

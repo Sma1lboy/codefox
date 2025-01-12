@@ -101,27 +101,18 @@ export class BuildMonitor {
     return BuildMonitor.instance;
   }
 
-  public static async timeRecorder(prompt: string, id: string, step: string): Promise<string>{
+  public static async timeRecorder(generateDuration: number, id: string, step: string, input: string, output: string){
     const {encode, decode} = require('gpt-3-encoder')
-    const startTime = new Date();
-    const response = await this.model.chatSync({
-      model: 'gpt-4o-mini',
-      messages: [{ content: prompt, role: 'system' }],
-    });
-    const endTime = new Date();
-    const duration = endTime.getTime() - startTime.getTime();
     let value = {
       step,
-      input: encode(prompt).length,
-      output: encode(response).length,
-      generateDuration: duration
+      input: encode(input).length,
+      output: encode(output).length,
+      generateDuration
     }
     if (!this.timeRecorders.has(id)) {
       this.timeRecorders.set(id, []);
     }
-  
     this.timeRecorders.get(id)!.push(value);
-    return response;
   }
 
   // Node-level monitoring

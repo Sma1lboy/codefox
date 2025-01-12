@@ -57,9 +57,15 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
         };
       }
       try {
-        fileArchContent = await BuildMonitor.timeRecorder(prompt, this.id, 'file struct');
-        this.logger.debug('File arch code generated and parsed successfully.');
-
+        
+    const startTime = new Date();
+        fileArchContent = await context.model.chatSync({
+          model: 'gpt-4o-mini',
+          messages: [{ content: prompt, role: 'system' }],
+        });
+    const endTime = new Date();
+    const duration = endTime.getTime() - startTime.getTime();
+    BuildMonitor.timeRecorder(duration,this.id,'generateFileArch',prompt,fileArchContent);
         const tagContent = parseGenerateTag(fileArchContent);
         jsonData = extractJsonFromText(tagContent);
 

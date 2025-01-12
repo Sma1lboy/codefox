@@ -63,8 +63,16 @@ export class BackendCodeHandler implements BuildHandler<string> {
     this.logger.debug('Generated backend code prompt.');
 
     try {
+      
+    const startTime = new Date();
       // Invoke the language model to generate the backend code
-      let modelResponse = await BuildMonitor.timeRecorder(backendCodePrompt, this.id, 'backend code');
+      const modelResponse = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: backendCodePrompt, role: 'system' }],
+      });
+    const endTime = new Date();
+    const duration = endTime.getTime() - startTime.getTime();
+    BuildMonitor.timeRecorder(duration,this.id,'generateBackendCode',backendCodePrompt,modelResponse);
       const generatedCode = formatResponse(modelResponse);
 
       const uuid = context.getGlobalContext('projectUUID');
