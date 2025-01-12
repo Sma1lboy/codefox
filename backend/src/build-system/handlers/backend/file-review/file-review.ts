@@ -80,7 +80,9 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
           // Extract new content and write back
           const newContent = formatResponse(response);
           await fs.writeFile(filePath, newContent, 'utf-8');
-          this.logger.debug('modification code generated and parsed successfully.');
+          this.logger.debug(
+            'modification code generated and parsed successfully.',
+          );
           this.logger.log(`Successfully modified ${fileName}`);
         } catch (error) {
           this.logger.error(`Error modifying file ${fileName}:`, error);
