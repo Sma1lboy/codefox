@@ -52,14 +52,13 @@ export class BuilderContext {
     waiting: new Set(),
   };
 
-  
   private globalPromises: Set<Promise<any>> = new Set();
   private logger: Logger;
   private globalContext: Map<GlobalDataKeys | string, any> = new Map();
   private nodeData: Map<string, any> = new Map();
 
   private handlerManager: BuildHandlerManager;
-  private retryHandler : RetryHandler;
+  private retryHandler: RetryHandler;
   private monitor: BuildMonitor;
   public model: ModelProvider;
   public virtualDirectory: VirtualDirectory;
@@ -194,7 +193,7 @@ export class BuilderContext {
                 this.logger.log(`Executing node ${node.id} in parallel batch`);
                 res = this.executeNodeById(node.id);
                 this.globalPromises.add(res);
-                
+
                 this.monitor.endNodeExecution(
                   node.id,
                   this.sequence.id,
@@ -212,7 +211,7 @@ export class BuilderContext {
                 throw error;
               }
             });
-            
+
             await Promise.all(this.globalPromises);
             const activeModelPromises = this.model.getAllActivePromises();
             if (activeModelPromises.length > 0) {
@@ -450,16 +449,19 @@ export class BuilderContext {
     if (!handler) {
       throw new Error(`No handler found for node: ${node.id}`);
     }
-    try{
+    try {
       return await handler.run(this, node.options);
-    }catch(e){
+    } catch (e) {
       this.logger.error(`retrying ${node.id}`);
-      const result = await this.retryHandler.retryMethod(e, (node) => this.invokeNodeHandler(node), [node]);
+      const result = await this.retryHandler.retryMethod(
+        e,
+        (node) => this.invokeNodeHandler(node),
+        [node],
+      );
       if (result === undefined) {
         throw e;
       }
       return result as unknown as BuildResult<T>;
     }
   }
-
 }
