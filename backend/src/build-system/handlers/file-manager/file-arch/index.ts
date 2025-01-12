@@ -57,7 +57,11 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
         };
       }
       try {
-        fileArchContent = await BuildMonitor.timeRecorder(prompt, this.id, 'file struct');
+        fileArchContent = await BuildMonitor.timeRecorder(
+          prompt,
+          this.id,
+          'file struct',
+        );
         this.logger.debug('File arch code generated and parsed successfully.');
 
         const tagContent = parseGenerateTag(fileArchContent);

@@ -64,7 +64,11 @@ export class BackendCodeHandler implements BuildHandler<string> {
 
     try {
       // Invoke the language model to generate the backend code
-      let modelResponse = await BuildMonitor.timeRecorder(backendCodePrompt, this.id, 'backend code');
+      const modelResponse = await BuildMonitor.timeRecorder(
+        backendCodePrompt,
+        this.id,
+        'backend code',
+      );
       const generatedCode = formatResponse(modelResponse);
 
       const uuid = context.getGlobalContext('projectUUID');

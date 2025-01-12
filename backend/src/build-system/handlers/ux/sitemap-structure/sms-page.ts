@@ -50,7 +50,11 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
         'web', // TODO: Replace with dynamic platform if necessary
       );
 
-      const refinedContent = await BuildMonitor.timeRecorder(prompt, this.id, 'level2uxsite map');
+      const refinedContent = await BuildMonitor.timeRecorder(
+        prompt,
+        this.id,
+        'level2uxsite map',
+      );
 
       refinedSections.push({
         title: section.title,

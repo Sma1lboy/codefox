@@ -85,8 +85,12 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
     let fileStructureContent: string;
     try {
       // Invoke the language model to generate the file structure content
-      
-      fileStructureContent = await BuildMonitor.timeRecorder(prompt, this.id, 'file struct');
+
+      fileStructureContent = await BuildMonitor.timeRecorder(
+        prompt,
+        this.id,
+        'file struct',
+      );
       this.logger.debug('File structure generated and parsed successfully.');
     } catch (error) {
       this.logger.error('Error during file structure generation:', error);

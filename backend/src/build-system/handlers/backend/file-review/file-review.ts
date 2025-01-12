@@ -18,7 +18,7 @@ import { BuildMonitor } from 'src/build-system/monitor';
 export class BackendFileReviewHandler implements BuildHandler<string> {
   readonly id = 'op:BACKEND:FILE:REVIEW';
   readonly logger: Logger = new Logger('BackendFileModificationHandler');
-  
+
   private monitor = BuildMonitor.getInstance();
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -51,8 +51,11 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
         backendCode,
       );
 
-      
-      let modelResponse = await BuildMonitor.timeRecorder(filePrompt, this.id, 'file struct');
+      const modelResponse = await BuildMonitor.timeRecorder(
+        filePrompt,
+        this.id,
+        'file struct',
+      );
 
       const filesToModify = this.parseFileIdentificationResponse(modelResponse);
       this.logger.log(`Files to modify: ${filesToModify.join(', ')}`);
@@ -73,10 +76,13 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
             backendCode,
           );
 
-         
-          let response = await BuildMonitor.timeRecorder(modificationPrompt, this.id, 'modification');
+          const response = await BuildMonitor.timeRecorder(
+            modificationPrompt,
+            this.id,
+            'modification',
+          );
           // Get modified content
-          
+
           // Extract new content and write back
           const newContent = formatResponse(response);
           await fs.writeFile(filePath, newContent, 'utf-8');

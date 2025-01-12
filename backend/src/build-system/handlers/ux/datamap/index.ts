@@ -25,8 +25,11 @@ export class UXDatamapHandler implements BuildHandler<string> {
       'web', // TODO: change platform dynamically if needed
     );
 
-    
-    let modelResponse = await BuildMonitor.timeRecorder(prompt, this.id,'site map');
+    const modelResponse = await BuildMonitor.timeRecorder(
+      prompt,
+      this.id,
+      'site map',
+    );
     this.logger.debug('UX Data Map generated and parsed successfully.');
     Logger.log('UX Data Map Content: ', modelResponse);
 

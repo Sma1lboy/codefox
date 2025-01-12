@@ -7,7 +7,6 @@ import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { BuildMonitor } from 'src/build-system/monitor';
 
 export class DatabaseRequirementHandler implements BuildHandler<string> {
-  
   readonly id = 'op:DATABASE_REQ';
   readonly logger = new Logger('DatabaseRequirementHandler');
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -21,9 +20,13 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
       projectName,
       datamapDoc,
     );
-    
-    let dbRequirementsContent = await BuildMonitor.timeRecorder(prompt, this.id, 'database');
-    
+
+    const dbRequirementsContent = await BuildMonitor.timeRecorder(
+      prompt,
+      this.id,
+      'database',
+    );
+
     this.logger.debug('Database code generated and parsed successfully.');
     return {
       success: true,

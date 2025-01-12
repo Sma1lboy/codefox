@@ -40,9 +40,11 @@ export class UXSMDHandler implements BuildHandler<string> {
   }
 
   private async generateUXSMDFromLLM(prompt: string): Promise<string> {
-
-    const uxsmdContent = await BuildMonitor.timeRecorder(prompt, this.id, 'uxsmd');
-
+    const uxsmdContent = await BuildMonitor.timeRecorder(
+      prompt,
+      this.id,
+      'uxsmd',
+    );
 
     this.logger.log('Received full UXSMD content from LLM server.');
     return uxsmdContent;

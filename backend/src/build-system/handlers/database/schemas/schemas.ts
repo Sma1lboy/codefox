@@ -71,9 +71,11 @@ export class DBSchemaHandler implements BuildHandler {
 
     let dbAnalysis: string;
     try {
-
-      
-      let modelResponse = await BuildMonitor.timeRecorder(analysisPrompt, this.id, 'db-analysis');
+      const modelResponse = await BuildMonitor.timeRecorder(
+        analysisPrompt,
+        this.id,
+        'db-analysis',
+      );
       this.logger.debug('Analysis code generated and parsed successfully.');
       dbAnalysis = modelResponse;
     } catch (error) {
@@ -104,8 +106,11 @@ export class DBSchemaHandler implements BuildHandler {
 
     let schemaContent: string;
     try {
-      
-      let modelResponse = await BuildMonitor.timeRecorder(schemaPrompt, this.id, 'schema');
+      const modelResponse = await BuildMonitor.timeRecorder(
+        schemaPrompt,
+        this.id,
+        'schema',
+      );
       this.logger.debug('Schema code generated and parsed successfully.');
       schemaContent = formatResponse(modelResponse);
     } catch (error) {
@@ -126,8 +131,11 @@ export class DBSchemaHandler implements BuildHandler {
 
     let validationResponse: string;
     try {
-      
-      let modelResponse = await BuildMonitor.timeRecorder(validationPrompt, this.id, 'validation');
+      const modelResponse = await BuildMonitor.timeRecorder(
+        validationPrompt,
+        this.id,
+        'validation',
+      );
       this.logger.debug('Validation code generated and parsed successfully.');
       validationResponse = formatResponse(modelResponse);
     } catch (error) {

@@ -32,7 +32,11 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
       'web', // TODO: Change platform dynamically if necessary
     );
 
-    const uxStructureContent = await BuildMonitor.timeRecorder(prompt, this.id, 'uxsite');
+    const uxStructureContent = await BuildMonitor.timeRecorder(
+      prompt,
+      this.id,
+      'uxsite',
+    );
     this.logger.debug('Ux structure generated and parsed successfully.');
 
     return {

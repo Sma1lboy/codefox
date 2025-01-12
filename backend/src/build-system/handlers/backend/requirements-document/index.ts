@@ -25,7 +25,6 @@ type BackendRequirementResult = {
 export class BackendRequirementHandler
   implements BuildHandler<BackendRequirementResult>
 {
-  
   private monitor = BuildMonitor.getInstance();
   readonly id = 'op:BACKEND:REQ';
   readonly logger: Logger = new Logger('BackendRequirementHandler');
@@ -57,9 +56,12 @@ export class BackendRequirementHandler
 
     let backendOverview: string;
     try {
-      
-      backendOverview = await BuildMonitor.timeRecorder(overviewPrompt, this.id, 'overview');
-      
+      backendOverview = await BuildMonitor.timeRecorder(
+        overviewPrompt,
+        this.id,
+        'overview',
+      );
+
       this.logger.debug('Overview code generated and parsed successfully.');
     } catch (error) {
       this.logger.error('Error generating backend overview:', error);

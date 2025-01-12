@@ -93,6 +93,9 @@ importers:
       fs-extra:
         specifier: ^11.2.0
         version: 11.2.0
+      gpt-3-encoder:
+        specifier: ^1.1.4
+        version: 1.1.4
       graphql:
         specifier: ^16.9.0
         version: 16.10.0
@@ -111,6 +114,9 @@ importers:
       normalize-path:
         specifier: ^3.0.0
         version: 3.0.0
+      openai:
+        specifier: ^4.77.0
+        version: 4.77.3(zod@3.24.1)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -8420,6 +8426,7 @@ packages:
 
   /@types/node@16.18.123:
     resolution: {integrity: sha512-/n7I6V/4agSpJtFDKKFEa763Hc1z3hmvchobHS1TisCOTKD5nxq8NJ2iK7SRIMYL276Q9mgWOx2AWp5n2XI6eA==}
+    dev: true
 
   /@types/node@17.0.45:
     resolution: {integrity: sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==}
@@ -9485,7 +9492,7 @@ packages:
     resolution: {integrity: sha512-DukmaFRnY6AzAALSH4J2M3k6PkaC+MfaAGdEERRWcC9q3/TWQwLpHR8ZRLKTdQ3aBDL64EdluRDjJqKw+BPZEw==}
     dependencies:
       follow-redirects: 1.15.9(debug@4.4.0)
-      form-data: 4.0.0
+      form-data: 4.0.1
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
@@ -13012,6 +13019,10 @@ packages:
       responselike: 3.0.0
     dev: false
 
+  /gpt-3-encoder@1.1.4:
+    resolution: {integrity: sha512-fSQRePV+HUAhCn7+7HL7lNIXNm6eaFWFbNLOOGtmSJ0qJycyQvj60OvRlH7mee8xAMjBDNRdMXlMwjAbMTDjkg==}
+    dev: false
+
   /graceful-fs@4.2.10:
     resolution: {integrity: sha512-9ByhssR2fPVsNZj478qUUbKfmL0+t5BDVyjShtyZZLiK7ZDAArFFfopyOTj0M05wE2tJPisA4iTnnXl2YoPvOA==}
     dev: false
@@ -14852,7 +14863,7 @@ packages:
     resolution: {integrity: sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==}
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/node': 16.18.123
+      '@types/node': 22.10.5
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
