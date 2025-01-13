@@ -6,6 +6,7 @@ import {
 } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { NonRetryableError, RetryableError } from 'src/build-system/retry-handler';
 
 type BackendRequirementResult = {
   overview: string;
@@ -16,9 +17,8 @@ type BackendRequirementResult = {
     packages: Record<string, string>;
   };
 };
-
 /**
- * BackendRequirementHandler is responsible for generating the backend requirements document
+ * BackendRequirementHandler is responsible for generating the backend requirements document.
  * Core Content Generation: API Endpoints, System Overview
  */
 export class BackendRequirementHandler
@@ -42,6 +42,16 @@ export class BackendRequirementHandler
     const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
     const sitemapDoc = context.getNodeData('op:UX:SMD');
 
+    if (!dbRequirements || !datamapDoc || !sitemapDoc) {
+      this.logger.error('Missing required parameters: dbRequirements, datamapDoc, or sitemapDoc');
+      return {
+        success: false,
+        error: new NonRetryableError(
+          'Missing required parameters: dbRequirements, datamapDoc, or sitemapDoc.',
+        ),
+      };
+    }
+
     const overviewPrompt = generateBackendOverviewPrompt(
       projectName,
       dbRequirements,
@@ -58,47 +68,32 @@ export class BackendRequirementHandler
         model: 'gpt-4o-mini',
         messages: [{ content: overviewPrompt, role: 'system' }],
       });
+
+      if (!backendOverview || backendOverview.trim() === '') {
+        throw new RetryableError('Generated backend overview is empty.');
+      }
     } catch (error) {
-      this.logger.error('Error generating backend overview:', error);
+      if (error instanceof RetryableError) {
+        this.logger.warn(`Retryable error during backend overview generation: ${error.message}`);
+        return {
+          success: false,
+          error,
+        };
+      }
+
+      this.logger.error('Non-retryable error generating backend overview:', error);
       return {
         success: false,
-        error: new Error('Failed to generate backend overview.'),
+        error: new NonRetryableError('Failed to generate backend overview.'),
       };
     }
-
-    // // Generate backend implementation details
-    // const implementationPrompt = generateBackendImplementationPrompt(
-    //   backendOverview,
-    //   language,
-    //   framework,
-    // );
-
-    // let implementationDetails: string;
-    // try {
-    //   implementationDetails = await context.model.chatSync(
-    //     {
-    //       content: implementationPrompt,
-    //     },
-    //     'gpt-4o-mini',
-    //   );
-    // } catch (error) {
-    //   this.logger.error(
-    //     'Error generating backend implementation details:',
-    //     error,
-    //   );
-    //   return {
-    //     success: false,
-    //     error: new Error('Failed to generate backend implementation details.'),
-    //   };
-    // }
 
     // Return generated data
     return {
       success: true,
       data: {
         overview: removeCodeBlockFences(backendOverview),
-        // TODO: consider remove implementation
-        implementation: '',
+        implementation: '', // Implementation generation skipped
         config: {
           language,
           framework,

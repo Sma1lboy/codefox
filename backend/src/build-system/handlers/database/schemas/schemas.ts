@@ -7,11 +7,11 @@ import {
   getSupportedDatabaseTypes,
   isSupportedDatabaseType,
 } from '../../../utils/database-utils';
-import { writeFile } from 'fs-extra';
 import { prompts } from './prompt';
 import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
 import { formatResponse } from 'src/build-system/utils/strings';
+import { RetryableError, NonRetryableError } from 'src/build-system/retry-handler';
 
 /**
  * DBSchemaHandler is responsible for generating database schemas based on provided requirements.
@@ -23,40 +23,49 @@ export class DBSchemaHandler implements BuildHandler {
   /**
    * Executes the handler to generate database schemas.
    * @param context - The builder context containing configuration and utilities.
-   * @param args - The variadic arguments required for generating the database schemas.
    * @returns A BuildResult containing the generated schema content and related data.
    */
   async run(context: BuilderContext): Promise<BuildResult> {
     this.logger.log('Generating Database Schemas...');
 
-    // Retrieve projectName and databaseType from context
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
     const databaseType =
       context.getGlobalContext('databaseType') || 'PostgreSQL';
 
     const dbRequirements = context.getNodeData('op:DATABASE_REQ');
-
-    this.logger.debug('Database requirements are provided.');
-
-    // Check if the databaseType is supported
-    if (!isSupportedDatabaseType(databaseType)) {
-      throw new Error(
-        `Unsupported database type: ${databaseType}. Supported types are: ${getSupportedDatabaseTypes().join(
-          ', ',
-        )}.`,
-      );
+    if (!dbRequirements) {
+      this.logger.error('Missing database requirements.');
+      return {
+        success: false,
+        error: new NonRetryableError('Missing required database requirements.'),
+      };
     }
 
-    // Get the file extension for the schema
+    if (!isSupportedDatabaseType(databaseType)) {
+      const supportedTypes = getSupportedDatabaseTypes().join(', ');
+      this.logger.error(
+        `Unsupported database type: ${databaseType}. Supported types: ${supportedTypes}`,
+      );
+      return {
+        success: false,
+        error: new NonRetryableError(
+          `Unsupported database type: ${databaseType}. Supported types: ${supportedTypes}.`,
+        ),
+      };
+    }
+
     let fileExtension: string;
     try {
       fileExtension = getSchemaFileExtension(databaseType as DatabaseType);
     } catch (error) {
       this.logger.error('Error determining schema file extension:', error);
-      throw new Error(
-        `Failed to determine schema file extension for database type: ${databaseType}.`,
-      );
+      return {
+        success: false,
+        error: new NonRetryableError(
+          `Failed to determine schema file extension for database type: ${databaseType}.`,
+        ),
+      };
     }
 
     this.logger.debug(`Schema file extension: .${fileExtension}`);
@@ -75,44 +84,48 @@ export class DBSchemaHandler implements BuildHandler {
         messages: [{ content: analysisPrompt, role: 'system' }],
       });
       dbAnalysis = analysisResponse;
+      if (!dbAnalysis || dbAnalysis.trim() === '') {
+        throw new RetryableError('Database requirements analysis returned empty.');
+      }
     } catch (error) {
-      this.logger.error('Error during database requirements analysis:', error);
+      if (error instanceof RetryableError) {
+        this.logger.warn(`Retryable error during analysis: ${error.message}`);
+        return { success: false, error };
+      }
+      this.logger.error('Non-retryable error during analysis:', error);
       return {
         success: false,
-        error: new Error('Failed to analyze database requirements.'),
+        error: new NonRetryableError('Failed to analyze database requirements.'),
       };
     }
 
     this.logger.debug('Database requirements analyzed successfully.');
 
     // Step 2: Generate database schema based on analysis
-    let schemaPrompt: string;
+    let schemaContent: string;
     try {
-      schemaPrompt = prompts.generateDatabaseSchema(
+      const schemaPrompt = prompts.generateDatabaseSchema(
         dbAnalysis,
         databaseType,
         fileExtension,
       );
-    } catch (error) {
-      this.logger.error('Error during schema prompt generation:', error);
-      return {
-        success: false,
-        error: new Error('Failed to generate schema prompt.'),
-      };
-    }
-
-    let schemaContent: string;
-    try {
       const schemaResponse = await context.model.chatSync({
         model: 'gpt-4o-mini',
         messages: [{ content: schemaPrompt, role: 'system' }],
       });
       schemaContent = formatResponse(schemaResponse);
+      if (!schemaContent || schemaContent.trim() === '') {
+        throw new RetryableError('Generated database schema is empty.');
+      }
     } catch (error) {
-      this.logger.error('Error during schema generation:', error);
+      if (error instanceof RetryableError) {
+        this.logger.warn(`Retryable error during schema generation: ${error.message}`);
+        return { success: false, error };
+      }
+      this.logger.error('Non-retryable error during schema generation:', error);
       return {
         success: false,
-        error: new Error('Failed to generate database schema.'),
+        error: new NonRetryableError('Failed to generate database schema.'),
       };
     }
 
@@ -124,37 +137,32 @@ export class DBSchemaHandler implements BuildHandler {
       databaseType,
     );
 
-    let validationResponse: string;
     try {
       const validationResult = await context.model.chatSync({
         model: 'gpt-4o-mini',
         messages: [{ content: validationPrompt, role: 'system' }],
       });
-      validationResponse = formatResponse(validationResult);
+      const validationResponse = formatResponse(validationResult);
+      if (validationResponse.includes('Error')) {
+        throw new RetryableError(`Schema validation failed: ${validationResponse}`);
+      }
     } catch (error) {
-      this.logger.error('Error during schema validation:', error);
+      if (error instanceof RetryableError) {
+        this.logger.warn(`Retryable error during schema validation: ${error.message}`);
+        return { success: false, error };
+      }
+      this.logger.error('Non-retryable error during schema validation:', error);
       return {
         success: false,
-        error: new Error('Failed to validate the generated database schema.'),
-      };
-    }
-
-    if (validationResponse.includes('Error')) {
-      this.logger.error('Schema validation failed:', validationResponse);
-      return {
-        success: false,
-        error: new Error(`Schema validation failed: ${validationResponse}`),
+        error: new NonRetryableError('Failed to validate the database schema.'),
       };
     }
 
     this.logger.debug('Schema validation passed.');
 
-    // Define the schema file name
+    // Step 4: Save the schema to a file
     const schemaFileName = `schema.${fileExtension}`;
-
-    // Write the schemaContent to a file
     const uuid = context.getGlobalContext('projectUUID');
-
     try {
       saveGeneratedCode(
         path.join(uuid, 'backend', schemaFileName),
@@ -165,11 +173,9 @@ export class DBSchemaHandler implements BuildHandler {
       this.logger.error('Error writing schema file:', error);
       return {
         success: false,
-        error: new Error('Failed to write schema file.'),
+        error: new NonRetryableError('Failed to write schema file.'),
       };
     }
-
-    this.logger.debug(`Schema file (${schemaFileName}) prepared.`);
 
     return {
       success: true,

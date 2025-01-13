@@ -6,10 +6,8 @@ import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
 import {
   formatResponse,
-  parseGenerateTag,
-  removeCodeBlockFences,
 } from 'src/build-system/utils/strings';
-
+import { NonRetryableError, RetryableError } from 'src/build-system/retry-handler';
 /**
  * BackendCodeHandler is responsible for generating the backend codebase
  * based on the provided sitemap and data mapping documents.
@@ -21,7 +19,6 @@ export class BackendCodeHandler implements BuildHandler<string> {
   /**
    * Executes the handler to generate backend code.
    * @param context - The builder context containing configuration and utilities.
-   * @param args - The variadic arguments required for generating the backend code.
    * @returns A BuildResult containing the generated code and related data.
    */
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -37,11 +34,18 @@ export class BackendCodeHandler implements BuildHandler<string> {
     const sitemapDoc = context.getNodeData('op:UX:SMD');
     const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
     const databaseSchemas = context.getNodeData('op:DATABASE:SCHEMAS');
-    //TODO: make this backend generate similar as FileGenerateHandler, do file arch, and then generate each backend code
-    //TODO: backend requirement
-    const backendRequirementDoc =
-      context.getNodeData('op:BACKEND:REQ').overview;
 
+    if (!sitemapDoc || !datamapDoc || !databaseSchemas) {
+      return {
+        success: false,
+        error: new NonRetryableError(
+          'Missing required parameters: sitemapDoc, datamapDoc, or databaseSchemas.',
+        ),
+      };
+    }
+
+    const backendRequirementDoc =
+      context.getNodeData('op:BACKEND:REQ')?.overview || '';
     const currentFile = 'index.js';
     const dependencyFile = 'dependencies.json';
 
@@ -58,9 +62,6 @@ export class BackendCodeHandler implements BuildHandler<string> {
       dependencyFile,
     );
 
-    // Log the prompt generation
-    this.logger.debug('Generated backend code prompt.');
-
     try {
       // Invoke the language model to generate the backend code
       const modelResponse = await context.model.chatSync({
@@ -70,21 +71,33 @@ export class BackendCodeHandler implements BuildHandler<string> {
 
       const generatedCode = formatResponse(modelResponse);
 
+      if (!generatedCode) {
+        throw new RetryableError('Generated code is empty.');
+      }
+
       const uuid = context.getGlobalContext('projectUUID');
       saveGeneratedCode(path.join(uuid, 'backend', currentFile), generatedCode);
 
       this.logger.debug('Backend code generated and parsed successfully.');
 
-      // TODO: return backend api as output
+      // TODO: return backend API as output
       return {
         success: true,
         data: generatedCode,
       };
     } catch (error) {
-      this.logger.error('Error during backend code generation:', error);
+      if (error instanceof RetryableError) {
+        this.logger.warn(`Retryable error encountered: ${error.message}`);
+        return {
+          success: false,
+          error,
+        };
+      }
+
+      this.logger.error('Non-retryable error encountered:', error);
       return {
         success: false,
-        error: new Error('Failed to generate backend code.'),
+        error: new NonRetryableError('Failed to generate backend code.'),
       };
     }
   }
