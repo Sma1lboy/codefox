@@ -7,6 +7,11 @@ import {
   formatResponse,
   parseGenerateTag,
 } from 'src/build-system/utils/strings';
+import {
+  buildDependencyGraph,
+  validateAgainstVirtualDirectory,
+} from 'src/build-system/utils/file_generator_util';
+import { VirtualDirectory } from 'src/build-system/virtual-dir';
 
 export class FileArchGenerateHandler implements BuildHandler<string> {
   readonly id = 'op:FILE:ARCH';
