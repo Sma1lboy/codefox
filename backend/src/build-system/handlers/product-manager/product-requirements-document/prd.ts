@@ -6,6 +6,7 @@ import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import {
   MissingConfigurationError,
+  ModelUnavailableError,
   ResponseParsingError,
 } from 'src/build-system/errors';
 
@@ -68,7 +69,7 @@ export class PRDHandler implements BuildHandler {
       });
 
       if (!prdContent || prdContent.trim() === '') {
-        throw new ResponseParsingError(
+        throw new ModelUnavailableError(
           'LLM server returned empty PRD content.',
         );
       }
@@ -76,25 +77,7 @@ export class PRDHandler implements BuildHandler {
       this.logger.log('Received full PRD content from LLM server.');
       return prdContent;
     } catch (error) {
-      if (error.message.includes('timeout')) {
-        this.logger.error('Timeout error communicating with the LLM server.');
-        throw new ResponseParsingError(
-          'Timeout occurred while communicating with the LLM server.',
-        );
-      }
-      if (error.message.includes('service unavailable')) {
-        this.logger.error('LLM server is temporarily unavailable.');
-        throw new ResponseParsingError(
-          'LLM server is temporarily unavailable.',
-        );
-      }
-      this.logger.error(
-        'Unexpected error communicating with the LLM server:',
-        error,
-      );
-      throw new ResponseParsingError(
-        'Unexpected error during communication with the LLM server.',
-      );
+      throw error;
     }
   }
 }

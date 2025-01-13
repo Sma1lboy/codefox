@@ -12,9 +12,6 @@ import {
   InvalidParameterError,
   ResponseParsingError,
   FileWriteError,
-  ModelTimeoutError,
-  TemporaryServiceUnavailableError,
-  RateLimitExceededError,
 } from 'src/build-system/errors';
 
 export class FileGeneratorHandler implements BuildHandler<string> {
@@ -44,7 +41,7 @@ export class FileGeneratorHandler implements BuildHandler<string> {
         data: 'Files and dependencies created successfully.',
       };
     } catch (error) {
-      this.handleErrors(error, 'generate files and dependencies');
+      throw error;
     }
   }
 
@@ -176,16 +173,4 @@ export class FileGeneratorHandler implements BuildHandler<string> {
     this.logger.log(`File created: ${filePath}`);
   }
 
-  private handleErrors(error: any, stage: string): never {
-    switch (error.name) {
-      case 'ModelTimeoutError':
-      case 'TemporaryServiceUnavailableError':
-      case 'RateLimitExceededError':
-        this.logger.warn(`Retryable error during ${stage}: ${error.message}`);
-        throw error;
-      default:
-        this.logger.error(`Non-retryable error during ${stage}:`, error);
-        throw new InvalidParameterError(`Unexpected error during ${stage}.`);
-    }
-  }
 }

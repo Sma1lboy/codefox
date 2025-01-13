@@ -49,11 +49,16 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
 
     let fileStructureContent: string;
     try {
-      fileStructureContent = await this.callModel(
-        context,
-        prompt,
-        'file structure',
-      );
+      fileStructureContent = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: prompt, role: 'system' }],
+      });
+
+      if (!fileStructureContent || fileStructureContent.trim() === '') {
+        throw new ResponseParsingError(
+          `Generated content is empty during op:FILE:STRUCT.`,
+        );
+      }
     } catch (error) {
       return { success: false, error };
     }
@@ -64,11 +69,16 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
 
     let fileStructureJsonContent: string;
     try {
-      fileStructureJsonContent = await this.callModel(
-        context,
-        convertToJsonPrompt,
-        'tree-to-JSON conversion',
-      );
+      fileStructureJsonContent = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: prompt, role: 'system' }],
+      });
+
+      if (!fileStructureJsonContent || fileStructureJsonContent.trim() === '') {
+        throw new ResponseParsingError(
+          `Generated content is empty during op:FILE:STRUCT 2.`,
+        );
+      }
     } catch (error) {
       return { success: false, error };
     }
@@ -124,45 +134,6 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
       throw new MissingConfigurationError(
         'Invalid projectPart. Must be either "frontend" or "backend".',
       );
-    }
-  }
-
-  private async callModel(
-    context: BuilderContext,
-    prompt: string,
-    stage: string,
-  ): Promise<string> {
-    try {
-      const response = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
-
-      if (!response || response.trim() === '') {
-        throw new ResponseParsingError(
-          `Generated content is empty during ${stage}.`,
-        );
-      }
-
-      return response;
-    } catch (error) {
-      this.handleErrors(error, stage);
-      throw error;
-    }
-  }
-
-  private handleErrors(error: any, stage: string): void {
-    switch (error.name) {
-      case 'ModelTimeoutError':
-      case 'TemporaryServiceUnavailableError':
-      case 'RateLimitExceededError':
-        this.logger.error(`Error during ${stage}: ${error.message}`);
-        throw new Error(`Unexpected error during ${stage}.`);
-      default:
-        this.logger.error(`Non-retryable error during ${stage}:`, error);
-        throw new ResponseParsingError(
-          `Error during ${stage}: ${error.message}`,
-        );
     }
   }
 }

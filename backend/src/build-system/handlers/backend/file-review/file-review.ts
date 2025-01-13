@@ -53,7 +53,7 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
       }
       this.logger.debug(`Found files: ${files.join(', ')}`);
     } catch (error) {
-      this.handleFileSystemError(error);
+      throw error;
     }
 
     const filePrompt = prompts.identifyBackendFilesToModify(
@@ -70,7 +70,7 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
         messages: [{ content: filePrompt, role: 'system' }],
       });
     } catch (error) {
-      this.handleModelError(error);
+      throw error;
     }
 
     const filesToModify = this.parseFileIdentificationResponse(modelResponse);
@@ -106,7 +106,7 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
         await fs.writeFile(filePath, newContent, 'utf-8');
         this.logger.log(`Successfully modified ${fileName}`);
       } catch (error) {
-        this.handleFileProcessingError(fileName, error);
+        throw error;
       }
     }
 
@@ -135,51 +135,5 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
         'Failed to parse file identification response.',
       );
     }
-  }
-
-  /**
-   * Handles file system errors.
-   */
-  private handleFileSystemError(error: any): never {
-    this.logger.error('File system error encountered:', error);
-    throw new FileNotFoundError(
-      `File system operation failed: ${error.message}`,
-    );
-  }
-
-  /**
-   * Handles model-related errors.
-   */
-  private handleModelError(error: any): never {
-    if (
-      error instanceof ModelTimeoutError ||
-      error instanceof TemporaryServiceUnavailableError ||
-      error instanceof RateLimitExceededError
-    ) {
-      this.logger.warn(`Retryable model error: ${error.message}`);
-      throw error;
-    }
-    this.logger.error('Non-retryable model error encountered:', error);
-    throw new ResponseParsingError(`Model error: ${error.message}`);
-  }
-
-  /**
-   * Handles errors during file processing.
-   */
-  private handleFileProcessingError(fileName: string, error: any): never {
-    if (
-      error instanceof ModelTimeoutError ||
-      error instanceof TemporaryServiceUnavailableError ||
-      error instanceof RateLimitExceededError
-    ) {
-      this.logger.warn(
-        `Retryable error for file ${fileName}: ${error.message}`,
-      );
-      throw error;
-    }
-    this.logger.error(`Non-retryable error for file ${fileName}:`, error);
-    throw new FileModificationError(
-      `Error processing file ${fileName}: ${error.message}`,
-    );
   }
 }

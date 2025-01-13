@@ -80,38 +80,7 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
           content: refinedContent,
         });
       } catch (error) {
-        if (error.message.includes('timeout')) {
-          this.logger.warn(
-            `Timeout error during section refinement: ${error.message}`,
-          );
-          throw new ResponseParsingError(
-            'Timeout occurred while refining sections.',
-          );
-        }
-        if (error.message.includes('service unavailable')) {
-          this.logger.warn(
-            `Service unavailable during section refinement: ${error.message}`,
-          );
-          throw new ResponseParsingError(
-            'Model service is temporarily unavailable.',
-          );
-        }
-        if (error.message.includes('rate limit')) {
-          this.logger.warn(
-            `Rate limit exceeded during section refinement: ${error.message}`,
-          );
-          throw new ResponseParsingError(
-            'Rate limit exceeded while refining sections.',
-          );
-        }
-
-        this.logger.error(
-          `Unexpected error during section refinement for "${section.title}":`,
-          error,
-        );
-        throw new ResponseParsingError(
-          `Unexpected error during section refinement for "${section.title}".`,
-        );
+        throw error;
       }
     }
 

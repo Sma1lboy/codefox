@@ -37,7 +37,16 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     );
 
     try {
-      const fileArchContent = await this.callModel(context, prompt);
+      const fileArchContent = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: prompt, role: 'system' }],
+      });
+
+      if (!fileArchContent) {
+        throw new ModelTimeoutError(
+          'The model did not respond within the expected time.',
+        );
+      }
 
       const tagContent = parseGenerateTag(fileArchContent);
       const jsonData = extractJsonFromText(tagContent);
@@ -60,7 +69,7 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
         data: formatResponse(fileArchContent),
       };
     } catch (error) {
-      this.handleModelErrors(error, 'generate file architecture');
+      throw error;
     }
   }
 
@@ -99,52 +108,4 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     return true;
   }
 
-  /**
-   * Calls the language model to generate file architecture.
-   * @param context The builder context.
-   * @param prompt The generated prompt.
-   */
-  private async callModel(
-    context: BuilderContext,
-    prompt: string,
-  ): Promise<string> {
-    try {
-      const modelResponse = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
-
-      if (!modelResponse) {
-        throw new ModelTimeoutError(
-          'The model did not respond within the expected time.',
-        );
-      }
-
-      return modelResponse;
-    } catch (error) {
-      this.handleModelErrors(error, 'call model');
-    }
-  }
-
-  /**
-   * Handles model-related errors and logs them.
-   * @param error The error encountered.
-   * @param stage The stage where the error occurred.
-   */
-  private handleModelErrors(error: any, stage: string): never {
-    switch (error.name) {
-      case 'ModelTimeoutError':
-        this.logger.warn(`Retryable error during ${stage}: ${error.message}`);
-        throw new ModelTimeoutError(error.message);
-      case 'TemporaryServiceUnavailableError':
-        this.logger.warn(`Retryable error during ${stage}: ${error.message}`);
-        throw new TemporaryServiceUnavailableError(error.message);
-      case 'RateLimitExceededError':
-        this.logger.warn(`Retryable error during ${stage}: ${error.message}`);
-        throw new RateLimitExceededError(error.message);
-      default:
-        this.logger.error(`Non-retryable error during ${stage}:`, error);
-        throw new InvalidParameterError(`Unexpected error during ${stage}.`);
-    }
-  }
 }

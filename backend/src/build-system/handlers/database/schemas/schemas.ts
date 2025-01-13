@@ -127,7 +127,7 @@ export class DBSchemaHandler implements BuildHandler {
 
       return analysisResponse;
     } catch (error) {
-      this.handleModelErrors(error, 'analyze database requirements');
+      throw error;
     }
   }
 
@@ -156,7 +156,7 @@ export class DBSchemaHandler implements BuildHandler {
 
       return schemaContent;
     } catch (error) {
-      this.handleModelErrors(error, 'generate database schema');
+      throw error;
     }
   }
 
@@ -183,24 +183,8 @@ export class DBSchemaHandler implements BuildHandler {
         );
       }
     } catch (error) {
-      this.handleModelErrors(error, 'validate database schema');
+      throw error;
     }
   }
 
-  private handleModelErrors(error: any, stage: string): never {
-    switch (error.name) {
-      case 'ModelTimeoutError':
-        this.logger.warn(`Retryable error during ${stage}: ${error.message}`);
-        throw new ModelTimeoutError(error.message);
-      case 'TemporaryServiceUnavailableError':
-        this.logger.warn(`Retryable error during ${stage}: ${error.message}`);
-        throw new TemporaryServiceUnavailableError(error.message);
-      case 'RateLimitExceededError':
-        this.logger.warn(`Retryable error during ${stage}: ${error.message}`);
-        throw new RateLimitExceededError(error.message);
-      default:
-        this.logger.error(`Non-retryable error during ${stage}:`, error);
-        throw new ResponseParsingError(`Failed to ${stage}.`);
-    }
-  }
 }

@@ -9,6 +9,7 @@ import {
   ModelTimeoutError,
   TemporaryServiceUnavailableError,
   RateLimitExceededError,
+  ModelUnavailableError,
 } from 'src/build-system/errors';
 
 type BackendRequirementResult = {
@@ -67,13 +68,21 @@ export class BackendRequirementHandler
 
     let backendOverview: string;
     try {
-      backendOverview = await this.callModel(context, overviewPrompt);
-      if (!backendOverview || backendOverview.trim() === '') {
+      backendOverview = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: overviewPrompt, role: 'system' }],
+      });
+
+      if (!backendOverview) {
+        throw new ModelTimeoutError(
+          'The model did not respond within the expected time.',
+        );
+      }
+      if (backendOverview.trim() === '') {
         throw new ResponseParsingError('Generated backend overview is empty.');
       }
     } catch (error) {
-      this.logger.error('Error during backend overview generation:', error);
-      throw error; // Pass error to upper-level handler
+      throw error;
     }
 
     // Return generated data
@@ -91,45 +100,4 @@ export class BackendRequirementHandler
     };
   }
 
-  /**
-   * Calls the language model to generate backend overview.
-   * @param context The builder context.
-   * @param prompt The generated prompt.
-   */
-  private async callModel(
-    context: BuilderContext,
-    prompt: string,
-  ): Promise<string> {
-    try {
-      const modelResponse = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
-
-      if (!modelResponse) {
-        throw new ModelTimeoutError(
-          'The model did not respond within the expected time.',
-        );
-      }
-
-      return modelResponse;
-    } catch (error) {
-      if (error.message.includes('timeout')) {
-        throw new ModelTimeoutError(
-          'Timeout occurred while communicating with the model.',
-        );
-      }
-      if (error.message.includes('service unavailable')) {
-        throw new TemporaryServiceUnavailableError(
-          'Model service is temporarily unavailable.',
-        );
-      }
-      if (error.message.includes('rate limit')) {
-        throw new RateLimitExceededError(
-          'Rate limit exceeded for model service.',
-        );
-      }
-      throw new Error(`Unexpected model error: ${error.message}`);
-    }
-  }
 }

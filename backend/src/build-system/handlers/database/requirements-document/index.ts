@@ -17,6 +17,8 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
   private readonly logger = new Logger('DatabaseRequirementHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
+    
+    const model = ModelProvider.getInstance();
     this.logger.log('Generating Database Requirements Document...');
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
@@ -38,8 +40,18 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
     let dbRequirementsContent: string;
 
     try {
-      dbRequirementsContent = await this.callModel(prompt);
-      if (!dbRequirementsContent || dbRequirementsContent.trim() === '') {
+      dbRequirementsContent = await model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: prompt, role: 'system' }],
+      });
+
+      if (!dbRequirementsContent) {
+        throw new ModelTimeoutError(
+          'The model did not respond within the expected time.',
+        );
+      }
+
+      if (dbRequirementsContent.trim() === '') {
         throw new ResponseParsingError(
           'Generated database requirements content is empty.',
         );
@@ -56,44 +68,5 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
       success: true,
       data: removeCodeBlockFences(dbRequirementsContent),
     };
-  }
-
-  /**
-   * Calls the language model to generate database requirements.
-   * @param prompt The generated prompt.
-   */
-  private async callModel(prompt: string): Promise<string> {
-    const model = ModelProvider.getInstance();
-    try {
-      const modelResponse = await model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
-
-      if (!modelResponse) {
-        throw new ModelTimeoutError(
-          'The model did not respond within the expected time.',
-        );
-      }
-
-      return modelResponse;
-    } catch (error) {
-      if (error.message.includes('timeout')) {
-        throw new ModelTimeoutError(
-          'Timeout occurred while communicating with the model.',
-        );
-      }
-      if (error.message.includes('service unavailable')) {
-        throw new TemporaryServiceUnavailableError(
-          'Model service is temporarily unavailable.',
-        );
-      }
-      if (error.message.includes('rate limit')) {
-        throw new RateLimitExceededError(
-          'Rate limit exceeded for model service.',
-        );
-      }
-      throw new Error(`Unexpected model error: ${error.message}`);
-    }
   }
 }

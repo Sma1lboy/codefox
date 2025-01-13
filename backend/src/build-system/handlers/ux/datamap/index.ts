@@ -58,34 +58,7 @@ export class UXDatamapHandler implements BuildHandler<string> {
         data: removeCodeBlockFences(uxDatamapContent),
       };
     } catch (error) {
-      if (error.message.includes('timeout')) {
-        this.logger.error(
-          'Timeout occurred while communicating with the model.',
-        );
-        throw new ResponseParsingError(
-          'Timeout occurred while generating UX Data Map.',
-        );
-      }
-      if (error.message.includes('service unavailable')) {
-        this.logger.error('Model service is temporarily unavailable.');
-        throw new ResponseParsingError(
-          'Model service is temporarily unavailable.',
-        );
-      }
-      if (error.message.includes('rate limit')) {
-        this.logger.error('Rate limit exceeded during model communication.');
-        throw new ResponseParsingError(
-          'Rate limit exceeded while generating UX Data Map.',
-        );
-      }
-
-      this.logger.error(
-        'Unexpected error during UX Data Map generation:',
-        error,
-      );
-      throw new ResponseParsingError(
-        'Unexpected error during UX Data Map generation.',
-      );
+      throw error;
     }
   }
 }
