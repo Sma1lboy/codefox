@@ -8,7 +8,10 @@ import { extractJsonFromMarkdown } from 'src/build-system/utils/strings';
 import { getProjectPath } from 'src/config/common-path';
 import normalizePath from 'normalize-path';
 import toposort from 'toposort';
-import { RetryableError, NonRetryableError } from 'src/build-system/retry-handler';
+import {
+  RetryableError,
+  NonRetryableError,
+} from 'src/build-system/retry-handler';
 
 export class FileGeneratorHandler implements BuildHandler<string> {
   readonly id = 'op:FILE:GENERATE';
@@ -24,7 +27,9 @@ export class FileGeneratorHandler implements BuildHandler<string> {
       this.logger.error('File architecture document is missing.');
       return {
         success: false,
-        error: new NonRetryableError('Missing required parameter: fileArchDoc.'),
+        error: new NonRetryableError(
+          'Missing required parameter: fileArchDoc.',
+        ),
       };
     }
 
@@ -41,10 +46,15 @@ export class FileGeneratorHandler implements BuildHandler<string> {
         };
       }
 
-      this.logger.error('Non-retryable error encountered during file generation:', error);
+      this.logger.error(
+        'Non-retryable error encountered during file generation:',
+        error,
+      );
       return {
         success: false,
-        error: new NonRetryableError('Failed to generate files and dependencies.'),
+        error: new NonRetryableError(
+          'Failed to generate files and dependencies.',
+        ),
       };
     }
 
@@ -68,7 +78,9 @@ export class FileGeneratorHandler implements BuildHandler<string> {
     try {
       this.detectCycles(graph);
     } catch (error) {
-      throw new NonRetryableError(`Circular dependency detected: ${error.message}`);
+      throw new NonRetryableError(
+        `Circular dependency detected: ${error.message}`,
+      );
     }
 
     try {

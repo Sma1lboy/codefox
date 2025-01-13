@@ -4,7 +4,10 @@ import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { RetryableError, NonRetryableError } from 'src/build-system/retry-handler';
+import {
+  RetryableError,
+  NonRetryableError,
+} from 'src/build-system/retry-handler';
 
 // UXSMS: UX Sitemap Structure
 export class UXSitemapStructureHandler implements BuildHandler<string> {
@@ -48,7 +51,9 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
       });
 
       if (!uxStructureContent || uxStructureContent.trim() === '') {
-        throw new RetryableError('Generated UX Sitemap Structure content is empty.');
+        throw new RetryableError(
+          'Generated UX Sitemap Structure content is empty.',
+        );
       }
 
       this.logger.log('Successfully generated UX Sitemap Structure content.');
@@ -58,17 +63,24 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
       };
     } catch (error) {
       if (error instanceof RetryableError) {
-        this.logger.warn(`Retryable error during UX Sitemap Structure generation: ${error.message}`);
+        this.logger.warn(
+          `Retryable error during UX Sitemap Structure generation: ${error.message}`,
+        );
         return {
           success: false,
           error,
         };
       }
 
-      this.logger.error('Non-retryable error during UX Sitemap Structure generation:', error);
+      this.logger.error(
+        'Non-retryable error during UX Sitemap Structure generation:',
+        error,
+      );
       return {
         success: false,
-        error: new NonRetryableError('Failed to generate UX Sitemap Structure document.'),
+        error: new NonRetryableError(
+          'Failed to generate UX Sitemap Structure document.',
+        ),
       };
     }
   }

@@ -4,7 +4,10 @@ import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { RetryableError, NonRetryableError } from 'src/build-system/retry-handler';
+import {
+  RetryableError,
+  NonRetryableError,
+} from 'src/build-system/retry-handler';
 
 /**
  * Handler for generating the UX Data Map document.
@@ -60,17 +63,24 @@ export class UXDatamapHandler implements BuildHandler<string> {
       };
     } catch (error) {
       if (error instanceof RetryableError) {
-        this.logger.warn(`Retryable error during UX Data Map generation: ${error.message}`);
+        this.logger.warn(
+          `Retryable error during UX Data Map generation: ${error.message}`,
+        );
         return {
           success: false,
           error,
         };
       }
 
-      this.logger.error('Non-retryable error during UX Data Map generation:', error);
+      this.logger.error(
+        'Non-retryable error during UX Data Map generation:',
+        error,
+      );
       return {
         success: false,
-        error: new NonRetryableError('Failed to generate UX Data Map document.'),
+        error: new NonRetryableError(
+          'Failed to generate UX Data Map document.',
+        ),
       };
     }
   }

@@ -4,7 +4,10 @@ import { prompts } from './prompt';
 import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { RetryableError, NonRetryableError } from 'src/build-system/retry-handler';
+import {
+  RetryableError,
+  NonRetryableError,
+} from 'src/build-system/retry-handler';
 
 export class PRDHandler implements BuildHandler {
   readonly id = 'op:PRD';
@@ -41,7 +44,11 @@ export class PRDHandler implements BuildHandler {
     }
 
     // Generate the prompt dynamically
-    const prompt = prompts.generatePRDPrompt(projectName, description, platform);
+    const prompt = prompts.generatePRDPrompt(
+      projectName,
+      description,
+      platform,
+    );
 
     try {
       // Send the prompt to the LLM server and process the response
@@ -57,7 +64,9 @@ export class PRDHandler implements BuildHandler {
       };
     } catch (error) {
       if (error instanceof RetryableError) {
-        this.logger.warn(`Retryable error during PRD generation: ${error.message}`);
+        this.logger.warn(
+          `Retryable error during PRD generation: ${error.message}`,
+        );
         return {
           success: false,
           error,

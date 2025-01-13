@@ -6,7 +6,10 @@ import {
 } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { NonRetryableError, RetryableError } from 'src/build-system/retry-handler';
+import {
+  NonRetryableError,
+  RetryableError,
+} from 'src/build-system/retry-handler';
 
 type BackendRequirementResult = {
   overview: string;
@@ -43,7 +46,9 @@ export class BackendRequirementHandler
     const sitemapDoc = context.getNodeData('op:UX:SMD');
 
     if (!dbRequirements || !datamapDoc || !sitemapDoc) {
-      this.logger.error('Missing required parameters: dbRequirements, datamapDoc, or sitemapDoc');
+      this.logger.error(
+        'Missing required parameters: dbRequirements, datamapDoc, or sitemapDoc',
+      );
       return {
         success: false,
         error: new NonRetryableError(
@@ -74,14 +79,19 @@ export class BackendRequirementHandler
       }
     } catch (error) {
       if (error instanceof RetryableError) {
-        this.logger.warn(`Retryable error during backend overview generation: ${error.message}`);
+        this.logger.warn(
+          `Retryable error during backend overview generation: ${error.message}`,
+        );
         return {
           success: false,
           error,
         };
       }
 
-      this.logger.error('Non-retryable error generating backend overview:', error);
+      this.logger.error(
+        'Non-retryable error generating backend overview:',
+        error,
+      );
       return {
         success: false,
         error: new NonRetryableError('Failed to generate backend overview.'),

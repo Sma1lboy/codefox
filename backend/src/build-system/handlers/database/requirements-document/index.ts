@@ -4,7 +4,10 @@ import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { NonRetryableError, RetryableError } from 'src/build-system/retry-handler';
+import {
+  NonRetryableError,
+  RetryableError,
+} from 'src/build-system/retry-handler';
 
 export class DatabaseRequirementHandler implements BuildHandler<string> {
   readonly id = 'op:DATABASE_REQ';
@@ -40,7 +43,9 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
       });
 
       if (!dbRequirementsContent || dbRequirementsContent.trim() === '') {
-        throw new RetryableError('Generated database requirements content is empty.');
+        throw new RetryableError(
+          'Generated database requirements content is empty.',
+        );
       }
     } catch (error) {
       if (error instanceof RetryableError) {
@@ -54,7 +59,9 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
       this.logger.error('Non-retryable error encountered:', error);
       return {
         success: false,
-        error: new NonRetryableError('Failed to generate database requirements document.'),
+        error: new NonRetryableError(
+          'Failed to generate database requirements document.',
+        ),
       };
     }
 

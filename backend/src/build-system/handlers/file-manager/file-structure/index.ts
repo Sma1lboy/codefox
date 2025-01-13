@@ -8,7 +8,10 @@ import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { RetryableError, NonRetryableError } from 'src/build-system/retry-handler';
+import {
+  RetryableError,
+  NonRetryableError,
+} from 'src/build-system/retry-handler';
 
 /**
  * FileStructureHandler is responsible for generating the project's file and folder structure
@@ -91,11 +94,16 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
       }
     } catch (error) {
       if (error instanceof RetryableError) {
-        this.logger.warn(`Retryable error during file structure generation: ${error.message}`);
+        this.logger.warn(
+          `Retryable error during file structure generation: ${error.message}`,
+        );
         return { success: false, error };
       }
 
-      this.logger.error('Non-retryable error during file structure generation:', error);
+      this.logger.error(
+        'Non-retryable error during file structure generation:',
+        error,
+      );
       return {
         success: false,
         error: new NonRetryableError('Failed to generate file structure.'),
@@ -120,14 +128,21 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
       }
     } catch (error) {
       if (error instanceof RetryableError) {
-        this.logger.warn(`Retryable error during tree-to-JSON conversion: ${error.message}`);
+        this.logger.warn(
+          `Retryable error during tree-to-JSON conversion: ${error.message}`,
+        );
         return { success: false, error };
       }
 
-      this.logger.error('Non-retryable error during tree-to-JSON conversion:', error);
+      this.logger.error(
+        'Non-retryable error during tree-to-JSON conversion:',
+        error,
+      );
       return {
         success: false,
-        error: new NonRetryableError('Failed to convert file structure to JSON.'),
+        error: new NonRetryableError(
+          'Failed to convert file structure to JSON.',
+        ),
       };
     }
 
@@ -135,17 +150,24 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
 
     // Build the virtual directory
     try {
-      const successBuild = context.buildVirtualDirectory(fileStructureJsonContent);
+      const successBuild = context.buildVirtualDirectory(
+        fileStructureJsonContent,
+      );
       if (!successBuild) {
         throw new RetryableError('Failed to build virtual directory.');
       }
     } catch (error) {
       if (error instanceof RetryableError) {
-        this.logger.warn(`Retryable error during virtual directory build: ${error.message}`);
+        this.logger.warn(
+          `Retryable error during virtual directory build: ${error.message}`,
+        );
         return { success: false, error };
       }
 
-      this.logger.error('Non-retryable error during virtual directory build:', error);
+      this.logger.error(
+        'Non-retryable error during virtual directory build:',
+        error,
+      );
       return {
         success: false,
         error: new NonRetryableError('Failed to build virtual directory.'),

@@ -4,7 +4,10 @@ import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { RetryableError, NonRetryableError } from 'src/build-system/retry-handler';
+import {
+  RetryableError,
+  NonRetryableError,
+} from 'src/build-system/retry-handler';
 
 export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
   readonly id = 'op:UX:SMS:LEVEL2';
@@ -34,7 +37,9 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
     if (!uxStructureDoc || typeof uxStructureDoc !== 'string') {
       return {
         success: false,
-        error: new NonRetryableError('Missing or invalid UX Structure document.'),
+        error: new NonRetryableError(
+          'Missing or invalid UX Structure document.',
+        ),
       };
     }
 
@@ -42,7 +47,9 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
     const sections = this.extractAllSections(uxStructureDoc);
 
     if (sections.length === 0) {
-      this.logger.error('No valid sections found in the UX Structure Document.');
+      this.logger.error(
+        'No valid sections found in the UX Structure Document.',
+      );
       return {
         success: false,
         error: new NonRetryableError(
@@ -70,7 +77,9 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
         });
 
         if (!refinedContent || refinedContent.trim() === '') {
-          throw new RetryableError(`Generated content for section "${section.title}" is empty.`);
+          throw new RetryableError(
+            `Generated content for section "${section.title}" is empty.`,
+          );
         }
 
         refinedSections.push({
@@ -80,17 +89,24 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
       }
     } catch (error) {
       if (error instanceof RetryableError) {
-        this.logger.warn(`Retryable error during section refinement: ${error.message}`);
+        this.logger.warn(
+          `Retryable error during section refinement: ${error.message}`,
+        );
         return {
           success: false,
           error,
         };
       }
 
-      this.logger.error('Non-retryable error during section refinement:', error);
+      this.logger.error(
+        'Non-retryable error during section refinement:',
+        error,
+      );
       return {
         success: false,
-        error: new NonRetryableError('Failed to refine sections in the UX Sitemap Structure.'),
+        error: new NonRetryableError(
+          'Failed to refine sections in the UX Sitemap Structure.',
+        ),
       };
     }
 
@@ -99,7 +115,9 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
       .map((section) => `## **${section.title}**\n${section.content}`)
       .join('\n\n');
 
-    this.logger.log('Successfully generated Level 2 UX Sitemap Structure document.');
+    this.logger.log(
+      'Successfully generated Level 2 UX Sitemap Structure document.',
+    );
 
     return {
       success: true,

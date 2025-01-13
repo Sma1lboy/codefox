@@ -11,7 +11,10 @@ import { prompts } from './prompt';
 import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
 import { formatResponse } from 'src/build-system/utils/strings';
-import { RetryableError, NonRetryableError } from 'src/build-system/retry-handler';
+import {
+  RetryableError,
+  NonRetryableError,
+} from 'src/build-system/retry-handler';
 
 /**
  * DBSchemaHandler is responsible for generating database schemas based on provided requirements.
@@ -85,7 +88,9 @@ export class DBSchemaHandler implements BuildHandler {
       });
       dbAnalysis = analysisResponse;
       if (!dbAnalysis || dbAnalysis.trim() === '') {
-        throw new RetryableError('Database requirements analysis returned empty.');
+        throw new RetryableError(
+          'Database requirements analysis returned empty.',
+        );
       }
     } catch (error) {
       if (error instanceof RetryableError) {
@@ -95,7 +100,9 @@ export class DBSchemaHandler implements BuildHandler {
       this.logger.error('Non-retryable error during analysis:', error);
       return {
         success: false,
-        error: new NonRetryableError('Failed to analyze database requirements.'),
+        error: new NonRetryableError(
+          'Failed to analyze database requirements.',
+        ),
       };
     }
 
@@ -119,7 +126,9 @@ export class DBSchemaHandler implements BuildHandler {
       }
     } catch (error) {
       if (error instanceof RetryableError) {
-        this.logger.warn(`Retryable error during schema generation: ${error.message}`);
+        this.logger.warn(
+          `Retryable error during schema generation: ${error.message}`,
+        );
         return { success: false, error };
       }
       this.logger.error('Non-retryable error during schema generation:', error);
@@ -144,11 +153,15 @@ export class DBSchemaHandler implements BuildHandler {
       });
       const validationResponse = formatResponse(validationResult);
       if (validationResponse.includes('Error')) {
-        throw new RetryableError(`Schema validation failed: ${validationResponse}`);
+        throw new RetryableError(
+          `Schema validation failed: ${validationResponse}`,
+        );
       }
     } catch (error) {
       if (error instanceof RetryableError) {
-        this.logger.warn(`Retryable error during schema validation: ${error.message}`);
+        this.logger.warn(
+          `Retryable error during schema validation: ${error.message}`,
+        );
         return { success: false, error };
       }
       this.logger.error('Non-retryable error during schema validation:', error);

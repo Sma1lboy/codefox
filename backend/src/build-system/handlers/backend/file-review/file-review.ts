@@ -6,7 +6,10 @@ import * as path from 'path';
 
 import { prompts } from './prompt';
 import { formatResponse } from 'src/build-system/utils/strings';
-import { NonRetryableError, RetryableError } from 'src/build-system/retry-handler';
+import {
+  NonRetryableError,
+  RetryableError,
+} from 'src/build-system/retry-handler';
 
 /**
  * Responsible for reviewing all related source root files and considering modifications
@@ -92,9 +95,14 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
           this.logger.log(`Successfully modified ${fileName}`);
         } catch (error) {
           if (error instanceof RetryableError) {
-            this.logger.warn(`Retryable error for file ${fileName}: ${error.message}`);
+            this.logger.warn(
+              `Retryable error for file ${fileName}: ${error.message}`,
+            );
           } else {
-            this.logger.error(`Non-retryable error for file ${fileName}:`, error);
+            this.logger.error(
+              `Non-retryable error for file ${fileName}:`,
+              error,
+            );
             throw error;
           }
         }
@@ -125,13 +133,17 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
     try {
       const parsedResponse = JSON.parse(formatResponse(response));
       if (!Array.isArray(parsedResponse)) {
-        throw new NonRetryableError('File identification response is not an array.');
+        throw new NonRetryableError(
+          'File identification response is not an array.',
+        );
       }
       this.logger.log('Parsed file identification response:', parsedResponse);
       return parsedResponse;
     } catch (error) {
       this.logger.error('Error parsing file identification response:', error);
-      throw new NonRetryableError('Failed to parse file identification response.');
+      throw new NonRetryableError(
+        'Failed to parse file identification response.',
+      );
     }
   }
 }

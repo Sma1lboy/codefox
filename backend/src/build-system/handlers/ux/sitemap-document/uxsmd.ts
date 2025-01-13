@@ -4,7 +4,10 @@ import { prompts } from './prompt';
 import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { RetryableError, NonRetryableError } from 'src/build-system/retry-handler';
+import {
+  RetryableError,
+  NonRetryableError,
+} from 'src/build-system/retry-handler';
 
 export class UXSMDHandler implements BuildHandler<string> {
   readonly id = 'op:UX:SMD';
@@ -40,7 +43,11 @@ export class UXSMDHandler implements BuildHandler<string> {
     }
 
     // Generate the prompt dynamically
-    const prompt = prompts.generateUxsmdrompt(projectName, prdContent, platform);
+    const prompt = prompts.generateUxsmdrompt(
+      projectName,
+      prdContent,
+      platform,
+    );
 
     try {
       // Generate UXSMD content using the language model
@@ -60,7 +67,9 @@ export class UXSMDHandler implements BuildHandler<string> {
       };
     } catch (error) {
       if (error instanceof RetryableError) {
-        this.logger.warn(`Retryable error during UXSMD generation: ${error.message}`);
+        this.logger.warn(
+          `Retryable error during UXSMD generation: ${error.message}`,
+        );
         return {
           success: false,
           error,
