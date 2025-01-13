@@ -7,7 +7,10 @@ import {
   formatResponse,
   parseGenerateTag,
 } from 'src/build-system/utils/strings';
-import { NonRetryableError, RetryableError } from 'src/build-system/retry-handler';
+import {
+  NonRetryableError,
+  RetryableError,
+} from 'src/build-system/retry-handler';
 
 export class FileArchGenerateHandler implements BuildHandler<string> {
   readonly id = 'op:FILE:ARCH';
@@ -70,7 +73,9 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
         this.logger.error('Non-retryable error encountered:', error);
         return {
           success: false,
-          error: new NonRetryableError('Unexpected error during JSON processing'),
+          error: new NonRetryableError(
+            'Unexpected error during JSON processing',
+          ),
         };
       }
     }
