@@ -49,17 +49,26 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
 
     let fileStructureContent: string;
     try {
-      fileStructureContent = await this.callModel(context, prompt, 'file structure');
+      fileStructureContent = await this.callModel(
+        context,
+        prompt,
+        'file structure',
+      );
     } catch (error) {
       return { success: false, error };
     }
 
     // Convert the tree structure to JSON
-    const convertToJsonPrompt = prompts.convertTreeToJsonPrompt(fileStructureContent);
+    const convertToJsonPrompt =
+      prompts.convertTreeToJsonPrompt(fileStructureContent);
 
     let fileStructureJsonContent: string;
     try {
-      fileStructureJsonContent = await this.callModel(context, convertToJsonPrompt, 'tree-to-JSON conversion');
+      fileStructureJsonContent = await this.callModel(
+        context,
+        convertToJsonPrompt,
+        'tree-to-JSON conversion',
+      );
     } catch (error) {
       return { success: false, error };
     }
@@ -73,14 +82,19 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
         throw new ResponseParsingError('Failed to build virtual directory.');
       }
     } catch (error) {
-      this.logger.error('Non-retryable error during virtual directory build:', error);
+      this.logger.error(
+        'Non-retryable error during virtual directory build:',
+        error,
+      );
       return {
         success: false,
         error: new ResponseParsingError('Failed to build virtual directory.'),
       };
     }
 
-    this.logger.log('File structure JSON content and virtual directory built successfully.');
+    this.logger.log(
+      'File structure JSON content and virtual directory built successfully.',
+    );
 
     return {
       success: true,
@@ -107,7 +121,9 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
       throw new MissingConfigurationError('Missing or invalid framework.');
     }
     if (!['frontend', 'backend'].includes(projectPart)) {
-      throw new MissingConfigurationError('Invalid projectPart. Must be either "frontend" or "backend".');
+      throw new MissingConfigurationError(
+        'Invalid projectPart. Must be either "frontend" or "backend".',
+      );
     }
   }
 
@@ -123,7 +139,9 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
       });
 
       if (!response || response.trim() === '') {
-        throw new ResponseParsingError(`Generated content is empty during ${stage}.`);
+        throw new ResponseParsingError(
+          `Generated content is empty during ${stage}.`,
+        );
       }
 
       return response;
@@ -142,7 +160,9 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
         throw new Error(`Unexpected error during ${stage}.`);
       default:
         this.logger.error(`Non-retryable error during ${stage}:`, error);
-        throw new ResponseParsingError(`Error during ${stage}: ${error.message}`);
+        throw new ResponseParsingError(
+          `Error during ${stage}: ${error.message}`,
+        );
     }
   }
 }

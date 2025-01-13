@@ -34,7 +34,11 @@ export class UXSMDHandler implements BuildHandler<string> {
     }
 
     // Generate the prompt dynamically
-    const prompt = prompts.generateUxsmdrompt(projectName, prdContent, platform);
+    const prompt = prompts.generateUxsmdrompt(
+      projectName,
+      prdContent,
+      platform,
+    );
 
     try {
       // Generate UXSMD content using the language model
@@ -57,16 +61,24 @@ export class UXSMDHandler implements BuildHandler<string> {
       this.logger.error('Error during UXSMD generation:', error);
 
       if (error.message.includes('timeout')) {
-        throw new ResponseParsingError('Timeout occurred while generating UXSMD.');
+        throw new ResponseParsingError(
+          'Timeout occurred while generating UXSMD.',
+        );
       }
       if (error.message.includes('service unavailable')) {
-        throw new ResponseParsingError('Model service is temporarily unavailable.');
+        throw new ResponseParsingError(
+          'Model service is temporarily unavailable.',
+        );
       }
       if (error.message.includes('rate limit')) {
-        throw new ResponseParsingError('Rate limit exceeded while generating UXSMD.');
+        throw new ResponseParsingError(
+          'Rate limit exceeded while generating UXSMD.',
+        );
       }
 
-      throw new ResponseParsingError('Unexpected error during UXSMD generation.');
+      throw new ResponseParsingError(
+        'Unexpected error during UXSMD generation.',
+      );
     }
   }
 
@@ -84,17 +96,28 @@ export class UXSMDHandler implements BuildHandler<string> {
       return uxsmdContent;
     } catch (error) {
       if (error.message.includes('timeout')) {
-        throw new ResponseParsingError('Timeout occurred while communicating with the model.');
+        throw new ResponseParsingError(
+          'Timeout occurred while communicating with the model.',
+        );
       }
       if (error.message.includes('service unavailable')) {
-        throw new ResponseParsingError('Model service is temporarily unavailable.');
+        throw new ResponseParsingError(
+          'Model service is temporarily unavailable.',
+        );
       }
       if (error.message.includes('rate limit')) {
-        throw new ResponseParsingError('Rate limit exceeded while communicating with the model.');
+        throw new ResponseParsingError(
+          'Rate limit exceeded while communicating with the model.',
+        );
       }
 
-      this.logger.error('Unexpected error communicating with the LLM server:', error);
-      throw new ResponseParsingError('Failed to communicate with the LLM server.');
+      this.logger.error(
+        'Unexpected error communicating with the LLM server:',
+        error,
+      );
+      throw new ResponseParsingError(
+        'Failed to communicate with the LLM server.',
+      );
     }
   }
 }

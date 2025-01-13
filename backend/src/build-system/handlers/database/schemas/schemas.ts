@@ -38,7 +38,9 @@ export class DBSchemaHandler implements BuildHandler {
     const dbRequirements = context.getNodeData('op:DATABASE_REQ');
     if (!dbRequirements) {
       this.logger.error('Missing database requirements.');
-      throw new MissingConfigurationError('Missing required database requirements.');
+      throw new MissingConfigurationError(
+        'Missing required database requirements.',
+      );
     }
 
     if (!isSupportedDatabaseType(databaseType)) {
@@ -118,7 +120,9 @@ export class DBSchemaHandler implements BuildHandler {
       });
 
       if (!analysisResponse || analysisResponse.trim() === '') {
-        throw new ResponseParsingError('Database requirements analysis returned empty.');
+        throw new ResponseParsingError(
+          'Database requirements analysis returned empty.',
+        );
       }
 
       return analysisResponse;
@@ -174,7 +178,9 @@ export class DBSchemaHandler implements BuildHandler {
 
       const validationResponse = formatResponse(validationResult);
       if (validationResponse.includes('Error')) {
-        throw new ResponseParsingError(`Schema validation failed: ${validationResponse}`);
+        throw new ResponseParsingError(
+          `Schema validation failed: ${validationResponse}`,
+        );
       }
     } catch (error) {
       this.handleModelErrors(error, 'validate database schema');

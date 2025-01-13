@@ -26,18 +26,26 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
       throw new MissingConfigurationError('Missing or invalid projectName.');
     }
     if (!sitemapDoc || typeof sitemapDoc !== 'string') {
-      throw new MissingConfigurationError('Missing or invalid sitemap document.');
+      throw new MissingConfigurationError(
+        'Missing or invalid sitemap document.',
+      );
     }
     if (!uxStructureDoc || typeof uxStructureDoc !== 'string') {
-      throw new MissingConfigurationError('Missing or invalid UX Structure document.');
+      throw new MissingConfigurationError(
+        'Missing or invalid UX Structure document.',
+      );
     }
 
     // Extract sections from the UX Structure Document
     const sections = this.extractAllSections(uxStructureDoc);
 
     if (sections.length === 0) {
-      this.logger.error('No valid sections found in the UX Structure Document.');
-      throw new ResponseParsingError('No valid sections found in the UX Structure Document.');
+      this.logger.error(
+        'No valid sections found in the UX Structure Document.',
+      );
+      throw new ResponseParsingError(
+        'No valid sections found in the UX Structure Document.',
+      );
     }
 
     // Process each section with the refined Level 2 prompt
@@ -59,7 +67,9 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
         });
 
         if (!refinedContent || refinedContent.trim() === '') {
-          this.logger.error(`Generated content for section "${section.title}" is empty.`);
+          this.logger.error(
+            `Generated content for section "${section.title}" is empty.`,
+          );
           throw new ResponseParsingError(
             `Generated content for section "${section.title}" is empty.`,
           );
@@ -71,16 +81,28 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
         });
       } catch (error) {
         if (error.message.includes('timeout')) {
-          this.logger.warn(`Timeout error during section refinement: ${error.message}`);
-          throw new ResponseParsingError('Timeout occurred while refining sections.');
+          this.logger.warn(
+            `Timeout error during section refinement: ${error.message}`,
+          );
+          throw new ResponseParsingError(
+            'Timeout occurred while refining sections.',
+          );
         }
         if (error.message.includes('service unavailable')) {
-          this.logger.warn(`Service unavailable during section refinement: ${error.message}`);
-          throw new ResponseParsingError('Model service is temporarily unavailable.');
+          this.logger.warn(
+            `Service unavailable during section refinement: ${error.message}`,
+          );
+          throw new ResponseParsingError(
+            'Model service is temporarily unavailable.',
+          );
         }
         if (error.message.includes('rate limit')) {
-          this.logger.warn(`Rate limit exceeded during section refinement: ${error.message}`);
-          throw new ResponseParsingError('Rate limit exceeded while refining sections.');
+          this.logger.warn(
+            `Rate limit exceeded during section refinement: ${error.message}`,
+          );
+          throw new ResponseParsingError(
+            'Rate limit exceeded while refining sections.',
+          );
         }
 
         this.logger.error(
@@ -98,7 +120,9 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
       .map((section) => `## **${section.title}**\n${section.content}`)
       .join('\n\n');
 
-    this.logger.log('Successfully generated Level 2 UX Sitemap Structure document.');
+    this.logger.log(
+      'Successfully generated Level 2 UX Sitemap Structure document.',
+    );
 
     return {
       success: true,

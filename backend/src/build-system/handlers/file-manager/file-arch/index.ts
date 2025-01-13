@@ -49,7 +49,9 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
 
       if (!this.validateJsonData(jsonData)) {
         this.logger.error('File architecture JSON validation failed.');
-        throw new ResponseParsingError('File architecture JSON validation failed.');
+        throw new ResponseParsingError(
+          'File architecture JSON validation failed.',
+        );
       }
 
       this.logger.log('File architecture document generated successfully.');
@@ -113,7 +115,9 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
       });
 
       if (!modelResponse) {
-        throw new ModelTimeoutError('The model did not respond within the expected time.');
+        throw new ModelTimeoutError(
+          'The model did not respond within the expected time.',
+        );
       }
 
       return modelResponse;

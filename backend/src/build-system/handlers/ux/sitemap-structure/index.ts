@@ -27,7 +27,9 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
       throw new MissingConfigurationError('Missing or invalid projectName.');
     }
     if (!sitemapDoc || typeof sitemapDoc !== 'string') {
-      throw new MissingConfigurationError('Missing or invalid sitemap document.');
+      throw new MissingConfigurationError(
+        'Missing or invalid sitemap document.',
+      );
     }
 
     // Generate the prompt dynamically
@@ -57,22 +59,27 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
         data: removeCodeBlockFences(uxStructureContent),
       };
     } catch (error) {
-      this.logger.error(
-        'Error during UX Sitemap Structure generation:',
-        error,
-      );
+      this.logger.error('Error during UX Sitemap Structure generation:', error);
 
       if (error.message.includes('timeout')) {
-        throw new ResponseParsingError('Timeout occurred while generating UX Sitemap Structure.');
+        throw new ResponseParsingError(
+          'Timeout occurred while generating UX Sitemap Structure.',
+        );
       }
       if (error.message.includes('service unavailable')) {
-        throw new ResponseParsingError('Model service is temporarily unavailable.');
+        throw new ResponseParsingError(
+          'Model service is temporarily unavailable.',
+        );
       }
       if (error.message.includes('rate limit')) {
-        throw new ResponseParsingError('Rate limit exceeded while generating UX Sitemap Structure.');
+        throw new ResponseParsingError(
+          'Rate limit exceeded while generating UX Sitemap Structure.',
+        );
       }
 
-      throw new ResponseParsingError('Unexpected error during UX Sitemap Structure generation.');
+      throw new ResponseParsingError(
+        'Unexpected error during UX Sitemap Structure generation.',
+      );
     }
   }
 }

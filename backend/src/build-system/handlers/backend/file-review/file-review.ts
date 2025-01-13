@@ -27,13 +27,11 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Starting backend file modification process...');
 
-    const backendPath =
-      context.getGlobalContext('backendPath') || './backend';
+    const backendPath = context.getGlobalContext('backendPath') || './backend';
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
     const description =
-      context.getGlobalContext('description') ||
-      'Default Project Description';
+      context.getGlobalContext('description') || 'Default Project Description';
     const projectOverview = `
         project name: ${projectName}
         project description: ${description},
@@ -125,13 +123,17 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
     try {
       const parsedResponse = JSON.parse(formatResponse(response));
       if (!Array.isArray(parsedResponse)) {
-        throw new ResponseParsingError('File identification response is not an array.');
+        throw new ResponseParsingError(
+          'File identification response is not an array.',
+        );
       }
       this.logger.log('Parsed file identification response:', parsedResponse);
       return parsedResponse;
     } catch (error) {
       this.logger.error('Error parsing file identification response:', error);
-      throw new ResponseParsingError('Failed to parse file identification response.');
+      throw new ResponseParsingError(
+        'Failed to parse file identification response.',
+      );
     }
   }
 
@@ -140,7 +142,9 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
    */
   private handleFileSystemError(error: any): never {
     this.logger.error('File system error encountered:', error);
-    throw new FileNotFoundError(`File system operation failed: ${error.message}`);
+    throw new FileNotFoundError(
+      `File system operation failed: ${error.message}`,
+    );
   }
 
   /**
@@ -168,10 +172,14 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
       error instanceof TemporaryServiceUnavailableError ||
       error instanceof RateLimitExceededError
     ) {
-      this.logger.warn(`Retryable error for file ${fileName}: ${error.message}`);
+      this.logger.warn(
+        `Retryable error for file ${fileName}: ${error.message}`,
+      );
       throw error;
     }
     this.logger.error(`Non-retryable error for file ${fileName}:`, error);
-    throw new FileModificationError(`Error processing file ${fileName}: ${error.message}`);
+    throw new FileModificationError(
+      `Error processing file ${fileName}: ${error.message}`,
+    );
   }
 }

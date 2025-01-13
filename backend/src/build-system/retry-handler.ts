@@ -1,6 +1,5 @@
 import { Logger } from '@nestjs/common';
 
-
 export class RetryHandler {
   private readonly logger = new Logger(RetryHandler.name);
   private static instance: RetryHandler;
@@ -16,7 +15,6 @@ export class RetryHandler {
     return new Promise((resolve) => setTimeout(resolve, delay));
   }
 
-  
   async retryMethod(
     error: Error,
     upperMethod: (...args: any[]) => Promise<any>,
@@ -26,7 +24,7 @@ export class RetryHandler {
     let retryCount = this.retryCounts.get(errorName) || 0;
     const isRetrying = this.retryCounts.has(errorName);
     let res;
-    switch (errorName) {  
+    switch (errorName) {
       case 'ModelTimeoutError':
       case 'TemporaryServiceUnavailableError':
       case 'RateLimitExceededError':
@@ -41,11 +39,9 @@ export class RetryHandler {
           this.retryCounts.set(errorName, this.retryCounts.get(errorName) + 1);
         while (retryCount < this.MAX_RETRY_COUNT) {
           try {
-            
             await this.addRetryDelay(retryCount);
             this.logger.log(`retryCount: ${retryCount}`);
             res = await upperMethod(...args);
-
           } catch (e) {
             if (e.name === errorName) {
               retryCount++;

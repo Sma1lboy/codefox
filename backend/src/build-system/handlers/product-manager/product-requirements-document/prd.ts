@@ -68,7 +68,9 @@ export class PRDHandler implements BuildHandler {
       });
 
       if (!prdContent || prdContent.trim() === '') {
-        throw new ResponseParsingError('LLM server returned empty PRD content.');
+        throw new ResponseParsingError(
+          'LLM server returned empty PRD content.',
+        );
       }
 
       this.logger.log('Received full PRD content from LLM server.');
@@ -76,14 +78,23 @@ export class PRDHandler implements BuildHandler {
     } catch (error) {
       if (error.message.includes('timeout')) {
         this.logger.error('Timeout error communicating with the LLM server.');
-        throw new ResponseParsingError('Timeout occurred while communicating with the LLM server.');
+        throw new ResponseParsingError(
+          'Timeout occurred while communicating with the LLM server.',
+        );
       }
       if (error.message.includes('service unavailable')) {
         this.logger.error('LLM server is temporarily unavailable.');
-        throw new ResponseParsingError('LLM server is temporarily unavailable.');
+        throw new ResponseParsingError(
+          'LLM server is temporarily unavailable.',
+        );
       }
-      this.logger.error('Unexpected error communicating with the LLM server:', error);
-      throw new ResponseParsingError('Unexpected error during communication with the LLM server.');
+      this.logger.error(
+        'Unexpected error communicating with the LLM server:',
+        error,
+      );
+      throw new ResponseParsingError(
+        'Unexpected error during communication with the LLM server.',
+      );
     }
   }
 }

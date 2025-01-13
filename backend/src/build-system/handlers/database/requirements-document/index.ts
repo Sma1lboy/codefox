@@ -25,7 +25,9 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
 
     if (!datamapDoc) {
       this.logger.error('Data mapping document is missing.');
-      throw new MissingConfigurationError('Missing required parameter: datamapDoc.');
+      throw new MissingConfigurationError(
+        'Missing required parameter: datamapDoc.',
+      );
     }
 
     const prompt = prompts.generateDatabaseRequirementPrompt(
@@ -38,10 +40,15 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
     try {
       dbRequirementsContent = await this.callModel(prompt);
       if (!dbRequirementsContent || dbRequirementsContent.trim() === '') {
-        throw new ResponseParsingError('Generated database requirements content is empty.');
+        throw new ResponseParsingError(
+          'Generated database requirements content is empty.',
+        );
       }
     } catch (error) {
-      this.logger.error('Error during database requirements generation:', error);
+      this.logger.error(
+        'Error during database requirements generation:',
+        error,
+      );
       throw error; // Propagate error to upper-level handler
     }
 
@@ -64,19 +71,27 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
       });
 
       if (!modelResponse) {
-        throw new ModelTimeoutError('The model did not respond within the expected time.');
+        throw new ModelTimeoutError(
+          'The model did not respond within the expected time.',
+        );
       }
 
       return modelResponse;
     } catch (error) {
       if (error.message.includes('timeout')) {
-        throw new ModelTimeoutError('Timeout occurred while communicating with the model.');
+        throw new ModelTimeoutError(
+          'Timeout occurred while communicating with the model.',
+        );
       }
       if (error.message.includes('service unavailable')) {
-        throw new TemporaryServiceUnavailableError('Model service is temporarily unavailable.');
+        throw new TemporaryServiceUnavailableError(
+          'Model service is temporarily unavailable.',
+        );
       }
       if (error.message.includes('rate limit')) {
-        throw new RateLimitExceededError('Rate limit exceeded for model service.');
+        throw new RateLimitExceededError(
+          'Rate limit exceeded for model service.',
+        );
       }
       throw new Error(`Unexpected model error: ${error.message}`);
     }

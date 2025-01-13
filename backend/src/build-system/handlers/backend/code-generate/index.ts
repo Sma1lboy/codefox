@@ -49,7 +49,9 @@ export class BackendCodeHandler implements BuildHandler<string> {
     }
 
     if (typeof databaseSchemas !== 'object') {
-      throw new InvalidParameterError('databaseSchemas should be a valid object.');
+      throw new InvalidParameterError(
+        'databaseSchemas should be a valid object.',
+      );
     }
 
     const currentFile = 'index.js';
@@ -92,7 +94,9 @@ export class BackendCodeHandler implements BuildHandler<string> {
       if (error instanceof ResponseTagError) {
         throw error;
       }
-      throw new ParsingError('Error occurred while parsing the model response.');
+      throw new ParsingError(
+        'Error occurred while parsing the model response.',
+      );
     }
 
     // Save the generated code to the specified location
@@ -102,7 +106,9 @@ export class BackendCodeHandler implements BuildHandler<string> {
     try {
       saveGeneratedCode(savePath, generatedCode);
     } catch (error) {
-      throw new FileWriteError(`Failed to save backend code to ${savePath}: ${error.message}`);
+      throw new FileWriteError(
+        `Failed to save backend code to ${savePath}: ${error.message}`,
+      );
     }
 
     return {
@@ -116,7 +122,10 @@ export class BackendCodeHandler implements BuildHandler<string> {
    * @param context The builder context.
    * @param prompt The generated prompt.
    */
-  private async callModel(context: BuilderContext, prompt: string): Promise<string> {
+  private async callModel(
+    context: BuilderContext,
+    prompt: string,
+  ): Promise<string> {
     try {
       const modelResponse = await context.model.chatSync({
         model: 'gpt-4o-mini',
@@ -124,19 +133,27 @@ export class BackendCodeHandler implements BuildHandler<string> {
       });
 
       if (!modelResponse) {
-        throw new ModelTimeoutError('The model did not respond within the expected time.');
+        throw new ModelTimeoutError(
+          'The model did not respond within the expected time.',
+        );
       }
 
       return modelResponse;
     } catch (error) {
       if (error.message.includes('timeout')) {
-        throw new ModelTimeoutError('Timeout occurred while communicating with the model.');
+        throw new ModelTimeoutError(
+          'Timeout occurred while communicating with the model.',
+        );
       }
       if (error.message.includes('service unavailable')) {
-        throw new TemporaryServiceUnavailableError('Model service is temporarily unavailable.');
+        throw new TemporaryServiceUnavailableError(
+          'Model service is temporarily unavailable.',
+        );
       }
       if (error.message.includes('rate limit')) {
-        throw new RateLimitExceededError('Rate limit exceeded for model service.');
+        throw new RateLimitExceededError(
+          'Rate limit exceeded for model service.',
+        );
       }
       throw new Error(`Unexpected model error: ${error.message}`);
     }

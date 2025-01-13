@@ -107,19 +107,27 @@ export class BackendRequirementHandler
       });
 
       if (!modelResponse) {
-        throw new ModelTimeoutError('The model did not respond within the expected time.');
+        throw new ModelTimeoutError(
+          'The model did not respond within the expected time.',
+        );
       }
 
       return modelResponse;
     } catch (error) {
       if (error.message.includes('timeout')) {
-        throw new ModelTimeoutError('Timeout occurred while communicating with the model.');
+        throw new ModelTimeoutError(
+          'Timeout occurred while communicating with the model.',
+        );
       }
       if (error.message.includes('service unavailable')) {
-        throw new TemporaryServiceUnavailableError('Model service is temporarily unavailable.');
+        throw new TemporaryServiceUnavailableError(
+          'Model service is temporarily unavailable.',
+        );
       }
       if (error.message.includes('rate limit')) {
-        throw new RateLimitExceededError('Rate limit exceeded for model service.');
+        throw new RateLimitExceededError(
+          'Rate limit exceeded for model service.',
+        );
       }
       throw new Error(`Unexpected model error: ${error.message}`);
     }

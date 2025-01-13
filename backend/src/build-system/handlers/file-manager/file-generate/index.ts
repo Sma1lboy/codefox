@@ -29,7 +29,9 @@ export class FileGeneratorHandler implements BuildHandler<string> {
 
     if (!fileArchDoc) {
       this.logger.error('File architecture document is missing.');
-      throw new InvalidParameterError('Missing required parameter: fileArchDoc.');
+      throw new InvalidParameterError(
+        'Missing required parameter: fileArchDoc.',
+      );
     }
 
     const projectSrcPath = getProjectPath(uuid);
@@ -46,12 +48,17 @@ export class FileGeneratorHandler implements BuildHandler<string> {
     }
   }
 
-  async generateFiles(markdownContent: string, projectSrcPath: string): Promise<void> {
+  async generateFiles(
+    markdownContent: string,
+    projectSrcPath: string,
+  ): Promise<void> {
     const jsonData = extractJsonFromMarkdown(markdownContent);
 
     if (!jsonData || !jsonData.files) {
       this.logger.error('Invalid or empty file architecture data.');
-      throw new ResponseParsingError('Invalid or empty file architecture data.');
+      throw new ResponseParsingError(
+        'Invalid or empty file architecture data.',
+      );
     }
 
     const { graph, nodes } = this.buildDependencyGraph(jsonData);
@@ -60,7 +67,9 @@ export class FileGeneratorHandler implements BuildHandler<string> {
       this.detectCycles(graph);
     } catch (error) {
       this.logger.error('Circular dependency detected.', error);
-      throw new InvalidParameterError(`Circular dependency detected: ${error.message}`);
+      throw new InvalidParameterError(
+        `Circular dependency detected: ${error.message}`,
+      );
     }
 
     try {
@@ -106,13 +115,18 @@ export class FileGeneratorHandler implements BuildHandler<string> {
       toposort(graph);
     } catch (error) {
       if (error.message.includes('cycle')) {
-        throw new InvalidParameterError(`Circular dependency detected: ${error.message}`);
+        throw new InvalidParameterError(
+          `Circular dependency detected: ${error.message}`,
+        );
       }
       throw error;
     }
   }
 
-  private getSortedFiles(graph: [string, string][], nodes: Set<string>): string[] {
+  private getSortedFiles(
+    graph: [string, string][],
+    nodes: Set<string>,
+  ): string[] {
     const sortedFiles = toposort(graph).reverse();
 
     Array.from(nodes).forEach((node) => {
