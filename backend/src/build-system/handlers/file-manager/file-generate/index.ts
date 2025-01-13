@@ -9,9 +9,13 @@ import { getProjectPath } from 'src/config/common-path';
 import normalizePath from 'normalize-path';
 import toposort from 'toposort';
 import {
-  RetryableError,
-  NonRetryableError,
-} from 'src/build-system/retry-handler';
+  InvalidParameterError,
+  ResponseParsingError,
+  FileWriteError,
+  ModelTimeoutError,
+  TemporaryServiceUnavailableError,
+  RateLimitExceededError,
+} from 'src/build-system/errors';
 
 export class FileGeneratorHandler implements BuildHandler<string> {
   readonly id = 'op:FILE:GENERATE';
@@ -25,52 +29,29 @@ export class FileGeneratorHandler implements BuildHandler<string> {
 
     if (!fileArchDoc) {
       this.logger.error('File architecture document is missing.');
-      return {
-        success: false,
-        error: new NonRetryableError(
-          'Missing required parameter: fileArchDoc.',
-        ),
-      };
+      throw new InvalidParameterError('Missing required parameter: fileArchDoc.');
     }
 
     const projectSrcPath = getProjectPath(uuid);
 
     try {
       await this.generateFiles(fileArchDoc, projectSrcPath);
-    } catch (error) {
-      if (error instanceof RetryableError) {
-        this.logger.warn(`Retryable error encountered: ${error.message}`);
-        return {
-          success: false,
-          error,
-        };
-      }
-
-      this.logger.error(
-        'Non-retryable error encountered during file generation:',
-        error,
-      );
+      this.logger.log('All files generated successfully.');
       return {
-        success: false,
-        error: new NonRetryableError(
-          'Failed to generate files and dependencies.',
-        ),
+        success: true,
+        data: 'Files and dependencies created successfully.',
       };
+    } catch (error) {
+      this.handleErrors(error, 'generate files and dependencies');
     }
-
-    return {
-      success: true,
-      data: 'Files and dependencies created successfully.',
-    };
   }
 
-  async generateFiles(
-    markdownContent: string,
-    projectSrcPath: string,
-  ): Promise<void> {
+  async generateFiles(markdownContent: string, projectSrcPath: string): Promise<void> {
     const jsonData = extractJsonFromMarkdown(markdownContent);
+
     if (!jsonData || !jsonData.files) {
-      throw new RetryableError('Invalid or empty file architecture data.');
+      this.logger.error('Invalid or empty file architecture data.');
+      throw new ResponseParsingError('Invalid or empty file architecture data.');
     }
 
     const { graph, nodes } = this.buildDependencyGraph(jsonData);
@@ -78,15 +59,15 @@ export class FileGeneratorHandler implements BuildHandler<string> {
     try {
       this.detectCycles(graph);
     } catch (error) {
-      throw new NonRetryableError(
-        `Circular dependency detected: ${error.message}`,
-      );
+      this.logger.error('Circular dependency detected.', error);
+      throw new InvalidParameterError(`Circular dependency detected: ${error.message}`);
     }
 
     try {
       this.validateAgainstVirtualDirectory(nodes);
     } catch (error) {
-      throw new NonRetryableError(error.message);
+      this.logger.error('Validation against virtual directory failed.', error);
+      throw new InvalidParameterError(error.message);
     }
 
     const sortedFiles = this.getSortedFiles(graph, nodes);
@@ -97,11 +78,9 @@ export class FileGeneratorHandler implements BuildHandler<string> {
       try {
         await this.createFile(fullPath);
       } catch (error) {
-        throw new RetryableError(`Failed to create file: ${file}`);
+        throw new FileWriteError(`Failed to create file: ${file}`);
       }
     }
-
-    this.logger.log('All files generated successfully.');
   }
 
   private buildDependencyGraph(jsonData: {
@@ -114,7 +93,7 @@ export class FileGeneratorHandler implements BuildHandler<string> {
       nodes.add(fileName);
       details.dependsOn.forEach((dep) => {
         const resolvedDep = this.resolveDependency(fileName, dep);
-        graph.push([resolvedDep, fileName]); // [dependency, dependent]
+        graph.push([resolvedDep, fileName]);
         nodes.add(resolvedDep);
       });
     });
@@ -127,18 +106,13 @@ export class FileGeneratorHandler implements BuildHandler<string> {
       toposort(graph);
     } catch (error) {
       if (error.message.includes('cycle')) {
-        throw new Error(
-          `Circular dependency detected in the file structure: ${error.message}`,
-        );
+        throw new InvalidParameterError(`Circular dependency detected: ${error.message}`);
       }
       throw error;
     }
   }
 
-  private getSortedFiles(
-    graph: [string, string][],
-    nodes: Set<string>,
-  ): string[] {
+  private getSortedFiles(graph: [string, string][], nodes: Set<string>): string[] {
     const sortedFiles = toposort(graph).reverse();
 
     Array.from(nodes).forEach((node) => {
@@ -173,7 +147,7 @@ export class FileGeneratorHandler implements BuildHandler<string> {
     });
 
     if (invalidFiles.length > 0) {
-      throw new Error(
+      throw new InvalidParameterError(
         `The following files do not exist in the project structure:\n${invalidFiles.join('\n')}`,
       );
     }
@@ -181,12 +155,23 @@ export class FileGeneratorHandler implements BuildHandler<string> {
 
   private async createFile(filePath: string): Promise<void> {
     const dir = path.dirname(filePath);
-
     await fs.mkdir(dir, { recursive: true });
 
     const content = `// Generated file: ${path.basename(filePath)}`;
     await fs.writeFile(filePath, content, 'utf8');
-
     this.logger.log(`File created: ${filePath}`);
+  }
+
+  private handleErrors(error: any, stage: string): never {
+    switch (error.name) {
+      case 'ModelTimeoutError':
+      case 'TemporaryServiceUnavailableError':
+      case 'RateLimitExceededError':
+        this.logger.warn(`Retryable error during ${stage}: ${error.message}`);
+        throw error;
+      default:
+        this.logger.error(`Non-retryable error during ${stage}:`, error);
+        throw new InvalidParameterError(`Unexpected error during ${stage}.`);
+    }
   }
 }

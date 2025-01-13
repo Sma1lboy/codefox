@@ -5,13 +5,16 @@ import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import {
-  NonRetryableError,
-  RetryableError,
-} from 'src/build-system/retry-handler';
+  MissingConfigurationError,
+  ResponseParsingError,
+  ModelTimeoutError,
+  TemporaryServiceUnavailableError,
+  RateLimitExceededError,
+} from 'src/build-system/errors';
 
 export class DatabaseRequirementHandler implements BuildHandler<string> {
   readonly id = 'op:DATABASE_REQ';
-  readonly logger = new Logger('DatabaseRequirementHandler');
+  private readonly logger = new Logger('DatabaseRequirementHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Generating Database Requirements Document...');
@@ -22,10 +25,7 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
 
     if (!datamapDoc) {
       this.logger.error('Data mapping document is missing.');
-      return {
-        success: false,
-        error: new NonRetryableError('Missing required parameter: datamapDoc.'),
-      };
+      throw new MissingConfigurationError('Missing required parameter: datamapDoc.');
     }
 
     const prompt = prompts.generateDatabaseRequirementPrompt(
@@ -33,41 +33,52 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
       datamapDoc,
     );
 
-    const model = ModelProvider.getInstance();
     let dbRequirementsContent: string;
 
     try {
-      dbRequirementsContent = await model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
-
+      dbRequirementsContent = await this.callModel(prompt);
       if (!dbRequirementsContent || dbRequirementsContent.trim() === '') {
-        throw new RetryableError(
-          'Generated database requirements content is empty.',
-        );
+        throw new ResponseParsingError('Generated database requirements content is empty.');
       }
     } catch (error) {
-      if (error instanceof RetryableError) {
-        this.logger.warn(`Retryable error encountered: ${error.message}`);
-        return {
-          success: false,
-          error,
-        };
-      }
-
-      this.logger.error('Non-retryable error encountered:', error);
-      return {
-        success: false,
-        error: new NonRetryableError(
-          'Failed to generate database requirements document.',
-        ),
-      };
+      this.logger.error('Error during database requirements generation:', error);
+      throw error; // Propagate error to upper-level handler
     }
 
     return {
       success: true,
       data: removeCodeBlockFences(dbRequirementsContent),
     };
+  }
+
+  /**
+   * Calls the language model to generate database requirements.
+   * @param prompt The generated prompt.
+   */
+  private async callModel(prompt: string): Promise<string> {
+    const model = ModelProvider.getInstance();
+    try {
+      const modelResponse = await model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: prompt, role: 'system' }],
+      });
+
+      if (!modelResponse) {
+        throw new ModelTimeoutError('The model did not respond within the expected time.');
+      }
+
+      return modelResponse;
+    } catch (error) {
+      if (error.message.includes('timeout')) {
+        throw new ModelTimeoutError('Timeout occurred while communicating with the model.');
+      }
+      if (error.message.includes('service unavailable')) {
+        throw new TemporaryServiceUnavailableError('Model service is temporarily unavailable.');
+      }
+      if (error.message.includes('rate limit')) {
+        throw new RateLimitExceededError('Rate limit exceeded for model service.');
+      }
+      throw new Error(`Unexpected model error: ${error.message}`);
+    }
   }
 }

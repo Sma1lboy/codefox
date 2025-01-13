@@ -7,9 +7,13 @@ import * as path from 'path';
 import { prompts } from './prompt';
 import { formatResponse } from 'src/build-system/utils/strings';
 import {
-  NonRetryableError,
-  RetryableError,
-} from 'src/build-system/retry-handler';
+  FileNotFoundError,
+  FileModificationError,
+  ResponseParsingError,
+  ModelTimeoutError,
+  TemporaryServiceUnavailableError,
+  RateLimitExceededError,
+} from 'src/build-system/errors';
 
 /**
  * Responsible for reviewing all related source root files and considering modifications
@@ -23,127 +27,151 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Starting backend file modification process...');
 
-    try {
-      const backendPath =
-        context.getGlobalContext('backendPath') || './backend';
-      const projectName =
-        context.getGlobalContext('projectName') || 'Default Project Name';
-      const description =
-        context.getGlobalContext('description') ||
-        'Default Project Description';
-      const projectOverview = `
+    const backendPath =
+      context.getGlobalContext('backendPath') || './backend';
+    const projectName =
+      context.getGlobalContext('projectName') || 'Default Project Name';
+    const description =
+      context.getGlobalContext('description') ||
+      'Default Project Description';
+    const projectOverview = `
         project name: ${projectName}
         project description: ${description},
       `;
 
-      const backendRequirement = context.getNodeData('op:BACKEND:REQ').overview;
-      const backendCode = [context.getNodeData('op:BACKEND:CODE')];
+    const backendRequirement = context.getNodeData('op:BACKEND:REQ')?.overview;
+    const backendCode = [context.getNodeData('op:BACKEND:CODE')];
 
-      // 1. Identify files to modify
+    if (!backendRequirement) {
+      throw new FileNotFoundError('Backend requirements are missing.');
+    }
+
+    let files: string[];
+    try {
       this.logger.log(`Scanning backend directory: ${backendPath}`);
-      const files = await fs.readdir(backendPath);
+      files = await fs.readdir(backendPath);
       if (!files.length) {
-        throw new NonRetryableError('No files found in the backend directory.');
+        throw new FileNotFoundError('No files found in the backend directory.');
       }
       this.logger.debug(`Found files: ${files.join(', ')}`);
+    } catch (error) {
+      this.handleFileSystemError(error);
+    }
 
-      const filePrompt = prompts.identifyBackendFilesToModify(
-        files,
-        backendRequirement,
-        projectOverview,
-        backendCode,
-      );
+    const filePrompt = prompts.identifyBackendFilesToModify(
+      files,
+      backendRequirement,
+      projectOverview,
+      backendCode,
+    );
 
-      const modelResponse = await context.model.chatSync({
+    let modelResponse: string;
+    try {
+      modelResponse = await context.model.chatSync({
         model: 'gpt-4o-mini',
         messages: [{ content: filePrompt, role: 'system' }],
       });
-
-      const filesToModify = this.parseFileIdentificationResponse(modelResponse);
-      if (!filesToModify.length) {
-        throw new RetryableError('No files identified for modification.');
-      }
-      this.logger.log(`Files to modify: ${filesToModify.join(', ')}`);
-
-      // 2. Modify each identified file
-      for (const fileName of filesToModify) {
-        const filePath = path.join(backendPath, fileName);
-        try {
-          const currentContent = await fs.readFile(filePath, 'utf-8');
-
-          const modificationPrompt = prompts.generateFileModificationPrompt(
-            fileName,
-            currentContent,
-            backendRequirement,
-            projectOverview,
-            backendCode,
-          );
-
-          const response = await context.model.chatSync({
-            model: 'gpt-4o-mini',
-            messages: [{ content: modificationPrompt, role: 'system' }],
-          });
-
-          const newContent = formatResponse(response);
-          if (!newContent) {
-            throw new RetryableError(
-              `Failed to generate content for file: ${fileName}.`,
-            );
-          }
-
-          await fs.writeFile(filePath, newContent, 'utf-8');
-          this.logger.log(`Successfully modified ${fileName}`);
-        } catch (error) {
-          if (error instanceof RetryableError) {
-            this.logger.warn(
-              `Retryable error for file ${fileName}: ${error.message}`,
-            );
-          } else {
-            this.logger.error(
-              `Non-retryable error for file ${fileName}:`,
-              error,
-            );
-            throw error;
-          }
-        }
-      }
-
-      return {
-        success: true,
-        data: `Modified files: ${filesToModify.join(', ')}`,
-      };
     } catch (error) {
-      if (error instanceof RetryableError) {
-        this.logger.warn(`Retryable error encountered: ${error.message}`);
-        return {
-          success: false,
-          error,
-        };
-      }
-
-      this.logger.error('Non-retryable error encountered:', error);
-      return {
-        success: false,
-        error: new NonRetryableError('Failed to modify backend files.'),
-      };
+      this.handleModelError(error);
     }
+
+    const filesToModify = this.parseFileIdentificationResponse(modelResponse);
+    if (!filesToModify.length) {
+      throw new FileModificationError('No files identified for modification.');
+    }
+    this.logger.log(`Files to modify: ${filesToModify.join(', ')}`);
+
+    for (const fileName of filesToModify) {
+      const filePath = path.join(backendPath, fileName);
+      try {
+        const currentContent = await fs.readFile(filePath, 'utf-8');
+        const modificationPrompt = prompts.generateFileModificationPrompt(
+          fileName,
+          currentContent,
+          backendRequirement,
+          projectOverview,
+          backendCode,
+        );
+
+        const response = await context.model.chatSync({
+          model: 'gpt-4o-mini',
+          messages: [{ content: modificationPrompt, role: 'system' }],
+        });
+
+        const newContent = formatResponse(response);
+        if (!newContent) {
+          throw new FileModificationError(
+            `Failed to generate content for file: ${fileName}.`,
+          );
+        }
+
+        await fs.writeFile(filePath, newContent, 'utf-8');
+        this.logger.log(`Successfully modified ${fileName}`);
+      } catch (error) {
+        this.handleFileProcessingError(fileName, error);
+      }
+    }
+
+    return {
+      success: true,
+      data: `Modified files: ${filesToModify.join(', ')}`,
+    };
   }
 
+  /**
+   * Parses the file identification response from the model.
+   */
   parseFileIdentificationResponse(response: string): string[] {
     try {
       const parsedResponse = JSON.parse(formatResponse(response));
       if (!Array.isArray(parsedResponse)) {
-        throw new NonRetryableError(
-          'File identification response is not an array.',
-        );
+        throw new ResponseParsingError('File identification response is not an array.');
       }
       this.logger.log('Parsed file identification response:', parsedResponse);
       return parsedResponse;
     } catch (error) {
       this.logger.error('Error parsing file identification response:', error);
-      throw new NonRetryableError(
-        'Failed to parse file identification response.',
-      );
+      throw new ResponseParsingError('Failed to parse file identification response.');
     }
+  }
+
+  /**
+   * Handles file system errors.
+   */
+  private handleFileSystemError(error: any): never {
+    this.logger.error('File system error encountered:', error);
+    throw new FileNotFoundError(`File system operation failed: ${error.message}`);
+  }
+
+  /**
+   * Handles model-related errors.
+   */
+  private handleModelError(error: any): never {
+    if (
+      error instanceof ModelTimeoutError ||
+      error instanceof TemporaryServiceUnavailableError ||
+      error instanceof RateLimitExceededError
+    ) {
+      this.logger.warn(`Retryable model error: ${error.message}`);
+      throw error;
+    }
+    this.logger.error('Non-retryable model error encountered:', error);
+    throw new ResponseParsingError(`Model error: ${error.message}`);
+  }
+
+  /**
+   * Handles errors during file processing.
+   */
+  private handleFileProcessingError(fileName: string, error: any): never {
+    if (
+      error instanceof ModelTimeoutError ||
+      error instanceof TemporaryServiceUnavailableError ||
+      error instanceof RateLimitExceededError
+    ) {
+      this.logger.warn(`Retryable error for file ${fileName}: ${error.message}`);
+      throw error;
+    }
+    this.logger.error(`Non-retryable error for file ${fileName}:`, error);
+    throw new FileModificationError(`Error processing file ${fileName}: ${error.message}`);
   }
 }

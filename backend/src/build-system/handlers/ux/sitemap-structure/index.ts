@@ -5,9 +5,9 @@ import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import {
-  RetryableError,
-  NonRetryableError,
-} from 'src/build-system/retry-handler';
+  MissingConfigurationError,
+  ResponseParsingError,
+} from 'src/build-system/errors';
 
 // UXSMS: UX Sitemap Structure
 export class UXSitemapStructureHandler implements BuildHandler<string> {
@@ -24,16 +24,10 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
 
     // Validate required parameters
     if (!projectName || typeof projectName !== 'string') {
-      return {
-        success: false,
-        error: new NonRetryableError('Missing or invalid projectName.'),
-      };
+      throw new MissingConfigurationError('Missing or invalid projectName.');
     }
     if (!sitemapDoc || typeof sitemapDoc !== 'string') {
-      return {
-        success: false,
-        error: new NonRetryableError('Missing or invalid sitemap document.'),
-      };
+      throw new MissingConfigurationError('Missing or invalid sitemap document.');
     }
 
     // Generate the prompt dynamically
@@ -51,7 +45,8 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
       });
 
       if (!uxStructureContent || uxStructureContent.trim() === '') {
-        throw new RetryableError(
+        this.logger.error('Generated UX Sitemap Structure content is empty.');
+        throw new ResponseParsingError(
           'Generated UX Sitemap Structure content is empty.',
         );
       }
@@ -62,26 +57,22 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
         data: removeCodeBlockFences(uxStructureContent),
       };
     } catch (error) {
-      if (error instanceof RetryableError) {
-        this.logger.warn(
-          `Retryable error during UX Sitemap Structure generation: ${error.message}`,
-        );
-        return {
-          success: false,
-          error,
-        };
-      }
-
       this.logger.error(
-        'Non-retryable error during UX Sitemap Structure generation:',
+        'Error during UX Sitemap Structure generation:',
         error,
       );
-      return {
-        success: false,
-        error: new NonRetryableError(
-          'Failed to generate UX Sitemap Structure document.',
-        ),
-      };
+
+      if (error.message.includes('timeout')) {
+        throw new ResponseParsingError('Timeout occurred while generating UX Sitemap Structure.');
+      }
+      if (error.message.includes('service unavailable')) {
+        throw new ResponseParsingError('Model service is temporarily unavailable.');
+      }
+      if (error.message.includes('rate limit')) {
+        throw new ResponseParsingError('Rate limit exceeded while generating UX Sitemap Structure.');
+      }
+
+      throw new ResponseParsingError('Unexpected error during UX Sitemap Structure generation.');
     }
   }
 }

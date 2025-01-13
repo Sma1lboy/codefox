@@ -5,9 +5,9 @@ import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import {
-  RetryableError,
-  NonRetryableError,
-} from 'src/build-system/retry-handler';
+  MissingConfigurationError,
+  ResponseParsingError,
+} from 'src/build-system/errors';
 
 export class UXSMDHandler implements BuildHandler<string> {
   readonly id = 'op:UX:SMD';
@@ -24,37 +24,25 @@ export class UXSMDHandler implements BuildHandler<string> {
 
     // Validate required data
     if (!projectName || typeof projectName !== 'string') {
-      return {
-        success: false,
-        error: new NonRetryableError('Missing or invalid projectName.'),
-      };
+      throw new MissingConfigurationError('Missing or invalid projectName.');
     }
     if (!platform || typeof platform !== 'string') {
-      return {
-        success: false,
-        error: new NonRetryableError('Missing or invalid platform.'),
-      };
+      throw new MissingConfigurationError('Missing or invalid platform.');
     }
     if (!prdContent || typeof prdContent !== 'string') {
-      return {
-        success: false,
-        error: new NonRetryableError('Missing or invalid PRD content.'),
-      };
+      throw new MissingConfigurationError('Missing or invalid PRD content.');
     }
 
     // Generate the prompt dynamically
-    const prompt = prompts.generateUxsmdrompt(
-      projectName,
-      prdContent,
-      platform,
-    );
+    const prompt = prompts.generateUxsmdrompt(projectName, prdContent, platform);
 
     try {
       // Generate UXSMD content using the language model
       const uxsmdContent = await this.generateUXSMDFromLLM(prompt);
 
       if (!uxsmdContent || uxsmdContent.trim() === '') {
-        throw new RetryableError('Generated UXSMD content is empty.');
+        this.logger.error('Generated UXSMD content is empty.');
+        throw new ResponseParsingError('Generated UXSMD content is empty.');
       }
 
       // Store the generated document in the context
@@ -66,21 +54,19 @@ export class UXSMDHandler implements BuildHandler<string> {
         data: removeCodeBlockFences(uxsmdContent),
       };
     } catch (error) {
-      if (error instanceof RetryableError) {
-        this.logger.warn(
-          `Retryable error during UXSMD generation: ${error.message}`,
-        );
-        return {
-          success: false,
-          error,
-        };
+      this.logger.error('Error during UXSMD generation:', error);
+
+      if (error.message.includes('timeout')) {
+        throw new ResponseParsingError('Timeout occurred while generating UXSMD.');
+      }
+      if (error.message.includes('service unavailable')) {
+        throw new ResponseParsingError('Model service is temporarily unavailable.');
+      }
+      if (error.message.includes('rate limit')) {
+        throw new ResponseParsingError('Rate limit exceeded while generating UXSMD.');
       }
 
-      this.logger.error('Non-retryable error during UXSMD generation:', error);
-      return {
-        success: false,
-        error: new NonRetryableError('Failed to generate UXSMD document.'),
-      };
+      throw new ResponseParsingError('Unexpected error during UXSMD generation.');
     }
   }
 
@@ -97,8 +83,18 @@ export class UXSMDHandler implements BuildHandler<string> {
       this.logger.log('Received full UXSMD content from LLM server.');
       return uxsmdContent;
     } catch (error) {
-      this.logger.error('Error communicating with the LLM server:', error);
-      throw new RetryableError('Failed to communicate with the LLM server.');
+      if (error.message.includes('timeout')) {
+        throw new ResponseParsingError('Timeout occurred while communicating with the model.');
+      }
+      if (error.message.includes('service unavailable')) {
+        throw new ResponseParsingError('Model service is temporarily unavailable.');
+      }
+      if (error.message.includes('rate limit')) {
+        throw new ResponseParsingError('Rate limit exceeded while communicating with the model.');
+      }
+
+      this.logger.error('Unexpected error communicating with the LLM server:', error);
+      throw new ResponseParsingError('Failed to communicate with the LLM server.');
     }
   }
 }

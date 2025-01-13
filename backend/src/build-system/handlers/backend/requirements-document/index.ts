@@ -1,15 +1,15 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
-import {
-  generateBackendImplementationPrompt,
-  generateBackendOverviewPrompt,
-} from './prompt';
+import { generateBackendOverviewPrompt } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import {
-  NonRetryableError,
-  RetryableError,
-} from 'src/build-system/retry-handler';
+  ResponseParsingError,
+  MissingConfigurationError,
+  ModelTimeoutError,
+  TemporaryServiceUnavailableError,
+  RateLimitExceededError,
+} from 'src/build-system/errors';
 
 type BackendRequirementResult = {
   overview: string;
@@ -20,6 +20,7 @@ type BackendRequirementResult = {
     packages: Record<string, string>;
   };
 };
+
 /**
  * BackendRequirementHandler is responsible for generating the backend requirements document.
  * Core Content Generation: API Endpoints, System Overview
@@ -28,7 +29,7 @@ export class BackendRequirementHandler
   implements BuildHandler<BackendRequirementResult>
 {
   readonly id = 'op:BACKEND:REQ';
-  readonly logger: Logger = new Logger('BackendRequirementHandler');
+  private readonly logger: Logger = new Logger('BackendRequirementHandler');
 
   async run(
     context: BuilderContext,
@@ -49,12 +50,9 @@ export class BackendRequirementHandler
       this.logger.error(
         'Missing required parameters: dbRequirements, datamapDoc, or sitemapDoc',
       );
-      return {
-        success: false,
-        error: new NonRetryableError(
-          'Missing required parameters: dbRequirements, datamapDoc, or sitemapDoc.',
-        ),
-      };
+      throw new MissingConfigurationError(
+        'Missing required parameters: dbRequirements, datamapDoc, or sitemapDoc.',
+      );
     }
 
     const overviewPrompt = generateBackendOverviewPrompt(
@@ -69,33 +67,13 @@ export class BackendRequirementHandler
 
     let backendOverview: string;
     try {
-      backendOverview = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: overviewPrompt, role: 'system' }],
-      });
-
+      backendOverview = await this.callModel(context, overviewPrompt);
       if (!backendOverview || backendOverview.trim() === '') {
-        throw new RetryableError('Generated backend overview is empty.');
+        throw new ResponseParsingError('Generated backend overview is empty.');
       }
     } catch (error) {
-      if (error instanceof RetryableError) {
-        this.logger.warn(
-          `Retryable error during backend overview generation: ${error.message}`,
-        );
-        return {
-          success: false,
-          error,
-        };
-      }
-
-      this.logger.error(
-        'Non-retryable error generating backend overview:',
-        error,
-      );
-      return {
-        success: false,
-        error: new NonRetryableError('Failed to generate backend overview.'),
-      };
+      this.logger.error('Error during backend overview generation:', error);
+      throw error; // Pass error to upper-level handler
     }
 
     // Return generated data
@@ -111,5 +89,39 @@ export class BackendRequirementHandler
         },
       },
     };
+  }
+
+  /**
+   * Calls the language model to generate backend overview.
+   * @param context The builder context.
+   * @param prompt The generated prompt.
+   */
+  private async callModel(
+    context: BuilderContext,
+    prompt: string,
+  ): Promise<string> {
+    try {
+      const modelResponse = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: prompt, role: 'system' }],
+      });
+
+      if (!modelResponse) {
+        throw new ModelTimeoutError('The model did not respond within the expected time.');
+      }
+
+      return modelResponse;
+    } catch (error) {
+      if (error.message.includes('timeout')) {
+        throw new ModelTimeoutError('Timeout occurred while communicating with the model.');
+      }
+      if (error.message.includes('service unavailable')) {
+        throw new TemporaryServiceUnavailableError('Model service is temporarily unavailable.');
+      }
+      if (error.message.includes('rate limit')) {
+        throw new RateLimitExceededError('Rate limit exceeded for model service.');
+      }
+      throw new Error(`Unexpected model error: ${error.message}`);
+    }
   }
 }

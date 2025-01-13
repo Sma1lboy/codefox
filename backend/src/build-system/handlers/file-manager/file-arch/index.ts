@@ -8,9 +8,12 @@ import {
   parseGenerateTag,
 } from 'src/build-system/utils/strings';
 import {
-  NonRetryableError,
-  RetryableError,
-} from 'src/build-system/retry-handler';
+  ResponseParsingError,
+  InvalidParameterError,
+  ModelTimeoutError,
+  TemporaryServiceUnavailableError,
+  RateLimitExceededError,
+} from 'src/build-system/errors';
 
 export class FileArchGenerateHandler implements BuildHandler<string> {
   readonly id = 'op:FILE:ARCH';
@@ -23,12 +26,9 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
 
     if (!fileStructure || !datamapDoc) {
-      return {
-        success: false,
-        error: new NonRetryableError(
-          'Missing required parameters: fileStructure or datamapDoc',
-        ),
-      };
+      throw new InvalidParameterError(
+        'Missing required parameters: fileStructure or datamapDoc.',
+      );
     }
 
     const prompt = generateFileArchPrompt(
@@ -37,52 +37,33 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     );
 
     try {
-      const fileArchContent = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
+      const fileArchContent = await this.callModel(context, prompt);
 
       const tagContent = parseGenerateTag(fileArchContent);
       const jsonData = extractJsonFromText(tagContent);
 
-      if (jsonData == null) {
-        this.logger.error('Failed to extract JSON from text');
-        throw new RetryableError('Failed to extract JSON from text');
+      if (!jsonData) {
+        this.logger.error('Failed to extract JSON from text.');
+        throw new ResponseParsingError('Failed to extract JSON from text.');
       }
 
-      // Validate the extracted JSON data
       if (!this.validateJsonData(jsonData)) {
-        this.logger.error('File architecture JSON validation failed');
-        throw new RetryableError('File architecture JSON validation failed');
+        this.logger.error('File architecture JSON validation failed.');
+        throw new ResponseParsingError('File architecture JSON validation failed.');
       }
 
-      this.logger.log('File architecture document generated successfully');
+      this.logger.log('File architecture document generated successfully.');
       return {
         success: true,
         data: formatResponse(fileArchContent),
       };
     } catch (error) {
-      if (error instanceof RetryableError) {
-        this.logger.warn(`Retryable error encountered: ${error.message}`);
-        // You can handle retry logic outside of this method
-        return {
-          success: false,
-          error,
-        };
-      } else {
-        this.logger.error('Non-retryable error encountered:', error);
-        return {
-          success: false,
-          error: new NonRetryableError(
-            'Unexpected error during JSON processing',
-          ),
-        };
-      }
+      this.handleModelErrors(error, 'generate file architecture');
     }
   }
 
   /**
-   * Validate the structure and content of the JSON data.
+   * Validates the structure and content of the JSON data.
    * @param jsonData The JSON data to validate.
    * @returns A boolean indicating whether the JSON data is valid.
    */
@@ -92,13 +73,11 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     const validPathRegex = /^[a-zA-Z0-9_\-/.]+$/;
 
     for (const [file, details] of Object.entries(jsonData.files)) {
-      // Validate the file path
       if (!validPathRegex.test(file)) {
         this.logger.error(`Invalid file path: ${file}`);
         return false;
       }
 
-      // Validate dependencies
       for (const dependency of details.dependsOn) {
         if (!validPathRegex.test(dependency)) {
           this.logger.error(
@@ -107,7 +86,6 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
           return false;
         }
 
-        // Ensure no double slashes or trailing slashes
         if (dependency.includes('//') || dependency.endsWith('/')) {
           this.logger.error(
             `Malformed dependency path "${dependency}" in file "${file}".`,
@@ -117,5 +95,52 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
       }
     }
     return true;
+  }
+
+  /**
+   * Calls the language model to generate file architecture.
+   * @param context The builder context.
+   * @param prompt The generated prompt.
+   */
+  private async callModel(
+    context: BuilderContext,
+    prompt: string,
+  ): Promise<string> {
+    try {
+      const modelResponse = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: prompt, role: 'system' }],
+      });
+
+      if (!modelResponse) {
+        throw new ModelTimeoutError('The model did not respond within the expected time.');
+      }
+
+      return modelResponse;
+    } catch (error) {
+      this.handleModelErrors(error, 'call model');
+    }
+  }
+
+  /**
+   * Handles model-related errors and logs them.
+   * @param error The error encountered.
+   * @param stage The stage where the error occurred.
+   */
+  private handleModelErrors(error: any, stage: string): never {
+    switch (error.name) {
+      case 'ModelTimeoutError':
+        this.logger.warn(`Retryable error during ${stage}: ${error.message}`);
+        throw new ModelTimeoutError(error.message);
+      case 'TemporaryServiceUnavailableError':
+        this.logger.warn(`Retryable error during ${stage}: ${error.message}`);
+        throw new TemporaryServiceUnavailableError(error.message);
+      case 'RateLimitExceededError':
+        this.logger.warn(`Retryable error during ${stage}: ${error.message}`);
+        throw new RateLimitExceededError(error.message);
+      default:
+        this.logger.error(`Non-retryable error during ${stage}:`, error);
+        throw new InvalidParameterError(`Unexpected error during ${stage}.`);
+    }
   }
 }

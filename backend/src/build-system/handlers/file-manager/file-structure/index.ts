@@ -9,9 +9,9 @@ import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import {
-  RetryableError,
-  NonRetryableError,
-} from 'src/build-system/retry-handler';
+  ResponseParsingError,
+  MissingConfigurationError,
+} from 'src/build-system/errors';
 
 /**
  * FileStructureHandler is responsible for generating the project's file and folder structure
@@ -30,48 +30,13 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
     // Retrieve projectName from context
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
-    this.logger.debug(`Project Name: ${projectName}`);
-
     const sitemapDoc = context.getNodeData('op:UX:SMD');
     const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
     const projectPart = opts?.projectPart ?? 'frontend';
     const framework = context.getGlobalContext('framework') ?? 'react';
 
     // Validate required arguments
-    if (!sitemapDoc || typeof sitemapDoc !== 'string') {
-      return {
-        success: false,
-        error: new NonRetryableError('Missing or invalid sitemapDoc.'),
-      };
-    }
-    if (!datamapDoc || typeof datamapDoc !== 'string') {
-      return {
-        success: false,
-        error: new NonRetryableError('Missing or invalid datamapDoc.'),
-      };
-    }
-    if (!framework || typeof framework !== 'string') {
-      return {
-        success: false,
-        error: new NonRetryableError('Missing or invalid framework.'),
-      };
-    }
-    if (
-      !projectPart ||
-      (projectPart !== 'frontend' && projectPart !== 'backend')
-    ) {
-      return {
-        success: false,
-        error: new NonRetryableError(
-          'Invalid projectPart. Must be either "frontend" or "backend".',
-        ),
-      };
-    }
-
-    this.logger.debug(`Project Part: ${projectPart}`);
-    this.logger.debug(
-      'Sitemap Documentation and Data Analysis Document are provided.',
-    );
+    this.validateInputs(sitemapDoc, datamapDoc, framework, projectPart);
 
     // Generate the common file structure prompt
     const prompt = prompts.generateCommonFileStructurePrompt(
@@ -84,69 +49,20 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
 
     let fileStructureContent: string;
     try {
-      fileStructureContent = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
-
-      if (!fileStructureContent || fileStructureContent.trim() === '') {
-        throw new RetryableError('Generated file structure content is empty.');
-      }
+      fileStructureContent = await this.callModel(context, prompt, 'file structure');
     } catch (error) {
-      if (error instanceof RetryableError) {
-        this.logger.warn(
-          `Retryable error during file structure generation: ${error.message}`,
-        );
-        return { success: false, error };
-      }
-
-      this.logger.error(
-        'Non-retryable error during file structure generation:',
-        error,
-      );
-      return {
-        success: false,
-        error: new NonRetryableError('Failed to generate file structure.'),
-      };
+      return { success: false, error };
     }
 
-    this.logger.debug('Generated file structure content.');
-
-    // Convert the tree structure to JSON using the appropriate prompt
-    const convertToJsonPrompt =
-      prompts.convertTreeToJsonPrompt(fileStructureContent);
+    // Convert the tree structure to JSON
+    const convertToJsonPrompt = prompts.convertTreeToJsonPrompt(fileStructureContent);
 
     let fileStructureJsonContent: string;
     try {
-      fileStructureJsonContent = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: convertToJsonPrompt, role: 'system' }],
-      });
-
-      if (!fileStructureJsonContent || fileStructureJsonContent.trim() === '') {
-        throw new RetryableError('Failed to convert file structure to JSON.');
-      }
+      fileStructureJsonContent = await this.callModel(context, convertToJsonPrompt, 'tree-to-JSON conversion');
     } catch (error) {
-      if (error instanceof RetryableError) {
-        this.logger.warn(
-          `Retryable error during tree-to-JSON conversion: ${error.message}`,
-        );
-        return { success: false, error };
-      }
-
-      this.logger.error(
-        'Non-retryable error during tree-to-JSON conversion:',
-        error,
-      );
-      return {
-        success: false,
-        error: new NonRetryableError(
-          'Failed to convert file structure to JSON.',
-        ),
-      };
+      return { success: false, error };
     }
-
-    this.logger.debug('Converted file structure to JSON.');
 
     // Build the virtual directory
     try {
@@ -154,29 +70,17 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
         fileStructureJsonContent,
       );
       if (!successBuild) {
-        throw new RetryableError('Failed to build virtual directory.');
+        throw new ResponseParsingError('Failed to build virtual directory.');
       }
     } catch (error) {
-      if (error instanceof RetryableError) {
-        this.logger.warn(
-          `Retryable error during virtual directory build: ${error.message}`,
-        );
-        return { success: false, error };
-      }
-
-      this.logger.error(
-        'Non-retryable error during virtual directory build:',
-        error,
-      );
+      this.logger.error('Non-retryable error during virtual directory build:', error);
       return {
         success: false,
-        error: new NonRetryableError('Failed to build virtual directory.'),
+        error: new ResponseParsingError('Failed to build virtual directory.'),
       };
     }
 
-    this.logger.log(
-      'File structure JSON content and virtual directory built successfully.',
-    );
+    this.logger.log('File structure JSON content and virtual directory built successfully.');
 
     return {
       success: true,
@@ -185,5 +89,60 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
         jsonFileStructure: removeCodeBlockFences(fileStructureJsonContent),
       },
     };
+  }
+
+  private validateInputs(
+    sitemapDoc: any,
+    datamapDoc: any,
+    framework: string,
+    projectPart: string,
+  ): void {
+    if (!sitemapDoc || typeof sitemapDoc !== 'string') {
+      throw new MissingConfigurationError('Missing or invalid sitemapDoc.');
+    }
+    if (!datamapDoc || typeof datamapDoc !== 'string') {
+      throw new MissingConfigurationError('Missing or invalid datamapDoc.');
+    }
+    if (!framework || typeof framework !== 'string') {
+      throw new MissingConfigurationError('Missing or invalid framework.');
+    }
+    if (!['frontend', 'backend'].includes(projectPart)) {
+      throw new MissingConfigurationError('Invalid projectPart. Must be either "frontend" or "backend".');
+    }
+  }
+
+  private async callModel(
+    context: BuilderContext,
+    prompt: string,
+    stage: string,
+  ): Promise<string> {
+    try {
+      const response = await context.model.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: prompt, role: 'system' }],
+      });
+
+      if (!response || response.trim() === '') {
+        throw new ResponseParsingError(`Generated content is empty during ${stage}.`);
+      }
+
+      return response;
+    } catch (error) {
+      this.handleErrors(error, stage);
+      throw error;
+    }
+  }
+
+  private handleErrors(error: any, stage: string): void {
+    switch (error.name) {
+      case 'ModelTimeoutError':
+      case 'TemporaryServiceUnavailableError':
+      case 'RateLimitExceededError':
+        this.logger.error(`Error during ${stage}: ${error.message}`);
+        throw new Error(`Unexpected error during ${stage}.`);
+      default:
+        this.logger.error(`Non-retryable error during ${stage}:`, error);
+        throw new ResponseParsingError(`Error during ${stage}: ${error.message}`);
+    }
   }
 }

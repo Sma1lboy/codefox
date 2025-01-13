@@ -5,9 +5,9 @@ import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import {
-  RetryableError,
-  NonRetryableError,
-} from 'src/build-system/retry-handler';
+  MissingConfigurationError,
+  ResponseParsingError,
+} from 'src/build-system/errors';
 
 /**
  * Handler for generating the UX Data Map document.
@@ -26,16 +26,10 @@ export class UXDatamapHandler implements BuildHandler<string> {
 
     // Validate required data
     if (!projectName || typeof projectName !== 'string') {
-      return {
-        success: false,
-        error: new NonRetryableError('Missing or invalid projectName.'),
-      };
+      throw new MissingConfigurationError('Missing or invalid projectName.');
     }
     if (!sitemapDoc || typeof sitemapDoc !== 'string') {
-      return {
-        success: false,
-        error: new NonRetryableError('Missing or invalid sitemapDoc.'),
-      };
+      throw new MissingConfigurationError('Missing or invalid sitemapDoc.');
     }
 
     // Generate the prompt
@@ -53,7 +47,7 @@ export class UXDatamapHandler implements BuildHandler<string> {
       });
 
       if (!uxDatamapContent || uxDatamapContent.trim() === '') {
-        throw new RetryableError('Generated UX Data Map content is empty.');
+        throw new ResponseParsingError('Generated UX Data Map content is empty.');
       }
 
       this.logger.log('Successfully generated UX Data Map content.');
@@ -62,26 +56,21 @@ export class UXDatamapHandler implements BuildHandler<string> {
         data: removeCodeBlockFences(uxDatamapContent),
       };
     } catch (error) {
-      if (error instanceof RetryableError) {
-        this.logger.warn(
-          `Retryable error during UX Data Map generation: ${error.message}`,
-        );
-        return {
-          success: false,
-          error,
-        };
+      if (error.message.includes('timeout')) {
+        this.logger.error('Timeout occurred while communicating with the model.');
+        throw new ResponseParsingError('Timeout occurred while generating UX Data Map.');
+      }
+      if (error.message.includes('service unavailable')) {
+        this.logger.error('Model service is temporarily unavailable.');
+        throw new ResponseParsingError('Model service is temporarily unavailable.');
+      }
+      if (error.message.includes('rate limit')) {
+        this.logger.error('Rate limit exceeded during model communication.');
+        throw new ResponseParsingError('Rate limit exceeded while generating UX Data Map.');
       }
 
-      this.logger.error(
-        'Non-retryable error during UX Data Map generation:',
-        error,
-      );
-      return {
-        success: false,
-        error: new NonRetryableError(
-          'Failed to generate UX Data Map document.',
-        ),
-      };
+      this.logger.error('Unexpected error during UX Data Map generation:', error);
+      throw new ResponseParsingError('Unexpected error during UX Data Map generation.');
     }
   }
 }
