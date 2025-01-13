@@ -75,11 +75,7 @@ export class UXSitemapStructurePagebyPageHandler
         },
         {
           role: 'user',
-          content: `Please add more detail about the Core Components within each <page_gen>.
-            Specifically:
-            - Provide a descriptive name for each Core Component (e.g., “C1.1. SearchBar”).
-            - List possible states (Default, Hover, etc.) and typical user interactions (click, scroll, etc.).
-            - Clarify how these components support user goals and why they exist on that page.`,
+          content: `Please add more detail about the Core Components within each <page_gen>.`,
         },
       ];
 
@@ -108,7 +104,7 @@ export class UXSitemapStructurePagebyPageHandler
    * @returns Array of extracted sections as full strings.
    */
   private extractAllSections(text: string): string[] {
-    const pageRegex = /<gen_page id="[^"]+">[\s\S]*?<\/gen_page>/g;
+    const pageRegex = /<page_gen id="[^"]+">[\s\S]*?<\/page_gen>/g;
     return text.match(pageRegex) || [];
   }
 }

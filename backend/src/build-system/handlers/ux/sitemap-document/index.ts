@@ -51,7 +51,7 @@ export class UXSMDHandler implements BuildHandler<string> {
 
           ${prdContent}
 
-          Please generate the Full UX Sitemap Document now, focusing on MVP features but ensuring each page (especially Home) has enough detail to be functional.`,
+          Please generate the Full UX Sitemap Document now, focusing on MVP features but ensuring each page has enough detail to be functional.`,
       },
       {
         role: 'user',
@@ -59,7 +59,7 @@ export class UXSMDHandler implements BuildHandler<string> {
       },
       {
         role: 'user',
-        content: `Please add more detail about the Core Components in each <gen_page>. 
+        content: `Please add more detail about the Sub-section in each <gen_page>. 
       Focus on step-by-step actions the user takes, and any alternative paths mentioned in the PRD. 
       Also, expand on how these components interrelate to the page's primary features.`,
       },

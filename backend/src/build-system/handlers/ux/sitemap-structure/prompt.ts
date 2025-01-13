@@ -13,10 +13,10 @@ export const prompts = {
    Output Requirements:
     Use plain text (no Markdown).
     Begin with <UXSitemap> and end with </UXSitemap>.
-    Within <UXSitemap>, start with <global_comp>, and generate multiple <gen_page> blocks, one for each page.
-    Each <gen_page> must follow this structure exactly:
+    Within <UXSitemap>, start with <global_comp>, and generate multiple <page_gen> blocks, one for each page.
+    Each <page_gen> must follow this structure exactly:
 
-<gen_page id="[id]">
+<page_gen id="[id]">
 P#. [Page Name]
     URL Path: /[path]
     Description: [Brief description of page purpose]
@@ -43,7 +43,7 @@ P#. [Page Name]
     Flow #. [Flow Name]
         [Step 1]
         [Step 2]
-</gen_page>
+</page_gen>
 
 1. **Goal**: Produce a complete UX Structure Map describing how each page/screen is laid out, including which global components are reused across pages.
 
@@ -117,7 +117,7 @@ Self-Check Before Submitting
     Are all global components defined in \`<global_comp>\` blocks?  
     Are user flows, interactions, and relevant content needs included?
 
-Deliver a single XML-like document that strictly follows the structure above. Start with <UXSitemap> and close with </UXSitemap>, containing one <gen_page> block per page.
+Deliver a single XML-like document that strictly follows the structure above. Start with <UXSitemap> and close with </UXSitemap>, containing one <page_gen> block per page.
 
   `;
   },
@@ -133,11 +133,41 @@ Deliver a single XML-like document that strictly follows the structure above. St
          - Project name: ${projectName}
          - Platform: ${platform}
          - Sitemap Documentation: (Provided by the user next)
-         - UX SiteMap Structure: (Provided by the user next)
+         - UX SiteMap Structure Section: (Provided by the user next)
          
   Follow these guidelines to analyze requirements from a UX perspective:
   
   ### Instructions and Rules:
+  UX SiteMap Structure Section will follow this structure exactly and your output should follow this exactly:
+  <page_gen id="[id]">
+  P#. [Page Name]
+      URL Path: /[path]
+      Description: [Brief description of page purpose]
+      Parent Page: [Parent page if nested, or "None" if top-level]
+      Access Level: [e.g., Public/Private/Admin]
+
+  #### Core Components
+      C#.1. [Component Name]
+      - Definition: Core Components are **distinct UI elements** or **functional blocks** on the page that have a clear, identifiable role. Each component must include:
+        1. **Type** (Layout, Interactive, Display, Input, etc.)
+        2. **Purpose** (What does it do for the user or the interface?)
+        3. **States** (Possible UI states: Default, Hover, Clicked, Expanded, Loading, etc.)
+        4. **Interactions** (User actions or system responses: clicking, hovering, dragging, scrolling, etc.)
+
+  #### Features & Functionality
+      - Focus on how these features tie back to user stories, and which **Core Components** are used to achieve them
+      F#.1. [Feature Name]
+          Description: [Brief feature description]
+          User Stories: [Related user stories from PRD]
+          Components Used: [Which components implement this feature?]
+
+  #### Page-Specific User Flows
+      Step-by-step sequences describing user interactions and system responses
+      Flow #. [Flow Name]
+          [Step 1]
+          [Step 2]
+  </page_gen>
+
   
   1, Analyze the Target Section:
       Focus on the specific part of the page provided in the UX Structure document.
@@ -154,16 +184,8 @@ Deliver a single XML-like document that strictly follows the structure above. St
         Include specific interactions and behaviors for each element.
     Content Display:
         Identify the information that needs to be visible on the page and why it's essential for the user.
-    Navigation and Routes:
-        Specify all frontend routes required to navigate to this page.
-        Include links or actions that lead to other pages or states.
     Restrictions:
         Note any restrictions or conditions for accessing the page (e.g., login required, specific user roles).
-
-  2. **Global Components**:
-   - Mark all reusable or site-wide elements with \`<global_comp>\` tags.
-   - Provide a short but clear definition for each global component (e.g., Navigation Bar, Footer, etc.).
-   - Explain how/why these components appear on multiple pages (if applicable).
 
   5, Focus on Detail:
     Provide a component-level breakdown for each page, including layouts.
@@ -188,7 +210,7 @@ Deliver a single XML-like document that strictly follows the structure above. St
   2. What information needs to be displayed and why
   3. How the element supports user goals
 
-  Make sure is 100% completed. It will be directly be use in development.
+  Make sure is 100% completed. It will be directly be use in development, Do not explain what part you changed.
   `;
   },
 };
