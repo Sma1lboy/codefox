@@ -186,5 +186,4 @@ export class DBSchemaHandler implements BuildHandler {
       throw error;
     }
   }
-
 }

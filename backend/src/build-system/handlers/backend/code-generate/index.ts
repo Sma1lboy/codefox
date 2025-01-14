@@ -67,14 +67,14 @@ export class BackendCodeHandler implements BuildHandler<string> {
       dependencyFile,
     );
 
-      let modelResponse;
+    let modelResponse;
     try {
       modelResponse = await context.model.chatSync({
         model: 'gpt-4o-mini',
         messages: [{ content: backendCodePrompt, role: 'system' }],
       });
     } catch (error) {
-        throw error;
+      throw error;
     }
 
     let generatedCode: string;
@@ -109,5 +109,4 @@ export class BackendCodeHandler implements BuildHandler<string> {
       data: generatedCode,
     };
   }
-
 }

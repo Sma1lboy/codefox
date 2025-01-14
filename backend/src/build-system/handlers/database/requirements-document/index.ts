@@ -17,7 +17,6 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
   private readonly logger = new Logger('DatabaseRequirementHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
-    
     const model = ModelProvider.getInstance();
     this.logger.log('Generating Database Requirements Document...');
     const projectName =

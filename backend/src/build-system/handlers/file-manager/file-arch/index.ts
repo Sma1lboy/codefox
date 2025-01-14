@@ -107,5 +107,4 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     }
     return true;
   }
-
 }

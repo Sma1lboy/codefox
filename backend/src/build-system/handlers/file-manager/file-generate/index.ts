@@ -172,5 +172,4 @@ export class FileGeneratorHandler implements BuildHandler<string> {
     await fs.writeFile(filePath, content, 'utf8');
     this.logger.log(`File created: ${filePath}`);
   }
-
 }
