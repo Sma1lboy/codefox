@@ -21,7 +21,7 @@ export default function ChatPage() {
 
   const { models } = useModels();
   const [selectedModel, setSelectedModel] = useState<string>(
-    models[0] || 'Loading models'
+    'gpt-4o' 
   );
 
   useQuery(GET_CHAT_HISTORY, {

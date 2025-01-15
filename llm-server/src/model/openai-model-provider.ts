@@ -55,7 +55,7 @@ export class OpenAIModelProvider {
 
   async initialize(): Promise<void> {
     this.logger.log('Initializing OpenAI model...');
-
+    this.logger.log('Options:', this.options);
     if (!this.options.apiKey) {
       throw new Error('OpenAI API key is required');
     }
@@ -93,7 +93,7 @@ export class OpenAIModelProvider {
       model: string;
       messages: ChatCompletionMessageParam[];
     };
-
+    this.logger.log(`Processing model (attempt ${model + 1})`);
     this.logger.log(`Processing request (attempt ${retries + 1})`);
     const startTime = Date.now();
 

@@ -1,5 +1,11 @@
 - we are using tmuxinator if you want to watch both codegen and dev server
 
+// remember to follow this command to configuration the backend endpoint:
+
+```sh
+cp example.env .env
+```
+
 struct for now
 
 ```plain
