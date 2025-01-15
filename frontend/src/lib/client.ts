@@ -15,6 +15,7 @@ import { getMainDefinition } from '@apollo/client/utilities';
 
 // HTTP Link
 const httpLink = new HttpLink({
+
   uri: process.env.NEXT_PUBLIC_GRAPHQL_URL,
   headers: {
     'Access-Control-Allow-Credentials': 'true',
@@ -22,15 +23,14 @@ const httpLink = new HttpLink({
   },
 });
 
-// WebSocket Link (only in browser environment)
-let wsLink = null;
+let wsLink;
 if (typeof window !== 'undefined') {
+  // WebSocket Link
   wsLink = new GraphQLWsLink(
     createClient({
       url: process.env.NEXT_PUBLIC_GRAPHQL_URL,
       connectionParams: () => {
-        const token = localStorage.getItem(LocalStore.accessToken);
-        return token ? { Authorization: `Bearer ${token}` } : {};
+        return {};
       },
     })
   );
@@ -80,26 +80,24 @@ const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
 });
 
 // Split traffic based on operation type
-const splitLink = wsLink
-  ? split(
-      ({ query }) => {
-        if (!query) {
-          throw new Error('Query is undefined');
-        }
-        const definition = getMainDefinition(query);
-        return (
-          definition.kind === 'OperationDefinition' &&
-          definition.operation === 'subscription'
-        );
-      },
-      wsLink,
-      from([errorLink, requestLoggingMiddleware, authMiddleware, httpLink])
-    )
-  : from([errorLink, requestLoggingMiddleware, authMiddleware, httpLink]);
+const splitLink = split(
+  ({ query }) => {
+    if (!query) {
+      throw new Error("Query is undefined");
+    }
+    const definition = getMainDefinition(query);
+    return (
+      definition.kind === 'OperationDefinition' &&
+      definition.operation === 'subscription'
+    );
+  },
+  wsLink,
+  from([errorLink, requestLoggingMiddleware, authMiddleware, httpLink])
+);
 
 // Create Apollo Client
 const client = new ApolloClient({
-  link: splitLink, // Use splitLink here
+  link: wsLink ? from([httpLink, wsLink]) : httpLink,
   cache: new InMemoryCache(),
   defaultOptions: {
     watchQuery: {
