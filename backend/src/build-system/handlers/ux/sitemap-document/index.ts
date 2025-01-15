@@ -20,7 +20,7 @@ export class UXSMDHandler implements BuildHandler<string> {
     const prdContent = context.getNodeData('op:PRD');
 
     // Generate the prompt dynamically
-    const prompt = prompts.generateUxsmdrompt(projectName, platform);
+    const prompt = prompts.generateUxsmdPrompt(projectName, platform);
 
     // Send the prompt to the LLM server and process the response
     const uxsmdContent = await this.generateUXSMDFromLLM(prompt, prdContent);
@@ -47,7 +47,7 @@ export class UXSMDHandler implements BuildHandler<string> {
       {
         role: 'user',
         content: `
-          Here is the Product Requirements Document (PRD):
+          Here is the **Product Requirements Document (PRD)**:
 
           ${prdContent}
 
@@ -55,18 +55,26 @@ export class UXSMDHandler implements BuildHandler<string> {
       },
       {
         role: 'user',
-        content: `Check if you meet all PRD details, add more pages, and details if needed. Focus on MVP (Minimum Viable Product).`,
+        content: `**Validation Step:**  
+      - **Review your output** to ensure **100% coverage** of the PRD.
+      - Make sure you covered all global_view_* and page_view_* in UX Sitemap Document, If any of them is missing add them based on the system prompt.
+      - If any critical pages, features, or flows are **missing**, **add them**.  
+      - Adjust for **navigation completeness**, making sure all interactions and workflows are **correctly linked**.`,
       },
       {
         role: 'user',
-        content: `Please add more detail about the Sub-section in each <gen_page>. 
-      Focus on step-by-step actions the user takes, and any alternative paths mentioned in the PRD. 
-      Also, expand on how these components interrelate to the page's primary features.`,
+        content: `**Final Refinement:**  
+        - **Expand the Unique UI Pages **, adding page_view_* if needed:
+        - **Expand the page_views **, adding more details on:
+        - **Step-by-step user actions** within each page.
+        - **Alternative user paths** (e.g., different ways a user might complete an action).  
+        - **How components within the page interact** with each other and primary features.
+      - **Ensure clarity** so developers can implement the structure **without assumptions**.`,
       },
     ];
 
     const modelProvider = ModelProvider.getInstance();
-    const model = 'gpt-4o-mini';
+    const model = 'gpt-4o';
 
     const uxsmdContent = await modelProvider.chatSync({
       model,

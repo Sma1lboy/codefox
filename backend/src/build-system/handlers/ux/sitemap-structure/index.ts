@@ -70,7 +70,7 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
     ];
 
     const uxStructureContent = await context.model.chatSync({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages,
     });
 

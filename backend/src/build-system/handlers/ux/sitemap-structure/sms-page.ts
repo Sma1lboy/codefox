@@ -62,7 +62,7 @@ export class UXSitemapStructurePagebyPageHandler
           
             ${sitemapDoc}
           
-            Next will provide UX SiteMap Structure`,
+            Next, we will provide the specific UX Sitemap Structure section to be refine.`,
         },
         {
           role: 'user',
@@ -71,16 +71,22 @@ export class UXSitemapStructurePagebyPageHandler
           
             ${section}
           
-            Please generate the Full UX Sitemap Structre for this section now.`,
+            Please generate the Full UX Sitemap Structre for this section now. Only provide the information in <page_gen>`,
         },
         {
           role: 'user',
-          content: `Please add more detail about the Core Components within each <page_gen>.`,
+          content: `Please add more detail about the Core Components within each <page_gen>.
+      Specifically:
+      - Provide a descriptive name for each Core Component (C#.X. [Component Name]) and why it exists on this page.
+      - List possible states (Default, Hover, Clicked, etc.) and typical user interactions (click, drag, input).
+      - Note any restrictions (login required, admin-only, etc.).
+      - Identify the essential content displayed (what users need to see and why).
+      - If any important elements or features appear to be missing, add them now to ensure a complete UX structure.`,
         },
       ];
 
       const refinedContent = await modelProvider.chatSync({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages,
       });
 
