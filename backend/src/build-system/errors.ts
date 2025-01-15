@@ -41,7 +41,6 @@ export class ResponseParsingError extends Error {
     this.name = 'ResponseParsingError';
   }
 }
-
 /**
  * Error thrown when the expected tags in a response are missing or invalid.
  * Typically occurs during content generation or parsing steps.
@@ -50,17 +49,6 @@ export class ResponseTagError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'ResponseTagError';
-  }
-}
-
-/**
- * Error thrown when a timeout occurs while interacting with the model service.
- * Used to handle scenarios where requests to the model exceed allowed time limits.
- */
-export class ModelTimeoutError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ModelTimeoutError';
   }
 }
 
@@ -116,16 +104,5 @@ export class FileWriteError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'FileWriteError';
-  }
-}
-
-/**
- * Error thrown when a general parsing failure occurs.
- * Can be used to handle issues in various parsing contexts.
- */
-export class ParsingError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ParsingError';
   }
 }

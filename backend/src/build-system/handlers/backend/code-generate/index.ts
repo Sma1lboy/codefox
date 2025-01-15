@@ -5,11 +5,10 @@ import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
 import { formatResponse } from 'src/build-system/utils/strings';
 import {
-  MissingConfigurationError,
-  InvalidParameterError,
   FileWriteError,
-  ParsingError,
-  ResponseTagError,
+  InvalidParameterError,
+  MissingConfigurationError,
+  ResponseParsingError,
 } from 'src/build-system/errors';
 
 /**
@@ -67,27 +66,22 @@ export class BackendCodeHandler implements BuildHandler<string> {
       dependencyFile,
     );
 
-    let modelResponse;
-    try {
-      modelResponse = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: backendCodePrompt, role: 'system' }],
-      });
-    } catch (error) {
-      throw error;
-    }
+    const modelResponse = await context.model.chatSync({
+      model: 'gpt-4o-mini',
+      messages: [{ content: backendCodePrompt, role: 'system' }],
+    });
 
     let generatedCode: string;
     try {
       generatedCode = formatResponse(modelResponse);
       if (!generatedCode) {
-        throw new ResponseTagError('Response tag extraction failed.');
+        throw new ResponseParsingError('Response tag extraction failed.');
       }
     } catch (error) {
-      if (error instanceof ResponseTagError) {
+      if (error instanceof ResponseParsingError) {
         throw error;
       }
-      throw new ParsingError(
+      throw new ResponseParsingError(
         'Error occurred while parsing the model response.',
       );
     }

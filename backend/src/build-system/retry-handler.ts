@@ -28,9 +28,7 @@ export class RetryHandler {
       case 'ModelTimeoutError':
       case 'TemporaryServiceUnavailableError':
       case 'RateLimitExceededError':
-      case 'ResponseTagError':
       case 'ResponseParsingError':
-      case 'ParsingError':
         // Optionally add a delay between retries
         this.logger.warn(
           `Retryable error occurred: ${error.message}. Retrying...`,
