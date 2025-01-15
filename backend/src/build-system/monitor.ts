@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { BuildNode, BuildStep, BuildSequence } from './types';
 import { ProjectEventLogger } from './logger';
 import { ModelProvider } from 'src/common/model-provider';
+import { MessageInterface } from 'src/common/model-provider/types';
 /**
  * Metrics for sequence, step, and node execution
  */
@@ -105,13 +106,16 @@ export class BuildMonitor {
     generateDuration: number,
     id: string,
     step: string,
-    input: string,
+    input: MessageInterface[],
     output: string,
   ) {
     const { encode, decode } = require('gpt-3-encoder');
+    let inputLength = input.reduce(( preLength, singleContent) => {
+      return encode(singleContent.content).length + preLength;
+    }, 0);
     const value = {
       step,
-      input: encode(input).length,
+      input: inputLength,
       output: encode(output).length,
       generateDuration,
     };

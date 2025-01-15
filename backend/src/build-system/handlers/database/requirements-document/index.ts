@@ -5,6 +5,8 @@ import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { BuildMonitor } from 'src/build-system/monitor';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { MessageInterface } from 'src/common/model-provider/types';
 
 export class DatabaseRequirementHandler implements BuildHandler<string> {
   readonly id = 'op:DATABASE_REQ';
@@ -20,22 +22,9 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
       projectName,
       datamapDoc,
     );
-    const model = ModelProvider.getInstance();
-
-    const startTime = new Date();
-    const dbRequirementsContent = await model.chatSync({
-      model: 'gpt-4o-mini',
-      messages: [{ content: prompt, role: 'system' }],
-    });
-    const endTime = new Date();
-    const duration = endTime.getTime() - startTime.getTime();
-    BuildMonitor.timeRecorder(
-      duration,
-      this.id,
-      'generateDatabaseRequirementPrompt',
-      prompt,
-      dbRequirementsContent,
-    );
+    let messages: MessageInterface[] = [{content: prompt, role: 'system'}];
+    const dbRequirementsContent = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateDatabaseRequirementPrompt', this.id);
+    
     return {
       success: true,
       data: removeCodeBlockFences(dbRequirementsContent),

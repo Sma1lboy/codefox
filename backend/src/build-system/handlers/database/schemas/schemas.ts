@@ -13,6 +13,8 @@ import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
 import { formatResponse } from 'src/build-system/utils/strings';
 import { BuildMonitor } from 'src/build-system/monitor';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { MessageInterface } from 'src/common/model-provider/types';
 
 /**
  * DBSchemaHandler is responsible for generating database schemas based on provided requirements.
@@ -71,20 +73,8 @@ export class DBSchemaHandler implements BuildHandler {
 
     let dbAnalysis: string;
     try {
-      const startTime = new Date();
-      const analysisResponse = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: analysisPrompt, role: 'system' }],
-      });
-      const endTime = new Date();
-      const duration = endTime.getTime() - startTime.getTime();
-      BuildMonitor.timeRecorder(
-        duration,
-        this.id,
-        'analyzeDatabaseRequirements',
-        analysisPrompt,
-        analysisResponse,
-      );
+      let messages: MessageInterface[] = [{content: analysisPrompt, role: 'system'}];
+      const analysisResponse = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'analyzeDatabaseRequirements', this.id);
       dbAnalysis = analysisResponse;
     } catch (error) {
       this.logger.error('Error during database requirements analysis:', error);
@@ -114,21 +104,8 @@ export class DBSchemaHandler implements BuildHandler {
 
     let schemaContent: string;
     try {
-      const startTime = new Date();
-      const schemaResponse = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: schemaPrompt, role: 'system' }],
-      });
-
-      const endTime = new Date();
-      const duration = endTime.getTime() - startTime.getTime();
-      BuildMonitor.timeRecorder(
-        duration,
-        this.id,
-        'generateDatabaseSchema',
-        schemaPrompt,
-        schemaResponse,
-      );
+      let messages: MessageInterface[] = [{content: schemaPrompt, role: 'system'}];
+      const schemaResponse = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateBackendCode', this.id);
       schemaContent = formatResponse(schemaResponse);
     } catch (error) {
       this.logger.error('Error during schema generation:', error);
@@ -148,20 +125,8 @@ export class DBSchemaHandler implements BuildHandler {
 
     let validationResponse: string;
     try {
-      const startTime = new Date();
-      const validationResult = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: validationPrompt, role: 'system' }],
-      });
-      const endTime = new Date();
-      const duration = endTime.getTime() - startTime.getTime();
-      BuildMonitor.timeRecorder(
-        duration,
-        this.id,
-        'validateDatabaseSchema',
-        validationPrompt,
-        validationResult,
-      );
+      let messages: MessageInterface[] = [{content: validationPrompt, role: 'system'}];
+      const validationResult = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateBackendCode', this.id);
       validationResponse = formatResponse(validationResult);
     } catch (error) {
       this.logger.error('Error during schema validation:', error);

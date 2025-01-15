@@ -9,6 +9,8 @@ import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { BuildMonitor } from 'src/build-system/monitor';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { MessageInterface } from 'src/common/model-provider/types';
 
 /**
  * FileStructureHandler is responsible for generating the project's file and folder structure
@@ -85,21 +87,8 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
     let fileStructureContent: string;
     try {
       // Invoke the language model to generate the file structure content
-
-      const startTime = new Date();
-      fileStructureContent = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
-      const endTime = new Date();
-      const duration = endTime.getTime() - startTime.getTime();
-      BuildMonitor.timeRecorder(
-        duration,
-        this.id,
-        'generateCommonFileStructure',
-        prompt,
-        fileStructureContent,
-      );
+      let messages: MessageInterface[] = [{content: prompt, role: 'system'}];
+      fileStructureContent = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateCommonFileStructure', this.id);
     } catch (error) {
       this.logger.error('Error during file structure generation:', error);
       return {

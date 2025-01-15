@@ -5,6 +5,8 @@ import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { BuildMonitor } from 'src/build-system/monitor';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { MessageInterface } from 'src/common/model-provider/types';
 
 // UXSMS: UX Sitemap Structure
 export class UXSitemapStructureHandler implements BuildHandler<string> {
@@ -32,20 +34,9 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
       'web', // TODO: Change platform dynamically if necessary
     );
 
-    const startTime = new Date();
-    const uxStructureContent = await context.model.chatSync({
-      model: 'gpt-4o-mini',
-      messages: [{ content: prompt, role: 'system' }],
-    });
-    const endTime = new Date();
-    const duration = endTime.getTime() - startTime.getTime();
-    BuildMonitor.timeRecorder(
-      duration,
-      this.id,
-      'generateUXSiteMapStructre',
-      prompt,
-      uxStructureContent,
-    );
+    let messages: MessageInterface[] = [{content: prompt, role: 'system'}];
+    const uxStructureContent = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateUXSiteMapStructre', this.id);
+    
 
     return {
       success: true,

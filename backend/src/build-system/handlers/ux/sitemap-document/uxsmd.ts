@@ -5,6 +5,8 @@ import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { BuildMonitor } from 'src/build-system/monitor';
+import { MessageInterface } from 'src/common/model-provider/types';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 
 export class UXSMDHandler implements BuildHandler<string> {
   readonly id = 'op:UX:SMD';
@@ -27,7 +29,7 @@ export class UXSMDHandler implements BuildHandler<string> {
     );
 
     // Send the prompt to the LLM server and process the response
-    const uxsmdContent = await this.generateUXSMDFromLLM(prompt);
+    const uxsmdContent = await this.generateUXSMDFromLLM(context, prompt);
 
     // Store the generated document in the context
     context.setGlobalContext('uxsmdDocument', uxsmdContent);
@@ -39,24 +41,12 @@ export class UXSMDHandler implements BuildHandler<string> {
     };
   }
 
-  private async generateUXSMDFromLLM(prompt: string): Promise<string> {
+  private async generateUXSMDFromLLM(context: BuilderContext, prompt: string): Promise<string> {
     const modelProvider = ModelProvider.getInstance();
     const model = 'gpt-4o-mini';
 
-    const startTime = new Date();
-    const uxsmdContent = await modelProvider.chatSync({
-      model,
-      messages: [{ content: prompt, role: 'system' }],
-    });
-    const endTime = new Date();
-    const duration = endTime.getTime() - startTime.getTime();
-    BuildMonitor.timeRecorder(
-      duration,
-      this.id,
-      'generateUXSMDFromLLM',
-      prompt,
-      uxsmdContent,
-    );
+    let messages: MessageInterface[] = [{content: prompt, role: 'system'}];
+    const uxsmdContent = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateUXSMDFromLLM', this.id);
     this.logger.log('Received full UXSMD content from LLM server.');
     return uxsmdContent;
   }

@@ -7,6 +7,8 @@ import * as path from 'path';
 import { prompts } from './prompt';
 import { formatResponse } from 'src/build-system/utils/strings';
 import { BuildMonitor } from 'src/build-system/monitor';
+import { MessageInterface } from 'src/common/model-provider/types';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 
 // TODO(Sma1lboy): we need a better way to handle handler pre requirements
 /**
@@ -49,21 +51,9 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
         backendCode,
       );
 
-      const startTime = new Date();
-      const modelResponse = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: filePrompt, role: 'system' }],
-      });
+      let messages: MessageInterface[] = [{content: filePrompt, role: 'system'}];
+      const modelResponse = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateBackendCode', this.id);
 
-      const endTime = new Date();
-      const duration = endTime.getTime() - startTime.getTime();
-      BuildMonitor.timeRecorder(
-        duration,
-        this.id,
-        'identifyBackendFilesToModify',
-        filePrompt,
-        modelResponse,
-      );
       const filesToModify = this.parseFileIdentificationResponse(modelResponse);
       this.logger.log(`Files to modify: ${filesToModify.join(', ')}`);
 
@@ -85,20 +75,9 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
 
           const startTime = new Date();
           // Get modified content
-          const response = await context.model.chatSync({
-            model: 'gpt-4o-mini',
-            messages: [{ content: modificationPrompt, role: 'system' }],
-          });
+          let messages: MessageInterface[] = [{content: modificationPrompt, role: 'system'}];
+          const response = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateFileModification', this.id);
 
-          const endTime = new Date();
-          const duration = endTime.getTime() - startTime.getTime();
-          BuildMonitor.timeRecorder(
-            duration,
-            this.id,
-            'generateFileModification',
-            modificationPrompt,
-            modelResponse,
-          );
           // Extract new content and write back
           const newContent = formatResponse(response);
           await fs.writeFile(filePath, newContent, 'utf-8');

@@ -5,6 +5,8 @@ import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { BuildMonitor } from 'src/build-system/monitor';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { MessageInterface } from 'src/common/model-provider/types';
 
 export class PRDHandler implements BuildHandler {
   readonly id = 'op:PRD';
@@ -27,7 +29,7 @@ export class PRDHandler implements BuildHandler {
     );
 
     // Send the prompt to the LLM server and process the response
-    const prdContent = await this.generatePRDFromLLM(prompt);
+    const prdContent = await this.generatePRDFromLLM(context, prompt);
 
     return {
       success: true,
@@ -35,23 +37,11 @@ export class PRDHandler implements BuildHandler {
     };
   }
 
-  private async generatePRDFromLLM(prompt: string): Promise<string> {
+  private async generatePRDFromLLM(context: BuilderContext, prompt: string): Promise<string> {
     const modelProvider = ModelProvider.getInstance();
 
-    const startTime = new Date();
-    const prdContent = await modelProvider.chatSync({
-      model: 'gpt-4o-mini',
-      messages: [{ content: prompt, role: 'system' }],
-    });
-    const endTime = new Date();
-    const duration = endTime.getTime() - startTime.getTime();
-    BuildMonitor.timeRecorder(
-      duration,
-      this.id,
-      'generatePRDFromLLM',
-      prompt,
-      prdContent,
-    );
+    let messages: MessageInterface[] = [{content: prompt, role: 'system'}];
+    const prdContent  = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generatePRDFromLLM', this.id);
     this.logger.log('Received full PRD content from LLM server.');
     return prdContent;
   }

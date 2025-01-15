@@ -7,6 +7,8 @@ import {
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { BuildMonitor } from 'src/build-system/monitor';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { MessageInterface } from 'src/common/model-provider/types';
 
 type BackendRequirementResult = {
   overview: string;
@@ -55,21 +57,8 @@ export class BackendRequirementHandler
 
     let backendOverview: string;
     try {
-      const startTime = new Date();
-      backendOverview = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: overviewPrompt, role: 'system' }],
-      });
-
-      const endTime = new Date();
-      const duration = endTime.getTime() - startTime.getTime();
-      BuildMonitor.timeRecorder(
-        duration,
-        this.id,
-        'generateBackendOverviewPrompt',
-        overviewPrompt,
-        backendOverview,
-      );
+      let messages: MessageInterface[] = [{content: overviewPrompt, role: 'system'}];
+      backendOverview = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateBackendOverviewPrompt', this.id);
     } catch (error) {
       this.logger.error('Error generating backend overview:', error);
       return {

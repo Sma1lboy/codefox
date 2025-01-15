@@ -5,6 +5,8 @@ import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { BuildMonitor } from 'src/build-system/monitor';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { MessageInterface } from 'src/common/model-provider/types';
 
 /**
  * Handler for generating the UX Data Map document.
@@ -24,20 +26,8 @@ export class UXDatamapHandler implements BuildHandler<string> {
       'web', // TODO: change platform dynamically if needed
     );
 
-    const startTime = new Date();
-    const uxDatamapContent = await context.model.chatSync({
-      model: 'gpt-4o-mini',
-      messages: [{ content: prompt, role: 'system' }],
-    });
-    const endTime = new Date();
-    const duration = endTime.getTime() - startTime.getTime();
-    BuildMonitor.timeRecorder(
-      duration,
-      this.id,
-      'generateUXDataMap',
-      prompt,
-      uxDatamapContent,
-    );
+    let messages: MessageInterface[] = [{content: prompt, role: 'system'}];
+    const uxDatamapContent = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateUXDataMap', this.id);
     Logger.log('UX Data Map Content: ', uxDatamapContent);
 
     return {
