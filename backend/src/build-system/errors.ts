@@ -1,8 +1,39 @@
+// error.ts
+
 /**
- * Error thrown when a required file is not found.
- * Typically used in file handling operations to indicate missing files.
+ * Base class representing retryable errors.
+ * Inherits from JavaScript's built-in Error class.
+ * Suitable for errors where the system can attempt to retry the operation.
  */
-export class FileNotFoundError extends Error {
+export class RetryableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RetryableError';
+    Object.setPrototypeOf(this, new.target.prototype); // Fixes the inheritance chain for instanceof checks
+  }
+}
+
+/**
+ * Base class representing non-retryable errors.
+ * Inherits from JavaScript's built-in Error class.
+ * Suitable for errors where the system should not attempt to retry the operation.
+ */
+export class NonRetryableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'NonRetryableError';
+    Object.setPrototypeOf(this, new.target.prototype); // Fixes the inheritance chain for instanceof checks
+  }
+}
+
+// Below are specific error classes inheriting from the appropriate base classes
+
+/**
+ * Error: File Not Found.
+ * Indicates that a required file could not be found during file operations.
+ * Non-retryable error.
+ */
+export class FileNotFoundError extends NonRetryableError {
   constructor(message: string) {
     super(message);
     this.name = 'FileNotFoundError';
@@ -10,10 +41,11 @@ export class FileNotFoundError extends Error {
 }
 
 /**
- * Error thrown when there is an issue modifying a file.
- * Indicates a failure in updating or altering file content.
+ * Error: File Modification Failed.
+ * Indicates issues encountered while modifying a file, such as insufficient permissions or disk errors.
+ * Non-retryable error.
  */
-export class FileModificationError extends Error {
+export class FileModificationError extends NonRetryableError {
   constructor(message: string) {
     super(message);
     this.name = 'FileModificationError';
@@ -21,10 +53,11 @@ export class FileModificationError extends Error {
 }
 
 /**
- * Error thrown when the model service is unavailable.
- * Used to signal that the underlying model cannot be reached or is down.
+ * Error: Model Service Unavailable.
+ * Indicates that the underlying model service cannot be reached or is down.
+ * Retryable error, typically temporary.
  */
-export class ModelUnavailableError extends Error {
+export class ModelUnavailableError extends RetryableError {
   constructor(message: string) {
     super(message);
     this.name = 'ModelUnavailableError';
@@ -32,20 +65,23 @@ export class ModelUnavailableError extends Error {
 }
 
 /**
- * Error thrown when parsing a response fails.
- * Indicates that the system could not properly interpret the response data.
+ * Error: Response Parsing Failed.
+ * Indicates that the system could not properly parse the response data.
+ * Retryable error, possibly due to temporary data format issues.
  */
-export class ResponseParsingError extends Error {
+export class ResponseParsingError extends RetryableError {
   constructor(message: string) {
     super(message);
     this.name = 'ResponseParsingError';
   }
 }
+
 /**
- * Error thrown when the expected tags in a response are missing or invalid.
- * Typically occurs during content generation or parsing steps.
+ * Error: Response Tag Error.
+ * Indicates that expected tags in the response are missing or invalid during content generation or parsing.
+ * Non-retryable error.
  */
-export class ResponseTagError extends Error {
+export class ResponseTagError extends NonRetryableError {
   constructor(message: string) {
     super(message);
     this.name = 'ResponseTagError';
@@ -53,10 +89,11 @@ export class ResponseTagError extends Error {
 }
 
 /**
- * Error thrown when the model service is temporarily unavailable.
- * Indicates transient issues, such as server overload or maintenance downtime.
+ * Error: Temporary Service Unavailable.
+ * Indicates that the service is unavailable due to temporary issues like server overload or maintenance.
+ * Retryable error, typically temporary.
  */
-export class TemporaryServiceUnavailableError extends Error {
+export class TemporaryServiceUnavailableError extends RetryableError {
   constructor(message: string) {
     super(message);
     this.name = 'TemporaryServiceUnavailableError';
@@ -64,10 +101,11 @@ export class TemporaryServiceUnavailableError extends Error {
 }
 
 /**
- * Error thrown when the rate limit for the model service is exceeded.
- * Used to signal that too many requests have been sent within a given time frame.
+ * Error: Rate Limit Exceeded.
+ * Indicates that too many requests have been sent within a given time frame.
+ * Retryable error, may require waiting before retrying.
  */
-export class RateLimitExceededError extends Error {
+export class RateLimitExceededError extends RetryableError {
   constructor(message: string) {
     super(message);
     this.name = 'RateLimitExceededError';
@@ -75,10 +113,11 @@ export class RateLimitExceededError extends Error {
 }
 
 /**
- * Error thrown when required configuration is missing or invalid.
+ * Error: Missing Configuration.
  * Indicates issues with system setup or missing configuration parameters.
+ * Non-retryable error, typically requires manual configuration fixes.
  */
-export class MissingConfigurationError extends Error {
+export class MissingConfigurationError extends NonRetryableError {
   constructor(message: string) {
     super(message);
     this.name = 'MissingConfigurationError';
@@ -86,10 +125,11 @@ export class MissingConfigurationError extends Error {
 }
 
 /**
- * Error thrown when a provided parameter is invalid.
- * Used to signal issues with function arguments or configurations.
+ * Error: Invalid Parameter.
+ * Indicates that a function argument or configuration parameter is invalid.
+ * Non-retryable error, typically requires correcting the input parameters.
  */
-export class InvalidParameterError extends Error {
+export class InvalidParameterError extends NonRetryableError {
   constructor(message: string) {
     super(message);
     this.name = 'InvalidParameterError';
@@ -97,10 +137,11 @@ export class InvalidParameterError extends Error {
 }
 
 /**
- * Error thrown when a failure occurs while writing to a file.
- * Indicates issues such as insufficient permissions or disk errors.
+ * Error: File Write Failed.
+ * Indicates issues encountered while writing to a file, such as insufficient permissions or disk errors.
+ * Non-retryable error.
  */
-export class FileWriteError extends Error {
+export class FileWriteError extends NonRetryableError {
   constructor(message: string) {
     super(message);
     this.name = 'FileWriteError';
