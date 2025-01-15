@@ -20,9 +20,7 @@ export default function ChatPage() {
   const formRef = useRef<HTMLFormElement>(null);
 
   const { models } = useModels();
-  const [selectedModel, setSelectedModel] = useState<string>(
-    'gpt-4o' 
-  );
+  const [selectedModel, setSelectedModel] = useState<string>('gpt-4o');
 
   useQuery(GET_CHAT_HISTORY, {
     variables: { chatId: params.id },
