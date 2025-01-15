@@ -123,7 +123,6 @@ type Query {
   getChatDetails(chatId: String!): Chat
   getChatHistory(chatId: String!): [Message!]!
   getHello: String!
-  getMessageDetail(messageId: String!): Message
   getProjectDetails(projectId: String!): Project!
   getUserChats: [Chat!]
   getUserProjects: [Project!]!
@@ -138,7 +137,8 @@ input RegisterUserInput {
 }
 
 enum Role {
-  Model
+  Assistant
+  System
   User
 }
 

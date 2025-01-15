@@ -3,6 +3,7 @@ import * as _ from 'lodash';
 import { getConfigPath } from './common-path';
 import { ConfigType } from 'src/downloader/universal-utils';
 import { Logger } from '@nestjs/common';
+import * as path from 'path';
 
 export interface ModelConfig {
   model: string;

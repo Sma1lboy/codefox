@@ -38,7 +38,8 @@ export class Chat extends SystemBaseModel {
   @Column({ nullable: true })
   title: string;
 
-  @Field({ nullable: true })
+  // 修改这里
+  @Field(() => [Message], { nullable: true })
   @Column('simple-json', { nullable: true, default: '[]' })
   messages: Message[];
 
