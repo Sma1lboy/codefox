@@ -22,7 +22,6 @@ const httpLink = new HttpLink({
   },
 });
 
-// WebSocket Link (only in browser environment)
 let wsLink = null;
 if (typeof window !== 'undefined') {
   wsLink = new GraphQLWsLink(
@@ -36,7 +35,6 @@ if (typeof window !== 'undefined') {
   );
 }
 
-// Logging Middleware
 const requestLoggingMiddleware = new ApolloLink((operation, forward) => {
   console.log('GraphQL Request:', {
     operationName: operation.operationName,
@@ -49,7 +47,6 @@ const requestLoggingMiddleware = new ApolloLink((operation, forward) => {
   });
 });
 
-// Auth Middleware
 const authMiddleware = new ApolloLink((operation, forward) => {
   if (typeof window === 'undefined') {
     return forward(operation);
@@ -65,7 +62,6 @@ const authMiddleware = new ApolloLink((operation, forward) => {
   return forward(operation);
 });
 
-// Error Link
 const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
   if (graphQLErrors) {
     graphQLErrors.forEach(({ message, locations, path }) => {
