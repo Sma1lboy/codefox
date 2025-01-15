@@ -29,6 +29,7 @@ export class RetryHandler {
       case 'TemporaryServiceUnavailableError':
       case 'RateLimitExceededError':
       case 'ResponseTagError':
+      case 'ResponseParsingError':
       case 'ParsingError':
         // Optionally add a delay between retries
         this.logger.warn(
