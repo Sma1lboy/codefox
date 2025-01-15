@@ -7,14 +7,13 @@ import {
   getSupportedDatabaseTypes,
   isSupportedDatabaseType,
 } from '../../../utils/database-utils';
-import { writeFile } from 'fs-extra';
 import { prompts } from './prompt';
 import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
 import { formatResponse } from 'src/build-system/utils/strings';
-import { BuildMonitor } from 'src/build-system/monitor';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import { MessageInterface } from 'src/common/model-provider/types';
+import { FileWriteError, ModelUnavailableError, ResponseParsingError } from 'src/build-system/errors';
 
 /**
  * DBSchemaHandler is responsible for generating database schemas based on provided requirements.
@@ -57,7 +56,7 @@ export class DBSchemaHandler implements BuildHandler {
       fileExtension = getSchemaFileExtension(databaseType as DatabaseType);
     } catch (error) {
       this.logger.error('Error determining schema file extension:', error);
-      throw new Error(
+      throw new FileWriteError(
         `Failed to determine schema file extension for database type: ${databaseType}.`,
       );
     }
@@ -74,8 +73,7 @@ export class DBSchemaHandler implements BuildHandler {
     let dbAnalysis: string;
     try {
       let messages: MessageInterface[] = [{content: analysisPrompt, role: 'system'}];
-      const analysisResponse = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'analyzeDatabaseRequirements', this.id);
-      dbAnalysis = analysisResponse;
+      dbAnalysis = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'analyzeDatabaseRequirements', this.id);
     } catch (error) {
       this.logger.error('Error during database requirements analysis:', error);
       return {
@@ -98,7 +96,7 @@ export class DBSchemaHandler implements BuildHandler {
       this.logger.error('Error during schema prompt generation:', error);
       return {
         success: false,
-        error: new Error('Failed to generate schema prompt.'),
+        error: new FileWriteError('Failed to generate schema prompt.'),
       };
     }
 
@@ -111,7 +109,7 @@ export class DBSchemaHandler implements BuildHandler {
       this.logger.error('Error during schema generation:', error);
       return {
         success: false,
-        error: new Error('Failed to generate database schema.'),
+        error: new ModelUnavailableError('Failed to generate database schema.'),
       };
     }
 
@@ -132,7 +130,7 @@ export class DBSchemaHandler implements BuildHandler {
       this.logger.error('Error during schema validation:', error);
       return {
         success: false,
-        error: new Error('Failed to validate the generated database schema.'),
+        error: new ModelUnavailableError('Failed to validate the generated database schema.'),
       };
     }
 
@@ -162,7 +160,7 @@ export class DBSchemaHandler implements BuildHandler {
       this.logger.error('Error writing schema file:', error);
       return {
         success: false,
-        error: new Error('Failed to write schema file.'),
+        error: new ResponseParsingError('Failed to write schema file.'),
       };
     }
 

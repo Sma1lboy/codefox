@@ -1,14 +1,17 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
-import {
-  generateBackendImplementationPrompt,
-  generateBackendOverviewPrompt,
-} from './prompt';
+import { generateBackendOverviewPrompt } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { BuildMonitor } from 'src/build-system/monitor';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import { MessageInterface } from 'src/common/model-provider/types';
+import {
+  MissingConfigurationError,
+  
+  ModelUnavailableError,
+  
+  ResponseParsingError,
+} from 'src/build-system/errors';
 
 type BackendRequirementResult = {
   overview: string;
@@ -21,14 +24,14 @@ type BackendRequirementResult = {
 };
 
 /**
- * BackendRequirementHandler is responsible for generating the backend requirements document
+ * BackendRequirementHandler is responsible for generating the backend requirements document.
  * Core Content Generation: API Endpoints, System Overview
  */
 export class BackendRequirementHandler
   implements BuildHandler<BackendRequirementResult>
 {
   readonly id = 'op:BACKEND:REQ';
-  readonly logger: Logger = new Logger('BackendRequirementHandler');
+  private readonly logger: Logger = new Logger('BackendRequirementHandler');
 
   async run(
     context: BuilderContext,
@@ -45,6 +48,15 @@ export class BackendRequirementHandler
     const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
     const sitemapDoc = context.getNodeData('op:UX:SMD');
 
+    if (!dbRequirements || !datamapDoc || !sitemapDoc) {
+      this.logger.error(
+        'Missing required parameters: dbRequirements, datamapDoc, or sitemapDoc',
+      );
+      throw new MissingConfigurationError(
+        'Missing required parameters: dbRequirements, datamapDoc, or sitemapDoc.',
+      );
+    }
+
     const overviewPrompt = generateBackendOverviewPrompt(
       projectName,
       dbRequirements,
@@ -56,50 +68,29 @@ export class BackendRequirementHandler
     );
 
     let backendOverview: string;
+    
     try {
       let messages: MessageInterface[] = [{content: overviewPrompt, role: 'system'}];
       backendOverview = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateBackendOverviewPrompt', this.id);
+
+      if (!backendOverview) {
+        throw new ModelUnavailableError(
+          'The model did not respond within the expected time.',
+        );
+      }
+      if (backendOverview.trim() === '') {
+        throw new ResponseParsingError('Generated backend overview is empty.');
+      }
     } catch (error) {
-      this.logger.error('Error generating backend overview:', error);
-      return {
-        success: false,
-        error: new Error('Failed to generate backend overview.'),
-      };
+      throw error;
     }
-
-    // // Generate backend implementation details
-    // const implementationPrompt = generateBackendImplementationPrompt(
-    //   backendOverview,
-    //   language,
-    //   framework,
-    // );
-
-    // let implementationDetails: string;
-    // try {
-    //   implementationDetails = await context.model.chatSync(
-    //     {
-    //       content: implementationPrompt,
-    //     },
-    //     'gpt-4o-mini',
-    //   );
-    // } catch (error) {
-    //   this.logger.error(
-    //     'Error generating backend implementation details:',
-    //     error,
-    //   );
-    //   return {
-    //     success: false,
-    //     error: new Error('Failed to generate backend implementation details.'),
-    //   };
-    // }
 
     // Return generated data
     return {
       success: true,
       data: {
         overview: removeCodeBlockFences(backendOverview),
-        // TODO: consider remove implementation
-        implementation: '',
+        implementation: '', // Implementation generation skipped
         config: {
           language,
           framework,

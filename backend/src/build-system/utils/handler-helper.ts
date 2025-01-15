@@ -2,7 +2,7 @@ import { MessageInterface } from "src/common/model-provider/types";
 import { BuilderContext } from "../context";
 import { BuildMonitor } from "../monitor";
 
-export async function chatSyncWithClocker(context: BuilderContext, messages: MessageInterface[], model: string, step: string, id: string): Promise<any>{
+export async function chatSyncWithClocker(context: BuilderContext, messages: MessageInterface[], model: string, step: string, id: string): Promise<string>{
     const startTime = new Date();
       const modelResponse = await context.model.chatSync({
         model,

@@ -109,14 +109,14 @@ export class BuildMonitor {
     input: MessageInterface[],
     output: string,
   ) {
-    const { encode, decode } = require('gpt-3-encoder');
+    const encoder = require('gpt-3-encoder');
     let inputLength = input.reduce(( preLength, singleContent) => {
-      return encode(singleContent.content).length + preLength;
+      return encoder.encode(singleContent.content).length + preLength;
     }, 0);
     const value = {
       step,
       input: inputLength,
-      output: encode(output).length,
+      output: encoder.encode(output).length,
       generateDuration,
     };
     if (!this.timeRecorders.has(id)) {

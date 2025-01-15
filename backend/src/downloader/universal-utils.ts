@@ -92,7 +92,7 @@ export async function checkAndDownloadAllModels(
 
   logger.log('Checking and downloading configured models...');
 
-  if (!modelsConfig.length) {
+  if (!modelsConfig || !modelsConfig.length) {
     logger.warn(`No ${type} models configured`);
     return;
   }
