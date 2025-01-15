@@ -41,10 +41,17 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
     let dbRequirementsContent: string;
 
     try {
-      let messages: MessageInterface[] = [{content: prompt, role: 'system'}];
-      dbRequirementsContent = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateDatabaseRequirementPrompt', this.id);
-    
-      
+      const messages: MessageInterface[] = [
+        { content: prompt, role: 'system' },
+      ];
+      dbRequirementsContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateDatabaseRequirementPrompt',
+        this.id,
+      );
+
       if (!dbRequirementsContent) {
         throw new ModelUnavailableError(
           'The model did not respond within the expected time.',

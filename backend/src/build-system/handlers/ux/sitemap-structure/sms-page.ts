@@ -64,9 +64,17 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
         sitemapDoc,
         'web', // TODO: Replace with dynamic platform if necessary
       );
-      
-      let messages: MessageInterface[] = [{content: prompt, role: 'system'}];
-      const refinedContent = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateLevel2UXSiteMapStructre', this.id);
+
+      const messages: MessageInterface[] = [
+        { content: prompt, role: 'system' },
+      ];
+      const refinedContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateLevel2UXSiteMapStructre',
+        this.id,
+      );
 
       this.logger.log(refinedContent);
       if (!refinedContent || refinedContent.trim() === '') {

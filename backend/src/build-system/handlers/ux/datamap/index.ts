@@ -40,11 +40,18 @@ export class UXDatamapHandler implements BuildHandler<string> {
       'web', // TODO: change platform dynamically if needed
     );
 
-    
     try {
       // Generate UX Data Map content using the language model
-      let messages: MessageInterface[] = [{content: prompt, role: 'system'}];
-      const uxDatamapContent = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateUXDataMap', this.id);
+      const messages: MessageInterface[] = [
+        { content: prompt, role: 'system' },
+      ];
+      const uxDatamapContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateUXDataMap',
+        this.id,
+      );
       if (!uxDatamapContent || uxDatamapContent.trim() === '') {
         throw new ResponseParsingError(
           'Generated UX Data Map content is empty.',

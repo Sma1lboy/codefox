@@ -110,7 +110,7 @@ export class BuildMonitor {
     output: string,
   ) {
     const encoder = require('gpt-3-encoder');
-    let inputLength = input.reduce(( preLength, singleContent) => {
+    const inputLength = input.reduce((preLength, singleContent) => {
       return encoder.encode(singleContent.content).length + preLength;
     }, 0);
     const value = {

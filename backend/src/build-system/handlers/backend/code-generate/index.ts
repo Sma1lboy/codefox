@@ -3,9 +3,7 @@ import { BuilderContext } from 'src/build-system/context';
 import { generateBackendCodePrompt } from './prompt';
 import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
-import {
-  formatResponse,
-} from 'src/build-system/utils/strings';
+import { formatResponse } from 'src/build-system/utils/strings';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import { MessageInterface } from 'src/common/model-provider/types';
 import {
@@ -74,8 +72,16 @@ export class BackendCodeHandler implements BuildHandler<string> {
     let generatedCode: string;
     try {
       // Invoke the language model to generate the backend code
-      let messages: MessageInterface[] = [{content: backendCodePrompt, role: 'system'}];
-      const modelResponse = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateBackendCode', this.id);
+      const messages: MessageInterface[] = [
+        { content: backendCodePrompt, role: 'system' },
+      ];
+      const modelResponse = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateBackendCode',
+        this.id,
+      );
 
       generatedCode = formatResponse(modelResponse);
 

@@ -146,6 +146,5 @@ describe('Build Sequence Test', () => {
     expect(result.success).toBe(true);
     expect(result.metrics).toBeDefined();
     console.log(`Logs saved to: ${result.logFolderPath}`);
-    
   }, 60000000);
 });

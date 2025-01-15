@@ -7,9 +7,7 @@ import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import { MessageInterface } from 'src/common/model-provider/types';
 import {
   MissingConfigurationError,
-  
   ModelUnavailableError,
-  
   ResponseParsingError,
 } from 'src/build-system/errors';
 
@@ -68,10 +66,18 @@ export class BackendRequirementHandler
     );
 
     let backendOverview: string;
-    
+
     try {
-      let messages: MessageInterface[] = [{content: overviewPrompt, role: 'system'}];
-      backendOverview = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateBackendOverviewPrompt', this.id);
+      const messages: MessageInterface[] = [
+        { content: overviewPrompt, role: 'system' },
+      ];
+      backendOverview = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateBackendOverviewPrompt',
+        this.id,
+      );
 
       if (!backendOverview) {
         throw new ModelUnavailableError(

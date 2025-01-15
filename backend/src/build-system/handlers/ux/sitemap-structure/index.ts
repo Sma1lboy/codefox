@@ -41,11 +41,18 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
       'web', // TODO: Change platform dynamically if necessary
     );
 
-    
     try {
       // Generate UX Structure content using the language model
-      let messages: MessageInterface[] = [{content: prompt, role: 'system'}];
-      const uxStructureContent = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateUXSiteMapStructre', this.id);  
+      const messages: MessageInterface[] = [
+        { content: prompt, role: 'system' },
+      ];
+      const uxStructureContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateUXSiteMapStructre',
+        this.id,
+      );
 
       if (!uxStructureContent || uxStructureContent.trim() === '') {
         this.logger.error('Generated UX Sitemap Structure content is empty.');

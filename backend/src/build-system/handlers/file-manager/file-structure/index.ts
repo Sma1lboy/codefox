@@ -52,9 +52,17 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
     let fileStructureContent: string;
     try {
       // Invoke the language model to generate the file structure content
-      let messages: MessageInterface[] = [{content: prompt, role: 'system'}];
-      fileStructureContent = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateCommonFileStructure', this.id);
-      
+      const messages: MessageInterface[] = [
+        { content: prompt, role: 'system' },
+      ];
+      fileStructureContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateCommonFileStructure',
+        this.id,
+      );
+
       if (!fileStructureContent || fileStructureContent.trim() === '') {
         throw new ResponseParsingError(
           `Generated content is empty during op:FILE:STRUCT.`,
@@ -70,8 +78,16 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
 
     let fileStructureJsonContent: string;
     try {
-      let messages: MessageInterface[] = [{content: convertToJsonPrompt, role: 'system'}];
-      fileStructureJsonContent = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'convertToJsonPrompt', this.id);
+      const messages: MessageInterface[] = [
+        { content: convertToJsonPrompt, role: 'system' },
+      ];
+      fileStructureJsonContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'convertToJsonPrompt',
+        this.id,
+      );
 
       if (!fileStructureJsonContent || fileStructureJsonContent.trim() === '') {
         throw new ResponseParsingError(

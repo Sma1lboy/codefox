@@ -63,10 +63,18 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
     );
 
     let modelResponse: string;
-    
+
     try {
-      let messages: MessageInterface[] = [{content: filePrompt, role: 'system'}];
-      modelResponse = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateBackendCode', this.id);
+      const messages: MessageInterface[] = [
+        { content: filePrompt, role: 'system' },
+      ];
+      modelResponse = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateBackendCode',
+        this.id,
+      );
     } catch (error) {
       throw error;
     }
@@ -89,9 +97,17 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
           backendCode,
         );
 
-        let messages: MessageInterface[] = [{content: modificationPrompt, role: 'system'}];
-        let response = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateBackendFile', this.id);
-        
+        const messages: MessageInterface[] = [
+          { content: modificationPrompt, role: 'system' },
+        ];
+        const response = await chatSyncWithClocker(
+          context,
+          messages,
+          'gpt-4o-mini',
+          'generateBackendFile',
+          this.id,
+        );
+
         const newContent = formatResponse(response);
         if (!newContent) {
           throw new FileModificationError(

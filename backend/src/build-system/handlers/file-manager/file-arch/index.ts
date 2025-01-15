@@ -39,10 +39,17 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     );
 
     try {
+      const messages: MessageInterface[] = [
+        { content: prompt, role: 'system' },
+      ];
+      const fileArchContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateFileArch',
+        this.id,
+      );
 
-      let messages: MessageInterface[] = [{content: prompt, role: 'system'}];
-      const  fileArchContent = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateFileArch', this.id);
-      
       if (!fileArchContent) {
         throw new ModelUnavailableError(
           'The model did not respond within the expected time.',

@@ -45,7 +45,7 @@ export class PRDHandler implements BuildHandler {
 
     try {
       // Send the prompt to the LLM server and process the response
-    const prdContent = await this.generatePRDFromLLM(context, prompt);
+      const prdContent = await this.generatePRDFromLLM(context, prompt);
 
       if (!prdContent || prdContent.trim() === '') {
         throw new ResponseParsingError('Generated PRD content is empty.');
@@ -60,10 +60,21 @@ export class PRDHandler implements BuildHandler {
       throw new ResponseParsingError('Failed to generate PRD.');
     }
   }
-  private async generatePRDFromLLM(context: BuilderContext,prompt: string): Promise<string> {
+  private async generatePRDFromLLM(
+    context: BuilderContext,
+    prompt: string,
+  ): Promise<string> {
     try {
-      let messages: MessageInterface[] = [{content: prompt, role: 'system'}];
-    const prdContent  = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generatePRDFromLLM', this.id);
+      const messages: MessageInterface[] = [
+        { content: prompt, role: 'system' },
+      ];
+      const prdContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generatePRDFromLLM',
+        this.id,
+      );
       if (!prdContent || prdContent.trim() === '') {
         throw new ModelUnavailableError(
           'LLM server returned empty PRD content.',

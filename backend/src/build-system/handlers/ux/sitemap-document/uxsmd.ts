@@ -42,7 +42,7 @@ export class UXSMDHandler implements BuildHandler<string> {
     );
 
     // Send the prompt to the LLM server and process the response
-   
+
     try {
       // Generate UXSMD content using the language model
       const uxsmdContent = await this.generateUXSMDFromLLM(context, prompt);
@@ -65,10 +65,21 @@ export class UXSMDHandler implements BuildHandler<string> {
     }
   }
 
-  private async generateUXSMDFromLLM(context: BuilderContext, prompt: string): Promise<string> {
+  private async generateUXSMDFromLLM(
+    context: BuilderContext,
+    prompt: string,
+  ): Promise<string> {
     try {
-      let messages: MessageInterface[] = [{content: prompt, role: 'system'}];
-      const uxsmdContent = await chatSyncWithClocker(context, messages, 'gpt-4o-mini', 'generateUXSMDFromLLM', this.id);
+      const messages: MessageInterface[] = [
+        { content: prompt, role: 'system' },
+      ];
+      const uxsmdContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateUXSMDFromLLM',
+        this.id,
+      );
       this.logger.log('Received full UXSMD content from LLM server.');
       return uxsmdContent;
     } catch (error) {
