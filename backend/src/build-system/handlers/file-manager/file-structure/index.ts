@@ -71,7 +71,7 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
     try {
       fileStructureJsonContent = await context.model.chatSync({
         model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
+        messages: [{ content: convertToJsonPrompt, role: 'system' }],
       });
 
       if (!fileStructureJsonContent || fileStructureJsonContent.trim() === '') {

@@ -36,8 +36,10 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
       );
     }
 
+    const normalizedUxStructureDoc = uxStructureDoc.replace(/\r\n/g, '\n');
+
     // Extract sections from the UX Structure Document
-    const sections = this.extractAllSections(uxStructureDoc);
+    const sections = this.extractAllSections(normalizedUxStructureDoc);
 
     if (sections.length === 0) {
       this.logger.error(
@@ -53,35 +55,32 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
     const refinedSections = [];
 
     for (const section of sections) {
-      try {
-        const prompt = prompts.generateLevel2UXSiteMapStructrePrompt(
-          projectName,
-          section.content,
-          sitemapDoc,
-          'web', // TODO: Replace with dynamic platform if necessary
+      const prompt = prompts.generateLevel2UXSiteMapStructrePrompt(
+        projectName,
+        section.content,
+        sitemapDoc,
+        'web', // TODO: Replace with dynamic platform if necessary
+      );
+
+      const refinedContent = await modelProvider.chatSync({
+        model: 'gpt-4o-mini',
+        messages: [{ content: prompt, role: 'system' }],
+      });
+
+      this.logger.log(refinedContent);
+      if (!refinedContent || refinedContent.trim() === '') {
+        this.logger.error(
+          `Generated content for section "${section.title}" is empty.`,
         );
-
-        const refinedContent = await modelProvider.chatSync({
-          model: 'gpt-4o-mini',
-          messages: [{ content: prompt, role: 'system' }],
-        });
-
-        if (!refinedContent || refinedContent.trim() === '') {
-          this.logger.error(
-            `Generated content for section "${section.title}" is empty.`,
-          );
-          throw new ResponseParsingError(
-            `Generated content for section "${section.title}" is empty.`,
-          );
-        }
-
-        refinedSections.push({
-          title: section.title,
-          content: refinedContent,
-        });
-      } catch (error) {
-        throw error;
+        throw new ResponseParsingError(
+          `Generated content for section "${section.title}" is empty.`,
+        );
       }
+
+      refinedSections.push({
+        title: section.title,
+        content: refinedContent,
+      });
     }
 
     // Combine the refined sections into the final document
@@ -107,13 +106,22 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
   private extractAllSections(
     text: string,
   ): Array<{ title: string; content: string }> {
-    const regex = /## \*\*(\d+\.\s.*)\*\*([\s\S]*?)(?=\n## \*\*|$)/g;
+    // Updated regex to handle optional numbering and use multiline flag
+    const regex =
+      /^##\s+(?:\d+(?:\.\d+)?\s+)?(.*?)(?=\r?\n##|$)([\s\S]*?)(?=\r?\n##|$)/gm;
     const sections = [];
-    let match;
+    let match = regex.exec(text);
+    let nextMatch;
 
-    while ((match = regex.exec(text)) !== null) {
+    while ((nextMatch = regex.exec(text)) !== null) {
+      const content = text.slice(match.index, nextMatch.index).trim();
       const title = match[1].trim();
-      const content = match[2].trim();
+      match = nextMatch;
+      sections.push({ title, content });
+    }
+    if (match) {
+      const content = text.slice(match.index).trim();
+      const title = match[1].trim();
       sections.push({ title, content });
     }
 
