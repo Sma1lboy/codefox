@@ -3,7 +3,7 @@
 // remember to follow this command to configuration the backend endpoint:
 
 ```sh
-cp example.env .env
+cp .env.example .env
 ```
 
 struct for now
