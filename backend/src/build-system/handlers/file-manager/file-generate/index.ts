@@ -33,16 +33,12 @@ export class FileGeneratorHandler implements BuildHandler<string> {
 
     const projectSrcPath = getProjectPath(uuid);
 
-    try {
-      await this.generateFiles(fileArchDoc, projectSrcPath);
-      this.logger.log('All files generated successfully.');
-      return {
-        success: true,
-        data: 'Files and dependencies created successfully.',
-      };
-    } catch (error) {
-      throw error;
-    }
+    await this.generateFiles(fileArchDoc, projectSrcPath);
+    this.logger.log('All files generated successfully.');
+    return {
+      success: true,
+      data: 'Files and dependencies created successfully.',
+    };
   }
 
   async generateFiles(

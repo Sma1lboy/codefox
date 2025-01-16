@@ -12,7 +12,6 @@ import {
   MissingConfigurationError,
   ResponseParsingError,
 } from 'src/build-system/errors';
-import { Logger } from '@nestjs/common';
 
 /**
  * BackendCodeHandler is responsible for generating the backend codebase
@@ -65,20 +64,18 @@ export class BackendCodeHandler implements BuildHandler<string> {
       databaseType,
       databaseSchemas,
       currentFile,
-      'javascript',
+      'javascript', // TODO: make sure this lang come from the context
       dependencyFile,
     );
 
     let generatedCode: string;
     try {
-      // Invoke the language model to generate the backend code
-      const messages: MessageInterface[] = [
-        { content: backendCodePrompt, role: 'system' },
-      ];
       const modelResponse = await chatSyncWithClocker(
         context,
-        messages,
-        'gpt-4o-mini',
+        {
+          model: 'gpt-4o-mini',
+          messages: [{ content: backendCodePrompt, role: 'system' }],
+        },
         'generateBackendCode',
         this.id,
       );

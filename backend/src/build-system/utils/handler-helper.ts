@@ -1,4 +1,4 @@
-import { ChatInput, MessageInterface } from 'src/common/model-provider/types';
+import { ChatInput } from 'src/common/model-provider/types';
 import { BuilderContext } from '../context';
 import { BuildMonitor } from '../monitor';
 

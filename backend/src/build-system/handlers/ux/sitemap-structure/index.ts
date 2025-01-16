@@ -8,6 +8,7 @@ import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import { MessageInterface } from 'src/common/model-provider/types';
 import {
   MissingConfigurationError,
+  ModelUnavailableError,
   ResponseParsingError,
 } from 'src/build-system/errors';
 
@@ -48,8 +49,10 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
       ];
       const uxStructureContent = await chatSyncWithClocker(
         context,
-        messages,
-        'gpt-4o-mini',
+        {
+          model: 'gpt-4o-mini',
+          messages,
+        },
         'generateUXSiteMapStructre',
         this.id,
       );
@@ -67,7 +70,7 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
         data: removeCodeBlockFences(uxStructureContent),
       };
     } catch (error) {
-      throw error;
+      throw new ModelUnavailableError('Model is unavailable: ' + error);
     }
   }
 }

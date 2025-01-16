@@ -7,6 +7,7 @@ import { MessageInterface } from 'src/common/model-provider/types';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import {
   MissingConfigurationError,
+  ModelUnavailableError,
   ResponseParsingError,
 } from 'src/build-system/errors';
 
@@ -61,7 +62,9 @@ export class UXSMDHandler implements BuildHandler<string> {
         data: removeCodeBlockFences(uxsmdContent),
       };
     } catch (error) {
-      throw error;
+      throw new ResponseParsingError(
+        'Failed to generate UXSMD content:' + error,
+      );
     }
   }
 
@@ -70,41 +73,20 @@ export class UXSMDHandler implements BuildHandler<string> {
     prompt: string,
   ): Promise<string> {
     try {
-      const messages: MessageInterface[] = [
-        { content: prompt, role: 'system' },
-      ];
       const uxsmdContent = await chatSyncWithClocker(
         context,
-        messages,
-        'gpt-4o-mini',
+        {
+          model: 'gpt-4o-mini',
+          messages: [{ content: prompt, role: 'system' }],
+        },
         'generateUXSMDFromLLM',
         this.id,
       );
       this.logger.log('Received full UXSMD content from LLM server.');
       return uxsmdContent;
     } catch (error) {
-      if (error.message.includes('timeout')) {
-        throw new ResponseParsingError(
-          'Timeout occurred while communicating with the model.',
-        );
-      }
-      if (error.message.includes('service unavailable')) {
-        throw new ResponseParsingError(
-          'Model service is temporarily unavailable.',
-        );
-      }
-      if (error.message.includes('rate limit')) {
-        throw new ResponseParsingError(
-          'Rate limit exceeded while communicating with the model.',
-        );
-      }
-
-      this.logger.error(
-        'Unexpected error communicating with the LLM server:',
-        error,
-      );
-      throw new ResponseParsingError(
-        'Failed to communicate with the LLM server.',
+      throw new ModelUnavailableError(
+        'Failed to generate UXSMD content:' + error,
       );
     }
   }
