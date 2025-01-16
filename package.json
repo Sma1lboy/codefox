@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
-    "dev": "turbo dev",
+    "dev:turbo": "turbo dev",
+    "dev": "tmuxinator start -p .tmuxinator/dev.yml",
     "lint": "turbo lint",
     "format": "turbo format",
     "dev:backend": "turbo dev:backend",

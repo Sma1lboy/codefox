@@ -33,8 +33,8 @@ export class ChatProxyService {
     );
   }
 
-  async fetchModelTags(): Promise<any> {
-    return this.models.fetchModelsName();
+  async fetchModelTags(): Promise<string[]> {
+    return await this.models.fetchModelsName();
   }
 }
 

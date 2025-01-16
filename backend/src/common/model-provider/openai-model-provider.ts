@@ -111,6 +111,7 @@ export class OpenAIModelProvider implements IModelProvider {
     model: string,
   ): CustomAsyncIterableIterator<ChatCompletionChunk> {
     let stream: Stream<OpenAIChatCompletionChunk> | null = null;
+    let streamIterator: AsyncIterator<OpenAIChatCompletionChunk> | null = null;
     const modelName = model || input.model;
     const queue = this.getQueueForModel(modelName);
 
@@ -128,30 +129,35 @@ export class OpenAIModelProvider implements IModelProvider {
 
         if (!result) throw new Error('Queue operation failed');
         stream = result;
+        // 创建一个新的迭代器并保存它
+        streamIterator = stream[Symbol.asyncIterator]();
       }
-      return stream;
+      return streamIterator;
     };
 
     const iterator: CustomAsyncIterableIterator<ChatCompletionChunk> = {
       async next() {
         try {
-          const currentStream = await createStream();
-          const chunk = await currentStream[Symbol.asyncIterator]().next();
+          const currentIterator = await createStream();
+          const chunk = await currentIterator.next();
           return {
             done: chunk.done,
             value: chunk.value as ChatCompletionChunk,
           };
         } catch (error) {
           stream = null;
+          streamIterator = null;
           throw error;
         }
       },
       async return() {
         stream = null;
+        streamIterator = null;
         return { done: true, value: undefined };
       },
       async throw(error) {
         stream = null;
+        streamIterator = null;
         throw error;
       },
       [Symbol.asyncIterator]() {
@@ -164,11 +170,24 @@ export class OpenAIModelProvider implements IModelProvider {
 
   async fetchModelsName(): Promise<string[]> {
     try {
-      const models = await this.openai.models.list();
-      return models.data.map((model) => model.id);
+      const response = await this.openai.models.list();
+      this.logger.debug('Raw models response:', JSON.stringify(response));
+
+      const responseBody = JSON.parse((response as any).body);
+      this.logger.debug('Parsed models response:', responseBody);
+
+      if (responseBody?.models?.data) {
+        this.logger.debug('Extracted model names:', responseBody.models.data);
+        const res = responseBody.models.data.map((res) => res.id);
+        this.logger.debug('Returning model names:', res);
+        return res;
+      }
+
+      this.logger.warn('Unexpected models response format:', responseBody);
+      return [];
     } catch (error) {
       this.logger.error('Error fetching models:', error);
-      throw error;
+      return [];
     }
   }
 
