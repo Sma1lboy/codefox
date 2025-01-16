@@ -1,4 +1,5 @@
 module.exports = {
+  parser: '@typescript-eslint/parser',
   parserOptions: {
     project: 'tsconfig.json',
     tsconfigRootDir: __dirname,
@@ -14,7 +15,13 @@ module.exports = {
     node: true,
     jest: true,
   },
-  ignorePatterns: ['.eslintrc.js', 'dist', 'node_modules', 'coverage'],
+  ignorePatterns: [
+    '.eslintrc.cjs',
+    'jest.config.js',
+    'dist',
+    'node_modules',
+    'coverage',
+  ],
   rules: {
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
@@ -27,9 +34,18 @@ module.exports = {
         varsIgnorePattern: '^_',
       },
     ],
-    'no-console': ['warn', { allow: ['warn', 'error'] }],
-    'prefer-const': 'error',
-    'no-var': 'error',
-    'no-multiple-empty-lines': ['error', { max: 2, maxEOF: 1 }],
+    'prettier/prettier': [
+      'error',
+      {
+        endOfLine: 'auto',
+      },
+    ],
+  },
+  settings: {
+    'import/resolver': {
+      typescript: {
+        project: './tsconfig.json',
+      },
+    },
   },
 };

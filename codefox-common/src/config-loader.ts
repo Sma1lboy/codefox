@@ -6,9 +6,13 @@ import * as path from 'path';
 
 export interface ModelConfig {
   model: string;
+  alias?: string;
   endpoint?: string;
   token?: string;
   default?: boolean;
+  task?: string;
+  // request per second
+  rps?: number;
 }
 
 export interface AppConfig {

@@ -21,6 +21,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "openai": "^4.0.0"
+  },
   "devDependencies": {
     "@nestjs/common": "10.4.15",
     "@types/fs-extra": "^11.0.4",

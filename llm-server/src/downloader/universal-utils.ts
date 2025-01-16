@@ -52,7 +52,7 @@ export async function checkAndDownloadAllModels(): Promise<void> {
 
   // TODO: refactor the workflow later, take a break for now
   if (!modelsConfig || !modelsConfig.length) {
-    logger.warn(`No Model need to models configured`);
+    logger.warn(`No Local Model need to models configured/Download`);
     return;
   }
 

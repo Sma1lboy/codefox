@@ -1,7 +1,7 @@
-import { Logger, Module } from '@nestjs/common';
-import { ChatMessageInput, LLMProvider } from './llm-provider';
+import { Logger } from '@nestjs/common';
+import { LLMProvider } from './llm-provider';
 import express, { Express, Request, Response, NextFunction } from 'express';
-import { GenerateMessageParams } from './types';
+import { GenerateMessageParams, ChatMessageInput, MessageInput } from './types';
 import { downloadAll } from './downloader/universal-utils';
 
 process.on('uncaughtException', error => {
@@ -47,7 +47,7 @@ export class App {
 
   setupRoutes(): void {
     this.logger.log('Setting up routes...');
-    this.app.post('/chat/completion', this.handleChatRequest.bind(this));
+    this.app.post('/chat/completions', this.handleChatRequest.bind(this));
     this.app.get('/tags', this.handleModelTagsRequest.bind(this));
     this.logger.log('Routes set up successfully.');
   }
@@ -55,18 +55,46 @@ export class App {
   private async handleChatRequest(req: Request, res: Response): Promise<void> {
     this.logger.log('Received chat request.');
     try {
-      const input = req.body as GenerateMessageParams;
+      const input = req.body as MessageInput & { stream?: boolean };
       const model = input.model;
       this.logger.log(`Received chat request for model: ${model}`);
-
       this.logger.debug(
         `Request messages: "${JSON.stringify(input.messages).slice(0, 100)}"`,
       );
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-      this.logger.debug('Response headers set for streaming.');
-      await this.llmProvider.generateStreamingResponse(input, res);
+
+      if (input.stream) {
+        // Handle streaming response
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        this.logger.debug('Response headers set for streaming.');
+
+        const stream = this.llmProvider.chatStream(input);
+        for await (const chunk of stream) {
+          if (!res.writableEnded) {
+            res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+          }
+        }
+
+        if (!res.writableEnded) {
+          res.write('data: [DONE]\n\n');
+          res.end();
+        }
+      } else {
+        // Handle regular response
+        const response = await this.llmProvider.chat(input);
+        res.json({
+          model: input.model,
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: response,
+              },
+            },
+          ],
+        });
+      }
     } catch (error) {
       this.logger.error('Error in chat endpoint:', error);
       console.error(
@@ -143,7 +171,7 @@ async function main() {
     await downloadAll();
     logger.log('Models downloaded successfully.');
 
-    const llmProvider = new LLMProvider('openai');
+    const llmProvider = new LLMProvider();
     await llmProvider.initialize();
     logger.log('LLM provider initialized successfully.');
 
@@ -157,7 +185,6 @@ async function main() {
   }
 }
 
-// 确保异步错误被正确捕获和处理
 main().catch(error => {
   console.error('Fatal error during application startup:');
   console.error(error);

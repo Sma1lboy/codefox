@@ -4,3 +4,4 @@
 
 export * from './common-path';
 export * from './config-loader';
+export * from './model-api';
