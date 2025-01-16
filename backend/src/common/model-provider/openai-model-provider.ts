@@ -4,7 +4,6 @@ import {
   IModelProvider,
 } from './types';
 import OpenAI from 'openai';
-import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 import { Logger } from '@nestjs/common';
 import { Stream } from 'openai/streaming';
 import { ChatCompletionChunk as OpenAIChatCompletionChunk } from 'openai/resources/chat';
@@ -21,7 +20,7 @@ export class OpenAIModelProvider implements IModelProvider {
   private constructor() {
     this.openai = new OpenAI({
       apiKey: '',
-      baseURL: 'http://localhost:3001',
+      baseURL: 'http://localhost:8001',
     });
 
     this.configLoader = ConfigLoader.getInstance();

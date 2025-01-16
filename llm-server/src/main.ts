@@ -3,6 +3,10 @@ import { LLMProvider } from './llm-provider';
 import express, { Express, Request, Response, NextFunction } from 'express';
 import { downloadAll } from './downloader/universal-utils';
 import { MessageInput } from './types';
+import * as dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 process.on('uncaughtException', error => {
   console.error('Uncaught Exception:', error);
@@ -22,13 +26,14 @@ process.on('unhandledRejection', (reason, promise) => {
 export class App {
   private readonly logger = new Logger(App.name);
   private app: Express;
+  private server: ReturnType<Express['listen']> | null = null;
   private readonly PORT: number;
   private llmProvider: LLMProvider;
 
   constructor(llmProvider: LLMProvider) {
     this.app = express();
     this.app.use(express.json());
-    this.PORT = parseInt(process.env.PORT || '3001', 10);
+    this.PORT = parseInt(process.env.PORT || '8001', 10);
     this.llmProvider = llmProvider;
     this.logger.log(`App initialized with PORT: ${this.PORT}`);
 
@@ -43,6 +48,46 @@ export class App {
         });
       },
     );
+
+    // Handle shutdown signals
+    const signals = ['SIGTERM', 'SIGINT'];
+    for (const signal of signals) {
+      process.on(signal, async () => {
+        this.logger.log(
+          `Received ${signal} signal. Starting graceful shutdown...`,
+        );
+        await this.shutdown();
+      });
+    }
+  }
+
+  async shutdown(): Promise<void> {
+    this.logger.log('Initiating graceful shutdown...');
+
+    try {
+      // Close server first to stop accepting new connections
+      if (this.server) {
+        await new Promise<void>((resolve, reject) => {
+          this.server!.close(err => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+        this.logger.log('HTTP server closed successfully');
+      }
+
+      // Cleanup LLM provider resources
+      if (this.llmProvider) {
+        await this.llmProvider.initialize(); // Ensure it's properly initialized before cleanup
+        this.logger.log('LLM provider resources cleaned up');
+      }
+
+      this.logger.log('Graceful shutdown completed');
+      process.exit(0);
+    } catch (error) {
+      this.logger.error('Error during graceful shutdown:', error);
+      process.exit(1);
+    }
   }
 
   setupRoutes(): void {
@@ -149,8 +194,19 @@ export class App {
   async start(): Promise<void> {
     try {
       this.setupRoutes();
-      this.app.listen(this.PORT, () => {
+
+      // Create server instance and store it
+      this.server = this.app.listen(this.PORT, () => {
         this.logger.log(`Server running on port ${this.PORT}`);
+      });
+
+      // Handle server-specific errors
+      this.server.on('error', error => {
+        this.logger.error('Server error:', error);
+        console.error(
+          'Stack trace:',
+          error instanceof Error ? error.stack : error,
+        );
       });
     } catch (error) {
       this.logger.error('Failed to start server:', error);
