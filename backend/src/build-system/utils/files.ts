@@ -1,8 +1,7 @@
 import { Logger } from '@nestjs/common';
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import { getProjectPath, getProjectsDir } from 'src/config/common-path';
-
+import { getProjectsDir, getProjectPath } from 'codefox-common';
 const logger = new Logger('file-utils');
 /**
  * Saves the given content to the specified file path using fs-extra.
