@@ -1,9 +1,7 @@
-// model-utils.ts
 import { UniversalDownloader } from './model-downloader';
 import { Logger } from '@nestjs/common';
 import { UniversalStatusManager } from './universal-status';
-import { ConfigLoader } from '../config/config-loader';
-import { getModelsDir } from '../config/common-path';
+import { ConfigLoader, getModelsDir } from 'codefox-common';
 
 const logger = new Logger('model-utils');
 
@@ -48,12 +46,13 @@ async function downloadModel(modelName: string, task: string) {
 
 export async function checkAndDownloadAllModels(): Promise<void> {
   const configLoader = ConfigLoader.getInstance();
-  const modelsConfig = configLoader.getAllConfigs();
+  const modelsConfig = configLoader.getDownloadableModels();
 
   logger.log('Checking and downloading configured models...');
 
-  if (!modelsConfig.length) {
-    logger.warn(`No models configured`);
+  // TODO: refactor the workflow later, take a break for now
+  if (!modelsConfig || !modelsConfig.length) {
+    logger.warn(`No Model need to models configured`);
     return;
   }
 

@@ -1,60 +1,56 @@
 import { Logger, Module } from '@nestjs/common';
 import { ChatMessageInput, LLMProvider } from './llm-provider';
-import express, { Express, Request, Response } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import { GenerateMessageParams } from './types';
 import { downloadAll } from './downloader/universal-utils';
+
+process.on('uncaughtException', error => {
+  console.error('Uncaught Exception:', error);
+  console.error('Stack trace:', error.stack);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise);
+  console.error('Reason:', reason);
+  if (reason instanceof Error) {
+    console.error('Stack trace:', reason.stack);
+  }
+  process.exit(1);
+});
 
 export class App {
   private readonly logger = new Logger(App.name);
   private app: Express;
   private readonly PORT: number;
   private llmProvider: LLMProvider;
-  // private embProvider: EmbeddingModelProvider;
 
   constructor(llmProvider: LLMProvider) {
     this.app = express();
     this.app.use(express.json());
     this.PORT = parseInt(process.env.PORT || '3001', 10);
     this.llmProvider = llmProvider;
-    // this.embProvider = embProvider;
     this.logger.log(`App initialized with PORT: ${this.PORT}`);
+
+    this.app.use(
+      (err: Error, req: Request, res: Response, next: NextFunction) => {
+        this.logger.error('Global error handler caught:', err);
+        console.error('Stack trace:', err.stack);
+        res.status(500).json({
+          error: 'Internal server error',
+          message: err.message,
+          stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+        });
+      },
+    );
   }
 
   setupRoutes(): void {
     this.logger.log('Setting up routes...');
     this.app.post('/chat/completion', this.handleChatRequest.bind(this));
-    // this.app.post('/embedding', this.handleEmbRequest.bind(this));
     this.app.get('/tags', this.handleModelTagsRequest.bind(this));
     this.logger.log('Routes set up successfully.');
   }
-
-  // private async handleEmbRequest(req: Request, res: Response): Promise<void> {
-  //   this.logger.log('Received embedding request.');
-  //   try {
-  //     this.logger.debug(JSON.stringify(req.body));
-  //     const { content, model } = req.body as ChatMessageInput & {
-  //       model: string;
-  //     };
-  //     if (!content || !model) {
-  //       res.status(400).json({ error: 'Content and model are required' });
-  //     }
-
-  //     this.logger.log(`Received chat request for model: ${model}`);
-  //     const params: GenerateMessageParams = {
-  //       model: model || 'text-embedding-ada-002',
-  //       messages: [{ content, role: 'system' }],
-  //     };
-
-  //     this.logger.debug(`Request content: "${content}"`);
-  //     res.setHeader('Content-Type', 'application/json');
-  //     res.setHeader('Cache-Control', 'no-cache');
-  //     this.logger.debug('Response headers set for streaming.');
-  //     await this.embProvider.generateEmbeddingResponse(params, res);
-  //   } catch (error) {
-  //     this.logger.error('Error in chat endpoint:', error);
-  //     res.status(500).json({ error: 'Internal server error' });
-  //   }
-  // }
 
   private async handleChatRequest(req: Request, res: Response): Promise<void> {
     this.logger.log('Received chat request.');
@@ -63,7 +59,9 @@ export class App {
       const model = input.model;
       this.logger.log(`Received chat request for model: ${model}`);
 
-      this.logger.debug(`Request messages: "${input.messages}"`);
+      this.logger.debug(
+        `Request messages: "${JSON.stringify(input.messages).slice(0, 100)}"`,
+      );
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
@@ -71,7 +69,20 @@ export class App {
       await this.llmProvider.generateStreamingResponse(input, res);
     } catch (error) {
       this.logger.error('Error in chat endpoint:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error(
+        'Stack trace:',
+        error instanceof Error ? error.stack : error,
+      );
+      res.status(500).json({
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack:
+          process.env.NODE_ENV === 'development'
+            ? error instanceof Error
+              ? error.stack
+              : undefined
+            : undefined,
+      });
     }
   }
 
@@ -79,7 +90,7 @@ export class App {
     req: Request,
     res: Response,
   ): Promise<void> {
-    this.logger.log('Received chat request.');
+    this.logger.log('Received tags request.');
     try {
       this.logger.debug(JSON.stringify(req.body));
       const { content } = req.body as ChatMessageInput;
@@ -90,35 +101,66 @@ export class App {
       this.logger.debug('Response headers set for streaming.');
       await this.llmProvider.getModelTags(res);
     } catch (error) {
-      this.logger.error('Error in chat endpoint:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      this.logger.error('Error in tags endpoint:', error);
+      console.error(
+        'Stack trace:',
+        error instanceof Error ? error.stack : error,
+      );
+      res.status(500).json({
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack:
+          process.env.NODE_ENV === 'development'
+            ? error instanceof Error
+              ? error.stack
+              : undefined
+            : undefined,
+      });
     }
   }
 
   async start(): Promise<void> {
-    this.setupRoutes();
-    this.app.listen(this.PORT, () => {
-      this.logger.log(`Server running on port ${this.PORT}`);
-    });
+    try {
+      this.setupRoutes();
+      this.app.listen(this.PORT, () => {
+        this.logger.log(`Server running on port ${this.PORT}`);
+      });
+    } catch (error) {
+      this.logger.error('Failed to start server:', error);
+      console.error(
+        'Stack trace:',
+        error instanceof Error ? error.stack : error,
+      );
+      throw error;
+    }
   }
 }
 
 async function main() {
   const logger = new Logger('Main');
   try {
+    logger.log('Starting application initialization...');
     await downloadAll();
+    logger.log('Models downloaded successfully.');
+
     const llmProvider = new LLMProvider('openai');
     await llmProvider.initialize();
+    logger.log('LLM provider initialized successfully.');
 
     const app = new App(llmProvider);
     await app.start();
+    logger.log('Application started successfully.');
   } catch (error) {
     logger.error('Failed to start the application:', error);
+    logger.error('Stack trace:', error instanceof Error ? error.stack : error);
     process.exit(1);
   }
 }
 
+// 确保异步错误被正确捕获和处理
 main().catch(error => {
-  console.error('Failed to start the application:', error);
+  console.error('Fatal error during application startup:');
+  console.error(error);
+  console.error('Stack trace:', error instanceof Error ? error.stack : error);
   process.exit(1);
 });

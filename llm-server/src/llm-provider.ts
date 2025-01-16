@@ -54,9 +54,8 @@ export class LLMProvider {
       this.initialized = true;
       this.logger.log('LLM provider fully initialized and ready.');
     } catch (error) {
-      const modelError = this.normalizeError(error);
-      this.logger.error('Failed to initialize LLM provider:', modelError);
-      throw modelError;
+      this.logger.error('Failed to initialize LLM provider:', error);
+      throw error;
     }
   }
 
@@ -69,11 +68,10 @@ export class LLMProvider {
     try {
       await this.modelProvider.generateStreamingResponse(params, res);
     } catch (error) {
-      const modelError = this.normalizeError(error);
-      this.logger.error('Error in streaming response:', modelError);
+      this.logger.error('Error in streaming response:', error);
 
       if (!res.writableEnded) {
-        this.sendErrorResponse(res, modelError);
+        this.sendErrorResponse(res, error);
       }
     }
   }
@@ -84,11 +82,10 @@ export class LLMProvider {
     try {
       await this.modelProvider.getModelTagsResponse(res);
     } catch (error) {
-      const modelError = this.normalizeError(error);
-      this.logger.error('Error getting model tags:', modelError);
+      this.logger.error('Error getting model tags:', error);
 
       if (!res.writableEnded) {
-        this.sendErrorResponse(res, modelError);
+        this.sendErrorResponse(res, error);
       }
     }
   }
@@ -97,23 +94,6 @@ export class LLMProvider {
     if (!this.initialized) {
       throw new Error('LLM provider not initialized. Call initialize() first.');
     }
-  }
-
-  private normalizeError(error: any): ModelError {
-    if (error instanceof Error) {
-      return {
-        ...error,
-        code: (error as any).code || 'UNKNOWN_ERROR',
-        retryable: (error as any).retryable || false,
-      };
-    }
-
-    return {
-      name: 'Error',
-      message: String(error),
-      code: 'UNKNOWN_ERROR',
-      retryable: false,
-    };
   }
 
   private sendErrorResponse(res: Response, error: ModelError): void {

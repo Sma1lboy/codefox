@@ -5,7 +5,8 @@ import { systemPrompts } from '../prompt/systemPrompt';
 import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import PQueue from 'p-queue';
 import { GenerateMessageParams } from '../types';
-import { ConfigLoader } from '../config/config-loader';
+import { ConfigLoader } from 'codefox-common';
+import { ModelProvider } from './model-provider';
 
 export interface OpenAIProviderOptions {
   maxConcurrentRequests?: number;
@@ -23,7 +24,7 @@ interface QueuedRequest {
   retries: number;
 }
 
-export class OpenAIModelProvider {
+export class OpenAIModelProvider implements ModelProvider {
   private readonly logger = new Logger(OpenAIModelProvider.name);
   private requestQueue: PQueue;
   private readonly options: Required<OpenAIProviderOptions>;
@@ -57,8 +58,16 @@ export class OpenAIModelProvider {
   async initialize(): Promise<void> {
     this.openAIcontainer = new Map();
     const config = ConfigLoader.getInstance();
-    const models = config.getAllConfigs();
-    models.forEach(model => {
+    const chatModels = config.getAllChatModelConfigs();
+    const apiModels = chatModels.filter(model =>
+      model.endpoint?.includes('openai.com'),
+    );
+
+    if (!apiModels || apiModels.length === 0) {
+      throw new Error('No OpenAI models found in the configuration.');
+    }
+
+    apiModels.forEach(model => {
       if (this.openAIcontainer.has(model.model)) return;
       const openai = new OpenAI({
         apiKey: model.token ? model.token : this.options.apiKey,
@@ -69,16 +78,25 @@ export class OpenAIModelProvider {
 
   private getInstance(modelName: string): OpenAI {
     const config = ConfigLoader.getInstance();
-    const models = config.getAllConfigs();
-    const modelExists = models.some(model => model.model === modelName);
-    if (!modelExists) {
+    const chatModels = config.getAllChatModelConfigs();
+    const modelConfig = chatModels.find(model => model.model === modelName);
+
+    if (!modelConfig) {
       throw new Error(
-        `Model "${modelName}" is not included in the configuration. Please add it under the "models" section in ".codefox/config.json".`,
+        `Model "${modelName}" is not included in the configuration. Please add it under the "chat" section in ".codefox/config.json".`,
       );
     }
 
-    if (this.openAIcontainer.has(modelName))
+    if (!modelConfig.endpoint?.includes('openai.com')) {
+      throw new Error(
+        `Model "${modelName}" is not an OpenAI model. Please check the configuration.`,
+      );
+    }
+
+    if (this.openAIcontainer.has(modelName)) {
       return this.openAIcontainer.get(modelName);
+    }
+
     throw new Error(`Model "${modelName}" is not initialized. Please check.`);
   }
 
@@ -119,7 +137,7 @@ export class OpenAIModelProvider {
         { role: 'system', content: systemPrompt },
         ...messages,
       ];
-      console.log(allMessages);
+
       const stream = await openai.chat.completions.create({
         model,
         messages: allMessages,

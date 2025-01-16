@@ -4,11 +4,11 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "start": "node --experimental-specifier-resolution=node --loader ts-node/esm src/main.ts",
-    "dev": "nodemon --watch \"src/**/*.ts\" --exec \"node --experimental-specifier-resolution=node --loader ts-node/esm\" src/main.ts",
+    "start": "NODE_OPTIONS='--enable-source-maps' tsx src/main.ts",
+    "dev": "NODE_OPTIONS='--enable-source-maps' nodemon --watch \"src/**/*.ts\" --exec \"tsx\" src/main.ts",
     "dev:backend": "pnpm dev",
     "build": "tsc",
-    "serve": "node --experimental-specifier-resolution=node dist/main.js",
+    "serve": "node --enable-source-maps dist/main.js",
     "format": "prettier --write \"src/**/*.ts\" ",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },
@@ -26,7 +26,8 @@
     "node-llama-cpp": "^3.1.1",
     "nodemon": "^3.1.7",
     "p-queue": "^8.0.1",
-    "strip-json-comments": "^5.0.1"
+    "strip-json-comments": "^5.0.1",
+    "codefox-common": "workspace:*"
   },
   "devDependencies": {
     "@types/express": "^4.17.13",
@@ -40,7 +41,7 @@
     "openai": "^4.77.0",
     "prettier": "^3.0.0",
     "ts-loader": "^9.5.1",
-    "ts-node": "^10.4.0",
+    "tsx": "^4.7.0",
     "typescript": "^5.6.3",
     "webpack": "^5.95.0",
     "webpack-cli": "^5.1.4"
