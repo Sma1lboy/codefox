@@ -1,9 +1,9 @@
 import { Logger } from '@nestjs/common';
 import { BuilderContext } from 'src/build-system/context';
 import { BuildHandler, BuildResult } from 'src/build-system/types';
-import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 
 export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
   readonly id = 'op:UX:SMS:LEVEL2';
@@ -38,7 +38,7 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
     }
 
     // Process each section with the refined Level 2 prompt
-    const modelProvider = ModelProvider.getInstance();
+    const modelProvider = OpenAIModelProvider.getInstance();
     const refinedSections = [];
 
     for (const section of sections) {

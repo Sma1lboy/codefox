@@ -1,9 +1,9 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
-import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 
 export class UXSMDHandler implements BuildHandler<string> {
   readonly id = 'op:UX:SMD';
@@ -39,7 +39,7 @@ export class UXSMDHandler implements BuildHandler<string> {
   }
 
   private async generateUXSMDFromLLM(prompt: string): Promise<string> {
-    const modelProvider = ModelProvider.getInstance();
+    const modelProvider = OpenAIModelProvider.getInstance();
     const model = 'gpt-4o-mini';
 
     const uxsmdContent = await modelProvider.chatSync({

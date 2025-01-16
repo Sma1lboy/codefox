@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ChatProxyService } from 'src/chat/chat.service';
-import { ModelProvider } from 'src/common/model-provider';
+import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 
 @Injectable()
 export class ProjectBuilderService {
   private readonly logger = new Logger(ProjectBuilderService.name);
 
-  private models: ModelProvider = ModelProvider.getInstance();
+  private models: OpenAIModelProvider = OpenAIModelProvider.getInstance();
   constructor(private chatProxyService: ChatProxyService) {}
 
   async createProject(input: {

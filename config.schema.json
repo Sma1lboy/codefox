@@ -24,6 +24,15 @@
               "llama2"
             ]
           },
+          "alias": {
+            "type": "string",
+            "description": "shown in the UI as the model name",
+            "examples": [
+              "gpt-4",
+              "gpt-3.5-turbo",
+              "llama2"
+            ]
+          },
           "endpoint": {
             "type": "string",
             "description": "API endpoint URL. If not provided, indicates a downloadable local model",
@@ -38,6 +47,15 @@
             "type": "boolean",
             "description": "Set as default chat model. Only one model can be default",
             "default": false
+          },
+          "task": {
+            "type": "string",
+            "description": "Optional: The specific task this model is optimized for",
+            "examples": [
+              "chat",
+              "code",
+              "analysis"
+            ]
           }
         }
       }
@@ -73,6 +91,15 @@
             "type": "boolean",
             "description": "Set as default embedding model. Only one model can be default",
             "default": false
+          },
+          "task": {
+            "type": "string",
+            "description": "Optional: The specific task this model is optimized for",
+            "examples": [
+              "text-embedding",
+              "code-embedding",
+              "semantic-search"
+            ]
           }
         }
       }

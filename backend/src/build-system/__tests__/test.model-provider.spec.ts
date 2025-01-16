@@ -1,11 +1,11 @@
-import { EmbeddingProvider } from 'src/common/embedding-provider';
+import { EmbeddingProvider } from 'src/embedding/local-embedding-provider';
 
 describe('Model Provider Test', () => {
-  const embProvider = EmbeddingProvider.getInstance();
   it('should generate a response from the model provider', async () => {
-    const res = await embProvider.generateEmbResponse(
-      'Your text string goes here',
+    const res = await EmbeddingProvider.generateEmbResponse(
       'text-embedding-3-small',
+
+      ['Your text string goes here'],
     );
     console.log(res);
   });

@@ -1,9 +1,8 @@
 // model-utils.ts
 import { Logger } from '@nestjs/common';
 import { UniversalStatusManager } from './universal-status';
-import { ConfigLoader } from 'src/config/config-loader';
-import { getEmbDir } from 'src/config/common-path';
 import { EmbeddingDownloader } from './embedding-downloader';
+import { ConfigLoader, getEmbDir } from 'codefox-common';
 
 const logger = new Logger('model-utils');
 
@@ -40,11 +39,11 @@ async function downloadEmbeddingModel(modelName: string) {
 
 export async function checkAndDownloadAllEmbeddings(): Promise<void> {
   const configLoader = ConfigLoader.getInstance();
-  const modelsConfig = configLoader.getAllConfigs();
+  const modelsConfig = configLoader.getAllEmbeddingModelConfigs();
 
   logger.log('Checking and downloading configured embedding models...');
 
-  if (!modelsConfig.length) {
+  if (!modelsConfig || !modelsConfig.length) {
     logger.warn('No embedding models configured');
     return;
   }

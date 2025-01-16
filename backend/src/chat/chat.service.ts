@@ -11,12 +11,13 @@ import {
   UpdateChatTitleInput,
 } from 'src/chat/dto/chat.input';
 import { CustomAsyncIterableIterator } from 'src/common/model-provider/types';
-import { ModelProvider } from 'src/common/model-provider';
+import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 
 @Injectable()
 export class ChatProxyService {
   private readonly logger = new Logger('ChatProxyService');
-  private readonly models: ModelProvider = ModelProvider.getInstance();
+  private readonly models: OpenAIModelProvider =
+    OpenAIModelProvider.getInstance();
 
   constructor() {}
 
@@ -29,7 +30,6 @@ export class ChatProxyService {
         model: input.model,
       },
       input.model,
-      input.chatId,
     );
   }
 

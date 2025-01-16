@@ -8,10 +8,10 @@ import {
 } from './types';
 import { Logger } from '@nestjs/common';
 import { VirtualDirectory } from './virtual-dir';
-import { ModelProvider } from 'src/common/model-provider';
 import { v4 as uuidv4 } from 'uuid';
 import { BuildMonitor } from './monitor';
 import { BuildHandlerManager } from './hanlder-manager';
+import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 
 /**
  * Global data keys used throughout the build process
@@ -56,7 +56,7 @@ export class BuilderContext {
 
   private handlerManager: BuildHandlerManager;
   private monitor: BuildMonitor;
-  public model: ModelProvider;
+  public model: OpenAIModelProvider;
   public virtualDirectory: VirtualDirectory;
 
   constructor(
@@ -64,7 +64,7 @@ export class BuilderContext {
     id: string,
   ) {
     this.handlerManager = BuildHandlerManager.getInstance();
-    this.model = ModelProvider.getInstance();
+    this.model = OpenAIModelProvider.getInstance();
     this.monitor = BuildMonitor.getInstance();
     this.logger = new Logger(`builder-context-${id}`);
     this.virtualDirectory = new VirtualDirectory();

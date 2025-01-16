@@ -1,8 +1,8 @@
 import { Logger } from '@nestjs/common';
 import { LLMProvider } from './llm-provider';
 import express, { Express, Request, Response, NextFunction } from 'express';
-import { GenerateMessageParams, ChatMessageInput, MessageInput } from './types';
 import { downloadAll } from './downloader/universal-utils';
+import { MessageInput } from './types';
 
 process.on('uncaughtException', error => {
   console.error('Uncaught Exception:', error);
@@ -49,6 +49,7 @@ export class App {
     this.logger.log('Setting up routes...');
     this.app.post('/chat/completions', this.handleChatRequest.bind(this));
     this.app.get('/tags', this.handleModelTagsRequest.bind(this));
+    this.app.get('/models', this.handleModelTagsRequest.bind(this));
     this.logger.log('Routes set up successfully.');
   }
 
@@ -121,8 +122,6 @@ export class App {
     this.logger.log('Received tags request.');
     try {
       this.logger.debug(JSON.stringify(req.body));
-      const { content } = req.body as ChatMessageInput;
-      this.logger.debug(`Request content: "${content}"`);
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');

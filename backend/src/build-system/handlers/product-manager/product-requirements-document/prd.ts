@@ -1,9 +1,9 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
-import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 
 export class PRDHandler implements BuildHandler {
   readonly id = 'op:PRD';
@@ -35,7 +35,7 @@ export class PRDHandler implements BuildHandler {
   }
 
   private async generatePRDFromLLM(prompt: string): Promise<string> {
-    const modelProvider = ModelProvider.getInstance();
+    const modelProvider = OpenAIModelProvider.getInstance();
     const prdContent = await modelProvider.chatSync({
       model: 'gpt-4o-mini',
       messages: [{ content: prompt, role: 'system' }],

@@ -1,8 +1,8 @@
 import { copyProjectTemplate } from 'src/build-system/utils/files';
 import { promises as fs } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
-import { getTemplatePath } from 'src/config/common-path';
 import { Logger } from '@nestjs/common';
+import { getTemplatePath } from 'codefox-common';
 
 describe('Copy Project Template', () => {
   it('should copy the template to the specified UUID folder', async () => {
