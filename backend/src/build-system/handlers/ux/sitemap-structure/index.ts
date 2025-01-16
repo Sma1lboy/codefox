@@ -4,6 +4,8 @@ import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { MessageInterface } from 'src/common/model-provider/types';
 import {
   MissingConfigurationError,
   ResponseParsingError,
@@ -41,10 +43,16 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
 
     try {
       // Generate UX Structure content using the language model
-      const uxStructureContent = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
+      const messages: MessageInterface[] = [
+        { content: prompt, role: 'system' },
+      ];
+      const uxStructureContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateUXSiteMapStructre',
+        this.id,
+      );
 
       if (!uxStructureContent || uxStructureContent.trim() === '') {
         this.logger.error('Generated UX Sitemap Structure content is empty.');

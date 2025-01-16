@@ -11,17 +11,13 @@ import { prompts } from './prompt';
 import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
 import { formatResponse } from 'src/build-system/utils/strings';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import {
-  MissingConfigurationError,
-  ResponseParsingError,
   FileWriteError,
   ModelUnavailableError,
   ResponseTagError,
 } from 'src/build-system/errors';
 
-/**
- * DBSchemaHandler is responsible for generating database schemas based on provided requirements.
- */
 export class DBSchemaHandler implements BuildHandler {
   readonly id = 'op:DATABASE:SCHEMAS';
   private readonly logger: Logger = new Logger('DBSchemaHandler');
@@ -29,154 +25,140 @@ export class DBSchemaHandler implements BuildHandler {
   async run(context: BuilderContext): Promise<BuildResult> {
     this.logger.log('Generating Database Schemas...');
 
+    // 1. Get required context data
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
     const databaseType =
       context.getGlobalContext('databaseType') || 'PostgreSQL';
-
     const dbRequirements = context.getNodeData('op:DATABASE_REQ');
-    if (!dbRequirements) {
-      this.logger.error('Missing database requirements.');
-      throw new MissingConfigurationError(
-        'Missing required database requirements.',
-      );
-    }
+    const uuid = context.getGlobalContext('projectUUID');
 
+    // 2. Validate database type
     if (!isSupportedDatabaseType(databaseType)) {
-      const supportedTypes = getSupportedDatabaseTypes().join(', ');
-      this.logger.error(
-        `Unsupported database type: ${databaseType}. Supported types: ${supportedTypes}`,
-      );
-      throw new MissingConfigurationError(
-        `Unsupported database type: ${databaseType}. Supported types: ${supportedTypes}.`,
+      throw new Error(
+        `Unsupported database type: ${databaseType}. Supported types are: ${getSupportedDatabaseTypes().join(', ')}.`,
       );
     }
 
+    // 3. Get file extension
     let fileExtension: string;
     try {
       fileExtension = getSchemaFileExtension(databaseType as DatabaseType);
     } catch (error) {
       this.logger.error('Error determining schema file extension:', error);
-      throw new ResponseParsingError(
+      throw new FileWriteError(
         `Failed to determine schema file extension for database type: ${databaseType}.`,
       );
     }
 
-    this.logger.debug(`Schema file extension: .${fileExtension}`);
-
-    const dbAnalysis = await this.analyzeDatabaseRequirements(
-      context,
-      projectName,
-      dbRequirements,
-      databaseType,
-    );
-
-    let schemaContent = await this.generateDatabaseSchema(
-      context,
-      dbAnalysis,
-      databaseType,
-      fileExtension,
-    );
-
     try {
-      schemaContent = await this.validateDatabaseSchema(
-        context,
+      // Step 1: Analyze database requirements
+      this.logger.debug('Starting database requirements analysis...');
+      const analysisPrompt = prompts.analyzeDatabaseRequirements(
+        projectName,
+        dbRequirements,
+        databaseType,
+      );
+      let dbAnalysis: string;
+      try {
+        const analysisResponse = await chatSyncWithClocker(
+          context,
+          {
+            model: 'gpt-4o-mini',
+            messages: [{ content: analysisPrompt, role: 'system' }],
+          },
+          'analyzeDatabaseRequirements',
+          this.id,
+        );
+        dbAnalysis = formatResponse(analysisResponse);
+      } catch (error) {
+        throw new ModelUnavailableError(
+          `Model unavailable during analysis: ${error}`,
+        );
+      }
+
+      // Step 2: Generate schema based on analysis
+      this.logger.debug('Generating database schema...');
+      const schemaPrompt = prompts.generateDatabaseSchema(
+        dbAnalysis,
+        databaseType,
+        fileExtension,
+      );
+      let schemaContent: string;
+      try {
+        const schemaResponse = await chatSyncWithClocker(
+          context,
+          {
+            model: 'gpt-4o-mini',
+            messages: [{ content: schemaPrompt, role: 'system' }],
+          },
+          'generateDatabaseSchema',
+          this.id,
+        );
+        schemaContent = formatResponse(schemaResponse);
+      } catch (error) {
+        throw new ModelUnavailableError(
+          `Model unavailable during schema generation: ${error}`,
+        );
+      }
+
+      // Step 3: Validate generated schema
+      this.logger.debug('Validating generated schema...');
+      const validationPrompt = prompts.validateDatabaseSchema(
         schemaContent,
         databaseType,
       );
+      let validationResult: string;
+      try {
+        const validationResponse = await chatSyncWithClocker(
+          context,
+          {
+            model: 'gpt-4o-mini',
+            messages: [{ content: validationPrompt, role: 'system' }],
+          },
+          'validateDatabaseSchema',
+          this.id,
+        );
+        validationResult = formatResponse(validationResponse);
+      } catch (error) {
+        throw new ModelUnavailableError(
+          `Model unavailable during validation: ${error}`,
+        );
+      }
+
+      // Check validation result
+      if (!validationResult.includes('Validation Passed')) {
+        throw new ResponseTagError(
+          `Schema validation failed: ${validationResult}`,
+        );
+      }
+
+      // Write schema to file
+      const schemaFileName = `schema.${fileExtension}`;
+      try {
+        saveGeneratedCode(
+          path.join(uuid, 'backend', schemaFileName),
+          schemaContent,
+        );
+        this.logger.log(
+          `Schema file (${schemaFileName}) written successfully.`,
+        );
+      } catch (error) {
+        throw new FileWriteError(
+          `Failed to write schema file: ${error.message}`,
+        );
+      }
+
+      return {
+        success: true,
+        data: schemaContent,
+      };
     } catch (error) {
-      new ResponseTagError('Failed to validate generated schema:' + error);
-    }
-
-    const schemaFileName = `schema.${fileExtension}`;
-    const uuid = context.getGlobalContext('projectUUID');
-
-    try {
-      saveGeneratedCode(
-        path.join(uuid, 'backend', schemaFileName),
-        schemaContent,
-      );
-      this.logger.log(`Schema file (${schemaFileName}) written successfully.`);
-    } catch (error) {
-      this.logger.error('Error writing schema file:', error);
-      throw new FileWriteError('Failed to write schema file.');
-    }
-
-    return {
-      success: true,
-      data: schemaContent,
-    };
-  }
-
-  private async analyzeDatabaseRequirements(
-    context: BuilderContext,
-    projectName: string,
-    dbRequirements: any,
-    databaseType: string,
-  ): Promise<string> {
-    const analysisPrompt = prompts.analyzeDatabaseRequirements(
-      projectName,
-      dbRequirements,
-      databaseType,
-    );
-
-    let analysisResponse: string;
-    try {
-      analysisResponse = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: analysisPrompt, role: 'system' }],
-      });
-    } catch (error) {
-      throw new ModelUnavailableError('Model is unavailable:' + error);
-    }
-    return analysisResponse;
-  }
-
-  private async generateDatabaseSchema(
-    context: BuilderContext,
-    dbAnalysis: string,
-    databaseType: string,
-    fileExtension: string,
-  ): Promise<string> {
-    const schemaPrompt = prompts.generateDatabaseSchema(
-      dbAnalysis,
-      databaseType,
-      fileExtension,
-    );
-
-    try {
-      const schemaResponse = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: schemaPrompt, role: 'system' }],
-      });
-
-      const schemaContent = formatResponse(schemaResponse);
-
-      return schemaContent;
-    } catch (error) {
-      throw new ModelUnavailableError('Model is unavailable:' + error);
-    }
-  }
-
-  private async validateDatabaseSchema(
-    context: BuilderContext,
-    schemaContent: string,
-    databaseType: string,
-  ): Promise<string> {
-    const validationPrompt = prompts.validateDatabaseSchema(
-      schemaContent,
-      databaseType,
-    );
-
-    try {
-      const validationResult = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: validationPrompt, role: 'system' }],
-      });
-
-      return formatResponse(validationResult);
-    } catch (error) {
-      throw new ModelUnavailableError('Model is unavailable:' + error);
+      this.logger.error('Error in schema generation process:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error : new Error(String(error)),
+      };
     }
   }
 }

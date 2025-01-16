@@ -7,6 +7,7 @@ import {
   formatResponse,
   parseGenerateTag,
 } from 'src/build-system/utils/strings';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import {
   ResponseParsingError,
   InvalidParameterError,
@@ -24,6 +25,8 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
 
     if (!fileStructure || !datamapDoc) {
+      Logger.error(fileStructure);
+      Logger.error(datamapDoc);
       throw new InvalidParameterError(
         'Missing required parameters: fileStructure or datamapDoc.',
       );
@@ -34,37 +37,42 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
       JSON.stringify(datamapDoc, null, 2),
     );
 
+    let fileArchContent: string;
     try {
-      const fileArchContent = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
+      fileArchContent = await chatSyncWithClocker(
+        context,
+        {
+          model: 'gpt-4o-mini',
+          messages: [{ content: prompt, role: 'system' }],
+        },
+        'generateFileArch',
+        this.id,
+      );
+    } catch (error) {
+      this.logger.error('Model is unavailable:' + error);
+      throw new ModelUnavailableError('Model is unavailable:' + error);
+    }
 
-      const tagContent = parseGenerateTag(fileArchContent);
-      const jsonData = extractJsonFromText(tagContent);
+    const tagContent = parseGenerateTag(fileArchContent);
+    const jsonData = extractJsonFromText(tagContent);
 
-      if (!jsonData) {
-        this.logger.error('Failed to extract JSON from text');
-        throw new ResponseParsingError('Failed to extract JSON from text.');
-      }
+    if (!jsonData) {
+      this.logger.error('Failed to extract JSON from text');
+      throw new ResponseParsingError('Failed to extract JSON from text.');
+    }
 
-      if (!this.validateJsonData(jsonData)) {
-        this.logger.error('File architecture JSON validation failed.');
-        throw new ResponseParsingError(
-          'File architecture JSON validation failed.',
-        );
-      }
-
-      this.logger.log('File architecture document generated successfully.');
-      return {
-        success: true,
-        data: formatResponse(fileArchContent),
-      };
-    } catch (error: any) {
-      throw new ModelUnavailableError(
-        "Model didn't respond within the expected time: " + error.stack,
+    if (!this.validateJsonData(jsonData)) {
+      this.logger.error('File architecture JSON validation failed.');
+      throw new ResponseParsingError(
+        'File architecture JSON validation failed.',
       );
     }
+
+    this.logger.log('File architecture document generated successfully.');
+    return {
+      success: true,
+      data: formatResponse(fileArchContent),
+    };
   }
 
   /**

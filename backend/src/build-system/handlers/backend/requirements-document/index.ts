@@ -3,11 +3,11 @@ import { BuilderContext } from 'src/build-system/context';
 import { generateBackendOverviewPrompt } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-
 import {
   MissingConfigurationError,
   ModelUnavailableError,
 } from 'src/build-system/errors';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 
 type BackendRequirementResult = {
   overview: string;
@@ -64,11 +64,17 @@ export class BackendRequirementHandler
     );
 
     let backendOverview: string;
+
     try {
-      backendOverview = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: overviewPrompt, role: 'system' }],
-      });
+      backendOverview = await chatSyncWithClocker(
+        context,
+        {
+          model: 'gpt-4o-mini',
+          messages: [{ content: overviewPrompt, role: 'system' }],
+        },
+        'generateBackendOverviewPrompt',
+        this.id,
+      );
     } catch (error) {
       throw new ModelUnavailableError('Model is unavailable:' + error);
     }

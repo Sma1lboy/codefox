@@ -8,6 +8,8 @@ import {
   MissingConfigurationError,
   ModelUnavailableError,
 } from 'src/build-system/errors';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { MessageInterface } from 'src/common/model-provider/types';
 
 export class DatabaseRequirementHandler implements BuildHandler<string> {
   readonly id = 'op:DATABASE_REQ';
@@ -36,10 +38,15 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
     let dbRequirementsContent: string;
 
     try {
-      dbRequirementsContent = await model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
+      dbRequirementsContent = await chatSyncWithClocker(
+        context,
+        {
+          model: 'gpt-4o-mini',
+          messages: [{ content: prompt, role: 'system' }],
+        },
+        'generateDatabaseRequirementPrompt',
+        this.id,
+      );
     } catch (error) {
       throw new ModelUnavailableError('Model Unavailable:' + error);
     }

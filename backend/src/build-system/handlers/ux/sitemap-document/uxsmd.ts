@@ -1,9 +1,10 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
-import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { MessageInterface } from 'src/common/model-provider/types';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import {
   MissingConfigurationError,
   ResponseParsingError,
@@ -40,9 +41,11 @@ export class UXSMDHandler implements BuildHandler<string> {
       platform,
     );
 
+    // Send the prompt to the LLM server and process the response
+
     try {
       // Generate UXSMD content using the language model
-      const uxsmdContent = await this.generateUXSMDFromLLM(prompt);
+      const uxsmdContent = await this.generateUXSMDFromLLM(context, prompt);
 
       if (!uxsmdContent || uxsmdContent.trim() === '') {
         this.logger.error('Generated UXSMD content is empty.');
@@ -62,16 +65,21 @@ export class UXSMDHandler implements BuildHandler<string> {
     }
   }
 
-  private async generateUXSMDFromLLM(prompt: string): Promise<string> {
-    const modelProvider = ModelProvider.getInstance();
-    const model = 'gpt-4o-mini';
-
+  private async generateUXSMDFromLLM(
+    context: BuilderContext,
+    prompt: string,
+  ): Promise<string> {
     try {
-      const uxsmdContent = await modelProvider.chatSync({
-        model,
-        messages: [{ content: prompt, role: 'system' }],
-      });
-
+      const messages: MessageInterface[] = [
+        { content: prompt, role: 'system' },
+      ];
+      const uxsmdContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateUXSMDFromLLM',
+        this.id,
+      );
       this.logger.log('Received full UXSMD content from LLM server.');
       return uxsmdContent;
     } catch (error) {

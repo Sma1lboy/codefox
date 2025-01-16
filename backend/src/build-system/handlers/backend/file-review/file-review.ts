@@ -6,6 +6,8 @@ import * as path from 'path';
 
 import { prompts } from './prompt';
 import { formatResponse } from 'src/build-system/utils/strings';
+import { MessageInterface } from 'src/common/model-provider/types';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import {
   FileNotFoundError,
   FileModificationError,
@@ -61,11 +63,20 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
     );
 
     let modelResponse: string;
+
     try {
-      modelResponse = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: filePrompt, role: 'system' }],
-      });
+      const messages: MessageInterface[] = [
+        { content: filePrompt, role: 'system' },
+      ];
+      modelResponse = await chatSyncWithClocker(
+        context,
+        {
+          model: 'gpt-4o-mini',
+          messages,
+        },
+        'generateBackendCode',
+        this.id,
+      );
     } catch (error) {
       throw new ModelUnavailableError('Model Unavailable:' + error);
     }
@@ -96,10 +107,15 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
 
       let response;
       try {
-        response = await context.model.chatSync({
-          model: 'gpt-4o-mini',
-          messages: [{ content: modificationPrompt, role: 'system' }],
-        });
+        response = await chatSyncWithClocker(
+          context,
+          {
+            model: 'gpt-4o-mini',
+            messages: [{ content: modificationPrompt, role: 'system' }],
+          },
+          'generateBackendFile',
+          this.id,
+        );
       } catch (error) {
         throw new ModelUnavailableError('Model Unavailable:' + error);
       }

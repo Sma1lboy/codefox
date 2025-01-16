@@ -4,6 +4,9 @@ import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { BuildMonitor } from 'src/build-system/monitor';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { MessageInterface } from 'src/common/model-provider/types';
 import {
   MissingConfigurationError,
   ResponseParsingError,
@@ -62,10 +65,16 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
         'web', // TODO: Replace with dynamic platform if necessary
       );
 
-      const refinedContent = await modelProvider.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
+      const messages: MessageInterface[] = [
+        { content: prompt, role: 'system' },
+      ];
+      const refinedContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateLevel2UXSiteMapStructre',
+        this.id,
+      );
 
       this.logger.log(refinedContent);
       if (!refinedContent || refinedContent.trim() === '') {
