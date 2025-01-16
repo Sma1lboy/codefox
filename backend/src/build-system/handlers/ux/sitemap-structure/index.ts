@@ -26,7 +26,7 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
       };
     }
 
-    const prompt = prompts.generateUXSiteMapStructrePrompt(
+    const prompt = prompts.generateUXSiteMapStructurePrompt(
       projectName,
       'web', // TODO: Change platform dynamically if necessary
     );

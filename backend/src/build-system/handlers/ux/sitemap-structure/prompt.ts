@@ -1,5 +1,5 @@
 export const prompts = {
-  generateUXSiteMapStructrePrompt: (
+  generateUXSiteMapStructurePrompt: (
     projectName: string,
     platform: string,
   ): string => {
@@ -38,14 +38,14 @@ export const prompts = {
                 Parent Page: [Parent page if nested, or "None" if top-level]
                 Description: [Brief description of page purpose]
                 Authentication Conditions: [Public/Private/Login Required]
-                Core Components:
+                #### Core Components:
                     - C#.1. [Component Name]
                     - Definition: Core Components are **distinct UI elements** or **functional blocks** on the page that have a clear, identifiable role. Each component must include:
                       1. **Type** (Layout, Interactive, Display, Input, etc.)
                       2. **Purpose** (What does it do for the user or the interface?)
                       3. **States** (Possible UI states: Default, Hover, Clicked, Expanded, Loading, etc.)
                       4. **Interactions** (User actions or system responses: clicking, hovering, dragging, scrolling, etc.)
-                Features & Functionality:
+                #### Features & Functionality:
                     - Focus on how these features tie back to user stories, and which **Core Components** are used to achieve them
                     - F#.1. [Feature Name]
                         - Description: [Functionality Overview]
@@ -136,23 +136,22 @@ Deliver a single XML-like document that strictly follows the structure above. St
 
   `;
   },
-  generateLevel2UXSiteMapStructrePrompt: (
-    projectName: string,
-    platform: string,
-  ): string => {
+  generatePagebyPageSiteMapStructrePrompt: (): string => {
+    const guidelines = prompts.HTML_Guidelines_global_component_prompt();
+
     return `
     You are an expert front-end developer and UX designer. We have two important inputs:
-1. A “UX Sitemap Document” that outlines high-level pages, sections, and user flows.
-2. A “UX Sitemap Structure” containing <page_gen> blocks for each main page/screen.
+    1, Global_component Sections Contain <global_component> blocks.
+    1. A “UX Sitemap Structure” containing <page_view> blocks for each main page/screen.
 
-Your task is to produce a **page-by-page analysis** that enriches each <page_gen> block with additional detail about layout, components, styling, and interactions, based on these two inputs.
+Your task is to produce a **page-by-page analysis** that enriches each <page_view> block with additional detail about layout, components, styling, and interactions, based on these two inputs.
 
 ### Instructions
 1. **Output Structure**
 
-Each page **must** follow this format exactly, wrapped in \`<page_gen>\` tags:
+Each page **must** follow this format exactly, wrapped in \`<page_view>\` tags:
 
-<page_gen id="[id]"> 
+<page_view id="[id]"> 
     P#. [Page Name] 
     URL Path: /[path] 
     Description: [Brief description of page purpose] 
@@ -174,25 +173,34 @@ Each page **must** follow this format exactly, wrapped in \`<page_gen>\` tags:
           - Iconography:
           - Transitions/Animations:
 
-    #### Features & Functionality
-    - Focus on how these features tie back to user stories, and which **Core Components** are used to achieve them
-    F#.1. [Feature Name]
-        Description: [Brief feature description]
-        User Stories: [Related user stories from PRD]
-        Components Used: [Which components implement this feature?]
+    #### Features & Functionality:
+      - Focus on how these features tie back to user stories, and which **Core Components** are used to achieve them
+      - F#.1. [Feature Name]
+      - Description: [Functionality Overview]
+      - User Stories: [Relevant user stories from PRD]
+      - Components Used: [Which UI elements power this feature?]
 
     #### Page-Specific User Flows
     Step-by-step sequences describing user interactions and system responses
     Flow #. [Flow Name]
         [Step 1]
         [Step 2]
-</page_gen>
+        
+    #### Draft HTML Layout (Focused on Page View)
+    <draft_html>
+        [Generated HTML Structure Here]
+    </draft_html>    
+</page_view>
 
 - For **Core Components**, use sequential numbering (C1.1, C1.2, etc.).
 - For **Features**, use sequential numbering (F1.1, F1.2, etc.).
-- Keep each \`<page_gen>\` labeled with a **unique** page ID and page number (P1, P2, etc.).
+- Keep each \`<page_view>\` labeled with a **unique** page ID and page number (P1, P2, etc.).
 
-2. **Enhance** each page description to include more granular information such as:
+2.  Guidelines for Draft HTML Layout:
+
+  ${guidelines}
+
+3. **Enhance** each page description to include more granular information such as:
    - **Layout**: Where each component (e.g. header, cards, sidebars) is placed on the page.
    - **Component Details**:
      - **Name** (e.g., “Search Bar,” “Recommended Playlists”)
@@ -210,22 +218,169 @@ Each page **must** follow this format exactly, wrapped in \`<page_gen>\` tags:
    - **Features & Functionality**: Link features to the components implementing them.
    - **Page-Specific User Flows**: Step-by-step sequences describing user interactions and system responses.
 
-3. **Process**
-   - For each \`<page_gen>\` in the provided UX Sitemap Structure, also consult the “UX Sitemap Document” for higher-level context.
-   - **Merge** or **add** any missing details, sub-pages, or user journeys not yet reflected in \`<page_gen>\`.
+4. **Process**
+   - For each \`<page_view>\` in the provided UX Sitemap Structure, also consult the “UX Sitemap Document” for higher-level context.
+   - **Merge** or **add** any missing details, sub-pages, or user journeys not yet reflected in \`<page_view>\`.
    - Provide enough detail that front-end developers have a clear blueprint of layout, styling, and user flows.
 
-4. **Self-Check**
-   - Does each \`<page_gen>\` block list **all** relevant components with location, style, and interactions?
+5. **Self-Check**
+   - Does each \`<page_view>\` block list **all** relevant components with location, style, and interactions?
    - Have you included all user flows from the UX Sitemap Document within the appropriate page?
    - Are roles, states, or restrictions noted (if any)?
    - Is the final detail sufficient for developers to build each page without ambiguity?
 
-5. **Final Instructions**
+6. **Final Instructions**
 - **Plain text only** (no Markdown).
-- Begin the final document with \`<UXSitemap>\` and end with \`</UXSitemap>\`.
-- Include one \`<page_gen>\` block per page. If you have global components, add them in \`<global_comp>\` blocks as per your chosen format.
+- Include only one \`<page_view>\` block per page.
 - Do **not** omit any page or feature. The final result must be **100% complete** and consistent with
   `;
+  },
+
+  generateGlobalComponentPagebyPageSiteMapStructrePrompt: (): string => {
+    return ` 
+      You are an expert front-end developer and UX designer. We have one important inputs:
+
+    A "UX Sitemap Structure" containing <global_component> blocks for each main component.
+
+Your task is to produce a component-by-component analysis that enriches each <global_component> block with additional detail about layout, components, styling, and interactions, based on these inputs.
+Instructions
+
+    Output Structure:
+
+Each <global_component> must follow this format exactly, wrapped in <global_component> tags:
+
+<global_component id="[id]">
+    G#. [Component Name]
+    Authentication Conditions:
+        - [Condition 1]: [Description of behavior for logged-in/logged-out users]
+    Elements:
+        - [Element Name]:
+            1. **Type** (e.g., Layout, Interactive, Display, Input, etc.)
+            2. **Purpose** (What does it do for the user or the interface?)
+            3. **States** (Possible UI states: Default, Hover, Clicked, Expanded, Loading, etc.)
+            4. **Interactions** (User actions or system responses: clicking, hovering, dragging, scrolling, etc.)
+            5. **Location** (e.g., Header bar, Left sidebar, Main content section)
+            6. **Component Style**:
+                - **Color & Theming**: Primary color, background/foreground contrasts, brand highlights, etc.
+                - **Fonts & Typography**: Font family, size, weight, line-height if relevant.
+                - **Dimensions & Spacing**: Approximate width/height (e.g., “a 300px-wide sidebar”), margins/paddings.
+                - **Iconography**: If icons are used, note icon style or library (e.g., Material Icons, FontAwesome).
+                - **Transitions/Animations**: Relevant hover or click animations.
+    
+    #### Draft HTML Layout (Focused on Component View)
+    <draft_html>
+      [Generated HTML Structure Here]
+    </draft_html>
+</global_component>
+
+    For Elements, use sequential numbering (E1.1, E1.2, etc.).
+    For Features, use sequential numbering (F1.1, F1.2, etc.).
+    Each <global_component> block must be labeled with a unique ID and component number (G1, G2, etc.).
+
+    Enhance Each Component Description
+
+    Include granular details:
+        Layout: Placement on the page (header, sidebar, main content, footer, etc.).
+        Component Details:
+            Name
+            Type
+            Purpose
+            States
+            Interactions
+            Location
+            Component Style (Color, Fonts, Dimensions, Iconography, Transitions/Animations)
+
+    Guidelines for Draft HTML Layout:
+      ${prompts.HTML_Guidelines_global_component_prompt}
+
+    Self-Check
+        Does each <global_component> block include all relevant components with their details?
+        Are features tied back to the user stories and corresponding components?
+        Are all roles, states, or restrictions clearly noted?
+        Is the final output detailed enough for developers to implement the design without ambiguity?
+
+    Final Output
+        Plain text only.
+        Include only one <global_component> block.
+        Ensure that no html, xml, or other declarations appear in the output.
+        Do not omit any component or feature. Ensure the final result is 100% complete and consistent.
+
+    `;
+  },
+
+  HTML_Guidelines_Page_view_Prompt: (): string => {
+    return ` 
+
+    Structure and Hierarchy
+        Use semantic HTML5 tags to represent the structure:
+            <header> for the top navigation or page intro.
+            <main> for the main content.
+            <section> for distinct content groups.
+            <footer> for page footers.
+        Group components logically based on their placement in the viewport:
+            Above the fold: High-priority content like hero banners or navigation.
+            Scrollable sections: Secondary content, such as grids or detailed sections.
+            Persistent elements: Sticky headers or fixed footers.
+
+    Styling Hints
+        Provide inline styling hints using style={{}}:
+            Layout direction: Use display: flex or display: grid for alignment.
+            Spacing: Define margin, padding, or gap for spacing between components.
+            Dimensions: Include width and height constraints (e.g., minHeight: "100vh").
+            Positioning: Specify fixed or sticky positioning for persistent elements.
+
+    Responsiveness
+        Use layout properties that adapt to various screen sizes.
+        For example:
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" for flexible grids.
+            flexWrap: "wrap" for flexible flexbox layouts.
+        Add responsive placeholders (e.g., "Desktop: 3-column grid, Mobile: Single column").
+
+    Accessibility
+        Ensure components include accessibility attributes:
+            Navigation bars: role="navigation", aria-label.
+            Landmarks: aria-labelledby or aria-describedby for clear roles.
+        Provide sufficient color contrast in styling hints.
+
+    Placement of Global Components
+    Place <global_component> elements at the correct viewport position:
+        Sticky or fixed elements (e.g., headers) should still be indicated using semantic placement (e.g., before <main> for navigation).
+        No CSS for <global_component>
+        Just do this <global_component id=[id]></global_component>
+
+    `;
+  },
+
+  HTML_Guidelines_global_component_prompt: (): string => {
+    return ` 
+    Component Structure
+        Use semantic HTML5 tags to structure the component logically.
+        Organize elements as per their role and purpose (e.g., <header> for navigation).
+
+    Class Naming and IDs
+        Use descriptive class names for styling hooks (e.g., logo, search-bar, user-icon).
+        Assign unique IDs for elements if necessary for JavaScript or accessibility.
+
+    State Representation
+        Provide placeholders for different states (e.g., class="hover", class="expanded").
+        Include comments to guide developers on state-specific styles and interactions.
+
+    Interactivity
+        Ensure elements have appropriate attributes for interaction:
+            Buttons: type="button".
+            Inputs: placeholder for guidance.
+        Include comments for dynamic functionality or JavaScript hooks.
+
+    Accessibility
+        Add ARIA attributes to enhance usability:
+          Example:
+            role="navigation" for the container.
+            aria-expanded for interactive elements with dropdowns.
+
+    Flexibility
+        Ensure the layout is modular and reusable across different contexts.
+        Avoid hardcoding styles; assume styles are managed externally via CSS.
+
+    `;
   },
 };

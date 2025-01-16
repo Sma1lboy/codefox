@@ -10,7 +10,7 @@ export class UXSitemapStructurePagebyPageHandler
   implements BuildHandler<string>
 {
   readonly id = 'op:UX:SMS:PAGEBYPAGE';
-  readonly logger = new Logger('Level2UXSitemapStructureHandler');
+  readonly logger = new Logger('UXSitemapStructurePagebyPageHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Generating Level 2 UX Sitemap Structure Document...');
@@ -28,7 +28,8 @@ export class UXSitemapStructurePagebyPageHandler
     }
 
     // Extract sections from the UX Structure Document
-    const sections = this.extractAllSections(uxStructureDoc);
+    const sections = this.extractAllPageViewSections(uxStructureDoc);
+    const globalSections = this.extractAllGlobalCompSections(uxStructureDoc);
 
     if (sections.length === 0) {
       this.logger.error(
@@ -44,25 +45,64 @@ export class UXSitemapStructurePagebyPageHandler
     const modelProvider = ModelProvider.getInstance();
     const refinedSections = [];
 
-    for (const section of sections) {
-      const prompt = prompts.generateLevel2UXSiteMapStructrePrompt(
-        projectName,
-        'web', // TODO: Replace with dynamic platform if necessary
-      );
+    const globalComponentPrompt =
+      prompts.generateGlobalComponentPagebyPageSiteMapStructrePrompt();
 
+    const pageViewprompt = prompts.generatePagebyPageSiteMapStructrePrompt();
+
+    this.logger.log('Processing each Global Component...');
+
+    // Global Component
+    for (const globalSection of globalSections) {
       const messages: MessageInterface[] = [
         {
           role: 'system',
-          content: prompt,
+          content: globalComponentPrompt,
         },
         {
           role: 'user',
           content: `
-            Here is the UX Sitemap Documentation (SMD):
-          
-            ${sitemapDoc}
-          
-            Next, we will provide the specific UX Sitemap Structure section to be refine.`,
+        This is the Global Components Section (GCS) of the UX SiteMap Structre (SMS) :
+         ${globalSection} 
+
+        Please generate the Full UX Sitemap Structre for this section now. Provide the information exclusively within <global_component> tags.
+        `,
+        },
+        {
+          role: 'user',
+          content: `Please enrich the details of Core Components in each <global_component> block.
+    Specifically:
+    - **Descriptive Component Names**: Include a clear, meaningful name (C#.X. [Component Name]) and explain its purpose on this page.
+    - **States and Interactions**: Define possible UI states (e.g., Default, Hover, Clicked) and describe typical user interactions (e.g., click, drag, input).
+    - **Access Restrictions**: Note any conditions (e.g., login required, admin-only) that govern access to the component.`,
+        },
+      ];
+
+      const refinedContent = await modelProvider.chatSync({
+        model: 'gpt-4o',
+        messages,
+      });
+
+      refinedSections.push(refinedContent);
+    }
+
+    this.logger.log('Processing each Page View...');
+
+    // Page View
+    for (const section of sections) {
+      const messages: MessageInterface[] = [
+        {
+          role: 'system',
+          content: pageViewprompt,
+        },
+        {
+          role: 'user',
+          content: `
+          This is the Global Components Section (GCS) of the UX SiteMap Structre (SMS) :
+           ${globalSections.join('\n\n')} 
+
+           Use this as a reference for HTML Layouts and Component Placement. Next will provide UX SiteMap Structre Section (SMS)
+          `,
         },
         {
           role: 'user',
@@ -71,17 +111,25 @@ export class UXSitemapStructurePagebyPageHandler
           
             ${section}
           
-            Please generate the Full UX Sitemap Structre for this section now. Only provide the information in <page_gen>`,
+            Please generate the Full UX Sitemap Structre for this section now. Provide the information exclusively within <page_view> tags.`,
         },
+        // {
+        //   role: 'user',
+        //   content: `
+        //   Next you need to generating a Draft HTML Layout for each <page_view>.
+        //   Your output must emphasize component placement, layout context, and styling directions to ensure developers can implement a responsive and accessible UI effectively.
+        //     ${prompts.HTML_Guidelines_Page_view_Prompt}
+        //     `,
+        // },
         {
           role: 'user',
-          content: `Please add more detail about the Core Components within each <page_gen>.
+          content: `Please enrich the details of Core Components in each <page_view> block.
       Specifically:
-      - Provide a descriptive name for each Core Component (C#.X. [Component Name]) and why it exists on this page.
-      - List possible states (Default, Hover, Clicked, etc.) and typical user interactions (click, drag, input).
-      - Note any restrictions (login required, admin-only, etc.).
-      - Identify the essential content displayed (what users need to see and why).
-      - If any important elements or features appear to be missing, add them now to ensure a complete UX structure.`,
+      - **Descriptive Component Names**: Include a clear, meaningful name (C#.X. [Component Name]) and explain its purpose on this page.
+      - **States and Interactions**: Define possible UI states (e.g., Default, Hover, Clicked) and describe typical user interactions (e.g., click, drag, input).
+      - **Access Restrictions**: Note any conditions (e.g., login required, admin-only) that govern access to the component.
+      - **Essential Content**: Identify critical information displayed in the component and explain its importance to the user experience.
+      - **Missing Elements**: Review the structure and add any components, features, or details that may be missing to ensure a complete and robust UX structure.`,
         },
       ];
 
@@ -105,12 +153,23 @@ export class UXSitemapStructurePagebyPageHandler
   }
 
   /**
-   * Extracts all <page_gen> sections as raw strings, including the tags.
+   * Extracts all <page_view> sections as raw strings, including the tags.
    * @param text The UX Structure Document content.
    * @returns Array of extracted sections as full strings.
    */
-  private extractAllSections(text: string): string[] {
-    const pageRegex = /<page_gen id="[^"]+">[\s\S]*?<\/page_gen>/g;
+  private extractAllPageViewSections(text: string): string[] {
+    const pageRegex = /<page_view id="[^"]+">[\s\S]*?<\/page_view>/g;
+    return text.match(pageRegex) || [];
+  }
+
+  /**
+   * Extracts all <global_component> sections as raw strings, including the tags.
+   * @param text The UX Structure Document content.
+   * @returns Array of extracted sections as full strings.
+   */
+  private extractAllGlobalCompSections(text: string): string[] {
+    const pageRegex =
+      /<global_component id="[^"]+">[\s\S]*?<\/global_component>/g;
     return text.match(pageRegex) || [];
   }
 }
