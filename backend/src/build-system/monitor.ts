@@ -106,13 +106,12 @@ export class BuildMonitor {
     generateDuration: number,
     id: string,
     step: string,
-    input: MessageInterface[],
+    input: string,
     output: string,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const encoder = require('gpt-3-encoder');
-    const inputLength = input.reduce((preLength, singleContent) => {
-      return encoder.encode(singleContent.content).length + preLength;
-    }, 0);
+    const inputLength = input.length;
     const value = {
       step,
       input: inputLength,
