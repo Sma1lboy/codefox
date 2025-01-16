@@ -10,9 +10,7 @@ import {
   FileNotFoundError,
   FileModificationError,
   ResponseParsingError,
-  ModelTimeoutError,
-  TemporaryServiceUnavailableError,
-  RateLimitExceededError,
+  ModelUnavailableError,
 } from 'src/build-system/errors';
 
 /**
@@ -48,12 +46,11 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
     try {
       this.logger.log(`Scanning backend directory: ${backendPath}`);
       files = await fs.readdir(backendPath);
-      if (!files.length) {
-        throw new FileNotFoundError('No files found in the backend directory.');
-      }
       this.logger.debug(`Found files: ${files.join(', ')}`);
     } catch (error) {
-      throw error;
+      throw new FileNotFoundError(
+        'No files found in the backend directory:' + error,
+      );
     }
 
     const filePrompt = prompts.identifyBackendFilesToModify(
@@ -70,7 +67,7 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
         messages: [{ content: filePrompt, role: 'system' }],
       });
     } catch (error) {
-      throw error;
+      throw new ModelUnavailableError('Model Unavailable:' + error);
     }
 
     const filesToModify = this.parseFileIdentificationResponse(modelResponse);
@@ -81,33 +78,36 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
 
     for (const fileName of filesToModify) {
       const filePath = path.join(backendPath, fileName);
+      let currentContent: string;
       try {
-        const currentContent = await fs.readFile(filePath, 'utf-8');
-        const modificationPrompt = prompts.generateFileModificationPrompt(
-          fileName,
-          currentContent,
-          backendRequirement,
-          projectOverview,
-          backendCode,
+        currentContent = await fs.readFile(filePath, 'utf-8');
+      } catch (error) {
+        throw new FileNotFoundError(
+          `Failed to read file: ${fileName}:` + error,
         );
+      }
+      const modificationPrompt = prompts.generateFileModificationPrompt(
+        fileName,
+        currentContent,
+        backendRequirement,
+        projectOverview,
+        backendCode,
+      );
 
-        const response = await context.model.chatSync({
+      let response;
+      try {
+        response = await context.model.chatSync({
           model: 'gpt-4o-mini',
           messages: [{ content: modificationPrompt, role: 'system' }],
         });
-
-        const newContent = formatResponse(response);
-        if (!newContent) {
-          throw new FileModificationError(
-            `Failed to generate content for file: ${fileName}.`,
-          );
-        }
-
-        await fs.writeFile(filePath, newContent, 'utf-8');
-        this.logger.log(`Successfully modified ${fileName}`);
       } catch (error) {
-        throw error;
+        throw new ModelUnavailableError('Model Unavailable:' + error);
       }
+      const newContent = formatResponse(response);
+
+      await fs.writeFile(filePath, newContent, 'utf-8');
+
+      this.logger.log(`Successfully modified ${fileName}`);
     }
 
     return {

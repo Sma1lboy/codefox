@@ -15,9 +15,8 @@ import {
   MissingConfigurationError,
   ResponseParsingError,
   FileWriteError,
-  ModelTimeoutError,
-  TemporaryServiceUnavailableError,
-  RateLimitExceededError,
+  ModelUnavailableError,
+  ResponseTagError,
 } from 'src/build-system/errors';
 
 /**
@@ -72,14 +71,22 @@ export class DBSchemaHandler implements BuildHandler {
       databaseType,
     );
 
-    const schemaContent = await this.generateDatabaseSchema(
+    let schemaContent = await this.generateDatabaseSchema(
       context,
       dbAnalysis,
       databaseType,
       fileExtension,
     );
 
-    await this.validateDatabaseSchema(context, schemaContent, databaseType);
+    try {
+      schemaContent = await this.validateDatabaseSchema(
+        context,
+        schemaContent,
+        databaseType,
+      );
+    } catch (error) {
+      new ResponseTagError('Failed to validate generated schema:' + error);
+    }
 
     const schemaFileName = `schema.${fileExtension}`;
     const uuid = context.getGlobalContext('projectUUID');
@@ -113,22 +120,16 @@ export class DBSchemaHandler implements BuildHandler {
       databaseType,
     );
 
+    let analysisResponse: string;
     try {
-      const analysisResponse = await context.model.chatSync({
+      analysisResponse = await context.model.chatSync({
         model: 'gpt-4o-mini',
         messages: [{ content: analysisPrompt, role: 'system' }],
       });
-
-      if (!analysisResponse || analysisResponse.trim() === '') {
-        throw new ResponseParsingError(
-          'Database requirements analysis returned empty.',
-        );
-      }
-
-      return analysisResponse;
     } catch (error) {
-      throw error;
+      throw new ModelUnavailableError('Model is unavailable:' + error);
     }
+    return analysisResponse;
   }
 
   private async generateDatabaseSchema(
@@ -150,13 +151,10 @@ export class DBSchemaHandler implements BuildHandler {
       });
 
       const schemaContent = formatResponse(schemaResponse);
-      if (!schemaContent || schemaContent.trim() === '') {
-        throw new ResponseParsingError('Generated database schema is empty.');
-      }
 
       return schemaContent;
     } catch (error) {
-      throw error;
+      throw new ModelUnavailableError('Model is unavailable:' + error);
     }
   }
 
@@ -164,7 +162,7 @@ export class DBSchemaHandler implements BuildHandler {
     context: BuilderContext,
     schemaContent: string,
     databaseType: string,
-  ): Promise<void> {
+  ): Promise<string> {
     const validationPrompt = prompts.validateDatabaseSchema(
       schemaContent,
       databaseType,
@@ -176,14 +174,9 @@ export class DBSchemaHandler implements BuildHandler {
         messages: [{ content: validationPrompt, role: 'system' }],
       });
 
-      const validationResponse = formatResponse(validationResult);
-      if (validationResponse.includes('Error')) {
-        throw new ResponseParsingError(
-          `Schema validation failed: ${validationResponse}`,
-        );
-      }
+      return formatResponse(validationResult);
     } catch (error) {
-      throw error;
+      throw new ModelUnavailableError('Model is unavailable:' + error);
     }
   }
 }

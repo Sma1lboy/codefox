@@ -6,10 +6,7 @@ import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import {
   MissingConfigurationError,
-  ResponseParsingError,
-  ModelTimeoutError,
-  TemporaryServiceUnavailableError,
-  RateLimitExceededError,
+  ModelUnavailableError,
 } from 'src/build-system/errors';
 
 export class DatabaseRequirementHandler implements BuildHandler<string> {
@@ -43,24 +40,8 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
         model: 'gpt-4o-mini',
         messages: [{ content: prompt, role: 'system' }],
       });
-
-      if (!dbRequirementsContent) {
-        throw new ModelTimeoutError(
-          'The model did not respond within the expected time.',
-        );
-      }
-
-      if (dbRequirementsContent.trim() === '') {
-        throw new ResponseParsingError(
-          'Generated database requirements content is empty.',
-        );
-      }
     } catch (error) {
-      this.logger.error(
-        'Error during database requirements generation:',
-        error,
-      );
-      throw error; // Propagate error to upper-level handler
+      throw new ModelUnavailableError('Model Unavailable:' + error);
     }
 
     return {

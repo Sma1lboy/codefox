@@ -10,9 +10,7 @@ import {
 import {
   ResponseParsingError,
   InvalidParameterError,
-  ModelTimeoutError,
-  TemporaryServiceUnavailableError,
-  RateLimitExceededError,
+  ModelUnavailableError,
 } from 'src/build-system/errors';
 
 export class FileArchGenerateHandler implements BuildHandler<string> {
@@ -42,17 +40,11 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
         messages: [{ content: prompt, role: 'system' }],
       });
 
-      if (!fileArchContent) {
-        throw new ModelTimeoutError(
-          'The model did not respond within the expected time.',
-        );
-      }
-
       const tagContent = parseGenerateTag(fileArchContent);
       const jsonData = extractJsonFromText(tagContent);
 
       if (!jsonData) {
-        this.logger.error('Failed to extract JSON from text.');
+        this.logger.error('Failed to extract JSON from text');
         throw new ResponseParsingError('Failed to extract JSON from text.');
       }
 
@@ -68,8 +60,10 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
         success: true,
         data: formatResponse(fileArchContent),
       };
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      throw new ModelUnavailableError(
+        "Model didn't respond within the expected time: " + error.stack,
+      );
     }
   }
 

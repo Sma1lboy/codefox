@@ -3,12 +3,9 @@ import { BuilderContext } from 'src/build-system/context';
 import { generateBackendOverviewPrompt } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+
 import {
-  ResponseParsingError,
   MissingConfigurationError,
-  ModelTimeoutError,
-  TemporaryServiceUnavailableError,
-  RateLimitExceededError,
   ModelUnavailableError,
 } from 'src/build-system/errors';
 
@@ -72,17 +69,8 @@ export class BackendRequirementHandler
         model: 'gpt-4o-mini',
         messages: [{ content: overviewPrompt, role: 'system' }],
       });
-
-      if (!backendOverview) {
-        throw new ModelTimeoutError(
-          'The model did not respond within the expected time.',
-        );
-      }
-      if (backendOverview.trim() === '') {
-        throw new ResponseParsingError('Generated backend overview is empty.');
-      }
     } catch (error) {
-      throw error;
+      throw new ModelUnavailableError('Model is unavailable:' + error);
     }
 
     // Return generated data
