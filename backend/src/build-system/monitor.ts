@@ -1,7 +1,8 @@
 import { Logger } from '@nestjs/common';
 import { BuildNode, BuildStep, BuildSequence } from './types';
 import { ProjectEventLogger } from './logger';
-
+import { ModelProvider } from 'src/common/model-provider';
+import { MessageInterface } from 'src/common/model-provider/types';
 /**
  * Metrics for sequence, step, and node execution
  */
@@ -13,6 +14,7 @@ export interface BuildReport {
     duration: number;
   };
   summary: {
+    spendTime: string[];
     totalSteps: number;
     completedSteps: number;
     failedSteps: number;
@@ -85,6 +87,9 @@ export class BuildMonitor {
   private static instance: BuildMonitor;
   private logger: Logger; // TODO: adding more logger
   private sequenceMetrics: Map<string, SequenceMetrics> = new Map();
+  private static timeRecorders: Map<string, any[]> = new Map();
+
+  private static model = ModelProvider.getInstance();
 
   private constructor() {
     this.logger = new Logger('BuildMonitor');
@@ -95,6 +100,29 @@ export class BuildMonitor {
       BuildMonitor.instance = new BuildMonitor();
     }
     return BuildMonitor.instance;
+  }
+
+  public static async timeRecorder(
+    generateDuration: number,
+    id: string,
+    step: string,
+    input: MessageInterface[],
+    output: string,
+  ) {
+    const encoder = require('gpt-3-encoder');
+    const inputLength = input.reduce((preLength, singleContent) => {
+      return encoder.encode(singleContent.content).length + preLength;
+    }, 0);
+    const value = {
+      step,
+      input: inputLength,
+      output: encoder.encode(output).length,
+      generateDuration,
+    };
+    if (!this.timeRecorders.has(id)) {
+      this.timeRecorders.set(id, []);
+    }
+    this.timeRecorders.get(id)!.push(value);
   }
 
   // Node-level monitoring
@@ -287,19 +315,23 @@ export class BuildMonitor {
     const steps = Array.from(metrics.stepMetrics.entries()).map(
       ([stepId, stepMetric]) => {
         const nodes = Array.from(stepMetric.nodeMetrics.entries()).map(
-          ([nodeId, nodeMetric]) => ({
-            id: nodeId,
-            name: nodeId,
-            duration: nodeMetric.duration,
-            status: nodeMetric.status,
-            retryCount: nodeMetric.retryCount,
-            error: nodeMetric.error
-              ? {
-                  message: nodeMetric.error.message,
-                  stack: nodeMetric.error.stack,
-                }
-              : undefined,
-          }),
+          ([nodeId, nodeMetric]) => {
+            const values = BuildMonitor.timeRecorders.get(nodeId);
+            return {
+              id: nodeId,
+              name: nodeId,
+              duration: nodeMetric.duration,
+              status: nodeMetric.status,
+              retryCount: nodeMetric.retryCount,
+              clock: values,
+              error: nodeMetric.error
+                ? {
+                    message: nodeMetric.error.message,
+                    stack: nodeMetric.error.stack,
+                  }
+                : undefined,
+            };
+          },
         );
 
         const completed = nodes.filter((n) => n.status === 'completed').length;
@@ -332,6 +364,9 @@ export class BuildMonitor {
         duration: metrics.duration,
       },
       summary: {
+        spendTime: Array.from(BuildMonitor.timeRecorders.entries()).map(
+          ([id, time]) => `Step ${id} duration is ${time} ms`,
+        ),
         totalSteps: metrics.totalSteps,
         completedSteps: steps.filter((s) => s.status === 'completed').length,
         failedSteps: steps.filter((s) => s.status === 'failed').length,
@@ -376,6 +411,17 @@ export class BuildMonitor {
         report += `      Status: ${nodeMetric.status}\n`;
         report += `      Duration: ${nodeMetric.duration}ms\n`;
         report += `      Retries: ${nodeMetric.retryCount}\n`;
+        const values = BuildMonitor.timeRecorders.get(nodeId);
+        if (values) {
+          report += `       Clock:\n`;
+          values.forEach((value) => {
+            report += `          ${value.step}:\n`;
+            report += `             input token: ${value.input}\n`;
+            report += `             output token: ${value.output}\n`;
+            report += `             GenerationDuration: ${value.generateDuration}ms\n`;
+          });
+        }
+
         if (nodeMetric.error) {
           report += `      Error: ${nodeMetric.error.message}\n`;
         }

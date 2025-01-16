@@ -4,12 +4,15 @@ import { generateBackendCodePrompt } from './prompt';
 import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
 import { formatResponse } from 'src/build-system/utils/strings';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { MessageInterface } from 'src/common/model-provider/types';
 import {
   FileWriteError,
   InvalidParameterError,
   MissingConfigurationError,
   ResponseParsingError,
 } from 'src/build-system/errors';
+import { Logger } from '@nestjs/common';
 
 /**
  * BackendCodeHandler is responsible for generating the backend codebase
@@ -44,7 +47,7 @@ export class BackendCodeHandler implements BuildHandler<string> {
       );
     }
 
-    if (typeof databaseSchemas !== 'object') {
+    if (!databaseSchemas) {
       throw new InvalidParameterError(
         'databaseSchemas should be a valid object.',
       );
@@ -66,13 +69,24 @@ export class BackendCodeHandler implements BuildHandler<string> {
       dependencyFile,
     );
 
-    const modelResponse = await context.model.chatSync({
-      model: 'gpt-4o-mini',
-      messages: [{ content: backendCodePrompt, role: 'system' }],
-    });
-
     let generatedCode: string;
     try {
+      // Invoke the language model to generate the backend code
+      const messages: MessageInterface[] = [
+        { content: backendCodePrompt, role: 'system' },
+      ];
+      const modelResponse = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateBackendCode',
+        this.id,
+      );
+
+      generatedCode = formatResponse(modelResponse);
+
+      const uuid = context.getGlobalContext('projectUUID');
+      saveGeneratedCode(path.join(uuid, 'backend', currentFile), generatedCode);
       generatedCode = formatResponse(modelResponse);
       if (!generatedCode) {
         throw new ResponseParsingError('Response tag extraction failed.');

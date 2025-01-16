@@ -7,12 +7,12 @@ import {
   formatResponse,
   parseGenerateTag,
 } from 'src/build-system/utils/strings';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { MessageInterface } from 'src/common/model-provider/types';
 import {
   ResponseParsingError,
   InvalidParameterError,
-  ModelTimeoutError,
-  TemporaryServiceUnavailableError,
-  RateLimitExceededError,
+  ModelUnavailableError,
 } from 'src/build-system/errors';
 
 export class FileArchGenerateHandler implements BuildHandler<string> {
@@ -26,6 +26,8 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
 
     if (!fileStructure || !datamapDoc) {
+      Logger.error(fileStructure);
+      Logger.error(datamapDoc);
       throw new InvalidParameterError(
         'Missing required parameters: fileStructure or datamapDoc.',
       );
@@ -37,13 +39,19 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     );
 
     try {
-      const fileArchContent = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
+      const messages: MessageInterface[] = [
+        { content: prompt, role: 'system' },
+      ];
+      const fileArchContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateFileArch',
+        this.id,
+      );
 
       if (!fileArchContent) {
-        throw new ModelTimeoutError(
+        throw new ModelUnavailableError(
           'The model did not respond within the expected time.',
         );
       }

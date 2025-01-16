@@ -8,6 +8,8 @@ import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { MessageInterface } from 'src/common/model-provider/types';
 import {
   ResponseParsingError,
   MissingConfigurationError,
@@ -49,10 +51,17 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
 
     let fileStructureContent: string;
     try {
-      fileStructureContent = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
+      // Invoke the language model to generate the file structure content
+      const messages: MessageInterface[] = [
+        { content: prompt, role: 'system' },
+      ];
+      fileStructureContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateCommonFileStructure',
+        this.id,
+      );
 
       if (!fileStructureContent || fileStructureContent.trim() === '') {
         throw new ResponseParsingError(
@@ -69,10 +78,16 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
 
     let fileStructureJsonContent: string;
     try {
-      fileStructureJsonContent = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: convertToJsonPrompt, role: 'system' }],
-      });
+      const messages: MessageInterface[] = [
+        { content: convertToJsonPrompt, role: 'system' },
+      ];
+      fileStructureJsonContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'convertToJsonPrompt',
+        this.id,
+      );
 
       if (!fileStructureJsonContent || fileStructureJsonContent.trim() === '') {
         throw new ResponseParsingError(

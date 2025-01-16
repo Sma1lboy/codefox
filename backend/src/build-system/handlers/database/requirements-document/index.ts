@@ -7,10 +7,12 @@ import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import {
   MissingConfigurationError,
   ResponseParsingError,
-  ModelTimeoutError,
+  ModelUnavailableError,
   TemporaryServiceUnavailableError,
   RateLimitExceededError,
 } from 'src/build-system/errors';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { MessageInterface } from 'src/common/model-provider/types';
 
 export class DatabaseRequirementHandler implements BuildHandler<string> {
   readonly id = 'op:DATABASE_REQ';
@@ -39,13 +41,19 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
     let dbRequirementsContent: string;
 
     try {
-      dbRequirementsContent = await model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
+      const messages: MessageInterface[] = [
+        { content: prompt, role: 'system' },
+      ];
+      dbRequirementsContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateDatabaseRequirementPrompt',
+        this.id,
+      );
 
       if (!dbRequirementsContent) {
-        throw new ModelTimeoutError(
+        throw new ModelUnavailableError(
           'The model did not respond within the expected time.',
         );
       }

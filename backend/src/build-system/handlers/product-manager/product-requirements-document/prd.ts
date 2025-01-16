@@ -1,9 +1,10 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
-import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { MessageInterface } from 'src/common/model-provider/types';
 import {
   MissingConfigurationError,
   ModelUnavailableError,
@@ -44,7 +45,7 @@ export class PRDHandler implements BuildHandler {
 
     try {
       // Send the prompt to the LLM server and process the response
-      const prdContent = await this.generatePRDFromLLM(prompt);
+      const prdContent = await this.generatePRDFromLLM(context, prompt);
 
       if (!prdContent || prdContent.trim() === '') {
         throw new ResponseParsingError('Generated PRD content is empty.');
@@ -59,15 +60,21 @@ export class PRDHandler implements BuildHandler {
       throw new ResponseParsingError('Failed to generate PRD.');
     }
   }
-
-  private async generatePRDFromLLM(prompt: string): Promise<string> {
+  private async generatePRDFromLLM(
+    context: BuilderContext,
+    prompt: string,
+  ): Promise<string> {
     try {
-      const modelProvider = ModelProvider.getInstance();
-      const prdContent = await modelProvider.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
-
+      const messages: MessageInterface[] = [
+        { content: prompt, role: 'system' },
+      ];
+      const prdContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generatePRDFromLLM',
+        this.id,
+      );
       if (!prdContent || prdContent.trim() === '') {
         throw new ModelUnavailableError(
           'LLM server returned empty PRD content.',

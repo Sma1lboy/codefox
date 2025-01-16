@@ -1,9 +1,10 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
-import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { MessageInterface } from 'src/common/model-provider/types';
 import {
   MissingConfigurationError,
   ResponseParsingError,
@@ -41,11 +42,16 @@ export class UXDatamapHandler implements BuildHandler<string> {
 
     try {
       // Generate UX Data Map content using the language model
-      const uxDatamapContent = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
-
+      const messages: MessageInterface[] = [
+        { content: prompt, role: 'system' },
+      ];
+      const uxDatamapContent = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateUXDataMap',
+        this.id,
+      );
       if (!uxDatamapContent || uxDatamapContent.trim() === '') {
         throw new ResponseParsingError(
           'Generated UX Data Map content is empty.',

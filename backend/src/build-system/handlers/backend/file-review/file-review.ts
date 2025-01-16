@@ -6,13 +6,12 @@ import * as path from 'path';
 
 import { prompts } from './prompt';
 import { formatResponse } from 'src/build-system/utils/strings';
+import { MessageInterface } from 'src/common/model-provider/types';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import {
   FileNotFoundError,
   FileModificationError,
   ResponseParsingError,
-  ModelTimeoutError,
-  TemporaryServiceUnavailableError,
-  RateLimitExceededError,
 } from 'src/build-system/errors';
 
 /**
@@ -64,11 +63,18 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
     );
 
     let modelResponse: string;
+
     try {
-      modelResponse = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: filePrompt, role: 'system' }],
-      });
+      const messages: MessageInterface[] = [
+        { content: filePrompt, role: 'system' },
+      ];
+      modelResponse = await chatSyncWithClocker(
+        context,
+        messages,
+        'gpt-4o-mini',
+        'generateBackendCode',
+        this.id,
+      );
     } catch (error) {
       throw error;
     }
@@ -91,10 +97,16 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
           backendCode,
         );
 
-        const response = await context.model.chatSync({
-          model: 'gpt-4o-mini',
-          messages: [{ content: modificationPrompt, role: 'system' }],
-        });
+        const messages: MessageInterface[] = [
+          { content: modificationPrompt, role: 'system' },
+        ];
+        const response = await chatSyncWithClocker(
+          context,
+          messages,
+          'gpt-4o-mini',
+          'generateBackendFile',
+          this.id,
+        );
 
         const newContent = formatResponse(response);
         if (!newContent) {
