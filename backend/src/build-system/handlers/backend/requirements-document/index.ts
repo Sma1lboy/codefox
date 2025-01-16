@@ -3,13 +3,11 @@ import { BuilderContext } from 'src/build-system/context';
 import { generateBackendOverviewPrompt } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
-import { MessageInterface } from 'src/common/model-provider/types';
 import {
   MissingConfigurationError,
   ModelUnavailableError,
-  ResponseParsingError,
 } from 'src/build-system/errors';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 
 type BackendRequirementResult = {
   overview: string;
@@ -68,27 +66,17 @@ export class BackendRequirementHandler
     let backendOverview: string;
 
     try {
-      const messages: MessageInterface[] = [
-        { content: overviewPrompt, role: 'system' },
-      ];
       backendOverview = await chatSyncWithClocker(
         context,
-        messages,
-        'gpt-4o-mini',
+        {
+          model: 'gpt-4o-mini',
+          messages: [{ content: overviewPrompt, role: 'system' }],
+        },
         'generateBackendOverviewPrompt',
         this.id,
       );
-
-      if (!backendOverview) {
-        throw new ModelUnavailableError(
-          'The model did not respond within the expected time.',
-        );
-      }
-      if (backendOverview.trim() === '') {
-        throw new ResponseParsingError('Generated backend overview is empty.');
-      }
     } catch (error) {
-      throw error;
+      throw new ModelUnavailableError('Model is unavailable:' + error);
     }
 
     // Return generated data

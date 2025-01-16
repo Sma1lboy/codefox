@@ -4,10 +4,9 @@ import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
-import { MessageInterface } from 'src/common/model-provider/types';
 import {
   MissingConfigurationError,
-  ResponseParsingError,
+  ModelUnavailableError,
 } from 'src/build-system/errors';
 
 /**
@@ -42,21 +41,15 @@ export class UXDatamapHandler implements BuildHandler<string> {
 
     try {
       // Generate UX Data Map content using the language model
-      const messages: MessageInterface[] = [
-        { content: prompt, role: 'system' },
-      ];
       const uxDatamapContent = await chatSyncWithClocker(
         context,
-        messages,
-        'gpt-4o-mini',
+        {
+          model: 'gpt-4o-mini',
+          messages: [{ content: prompt, role: 'system' }],
+        },
         'generateUXDataMap',
         this.id,
       );
-      if (!uxDatamapContent || uxDatamapContent.trim() === '') {
-        throw new ResponseParsingError(
-          'Generated UX Data Map content is empty.',
-        );
-      }
 
       this.logger.log('Successfully generated UX Data Map content.');
       return {
@@ -64,7 +57,7 @@ export class UXDatamapHandler implements BuildHandler<string> {
         data: removeCodeBlockFences(uxDatamapContent),
       };
     } catch (error) {
-      throw error;
+      throw new ModelUnavailableError('Model is unavailable:' + error);
     }
   }
 }

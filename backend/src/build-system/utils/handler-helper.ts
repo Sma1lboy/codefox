@@ -1,21 +1,19 @@
-import { MessageInterface } from 'src/common/model-provider/types';
+import { ChatInput } from 'src/common/model-provider/types';
 import { BuilderContext } from '../context';
 import { BuildMonitor } from '../monitor';
 
 export async function chatSyncWithClocker(
   context: BuilderContext,
-  messages: MessageInterface[],
-  model: string,
+  input: ChatInput,
   step: string,
   id: string,
 ): Promise<string> {
   const startTime = new Date();
-  const modelResponse = await context.model.chatSync({
-    model,
-    messages,
-  });
+  const modelResponse = await context.model.chatSync(input);
   const endTime = new Date();
   const duration = endTime.getTime() - startTime.getTime();
-  BuildMonitor.timeRecorder(duration, id, step, messages, modelResponse);
+
+  const inputContent = input.messages.map((m) => m.content).join('');
+  BuildMonitor.timeRecorder(duration, id, step, inputContent, modelResponse);
   return modelResponse;
 }

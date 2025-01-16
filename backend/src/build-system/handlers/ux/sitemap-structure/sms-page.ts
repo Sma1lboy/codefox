@@ -4,7 +4,6 @@ import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { BuildMonitor } from 'src/build-system/monitor';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import { MessageInterface } from 'src/common/model-provider/types';
 import {
@@ -54,7 +53,6 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
     }
 
     // Process each section with the refined Level 2 prompt
-    const modelProvider = ModelProvider.getInstance();
     const refinedSections = [];
 
     for (const section of sections) {
@@ -70,9 +68,11 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
       ];
       const refinedContent = await chatSyncWithClocker(
         context,
-        messages,
-        'gpt-4o-mini',
-        'generateLevel2UXSiteMapStructre',
+        {
+          model: 'gpt-4o-mini',
+          messages,
+        },
+        'generateLevel2UXSiteMapStructure',
         this.id,
       );
 

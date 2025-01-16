@@ -12,49 +12,35 @@ import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
 import { formatResponse } from 'src/build-system/utils/strings';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
-import { MessageInterface } from 'src/common/model-provider/types';
 import {
   FileWriteError,
   ModelUnavailableError,
-  ResponseParsingError,
+  ResponseTagError,
 } from 'src/build-system/errors';
 
-/**
- * DBSchemaHandler is responsible for generating database schemas based on provided requirements.
- */
 export class DBSchemaHandler implements BuildHandler {
   readonly id = 'op:DATABASE:SCHEMAS';
   private readonly logger: Logger = new Logger('DBSchemaHandler');
 
-  /**
-   * Executes the handler to generate database schemas.
-   * @param context - The builder context containing configuration and utilities.
-   * @param args - The variadic arguments required for generating the database schemas.
-   * @returns A BuildResult containing the generated schema content and related data.
-   */
   async run(context: BuilderContext): Promise<BuildResult> {
     this.logger.log('Generating Database Schemas...');
 
-    // Retrieve projectName and databaseType from context
+    // 1. Get required context data
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
     const databaseType =
       context.getGlobalContext('databaseType') || 'PostgreSQL';
-
     const dbRequirements = context.getNodeData('op:DATABASE_REQ');
+    const uuid = context.getGlobalContext('projectUUID');
 
-    this.logger.debug('Database requirements are provided.');
-
-    // Check if the databaseType is supported
+    // 2. Validate database type
     if (!isSupportedDatabaseType(databaseType)) {
       throw new Error(
-        `Unsupported database type: ${databaseType}. Supported types are: ${getSupportedDatabaseTypes().join(
-          ', ',
-        )}.`,
+        `Unsupported database type: ${databaseType}. Supported types are: ${getSupportedDatabaseTypes().join(', ')}.`,
       );
     }
 
-    // Get the file extension for the schema
+    // 3. Get file extension
     let fileExtension: string;
     try {
       fileExtension = getSchemaFileExtension(databaseType as DatabaseType);
@@ -65,140 +51,114 @@ export class DBSchemaHandler implements BuildHandler {
       );
     }
 
-    this.logger.debug(`Schema file extension: .${fileExtension}`);
-
-    // Step 1: Analyze database requirements
-    const analysisPrompt = prompts.analyzeDatabaseRequirements(
-      projectName,
-      dbRequirements,
-      databaseType,
-    );
-
-    let dbAnalysis: string;
     try {
-      const messages: MessageInterface[] = [
-        { content: analysisPrompt, role: 'system' },
-      ];
-      dbAnalysis = await chatSyncWithClocker(
-        context,
-        messages,
-        'gpt-4o-mini',
-        'analyzeDatabaseRequirements',
-        this.id,
+      // Step 1: Analyze database requirements
+      this.logger.debug('Starting database requirements analysis...');
+      const analysisPrompt = prompts.analyzeDatabaseRequirements(
+        projectName,
+        dbRequirements,
+        databaseType,
       );
-    } catch (error) {
-      this.logger.error('Error during database requirements analysis:', error);
-      return {
-        success: false,
-        error: new Error('Failed to analyze database requirements.'),
-      };
-    }
+      let dbAnalysis: string;
+      try {
+        const analysisResponse = await chatSyncWithClocker(
+          context,
+          {
+            model: 'gpt-4o-mini',
+            messages: [{ content: analysisPrompt, role: 'system' }],
+          },
+          'analyzeDatabaseRequirements',
+          this.id,
+        );
+        dbAnalysis = formatResponse(analysisResponse);
+      } catch (error) {
+        throw new ModelUnavailableError(
+          `Model unavailable during analysis: ${error}`,
+        );
+      }
 
-    this.logger.debug('Database requirements analyzed successfully.');
-
-    // Step 2: Generate database schema based on analysis
-    let schemaPrompt: string;
-    try {
-      schemaPrompt = prompts.generateDatabaseSchema(
+      // Step 2: Generate schema based on analysis
+      this.logger.debug('Generating database schema...');
+      const schemaPrompt = prompts.generateDatabaseSchema(
         dbAnalysis,
         databaseType,
         fileExtension,
       );
-    } catch (error) {
-      this.logger.error('Error during schema prompt generation:', error);
-      return {
-        success: false,
-        error: new FileWriteError('Failed to generate schema prompt.'),
-      };
-    }
+      let schemaContent: string;
+      try {
+        const schemaResponse = await chatSyncWithClocker(
+          context,
+          {
+            model: 'gpt-4o-mini',
+            messages: [{ content: schemaPrompt, role: 'system' }],
+          },
+          'generateDatabaseSchema',
+          this.id,
+        );
+        schemaContent = formatResponse(schemaResponse);
+      } catch (error) {
+        throw new ModelUnavailableError(
+          `Model unavailable during schema generation: ${error}`,
+        );
+      }
 
-    let schemaContent: string;
-    try {
-      const messages: MessageInterface[] = [
-        { content: schemaPrompt, role: 'system' },
-      ];
-      const schemaResponse = await chatSyncWithClocker(
-        context,
-        messages,
-        'gpt-4o-mini',
-        'generateBackendCode',
-        this.id,
-      );
-      schemaContent = formatResponse(schemaResponse);
-    } catch (error) {
-      this.logger.error('Error during schema generation:', error);
-      return {
-        success: false,
-        error: new ModelUnavailableError('Failed to generate database schema.'),
-      };
-    }
-
-    this.logger.debug('Database schema generated successfully.');
-
-    // Step 3: Validate the generated schema
-    const validationPrompt = prompts.validateDatabaseSchema(
-      schemaContent,
-      databaseType,
-    );
-
-    let validationResponse: string;
-    try {
-      const messages: MessageInterface[] = [
-        { content: validationPrompt, role: 'system' },
-      ];
-      const validationResult = await chatSyncWithClocker(
-        context,
-        messages,
-        'gpt-4o-mini',
-        'generateBackendCode',
-        this.id,
-      );
-      validationResponse = formatResponse(validationResult);
-    } catch (error) {
-      this.logger.error('Error during schema validation:', error);
-      return {
-        success: false,
-        error: new ModelUnavailableError(
-          'Failed to validate the generated database schema.',
-        ),
-      };
-    }
-
-    if (validationResponse.includes('Error')) {
-      this.logger.error('Schema validation failed:', validationResponse);
-      return {
-        success: false,
-        error: new Error(`Schema validation failed: ${validationResponse}`),
-      };
-    }
-
-    this.logger.debug('Schema validation passed.');
-
-    // Define the schema file name
-    const schemaFileName = `schema.${fileExtension}`;
-
-    // Write the schemaContent to a file
-    const uuid = context.getGlobalContext('projectUUID');
-
-    try {
-      saveGeneratedCode(
-        path.join(uuid, 'backend', schemaFileName),
+      // Step 3: Validate generated schema
+      this.logger.debug('Validating generated schema...');
+      const validationPrompt = prompts.validateDatabaseSchema(
         schemaContent,
+        databaseType,
       );
-      this.logger.log(`Schema file (${schemaFileName}) written successfully.`);
+      let validationResult: string;
+      try {
+        const validationResponse = await chatSyncWithClocker(
+          context,
+          {
+            model: 'gpt-4o-mini',
+            messages: [{ content: validationPrompt, role: 'system' }],
+          },
+          'validateDatabaseSchema',
+          this.id,
+        );
+        validationResult = formatResponse(validationResponse);
+      } catch (error) {
+        throw new ModelUnavailableError(
+          `Model unavailable during validation: ${error}`,
+        );
+      }
+
+      // Check validation result
+      if (!validationResult.includes('Validation Passed')) {
+        throw new ResponseTagError(
+          `Schema validation failed: ${validationResult}`,
+        );
+      }
+
+      // Write schema to file
+      const schemaFileName = `schema.${fileExtension}`;
+      try {
+        saveGeneratedCode(
+          path.join(uuid, 'backend', schemaFileName),
+          schemaContent,
+        );
+        this.logger.log(
+          `Schema file (${schemaFileName}) written successfully.`,
+        );
+      } catch (error) {
+        throw new FileWriteError(
+          `Failed to write schema file: ${error.message}`,
+        );
+      }
+
+      return {
+        success: true,
+        data: schemaContent,
+      };
     } catch (error) {
-      this.logger.error('Error writing schema file:', error);
+      this.logger.error('Error in schema generation process:', error);
       return {
         success: false,
-        error: new ResponseParsingError('Failed to write schema file.'),
+        error: error instanceof Error ? error : new Error(String(error)),
       };
     }
-
-    this.logger.debug(`Schema file (${schemaFileName}) prepared.`);
-
-    return {
-      success: true,
-      data: schemaContent,
-    };
   }
 }

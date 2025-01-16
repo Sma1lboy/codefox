@@ -70,8 +70,7 @@ export class PRDHandler implements BuildHandler {
       ];
       const prdContent = await chatSyncWithClocker(
         context,
-        messages,
-        'gpt-4o-mini',
+        { messages, model: 'gpt-4o-mini' },
         'generatePRDFromLLM',
         this.id,
       );
@@ -84,7 +83,7 @@ export class PRDHandler implements BuildHandler {
       this.logger.log('Received full PRD content from LLM server.');
       return prdContent;
     } catch (error) {
-      throw error;
+      throw new ModelUnavailableError('Model is unavailable: ' + error);
     }
   }
 }

@@ -51,14 +51,12 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
 
     let fileStructureContent: string;
     try {
-      // Invoke the language model to generate the file structure content
-      const messages: MessageInterface[] = [
-        { content: prompt, role: 'system' },
-      ];
       fileStructureContent = await chatSyncWithClocker(
         context,
-        messages,
-        'gpt-4o-mini',
+        {
+          model: 'gpt-4o-mini',
+          messages: [{ content: prompt, role: 'system' }],
+        },
         'generateCommonFileStructure',
         this.id,
       );
@@ -78,13 +76,12 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
 
     let fileStructureJsonContent: string;
     try {
-      const messages: MessageInterface[] = [
-        { content: convertToJsonPrompt, role: 'system' },
-      ];
       fileStructureJsonContent = await chatSyncWithClocker(
         context,
-        messages,
-        'gpt-4o-mini',
+        {
+          model: 'gpt-4o-mini',
+          messages: [{ content: convertToJsonPrompt, role: 'system' }],
+        },
         'convertToJsonPrompt',
         this.id,
       );
