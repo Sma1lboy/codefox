@@ -250,15 +250,6 @@ export class ConfigLoader {
       }
     });
 
-    const defaultChatModels = ConfigLoader.config.chat.filter(
-      (model) => model.default
-    );
-    if (defaultChatModels.length > 1) {
-      throw new Error(
-        'Invalid configuration: Multiple default chat models found'
-      );
-    }
-
     if (!Array.isArray(ConfigLoader.config.embedding)) {
       throw new Error("Invalid configuration: 'embedding' must be an array");
     }

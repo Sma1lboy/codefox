@@ -15,11 +15,7 @@ export class RemoteModelFactory {
 
     const key = `${config.endpoint}:${config.token}:${modelName}`;
     if (!this.instances.has(key)) {
-      const instance = new RemoteOpenAIModelEngine(
-        config.endpoint,
-        config.token,
-        modelName,
-      );
+      const instance = new RemoteOpenAIModelEngine(config);
       this.instances.set(key, instance);
     }
     return this.instances.get(key)!;

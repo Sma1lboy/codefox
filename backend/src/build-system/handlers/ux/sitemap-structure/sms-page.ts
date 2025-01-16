@@ -37,28 +37,33 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
       };
     }
 
-    // Process each section with the refined Level 2 prompt
+    // Process all sections concurrently
     const modelProvider = OpenAIModelProvider.getInstance();
-    const refinedSections = [];
 
-    for (const section of sections) {
-      const prompt = prompts.generateLevel2UXSiteMapStructrePrompt(
-        projectName,
-        section.content,
-        sitemapDoc,
-        'web', // TODO: Replace with dynamic platform if necessary
-      );
+    // Prepare all requests
+    const requests = sections.map((section) => ({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          content: prompts.generateLevel2UXSiteMapStructrePrompt(
+            projectName,
+            section.content,
+            sitemapDoc,
+            'web', // TODO: Replace with dynamic platform if necessary
+          ),
+          role: 'system' as const,
+        },
+      ],
+    }));
 
-      const refinedContent = await modelProvider.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: prompt, role: 'system' }],
-      });
+    // Process all requests concurrently
+    const refinedContents = await modelProvider.batchChatSync(requests);
 
-      refinedSections.push({
-        title: section.title,
-        content: refinedContent,
-      });
-    }
+    // Combine results with section titles
+    const refinedSections = sections.map((section, index) => ({
+      title: section.title,
+      content: refinedContents[index],
+    }));
 
     // Combine the refined sections into the final document
     const refinedDocument = refinedSections

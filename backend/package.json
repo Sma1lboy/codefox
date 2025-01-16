@@ -54,6 +54,7 @@
     "markdown-to-txt": "^2.0.1",
     "normalize-path": "^3.0.0",
     "openai": "^4.77.0",
+    "p-queue-es5": "^6.0.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "sqlite3": "^5.1.7",
@@ -63,7 +64,6 @@
     "uuid": "^10.0.0"
   },
   "devDependencies": {
-    "codefox-common": "workspace:*",
     "@eslint/eslintrc": "^3.1.0",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
@@ -74,6 +74,7 @@
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
+    "codefox-common": "workspace:*",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
