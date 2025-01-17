@@ -44,7 +44,7 @@ export async function checkAndDownloadAllEmbeddings(): Promise<void> {
   logger.log('Checking and downloading configured embedding models...');
 
   if (!modelsConfig || !modelsConfig.length) {
-    logger.warn(`No ${type} models configured`);
+    logger.warn(`No embedding models configured`);
     return;
   }
 
