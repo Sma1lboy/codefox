@@ -1,8 +1,8 @@
 import { Logger } from '@nestjs/common';
 import { BuildNode, BuildStep, BuildSequence } from './types';
 import { ProjectEventLogger } from './logger';
-import { ModelProvider } from 'src/common/model-provider';
 import { MessageInterface } from 'src/common/model-provider/types';
+import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 /**
  * Metrics for sequence, step, and node execution
  */
@@ -89,7 +89,7 @@ export class BuildMonitor {
   private sequenceMetrics: Map<string, SequenceMetrics> = new Map();
   private static timeRecorders: Map<string, any[]> = new Map();
 
-  private static model = ModelProvider.getInstance();
+  private static model = OpenAIModelProvider.getInstance();
 
   private constructor() {
     this.logger = new Logger('BuildMonitor');
