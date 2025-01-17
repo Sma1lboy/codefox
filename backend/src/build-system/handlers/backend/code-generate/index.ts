@@ -5,7 +5,6 @@ import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
 import { formatResponse } from 'src/build-system/utils/strings';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
-import { MessageInterface } from 'src/common/model-provider/types';
 import {
   FileWriteError,
   InvalidParameterError,

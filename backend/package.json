@@ -22,7 +22,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "test:integration": "RUN_INTEGRATION_TESTS=true jest",
+    "test:integration": "INTEGRATION_TEST=true jest",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
@@ -46,6 +46,7 @@
     "bcrypt": "^5.1.1",
     "class-validator": "^0.14.1",
     "dotenv": "^16.4.7",
+    "eslint-plugin-unused-imports": "^4.1.4",
     "fastembed": "^1.14.1",
     "fs-extra": "^11.2.0",
     "gpt-3-encoder": "^1.1.4",

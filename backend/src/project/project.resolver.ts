@@ -1,12 +1,5 @@
 // GraphQL Resolvers for Project APIs
-import {
-  Args,
-  Field,
-  Mutation,
-  ObjectType,
-  Query,
-  Resolver,
-} from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { ProjectService } from './project.service';
 import { Project } from './project.model';
 import { UpsertProjectInput } from './dto/project.input';

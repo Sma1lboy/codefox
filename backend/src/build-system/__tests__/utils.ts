@@ -135,7 +135,7 @@ export async function executeBuildSequence(
         'utf8',
       );
 
-      console.log('\nSequence Metrics:');
+      Logger.log('\nSequence Metrics:');
       console.table(metricsJson);
     }
 
@@ -152,7 +152,7 @@ export async function executeBuildSequence(
               : resultData;
           writeToFile(logFolderPath, `${node.name}`, content);
         } else {
-          console.error(
+          Logger.error(
             `Error: Handler ${node.name} failed to produce result data`,
           );
           writeToFile(
@@ -205,8 +205,8 @@ export async function executeBuildSequence(
       'utf8',
     );
 
-    console.error('\nError during sequence execution:');
-    console.error(error);
+    Logger.error('\nError during sequence execution:');
+    Logger.error(error);
 
     return {
       success: false,

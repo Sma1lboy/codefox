@@ -1,5 +1,4 @@
-import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { SystemBaseModel } from 'src/system-base-model/system-base.model';
+import { ObjectType, Field } from '@nestjs/graphql';
 import { User } from 'src/user/user.model';
 import {
   Entity,

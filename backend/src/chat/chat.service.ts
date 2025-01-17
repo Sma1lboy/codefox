@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { ChatCompletionChunk, Chat, StreamStatus } from './chat.model';
+import { ChatCompletionChunk, Chat } from './chat.model';
 import { Message, MessageRole } from 'src/chat/message.model';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -51,7 +50,7 @@ export class ChatService {
     const chat = await this.chatRepository.findOne({
       where: { id: chatId, isDeleted: false },
     });
-    console.log(chat);
+    Logger.log(chat);
 
     if (chat && chat.messages) {
       // Sort messages by createdAt in ascending order

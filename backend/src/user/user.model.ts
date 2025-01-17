@@ -1,4 +1,4 @@
-import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { ObjectType, Field } from '@nestjs/graphql';
 import { IsEmail } from 'class-validator';
 import { Role } from 'src/auth/role/role.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';

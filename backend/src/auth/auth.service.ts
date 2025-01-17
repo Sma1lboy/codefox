@@ -84,7 +84,7 @@ export class AuthService {
       await this.jwtService.verifyAsync(params.token);
       return this.jwtCacheService.isTokenStored(params.token);
     } catch (error) {
-      console.log(error);
+      Logger.log(error);
       return false;
     }
   }

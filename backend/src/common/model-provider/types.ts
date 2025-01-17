@@ -1,4 +1,3 @@
-import { ChatCompletionChunk as OpenAIChatCompletionChunk } from 'openai/resources';
 import { ChatCompletionChunk } from 'src/chat/chat.model';
 
 export interface ModelChatStreamConfig {

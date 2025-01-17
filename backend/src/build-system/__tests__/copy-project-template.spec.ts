@@ -4,6 +4,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { Logger } from '@nestjs/common';
 import { getTemplatePath } from 'codefox-common';
 
+/**
+ * This test ensure project template exist
+ */
 describe('Copy Project Template', () => {
   it('should copy the template to the specified UUID folder', async () => {
     const templatePath = getTemplatePath('template-backend');
