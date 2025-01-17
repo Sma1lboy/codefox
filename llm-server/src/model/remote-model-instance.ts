@@ -20,12 +20,17 @@ export class RemoteOpenAIModelEngine implements ModelInstance {
       baseURL: config.endpoint,
     });
 
+    this.initializeQueue();
+  }
+
+  private initializeQueue() {
     // Initialize queue with 30 RPS limit
     this.queue = new PQueue({
-      intervalCap: config.rps ?? 30, // 30 requests
+      intervalCap: this.config.rps ?? 30, // 30 requests
       interval: 1000, // per 1000ms (1 second)
       carryoverConcurrencyCount: true, // Carry over pending tasks
-      timeout: 30000, // 30 second timeout
+      // FIXME: hack way to set up timeout
+      timeout: 120000, // 120 second timeout to accommodate longer streams
     });
 
     // Log queue events for monitoring
@@ -73,11 +78,17 @@ export class RemoteOpenAIModelEngine implements ModelInstance {
       });
 
       if (!result) {
+        this.logger.warn('Queue is closed, reinitializing queue');
+        this.initializeQueue();
         throw new Error('Queue is closed');
       }
 
       return result;
     } catch (error) {
+      if (error.message === 'Queue is closed') {
+        this.logger.warn('Reinitializing queue due to closure');
+        this.initializeQueue();
+      }
       const modelError = this.createModelError(error);
       this.logger.error('Error in chat:', modelError);
       throw modelError;
@@ -100,6 +111,8 @@ export class RemoteOpenAIModelEngine implements ModelInstance {
       );
 
       if (!stream) {
+        this.logger.warn('Queue is closed, reinitializing queue');
+        this.initializeQueue();
         throw new Error('Queue is closed');
       }
 
@@ -108,6 +121,10 @@ export class RemoteOpenAIModelEngine implements ModelInstance {
         yield chunk;
       }
     } catch (error) {
+      if (error.message === 'Queue is closed') {
+        this.logger.warn('Reinitializing queue due to closure');
+        this.initializeQueue();
+      }
       const modelError = this.createModelError(error);
       this.logger.error('Error in chatStream:', modelError);
       throw modelError;
