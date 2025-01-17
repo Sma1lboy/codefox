@@ -55,9 +55,6 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
       );
     }
 
-    // Process all sections concurrently
-    const modelProvider = OpenAIModelProvider.getInstance();
-
     // Prepare all requests
     const requests = sections.map((section) => ({
       model: 'gpt-4o-mini',
