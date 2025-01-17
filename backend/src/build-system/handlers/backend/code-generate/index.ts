@@ -1,14 +1,16 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { generateBackendCodePrompt } from './prompt';
-import { Logger } from '@nestjs/common';
 import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
+import { formatResponse } from 'src/build-system/utils/strings';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import {
-  formatResponse,
-  parseGenerateTag,
-  removeCodeBlockFences,
-} from 'src/build-system/utils/strings';
+  FileWriteError,
+  InvalidParameterError,
+  MissingConfigurationError,
+  ResponseParsingError,
+} from 'src/build-system/errors';
 
 /**
  * BackendCodeHandler is responsible for generating the backend codebase
@@ -16,31 +18,38 @@ import {
  */
 export class BackendCodeHandler implements BuildHandler<string> {
   readonly id = 'op:BACKEND:CODE';
-  readonly logger: Logger = new Logger('BackendCodeHandler');
 
   /**
    * Executes the handler to generate backend code.
    * @param context - The builder context containing configuration and utilities.
-   * @param args - The variadic arguments required for generating the backend code.
    * @returns A BuildResult containing the generated code and related data.
    */
   async run(context: BuilderContext): Promise<BuildResult<string>> {
-    this.logger.log('Generating Backend Codebase...');
-
     // Retrieve project name and database type from context
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
     const databaseType =
       context.getGlobalContext('databaseType') || 'Default database type';
 
-    // Destructure arguments with default values for optional parameters
+    // Retrieve required documents
     const sitemapDoc = context.getNodeData('op:UX:SMD');
     const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
     const databaseSchemas = context.getNodeData('op:DATABASE:SCHEMAS');
-    //TODO: make this backend generate similar as FileGenerateHandler, do file arch, and then generate each backend code
-    //TODO: backend requirement
     const backendRequirementDoc =
-      context.getNodeData('op:BACKEND:REQ').overview;
+      context.getNodeData('op:BACKEND:REQ')?.overview || '';
+
+    // Validate required data
+    if (!sitemapDoc || !datamapDoc || !databaseSchemas) {
+      throw new MissingConfigurationError(
+        'Missing required configuration: sitemapDoc, datamapDoc, or databaseSchemas.',
+      );
+    }
+
+    if (!databaseSchemas) {
+      throw new InvalidParameterError(
+        'databaseSchemas should be a valid object.',
+      );
+    }
 
     const currentFile = 'index.js';
     const dependencyFile = 'dependencies.json';
@@ -54,38 +63,54 @@ export class BackendCodeHandler implements BuildHandler<string> {
       databaseType,
       databaseSchemas,
       currentFile,
-      'javascript',
+      'javascript', // TODO: make sure this lang come from the context
       dependencyFile,
     );
 
-    // Log the prompt generation
-    this.logger.debug('Generated backend code prompt.');
-
+    let generatedCode: string;
     try {
-      // Invoke the language model to generate the backend code
-      const modelResponse = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: backendCodePrompt, role: 'system' }],
-      });
+      const modelResponse = await chatSyncWithClocker(
+        context,
+        {
+          model: 'gpt-4o-mini',
+          messages: [{ content: backendCodePrompt, role: 'system' }],
+        },
+        'generateBackendCode',
+        this.id,
+      );
 
-      const generatedCode = formatResponse(modelResponse);
+      generatedCode = formatResponse(modelResponse);
 
       const uuid = context.getGlobalContext('projectUUID');
       saveGeneratedCode(path.join(uuid, 'backend', currentFile), generatedCode);
-
-      this.logger.debug('Backend code generated and parsed successfully.');
-
-      // TODO: return backend api as output
-      return {
-        success: true,
-        data: generatedCode,
-      };
+      generatedCode = formatResponse(modelResponse);
+      if (!generatedCode) {
+        throw new ResponseParsingError('Response tag extraction failed.');
+      }
     } catch (error) {
-      this.logger.error('Error during backend code generation:', error);
-      return {
-        success: false,
-        error: new Error('Failed to generate backend code.'),
-      };
+      if (error instanceof ResponseParsingError) {
+        throw error;
+      }
+      throw new ResponseParsingError(
+        'Error occurred while parsing the model response.',
+      );
     }
+
+    // Save the generated code to the specified location
+    const uuid = context.getGlobalContext('projectUUID');
+    const savePath = path.join(uuid, 'backend', currentFile);
+
+    try {
+      saveGeneratedCode(savePath, generatedCode);
+    } catch (error) {
+      throw new FileWriteError(
+        `Failed to save backend code to ${savePath}: ${error.message}`,
+      );
+    }
+
+    return {
+      success: true,
+      data: generatedCode,
+    };
   }
 }

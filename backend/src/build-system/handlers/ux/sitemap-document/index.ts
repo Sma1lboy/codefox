@@ -1,10 +1,16 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
-import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { MessageInterface } from 'src/common/model-provider/types';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import {
+  MissingConfigurationError,
+  ModelUnavailableError,
+  ResponseParsingError,
+} from 'src/build-system/errors';
+import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 
 export class UXSMDHandler implements BuildHandler<string> {
   readonly id = 'op:UX:SMD';
@@ -23,7 +29,7 @@ export class UXSMDHandler implements BuildHandler<string> {
     const prompt = prompts.generateUxsmdPrompt(projectName, platform);
 
     // Send the prompt to the LLM server and process the response
-    const uxsmdContent = await this.generateUXSMDFromLLM(prompt, prdContent);
+    const uxsmdContent = await this.generateUXSMDFromLLM(context, prompt, prdContent);
 
     // Store the generated document in the context
     context.setGlobalContext('uxsmdDocument', uxsmdContent);
@@ -36,16 +42,17 @@ export class UXSMDHandler implements BuildHandler<string> {
   }
 
   private async generateUXSMDFromLLM(
+    context: BuilderContext,
     prompt: string,
     prdContent: string,
   ): Promise<string> {
-    const messages: MessageInterface[] = [
+    const messages = [
       {
-        role: 'system',
+        role: 'system' as const,
         content: prompt,
       },
       {
-        role: 'user',
+        role: 'user' as const,
         content: `
           Here is the **Product Requirements Document (PRD)**:
 
@@ -54,7 +61,7 @@ export class UXSMDHandler implements BuildHandler<string> {
           Please generate the Full UX Sitemap Document now, focusing on MVP features but ensuring each page has enough detail to be functional.`,
       },
       {
-        role: 'user',
+        role: 'user' as const,
         content: `**Validation Step:**  
       - **Review your output** to ensure **100% coverage** of the PRD.
       - Make sure you covered all global_view_* and page_view_* in UX Sitemap Document, If any of them is missing add them based on the system prompt.
@@ -62,7 +69,7 @@ export class UXSMDHandler implements BuildHandler<string> {
       - Adjust for **navigation completeness**, making sure all interactions and workflows are **correctly linked**.`,
       },
       {
-        role: 'user',
+        role: 'user' as const,
         content: `**Final Refinement:**  
         - **Expand the Unique UI Pages **, adding page_view_* if needed:
         - **Expand the page_views **, adding more details on:
@@ -73,13 +80,15 @@ export class UXSMDHandler implements BuildHandler<string> {
       },
     ];
 
-    const modelProvider = ModelProvider.getInstance();
-    const model = 'gpt-4o';
-
-    const uxsmdContent = await modelProvider.chatSync({
-      model,
-      messages,
-    });
+    const uxsmdContent = await chatSyncWithClocker(
+      context,
+      {
+        model: 'gpt-4o-mini',
+        messages: messages,
+      },
+      'generateUXSMDFromLLM',
+      this.id,
+    );
 
     this.logger.log('Received full UXSMD content from LLM server.');
     return uxsmdContent;

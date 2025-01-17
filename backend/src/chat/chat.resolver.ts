@@ -1,12 +1,4 @@
-import {
-  Resolver,
-  Subscription,
-  Args,
-  Field,
-  ObjectType,
-  Query,
-  Mutation,
-} from '@nestjs/graphql';
+import { Resolver, Subscription, Args, Query, Mutation } from '@nestjs/graphql';
 import { Chat, ChatCompletionChunk } from './chat.model';
 import { ChatProxyService, ChatService } from './chat.service';
 import { UserService } from 'src/user/user.service';
@@ -17,8 +9,7 @@ import {
   UpdateChatTitleInput,
 } from './dto/chat.input';
 import { GetUserIdFromToken } from 'src/decorator/get-auth-token.decorator';
-import { Inject, Logger, UseGuards } from '@nestjs/common';
-import { ChatGuard, MessageGuard } from 'src/guard/chat.guard';
+import { Inject, Logger } from '@nestjs/common';
 import { JWTAuth } from 'src/decorator/jwt-auth.decorator';
 import { PubSubEngine } from 'graphql-subscriptions';
 @Resolver('Chat')
@@ -76,7 +67,7 @@ export class ChatResolver {
       await this.chatService.saveMessage(
         input.chatId,
         accumulatedContent,
-        MessageRole.Model,
+        MessageRole.Assistant,
       );
 
       return true;
@@ -92,7 +83,7 @@ export class ChatResolver {
   ): Promise<string[]> {
     try {
       const response = await this.chatProxyService.fetchModelTags();
-      return response.models.data.map((model) => model.id); // Adjust based on model structure
+      return response;
     } catch (error) {
       throw new Error('Failed to fetch model tags');
     }

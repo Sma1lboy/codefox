@@ -10,8 +10,6 @@ import { ProjectModule } from './project/project.module';
 import { TokenModule } from './token/token.module';
 import { UserModule } from './user/user.module';
 import { InitModule } from './init/init.module';
-import { RolesGuard } from './guard/roles.guard';
-import { MenuGuard } from './guard/menu.guard';
 import { User } from './user/user.model';
 import { AppResolver } from './app.resolver';
 import { APP_INTERCEPTOR } from '@nestjs/core';
@@ -33,7 +31,7 @@ import { LoggingInterceptor } from 'src/interceptor/LoggingInterceptor';
     }),
     TypeOrmModule.forRoot({
       type: 'sqlite',
-      database: join(process.cwd(), 'src/database.sqlite'),
+      database: join(process.cwd(), './database.db'),
       synchronize: true,
       entities: [__dirname + '/**/*.model{.ts,.js}'],
     }),

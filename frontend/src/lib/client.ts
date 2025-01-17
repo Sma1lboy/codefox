@@ -13,7 +13,6 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 
 import { getMainDefinition } from '@apollo/client/utilities';
-
 // HTTP Link
 const httpLink = new HttpLink({
   uri: process.env.NEXT_PUBLIC_GRAPHQL_URL,
@@ -23,25 +22,18 @@ const httpLink = new HttpLink({
   },
 });
 
-// WebSocket Link
-const wsLink = new GraphQLWsLink(
-  createClient({
-    url: process.env.NEXT_PUBLIC_GRAPHQL_URL?.replace('http', 'ws') || '',
-    connectionParams: () => {
-      if (typeof window === 'undefined') return {};
-
-      const token = localStorage.getItem(LocalStore.accessToken);
-      return {
-        Authorization: token ? `Bearer ${token}` : '',
-      };
-    },
-    on: {
-      connected: () => console.log('WebSocket Connected'),
-      error: (err) => console.error('WebSocket Error:', err),
-      closed: () => console.log('WebSocket Closed'),
-    },
-  })
-);
+let wsLink;
+if (typeof window !== 'undefined') {
+  // WebSocket Link
+  wsLink = new GraphQLWsLink(
+    createClient({
+      url: process.env.NEXT_PUBLIC_GRAPHQL_URL,
+      connectionParams: () => {
+        return {};
+      },
+    })
+  );
+}
 
 // Logging Middleware
 const requestLoggingMiddleware = new ApolloLink((operation, forward) => {
@@ -89,6 +81,9 @@ const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
 // Split traffic based on operation type
 const splitLink = split(
   ({ query }) => {
+    if (!query) {
+      throw new Error('Query is undefined');
+    }
     const definition = getMainDefinition(query);
     return (
       definition.kind === 'OperationDefinition' &&
@@ -101,7 +96,7 @@ const splitLink = split(
 
 // Create Apollo Client
 const client = new ApolloClient({
-  link: splitLink,
+  link: wsLink ? from([httpLink, wsLink]) : httpLink,
   cache: new InMemoryCache(),
   defaultOptions: {
     watchQuery: {

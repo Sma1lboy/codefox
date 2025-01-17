@@ -7,6 +7,12 @@ import {
   formatResponse,
   parseGenerateTag,
 } from 'src/build-system/utils/strings';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import {
+  ResponseParsingError,
+  InvalidParameterError,
+  ModelUnavailableError,
+} from 'src/build-system/errors';
 import { VirtualDirectory } from 'src/build-system/virtual-dir';
 import {
   buildDependencyGraph,
@@ -18,24 +24,20 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
   private readonly logger: Logger = new Logger('FileArchGenerateHandler');
   private virtualDir: VirtualDirectory;
 
-  // TODO: adding page by page analysis
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Generating File Architecture Document...');
 
     this.virtualDir = context.virtualDirectory;
 
     const fileStructure = context.getNodeData('op:FILE:STRUCT');
-    // TODO: here should use datamap struct
     const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
-    // TODO: adding page by page analysis
 
     if (!fileStructure || !datamapDoc) {
-      return {
-        success: false,
-        error: new Error(
-          'Missing required parameters: fileStructure or datamapDoc',
-        ),
-      };
+      Logger.error(fileStructure);
+      Logger.error(datamapDoc);
+      throw new InvalidParameterError(
+        'Missing required parameters: fileStructure or datamapDoc.',
+      );
     }
 
     const prompt = generateFileArchPrompt(
@@ -43,67 +45,47 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
       JSON.stringify(datamapDoc, null, 2),
     );
 
-    // fileArchContent generate
-    let successBuild = false;
-    let fileArchContent = null;
-    let jsonData = null;
-    let retry = 0;
-    const retryChances = 2;
-
-    // TODO: not ideal, should implement a better global retry mechanism
-    while (!successBuild) {
-      if (retry > retryChances) {
-        this.logger.error(
-          'Failed to build virtual directory after multiple attempts',
-        );
-        return {
-          success: false,
-          error: new Error(
-            'Failed to build virtual directory after multiple attempts',
-          ),
-        };
-      }
-      try {
-        fileArchContent = await context.model.chatSync({
+    let fileArchContent: string;
+    try {
+      fileArchContent = await chatSyncWithClocker(
+        context,
+        {
           model: 'gpt-4o-mini',
           messages: [{ content: prompt, role: 'system' }],
-        });
-
-        const tagContent = parseGenerateTag(fileArchContent);
-        jsonData = extractJsonFromText(tagContent);
-
-        if (jsonData == null) {
-          retry += 1;
-          this.logger.error('Extract Json From Text fail');
-          continue;
-        }
-
-        // Validate the extracted JSON data
-        if (!this.validateJsonData(jsonData)) {
-          retry += 1;
-          this.logger.error('File architecture JSON validation failed');
-          continue;
-        }
-        console.log(jsonData);
-        // validate with virutual dir
-        const { graph, nodes, fileInfos } = buildDependencyGraph(jsonData);
-        if (!validateAgainstVirtualDirectory(nodes, this.virtualDir)) {
-          retry += 1;
-          this.logger.error('Validate Against Virtual Directory Fail !!!');
-          continue;
-        }
-
-        successBuild = true;
-      } catch (error) {
-        this.logger.error('Error during JSON extraction or validation', error);
-        return {
-          success: false,
-          error: new Error('Error during JSON extraction or validation'),
-        };
-      }
+        },
+        'generateFileArch',
+        this.id,
+      );
+    } catch (error) {
+      this.logger.error('Model is unavailable:' + error);
+      throw new ModelUnavailableError('Model is unavailable:' + error);
     }
 
-    this.logger.log('File architecture document generated successfully');
+    const tagContent = parseGenerateTag(fileArchContent);
+    const jsonData = extractJsonFromText(tagContent);
+
+    if (!jsonData) {
+      this.logger.error('Failed to extract JSON from text');
+      throw new ResponseParsingError('Failed to extract JSON from text.');
+    }
+
+    if (!this.validateJsonData(jsonData)) {
+      this.logger.error('File architecture JSON validation failed.');
+      throw new ResponseParsingError(
+        'File architecture JSON validation failed.',
+      );
+    }
+
+    console.log(jsonData);
+    // validate with virutual dir
+    const { graph, nodes, fileInfos } = buildDependencyGraph(jsonData);
+    if (!validateAgainstVirtualDirectory(nodes, this.virtualDir)) {
+        
+          this.logger.error('Validate Against Virtual Directory Fail !!!');
+          throw new ResponseParsingError('Failed to validate against virtualDirectory.');
+        }
+
+    this.logger.log('File architecture document generated successfully.');
     return {
       success: true,
       data: formatResponse(fileArchContent),
@@ -111,7 +93,7 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
   }
 
   /**
-   * Validate the structure and content of the JSON data.
+   * Validates the structure and content of the JSON data.
    * @param jsonData The JSON data to validate.
    * @returns A boolean indicating whether the JSON data is valid.
    */
@@ -121,13 +103,11 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     const validPathRegex = /^[a-zA-Z0-9_\-/.]+$/;
 
     for (const [file, details] of Object.entries(jsonData.files)) {
-      // Validate the file path
       if (!validPathRegex.test(file)) {
         this.logger.error(`Invalid file path: ${file}`);
         return false;
       }
 
-      // Validate dependencies
       for (const dependency of details.dependsOn) {
         if (!validPathRegex.test(dependency)) {
           this.logger.error(
@@ -136,7 +116,6 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
           return false;
         }
 
-        // Ensure no double slashes or trailing slashes
         if (dependency.includes('//') || dependency.endsWith('/')) {
           this.logger.error(
             `Malformed dependency path "${dependency}" in file "${file}".`,

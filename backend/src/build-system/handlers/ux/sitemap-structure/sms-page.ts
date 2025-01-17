@@ -1,10 +1,15 @@
 import { Logger } from '@nestjs/common';
 import { BuilderContext } from 'src/build-system/context';
 import { BuildHandler, BuildResult } from 'src/build-system/types';
-import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { MessageInterface } from 'src/common/model-provider/types';
+import { batchChatSyncWithClock } from 'src/build-system/utils/handler-helper';
+import {
+  MissingConfigurationError,
+  ResponseParsingError,
+} from 'src/build-system/errors';
+import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 
 export class UXSitemapStructurePagebyPageHandler
   implements BuildHandler<string>
@@ -20,12 +25,22 @@ export class UXSitemapStructurePagebyPageHandler
     const sitemapDoc = context.getNodeData('op:UX:SMS');
     const uxStructureDoc = context.getNodeData('op:UX:SMS');
 
-    if (!projectName || !sitemapDoc || !uxStructureDoc) {
-      return {
-        success: false,
-        data: 'Missing required arguments: projectName, sitemapDoc, or uxStructureDoc.',
-      };
+    // Validate required data
+    if (!projectName || typeof projectName !== 'string') {
+      throw new MissingConfigurationError('Missing or invalid projectName.');
     }
+    if (!sitemapDoc || typeof sitemapDoc !== 'string') {
+      throw new MissingConfigurationError(
+        'Missing or invalid sitemap document.',
+      );
+    }
+    if (!uxStructureDoc || typeof uxStructureDoc !== 'string') {
+      throw new MissingConfigurationError(
+        'Missing or invalid UX Structure document.',
+      );
+    }
+
+    const normalizedUxStructureDoc = uxStructureDoc.replace(/\r\n/g, '\n');
 
     // Extract sections from the UX Structure Document
     const sections = this.extractAllPageViewSections(uxStructureDoc);
@@ -35,14 +50,12 @@ export class UXSitemapStructurePagebyPageHandler
       this.logger.error(
         'No valid sections found in the UX Structure Document.',
       );
-      return {
-        success: false,
-        data: 'No valid sections found in the UX Structure Document.',
-      };
+      throw new ResponseParsingError(
+        'No valid sections found in the UX Structure Document.',
+      );
     }
 
     // Process each section with the refined Level 2 prompt
-    const modelProvider = ModelProvider.getInstance();
     const refinedSections = [];
 
     const globalComponentPrompt =
@@ -52,51 +65,47 @@ export class UXSitemapStructurePagebyPageHandler
 
     this.logger.log('Processing each Global Component...');
 
-    // Global Component
-    for (const globalSection of globalSections) {
-      const messages: MessageInterface[] = [
-        {
-          role: 'system',
-          content: globalComponentPrompt,
-        },
-        {
-          role: 'user',
-          content: `
-        This is the Global Components Section (GCS) of the UX SiteMap Structre (SMS) :
-         ${globalSection} 
+  const requests = globalSections.map((globalSection) => ({
+    model: 'gpt-4o',
+    messages: [{
+      role: 'system' as const,
+      content: globalComponentPrompt,
+    },
+    {
+      role: 'user' as const,
+      content: `
+    This is the Global Components Section (GCS) of the UX SiteMap Structre (SMS) :
+     ${globalSection} 
+  
+    Please generate the Full UX Sitemap Structre for this section now. Provide the information exclusively within <global_component> tags.
+    `,
+    },
+    {
+      role: 'user' as const,
+      content: `Please enrich the details of Core Components in each <global_component> block.
+  Specifically:
+  - **Descriptive Component Names**: Include a clear, meaningful name (C#.X. [Component Name]) and explain its purpose on this page.
+  - **States and Interactions**: Define possible UI states (e.g., Default, Hover, Clicked) and describe typical user interactions (e.g., click, drag, input).
+  - **Access Restrictions**: Note any conditions (e.g., login required, admin-only) that govern access to the component.`,
+      },
+    ]
+  }));
 
-        Please generate the Full UX Sitemap Structre for this section now. Provide the information exclusively within <global_component> tags.
-        `,
-        },
-        {
-          role: 'user',
-          content: `Please enrich the details of Core Components in each <global_component> block.
-    Specifically:
-    - **Descriptive Component Names**: Include a clear, meaningful name (C#.X. [Component Name]) and explain its purpose on this page.
-    - **States and Interactions**: Define possible UI states (e.g., Default, Hover, Clicked) and describe typical user interactions (e.g., click, drag, input).
-    - **Access Restrictions**: Note any conditions (e.g., login required, admin-only) that govern access to the component.`,
-        },
-      ];
-
-      const refinedContent = await modelProvider.chatSync({
-        model: 'gpt-4o',
-        messages,
-      });
-
-      refinedSections.push(refinedContent);
-    }
+    const refinedGlobalCompSections = await batchChatSyncWithClock(context, 'generate global components', this.id, requests);
+    refinedSections.push(refinedGlobalCompSections);
 
     this.logger.log('Processing each Page View...');
 
     // Page View
-    for (const section of sections) {
-      const messages: MessageInterface[] = [
+    const page_view_requests = sections.map((section) => ({
+      model: 'gpt-4o',
+      messages: [
         {
-          role: 'system',
+          role: 'system' as const,
           content: pageViewprompt,
         },
         {
-          role: 'user',
+          role: 'user' as const,
           content: `
           This is the Global Components Section (GCS) of the UX SiteMap Structre (SMS) :
            ${globalSections.join('\n\n')} 
@@ -105,7 +114,7 @@ export class UXSitemapStructurePagebyPageHandler
           `,
         },
         {
-          role: 'user',
+          role: 'user' as const,
           content: `
             Here is the UX SiteMap Structre Section (SMS):
           
@@ -114,7 +123,7 @@ export class UXSitemapStructurePagebyPageHandler
             Please generate the Full UX Sitemap Structre for this section now. Provide the information exclusively within <page_view> tags.`,
         },
         // {
-        //   role: 'user',
+        //   role: 'user' as const,
         //   content: `
         //   Next you need to generating a Draft HTML Layout for each <page_view>.
         //   Your output must emphasize component placement, layout context, and styling directions to ensure developers can implement a responsive and accessible UI effectively.
@@ -122,7 +131,7 @@ export class UXSitemapStructurePagebyPageHandler
         //     `,
         // },
         {
-          role: 'user',
+          role: 'user' as const,
           content: `Please enrich the details of Core Components in each <page_view> block.
       Specifically:
       - **Descriptive Component Names**: Include a clear, meaningful name (C#.X. [Component Name]) and explain its purpose on this page.
@@ -131,20 +140,20 @@ export class UXSitemapStructurePagebyPageHandler
       - **Essential Content**: Identify critical information displayed in the component and explain its importance to the user experience.
       - **Missing Elements**: Review the structure and add any components, features, or details that may be missing to ensure a complete and robust UX structure.`,
         },
-      ];
+      ]
+    }));
+    
 
-      const refinedContent = await modelProvider.chatSync({
-        model: 'gpt-4o',
-        messages,
-      });
+    const refinedPageViewSections = await batchChatSyncWithClock(context, 'generate global components', this.id, page_view_requests);
+    refinedSections.push(refinedPageViewSections);
 
-      refinedSections.push(refinedContent);
-    }
-
-    // Convert refinedSections to a stringD
+    // TODO: deal with chat clocker
+    // Combine the refined sections into the final document
     const refinedDocument = `<UXStructureMap>\n${refinedSections.join('\n\n')}\n</UXStructureMap>`;
 
-    this.logger.log(refinedDocument);
+    this.logger.log(
+      'Successfully generated Level 2 UX Sitemap Structure document.',
+    );
 
     return {
       success: true,

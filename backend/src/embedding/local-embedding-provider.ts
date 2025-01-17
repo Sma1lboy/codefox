@@ -2,8 +2,8 @@ import { Logger } from '@nestjs/common';
 import { EmbeddingModel } from 'fastembed';
 import { EmbeddingDownloader } from 'src/downloader/embedding-downloader';
 
-export class localEmbProvider {
-  private static logger = new Logger(localEmbProvider.name);
+export class EmbeddingProvider {
+  private static logger = new Logger(EmbeddingProvider.name);
 
   static async generateEmbResponse(model: string, message: string[]) {
     const embLoader = EmbeddingDownloader.getInstance();
@@ -12,7 +12,7 @@ export class localEmbProvider {
       const embeddings = embeddingModel.embed(message);
 
       for await (const batch of embeddings) {
-        console.log(batch);
+        Logger.log(batch);
       }
     } catch (error) {
       this.logger.log(`error when using ${model} api`);

@@ -76,7 +76,7 @@ export const generateBackendCodePrompt = (
           import { exec } from 'child_process';
           exec('sqlite3 database.sqlite < ./schema.sql', (error, stdout, stderr) => {
             if (error) {
-              console.error('Error executing schema:', error);
+              Logger.error('Error executing schema:', error);
               return;
             }
           });
@@ -88,7 +88,7 @@ export const generateBackendCodePrompt = (
           const initSchema = fs.readFileSync('./schema.sql', 'utf-8');
           db.exec(initSchema, (err) => {
             if (err) {
-              console.error('Error executing schema:', err);
+              Logger.error('Error executing schema:', err);
               return;
             }
           });

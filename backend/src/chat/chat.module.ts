@@ -1,7 +1,4 @@
 import { Module } from '@nestjs/common';
-import { GraphQLModule } from '@nestjs/graphql';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { HttpModule } from '@nestjs/axios';
 import { ChatResolver } from './chat.resolver';
 import { ChatProxyService, ChatService } from './chat.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -12,14 +9,9 @@ import { ChatGuard } from '../guard/chat.guard';
 import { AuthModule } from '../auth/auth.module';
 import { UserService } from 'src/user/user.service';
 import { PubSub } from 'graphql-subscriptions';
-import { ModelProvider } from 'src/common/model-provider';
 
 @Module({
-  imports: [
-    HttpModule,
-    TypeOrmModule.forFeature([Chat, User, Message]),
-    AuthModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Chat, User, Message]), AuthModule],
   providers: [
     ChatResolver,
     ChatProxyService,
@@ -31,6 +23,6 @@ import { ModelProvider } from 'src/common/model-provider';
       useValue: new PubSub(),
     },
   ],
-  exports: [ChatService, ChatGuard, ModelProvider],
+  exports: [ChatService, ChatGuard],
 })
 export class ChatModule {}
