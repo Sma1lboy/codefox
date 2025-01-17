@@ -12,7 +12,8 @@
     "lint": "eslint . --ext .js,.ts,.tsx",
     "format": "prettier --write .",
     "dev:backend": "turbo dev:backend",
-    "test": "turbo test"
+    "test": "turbo test",
+    "fix": "eslint . --ext .js,.ts,.tsx --fix"
   },
   "postinstall": "pnpm --filter codefox-common run build",
   "keywords": [],
