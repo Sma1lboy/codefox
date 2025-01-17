@@ -3,7 +3,6 @@ import * as path from 'path';
 import { Logger } from '@nestjs/common';
 import { VirtualDirectory } from '../virtual-dir';
 import { extractJsonFromMarkdown } from 'src/build-system/utils/strings';
-import normalizePath from 'normalize-path';
 import toposort from 'toposort';
 
 interface FileDependencyInfo {

@@ -3,14 +3,7 @@ import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { MessageInterface } from 'src/common/model-provider/types';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
-import {
-  MissingConfigurationError,
-  ModelUnavailableError,
-  ResponseParsingError,
-} from 'src/build-system/errors';
-import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 
 export class UXSMDHandler implements BuildHandler<string> {
   readonly id = 'op:UX:SMD';
@@ -29,7 +22,11 @@ export class UXSMDHandler implements BuildHandler<string> {
     const prompt = prompts.generateUxsmdPrompt(projectName, platform);
 
     // Send the prompt to the LLM server and process the response
-    const uxsmdContent = await this.generateUXSMDFromLLM(context, prompt, prdContent);
+    const uxsmdContent = await this.generateUXSMDFromLLM(
+      context,
+      prompt,
+      prdContent,
+    );
 
     // Store the generated document in the context
     context.setGlobalContext('uxsmdDocument', uxsmdContent);

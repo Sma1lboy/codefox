@@ -80,10 +80,11 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
     // validate with virutual dir
     const { graph, nodes, fileInfos } = buildDependencyGraph(jsonData);
     if (!validateAgainstVirtualDirectory(nodes, this.virtualDir)) {
-        
-          this.logger.error('Validate Against Virtual Directory Fail !!!');
-          throw new ResponseParsingError('Failed to validate against virtualDirectory.');
-        }
+      this.logger.error('Validate Against Virtual Directory Fail !!!');
+      throw new ResponseParsingError(
+        'Failed to validate against virtualDirectory.',
+      );
+    }
 
     this.logger.log('File architecture document generated successfully.');
     return {

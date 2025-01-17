@@ -78,7 +78,6 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
     ];
 
     try {
-      
       const uxStructureContent = await chatSyncWithClocker(
         context,
         {

@@ -2,14 +2,11 @@ import { Logger } from '@nestjs/common';
 import { BuilderContext } from 'src/build-system/context';
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { prompts } from './prompt';
-import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { MessageInterface } from 'src/common/model-provider/types';
 import { batchChatSyncWithClock } from 'src/build-system/utils/handler-helper';
 import {
   MissingConfigurationError,
   ResponseParsingError,
 } from 'src/build-system/errors';
-import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 
 export class UXSitemapStructurePagebyPageHandler
   implements BuildHandler<string>
@@ -65,33 +62,39 @@ export class UXSitemapStructurePagebyPageHandler
 
     this.logger.log('Processing each Global Component...');
 
-  const requests = globalSections.map((globalSection) => ({
-    model: 'gpt-4o',
-    messages: [{
-      role: 'system' as const,
-      content: globalComponentPrompt,
-    },
-    {
-      role: 'user' as const,
-      content: `
+    const requests = globalSections.map((globalSection) => ({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system' as const,
+          content: globalComponentPrompt,
+        },
+        {
+          role: 'user' as const,
+          content: `
     This is the Global Components Section (GCS) of the UX SiteMap Structre (SMS) :
      ${globalSection} 
   
     Please generate the Full UX Sitemap Structre for this section now. Provide the information exclusively within <global_component> tags.
     `,
-    },
-    {
-      role: 'user' as const,
-      content: `Please enrich the details of Core Components in each <global_component> block.
+        },
+        {
+          role: 'user' as const,
+          content: `Please enrich the details of Core Components in each <global_component> block.
   Specifically:
   - **Descriptive Component Names**: Include a clear, meaningful name (C#.X. [Component Name]) and explain its purpose on this page.
   - **States and Interactions**: Define possible UI states (e.g., Default, Hover, Clicked) and describe typical user interactions (e.g., click, drag, input).
   - **Access Restrictions**: Note any conditions (e.g., login required, admin-only) that govern access to the component.`,
-      },
-    ]
-  }));
+        },
+      ],
+    }));
 
-    const refinedGlobalCompSections = await batchChatSyncWithClock(context, 'generate global components', this.id, requests);
+    const refinedGlobalCompSections = await batchChatSyncWithClock(
+      context,
+      'generate global components',
+      this.id,
+      requests,
+    );
     refinedSections.push(refinedGlobalCompSections);
 
     this.logger.log('Processing each Page View...');
@@ -140,11 +143,15 @@ export class UXSitemapStructurePagebyPageHandler
       - **Essential Content**: Identify critical information displayed in the component and explain its importance to the user experience.
       - **Missing Elements**: Review the structure and add any components, features, or details that may be missing to ensure a complete and robust UX structure.`,
         },
-      ]
+      ],
     }));
-    
 
-    const refinedPageViewSections = await batchChatSyncWithClock(context, 'generate global components', this.id, page_view_requests);
+    const refinedPageViewSections = await batchChatSyncWithClock(
+      context,
+      'generate global components',
+      this.id,
+      page_view_requests,
+    );
     refinedSections.push(refinedPageViewSections);
 
     // TODO: deal with chat clocker
