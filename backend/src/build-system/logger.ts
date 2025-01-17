@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
+import { PROJECT_EVENT_PATH } from 'codefox-common';
 import * as fs from 'fs';
 import * as path from 'path';
-import { PROJECT_EVENT_PATH } from 'src/config/common-path';
 
 /**
  * Interface representing a project event with associated metadata

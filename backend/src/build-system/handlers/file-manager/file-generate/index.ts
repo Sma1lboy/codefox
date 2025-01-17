@@ -5,7 +5,6 @@ import { VirtualDirectory } from '../../../virtual-dir';
 import { BuilderContext } from 'src/build-system/context';
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { extractJsonFromMarkdown } from 'src/build-system/utils/strings';
-import { getProjectPath } from 'src/config/common-path';
 import normalizePath from 'normalize-path';
 import toposort from 'toposort';
 import {
@@ -13,6 +12,7 @@ import {
   ResponseParsingError,
   FileWriteError,
 } from 'src/build-system/errors';
+import { getProjectPath } from 'codefox-common';
 
 export class FileGeneratorHandler implements BuildHandler<string> {
   readonly id = 'op:FILE:GENERATE';

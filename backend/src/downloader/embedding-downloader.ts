@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { UniversalStatusManager } from './universal-status';
 import { EmbeddingModel, FlagEmbedding } from 'fastembed';
-import { getEmbDir } from 'src/config/common-path';
+import { getEmbDir } from 'codefox-common';
 export class EmbeddingDownloader {
   readonly logger = new Logger(EmbeddingDownloader.name);
   private static instance: EmbeddingDownloader;

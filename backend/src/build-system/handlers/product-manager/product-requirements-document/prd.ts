@@ -10,6 +10,7 @@ import {
   ModelUnavailableError,
   ResponseParsingError,
 } from 'src/build-system/errors';
+import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 
 export class PRDHandler implements BuildHandler {
   readonly id = 'op:PRD';

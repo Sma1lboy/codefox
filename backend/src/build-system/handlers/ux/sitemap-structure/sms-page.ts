@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { BuilderContext } from 'src/build-system/context';
 import { BuildHandler, BuildResult } from 'src/build-system/types';
-import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
@@ -10,6 +9,7 @@ import {
   MissingConfigurationError,
   ResponseParsingError,
 } from 'src/build-system/errors';
+import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 
 export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
   readonly id = 'op:UX:SMS:LEVEL2';
@@ -52,50 +52,30 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
       );
     }
 
-    // Process each section with the refined Level 2 prompt
-    const refinedSections = [];
+    // Process all sections concurrently
+    const modelProvider = OpenAIModelProvider.getInstance();
 
-    for (const section of sections) {
-      const prompt = prompts.generateLevel2UXSiteMapStructrePrompt(
-        projectName,
-        section.content,
-        sitemapDoc,
-        'web', // TODO: Replace with dynamic platform if necessary
-      );
-
-      const messages: MessageInterface[] = [
-        { content: prompt, role: 'system' },
-      ];
-      const refinedContent = await chatSyncWithClocker(
-        context,
+    // Prepare all requests
+    const requests = sections.map((section) => ({
+      model: 'gpt-4o-mini',
+      messages: [
         {
-          model: 'gpt-4o-mini',
-          messages,
+          content: prompts.generateLevel2UXSiteMapStructrePrompt(
+            projectName,
+            section.content,
+            sitemapDoc,
+            'web', // TODO: Replace with dynamic platform if necessary
+          ),
+          role: 'system' as const,
         },
-        'generateLevel2UXSiteMapStructure',
-        this.id,
-      );
+      ],
+    }));
 
-      this.logger.log(refinedContent);
-      if (!refinedContent || refinedContent.trim() === '') {
-        this.logger.error(
-          `Generated content for section "${section.title}" is empty.`,
-        );
-        throw new ResponseParsingError(
-          `Generated content for section "${section.title}" is empty.`,
-        );
-      }
+    const refinedSections = await modelProvider.batchChatSync(requests);
 
-      refinedSections.push({
-        title: section.title,
-        content: refinedContent,
-      });
-    }
-
+    // TODO: deal with chat clocker
     // Combine the refined sections into the final document
-    const refinedDocument = refinedSections
-      .map((section) => `## **${section.title}**\n${section.content}`)
-      .join('\n\n');
+    const refinedDocument = refinedSections.join('\n\n');
 
     this.logger.log(
       'Successfully generated Level 2 UX Sitemap Structure document.',

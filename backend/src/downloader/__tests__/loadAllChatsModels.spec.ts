@@ -1,12 +1,6 @@
-import path from 'path';
-import * as fs from 'fs';
-import {
-  ConfigLoader,
-  ModelConfig,
-  EmbeddingConfig,
-} from '../../config/config-loader';
-import { UniversalDownloader } from '../model-downloader';
-import { ConfigType, downloadAll, TaskType } from '../universal-utils';
+import { ConfigLoader, EmbeddingConfig } from '../../config/config-loader';
+import { EmbeddingDownloader } from '../embedding-downloader';
+import { downloadAllEmbeddings } from '../universal-utils';
 
 const originalIsArray = Array.isArray;
 
@@ -22,76 +16,44 @@ Array.isArray = jest.fn((type: any): type is any[] => {
   return originalIsArray(type);
 }) as unknown as (arg: any) => arg is any[];
 
-// jest.mock('../../config/config-loader', () => {
-//   return {
-//     ConfigLoader: jest.fn().mockImplementation(() => {
-//       return {
-//         get: jest.fn().mockReturnValue({
-//           chat1: {
-//             model: 'Felladrin/onnx-flan-alpaca-base',
-//             task: 'text2text-generation',
-//           },
-//         }),
-//         validateConfig: jest.fn(),
-//       };
-//     }),
-//   };
-// });
-
-describe('loadAllChatsModels with real model loading', () => {
-  let modelConfigLoader: ConfigLoader;
+describe('loadAllEmbeddingModels with real model loading', () => {
   let embConfigLoader: ConfigLoader;
-  beforeAll(async () => {
-    modelConfigLoader = ConfigLoader.getInstance(ConfigType.CHATS);
-    embConfigLoader = ConfigLoader.getInstance(ConfigType.EMBEDDINGS);
-    const modelConfig: ModelConfig = {
-      model: 'Xenova/flan-t5-small',
-      endpoint: 'http://localhost:11434/v1',
-      token: 'your-token-here',
-      task: 'text2text-generation',
-    };
-    modelConfigLoader.addConfig(modelConfig);
 
+  beforeAll(async () => {
+    embConfigLoader = ConfigLoader.getInstance();
     const embConfig: EmbeddingConfig = {
       model: 'fast-bge-base-en-v1.5',
       endpoint: 'http://localhost:11434/v1',
       token: 'your-token-here',
     };
     embConfigLoader.addConfig(embConfig);
+
     console.log('preload starts');
-    await downloadAll();
+    await downloadAllEmbeddings();
     console.log('preload successfully');
-  }, 60000000);
+  }, 6000000);
 
-  it('should load real models specified in config', async () => {
-    const downloader = UniversalDownloader.getInstance();
-    const chat1Model = await downloader.getLocalModel(
-      TaskType.CHAT,
-      'Xenova/flan-t5-small',
+  it('should load real embedding models specified in config', async () => {
+    const downloader = EmbeddingDownloader.getInstance();
+    const embeddingModel = await downloader.getPipeline(
+      'fast-bge-base-en-v1.5',
     );
-    expect(chat1Model).toBeDefined();
-    console.log('Loaded Model:', chat1Model);
+    expect(embeddingModel).toBeDefined();
+    console.log('Loaded Embedding Model:', embeddingModel);
 
-    expect(chat1Model).toHaveProperty('model');
-    expect(chat1Model).toHaveProperty('tokenizer');
+    expect(embeddingModel).toHaveProperty('model');
 
     try {
-      const chat1Output = await chat1Model(
-        'Write me a love poem about cheese.',
-        {
-          max_new_tokens: 200,
-          temperature: 0.9,
-          repetition_penalty: 2.0,
-          no_repeat_ngram_size: 3,
-        },
-      );
+      const embeddingOutput = await embeddingModel.embed([
+        'Test input sentence for embedding.',
+      ]);
+      for await (const batch of embeddingOutput) {
+        console.log(batch);
+      }
 
-      console.log('Model Output:', chat1Output);
-      expect(chat1Output).toBeDefined();
-      expect(chat1Output[0]).toHaveProperty('generated_text');
-      console.log(chat1Output[0].generated_text);
+      expect(embeddingOutput).toBeDefined();
     } catch (error) {
-      console.error('Error during model inference:', error);
+      console.error('Error during embedding model inference:', error);
     }
   }, 6000000);
 });

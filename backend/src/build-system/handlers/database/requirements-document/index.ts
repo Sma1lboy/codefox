@@ -1,22 +1,21 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
-import { ModelProvider } from 'src/common/model-provider';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 import {
   MissingConfigurationError,
   ModelUnavailableError,
 } from 'src/build-system/errors';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
-import { MessageInterface } from 'src/common/model-provider/types';
 
 export class DatabaseRequirementHandler implements BuildHandler<string> {
   readonly id = 'op:DATABASE_REQ';
   private readonly logger = new Logger('DatabaseRequirementHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
-    const model = ModelProvider.getInstance();
+    const model = context.model;
     this.logger.log('Generating Database Requirements Document...');
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';

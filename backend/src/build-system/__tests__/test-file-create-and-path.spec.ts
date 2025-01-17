@@ -1,13 +1,8 @@
 import * as path from 'path';
 import * as os from 'os';
 import { existsSync, rmdirSync } from 'fs-extra';
-import * as pathUtil from '../../config/common-path';
 import { saveGeneratedCode } from 'src/build-system/utils/files';
-import {
-  getRootDir,
-  getProjectsDir,
-  getProjectPath,
-} from 'src/config/common-path';
+import { getProjectPath, getProjectsDir, getRootDir } from 'codefox-common';
 
 describe('Path Utilities', () => {
   const APP_NAME = 'codefox';
@@ -47,14 +42,14 @@ describe('Path Utilities', () => {
   });
 
   it('should resolve paths correctly', () => {
-    const rootDir = pathUtil.getRootDir();
-    const projectsDir = pathUtil.getProjectsDir();
+    const rootDir = getRootDir();
+    const projectsDir = getProjectsDir();
     expect(rootDir).toBeDefined();
     expect(projectsDir).toBeDefined();
   });
 
   it('should create and return the root directory', async () => {
-    const rootDir = pathUtil.getRootDir();
+    const rootDir = getRootDir();
 
     await generateAndSaveCode();
     expect(rootDir).toBe(ROOT_DIR);
