@@ -12,7 +12,7 @@ import { DatabaseRequirementHandler } from './handlers/database/requirements-doc
 import { FileGeneratorHandler } from './handlers/file-manager/file-generate';
 import { BackendRequirementHandler } from './handlers/backend/requirements-document';
 import { BackendFileReviewHandler } from './handlers/backend/file-review/file-review';
-import { Level2UXSitemapStructureHandler } from './handlers/ux/sitemap-structure/sms-page';
+import { UXSitemapStructurePagebyPageHandler } from './handlers/ux/sitemap-structure/sms-page';
 import { FrontendCodeHandler } from './handlers/frontend-code-generate';
 
 /**
@@ -37,7 +37,7 @@ export class BuildHandlerManager {
       new ProjectInitHandler(),
       new PRDHandler(),
       new UXSitemapStructureHandler(),
-      new Level2UXSitemapStructureHandler(),
+      new UXSitemapStructurePagebyPageHandler(),
       new UXDatamapHandler(),
       new UXSMDHandler(),
       new FileStructureHandler(),
