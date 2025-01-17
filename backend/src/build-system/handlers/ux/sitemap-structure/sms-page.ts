@@ -3,11 +3,7 @@ import { BuilderContext } from 'src/build-system/context';
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { prompts } from './prompt';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import {
-  batchChatSyncWithClock,
-  chatSyncWithClocker,
-} from 'src/build-system/utils/handler-helper';
-import { MessageInterface } from 'src/common/model-provider/types';
+import { batchChatSyncWithClock } from 'src/build-system/utils/handler-helper';
 import {
   MissingConfigurationError,
   ResponseParsingError,

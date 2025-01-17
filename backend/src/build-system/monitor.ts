@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { BuildStep, BuildSequence } from './types';
 import { ProjectEventLogger } from './logger';
-import { MessageInterface } from 'src/common/model-provider/types';
 import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 /**
  * Metrics for sequence, step, and node execution

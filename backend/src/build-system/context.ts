@@ -1,6 +1,5 @@
 import {
   BuildExecutionState,
-  BuildHandler,
   BuildNode,
   BuildResult,
   BuildSequence,

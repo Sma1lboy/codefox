@@ -1,5 +1,5 @@
 import { BuildSequence } from '../types';
-import { executeBuildSequence, objectToMarkdown, writeToFile } from './utils';
+import { executeBuildSequence } from './utils';
 
 describe('Build Sequence Test', () => {
   it('should execute build sequence successfully', async () => {

@@ -3,7 +3,6 @@ import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 import {
   MissingConfigurationError,
   ModelUnavailableError,
