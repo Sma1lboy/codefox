@@ -83,7 +83,7 @@ export class ChatResolver {
   ): Promise<string[]> {
     try {
       const response = await this.chatProxyService.fetchModelTags();
-      return response.models.data.map((model) => model.id); // Adjust based on model structure
+      return response;
     } catch (error) {
       throw new Error('Failed to fetch model tags');
     }

@@ -6,6 +6,7 @@
     "dev": "next dev",
     "start:dev": "next dev",
     "start:dev-watch": "tmuxinator start -p .tmuxinator/build.yml",
+    "dev:watch": "tmuxinator start -p .tmuxinator/dev.yml",
     "build": "next build",
     "start": "next start",
     "lint": "next lint --fix",

@@ -1,8 +1,8 @@
 import { Logger } from '@nestjs/common';
 import { PipelineType, pipeline, env } from '@huggingface/transformers';
-import { getModelsDir } from 'src/config/common-path';
 import { isRemoteModel } from './const';
 import { UniversalStatusManager } from './universal-status';
+import { getModelsDir } from 'codefox-common';
 
 env.allowLocalModels = true;
 env.localModelPath = getModelsDir();
@@ -21,14 +21,14 @@ export class UniversalDownloader {
   async getPipeline(task: string, model: string, path: string): Promise<any> {
     if (isRemoteModel(model)) {
       this.logger.log(`Remote model detected: ${model}, marking as downloaded`);
-      Logger.log(this.statusManager);
+      console.log(this.statusManager);
       this.statusManager.updateStatus(model, true);
       return null;
     }
 
     this.logger.log(`Starting download for local model: ${model}`);
     try {
-      Logger.log(path);
+      console.log(path);
       const pipelineInstance = await pipeline(task as PipelineType, model, {
         cache_dir: path,
       });

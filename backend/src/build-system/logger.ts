@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
+import { PROJECT_EVENT_PATH } from 'codefox-common';
 import * as fs from 'fs';
 import * as path from 'path';
-import { PROJECT_EVENT_PATH } from 'src/config/common-path';
 
 /**
  * Interface representing a project event with associated metadata
@@ -67,7 +67,7 @@ export class ProjectEventLogger {
       const events = await this.readExistingEvents();
       events.push(event);
       await fs.promises.writeFile(filePath, JSON.stringify(events, null, 2));
-      this.logger.log(`Event logged: ${event.type}`);
+      this.logger.log(`Event logged: ${event.type} to ${filePath}`);
     } catch (error) {
       this.logger.error('Failed to log event:', error);
       throw error;

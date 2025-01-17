@@ -1,8 +1,7 @@
 import { Logger } from '@nestjs/common';
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import { getProjectPath, getProjectsDir } from 'src/config/common-path';
-
+import { getProjectsDir, getProjectPath } from 'codefox-common';
 const logger = new Logger('file-utils');
 /**
  * Saves the given content to the specified file path using fs-extra.
@@ -19,10 +18,14 @@ export async function saveGeneratedCode(
 ): Promise<string> {
   try {
     // fs-extra's outputFile creates all directories if they don't exist
-    await fs.outputFile(path.join(getProjectsDir(), filePath), content, 'utf8');
+    await fs.outputFile(
+      path.join(getProjectsDir(), filePath),
+      content ? content : '',
+      'utf8',
+    );
     return filePath;
   } catch (error) {
-    logger.error('Error saving generated code:', error);
+    logger.error(`Error saving generated code to ${filePath}:`, error);
     throw error;
   }
 }

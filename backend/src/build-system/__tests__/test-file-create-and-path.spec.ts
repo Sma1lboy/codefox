@@ -1,11 +1,6 @@
-import * as pathUtil from '../../config/common-path';
-import { saveGeneratedCode } from 'src/build-system/utils/files';
-import {
-  getRootDir,
-  getProjectsDir,
-  getProjectPath,
-} from 'src/config/common-path';
 import { Logger } from '@nestjs/common';
+import { getProjectPath, getProjectsDir, getRootDir } from 'codefox-common';
+import { saveGeneratedCode } from 'src/build-system/utils/files';
 
 describe('Path Utilities', () => {
   const cleanUp = () => {
@@ -42,13 +37,15 @@ describe('Path Utilities', () => {
   });
 
   it('should resolve paths correctly', () => {
-    const rootDir = pathUtil.getRootDir();
-    const projectsDir = pathUtil.getProjectsDir();
+    const rootDir = getRootDir();
+    const projectsDir = getProjectsDir();
     expect(rootDir).toBeDefined();
     expect(projectsDir).toBeDefined();
   });
 
   it('should create and return the root directory', async () => {
+    const rootDir = getRootDir();
+
     await generateAndSaveCode();
   });
 });

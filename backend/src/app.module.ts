@@ -31,7 +31,7 @@ import { LoggingInterceptor } from 'src/interceptor/LoggingInterceptor';
     }),
     TypeOrmModule.forRoot({
       type: 'sqlite',
-      database: join(process.cwd(), 'src/database.sqlite'),
+      database: join(process.cwd(), './database.db'),
       synchronize: true,
       entities: [__dirname + '/**/*.model{.ts,.js}'],
     }),
