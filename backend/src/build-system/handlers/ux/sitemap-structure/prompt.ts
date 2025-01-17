@@ -197,6 +197,7 @@ Each page **must** follow this format exactly, wrapped in \`<page_view>\` tags:
 - Keep each \`<page_view>\` labeled with a **unique** page ID and page number (P1, P2, etc.).
 
 2.  Guidelines for Draft HTML Layout:
+Your output must emphasize component placement, layout context, and styling directions to ensure developers can implement a responsive and accessible UI effectively.
 
   ${guidelines}
 
@@ -311,7 +312,7 @@ Each <global_component> must follow this format exactly, wrapped in <global_comp
   HTML_Guidelines_Page_view_Prompt: (): string => {
     return ` 
 
-    Structure and Hierarchy
+    Structure and Hierarchy:
         Use semantic HTML5 tags to represent the structure:
             <header> for the top navigation or page intro.
             <main> for the main content.
@@ -322,21 +323,21 @@ Each <global_component> must follow this format exactly, wrapped in <global_comp
             Scrollable sections: Secondary content, such as grids or detailed sections.
             Persistent elements: Sticky headers or fixed footers.
 
-    Styling Hints
-        Provide inline styling hints using style={{}}:
+    Styling Hints:
+        Provide inline styling using style={{}}:
             Layout direction: Use display: flex or display: grid for alignment.
             Spacing: Define margin, padding, or gap for spacing between components.
             Dimensions: Include width and height constraints (e.g., minHeight: "100vh").
             Positioning: Specify fixed or sticky positioning for persistent elements.
 
-    Responsiveness
+    Responsiveness:
         Use layout properties that adapt to various screen sizes.
         For example:
             gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" for flexible grids.
             flexWrap: "wrap" for flexible flexbox layouts.
         Add responsive placeholders (e.g., "Desktop: 3-column grid, Mobile: Single column").
 
-    Accessibility
+    Accessibility:
         Ensure components include accessibility attributes:
             Navigation bars: role="navigation", aria-label.
             Landmarks: aria-labelledby or aria-describedby for clear roles.
