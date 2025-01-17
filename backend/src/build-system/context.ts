@@ -86,87 +86,13 @@ export class BuilderContext {
     );
   }
 
-  async execute(): Promise<void> {
-    this.logger.log(`Starting build sequence: ${this.sequence.id}`);
-    this.monitor.startSequenceExecution(this.sequence);
-
-    try {
-      const nodes = this.sequence.nodes;
-      const windowSize = 20;
-      let windowStart = 0;
-
-      while (windowStart < nodes.length) {
-        const windowEnd = Math.min(windowStart + windowSize, nodes.length);
-        const windowNodes = nodes.slice(windowStart, windowEnd);
-
-        const executableNodes = windowNodes.filter((node) =>
-          this.canExecute(node),
-        );
-
-        if (executableNodes.length > 0) {
-          await Promise.all(
-            executableNodes.map(async (node) => {
-              const handlerClass = node.handler
-                .constructor as BuildHandlerConstructor;
-              if (this.executionState.completed.has(handlerClass.name)) {
-                return;
-              }
-
-              this.monitor.startNodeExecution(
-                handlerClass.name,
-                this.sequence.id,
-              );
-
-              try {
-                this.logger.log(`Executing node ${handlerClass.name}`);
-                await this.executeNode(node);
-
-                this.monitor.endNodeExecution(
-                  handlerClass.name,
-                  this.sequence.id,
-                  true,
-                );
-              } catch (error) {
-                this.monitor.endNodeExecution(
-                  handlerClass.name,
-                  this.sequence.id,
-                  false,
-                  error instanceof Error ? error : new Error(String(error)),
-                );
-                throw error;
-              }
-            }),
-          );
-        }
-
-        windowStart += windowSize;
-      }
-
-      const finalActivePromises = this.model.getAllActivePromises();
-      if (finalActivePromises.length > 0) {
-        this.logger.debug(
-          `Final wait for ${finalActivePromises.length} remaining LLM requests`,
-        );
-        await Promise.all(finalActivePromises);
-      }
-
-      this.logger.log(`Build sequence completed: ${this.sequence.id}`);
-      this.logger.log('Final execution state:', this.executionState);
-    } finally {
-      this.monitor.endSequenceExecution(
-        this.sequence.id,
-        this.globalContext.get('projectUUID'),
-      );
-    }
-  }
-
   /**
    * Checks if a node can be executed based on its dependencies
    * @param node The node to check
    * @returns boolean indicating if the node can be executed
    */
   private canExecute(node: BuildNode): boolean {
-    const handlerClass = node.handler.constructor as BuildHandlerConstructor;
+    const handlerClass = node.handler;
     const handlerName = handlerClass.name;
 
     if (
@@ -191,8 +117,12 @@ export class BuilderContext {
   private async executeNode<T extends BuildHandler>(
     node: BuildNode,
   ): Promise<BuildResult<ExtractHandlerType<T>>> {
-    const handlerClass = node.handler.constructor as BuildHandlerConstructor;
+    const handlerClass = node.handler; // 直接使用，因为它已经是 BuildHandlerConstructor
     const handlerName = handlerClass.name;
+
+    if (!this.canExecute(node)) {
+      throw new Error(`Dependencies not met for node: ${handlerName}`);
+    }
 
     try {
       this.executionState.pending.add(handlerName);
@@ -209,14 +139,13 @@ export class BuilderContext {
       throw error;
     }
   }
-
   /**
    * Invokes a handler for a specific node
    * @param node The node to execute
    * @returns Promise resolving to the build result
    */
   private async invokeNodeHandler<T>(node: BuildNode): Promise<BuildResult<T>> {
-    const handlerClass = node.handler.constructor as BuildHandlerConstructor;
+    const handlerClass = node.handler;
     this.logger.log(`solving ${handlerClass.name}`);
 
     if (!this.handlerManager.validateDependencies(handlerClass)) {
@@ -224,7 +153,8 @@ export class BuilderContext {
     }
 
     try {
-      return await node.handler.run(this, node.options);
+      const handler = this.handlerManager.getHandler(handlerClass);
+      return await handler.run(this);
     } catch (e) {
       this.logger.error(`retrying ${handlerClass.name}`);
       const result = await this.retryHandler.retryMethod(
@@ -291,5 +221,89 @@ export class BuilderContext {
 
   buildVirtualDirectory(jsonContent: string): boolean {
     return this.virtualDirectory.parseJsonStructure(jsonContent);
+  }
+
+  async execute(): Promise<void> {
+    this.logger.log(`Starting build sequence: ${this.sequence.id}`);
+    this.monitor.startSequenceExecution(this.sequence);
+
+    try {
+      const nodes = this.sequence.nodes;
+      let currentIndex = 0;
+
+      while (currentIndex < nodes.length) {
+        const currentNode = nodes[currentIndex];
+        const handlerClass = currentNode.handler;
+        const handlerName = handlerClass.name;
+
+        // Check if node is already completed
+        if (this.executionState.completed.has(handlerName)) {
+          currentIndex++;
+          continue;
+        }
+
+        // Check dependencies
+        if (!this.checkDependencies(handlerClass)) {
+          const dependencies =
+            this.handlerManager.getDependencies(handlerClass);
+          this.logger.debug(
+            `Dependencies not met for ${handlerName}: ${dependencies.map((d) => d.name).join(', ')}. Waiting for previous nodes to complete.`,
+          );
+          // Since nodes are ordered by dependency, yield and wait for previous nodes
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          // Don't increment currentIndex, stay at current node
+          continue;
+        }
+
+        // Dependencies satisfied, execute the node
+        this.monitor.startNodeExecution(handlerName, this.sequence.id);
+
+        try {
+          this.logger.log(`Executing node ${handlerName}`);
+          await this.executeNode(currentNode);
+
+          this.monitor.endNodeExecution(handlerName, this.sequence.id, true);
+
+          // Only move to next node after successful execution
+          currentIndex++;
+        } catch (error) {
+          this.monitor.endNodeExecution(
+            handlerName,
+            this.sequence.id,
+            false,
+            error instanceof Error ? error : new Error(String(error)),
+          );
+          throw error;
+        }
+      }
+
+      const finalActivePromises = this.model.getAllActivePromises();
+      if (finalActivePromises.length > 0) {
+        this.logger.debug(
+          `Final wait for ${finalActivePromises.length} remaining LLM requests`,
+        );
+        await Promise.all(finalActivePromises);
+      }
+
+      this.logger.log(`Build sequence completed: ${this.sequence.id}`);
+      this.logger.log('Final execution state:', this.executionState);
+    } finally {
+      this.monitor.endSequenceExecution(
+        this.sequence.id,
+        this.globalContext.get('projectUUID'),
+      );
+    }
+  }
+
+  /**
+   * Checks if all dependencies for a handler are completed
+   * @param handlerClass The handler class to check dependencies for
+   * @returns boolean indicating if all dependencies are satisfied
+   */
+  private checkDependencies(handlerClass: BuildHandlerConstructor): boolean {
+    const dependencies = this.handlerManager.getDependencies(handlerClass);
+    return dependencies.every((dep) =>
+      this.executionState.completed.has(dep.name),
+    );
   }
 }

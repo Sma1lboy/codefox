@@ -149,7 +149,7 @@ export class UXSitemapStructurePagebyPageHandler
 
     const refinedPageViewSections = await batchChatSyncWithClock(
       context,
-      'generate global components',
+      'generate page by page details',
       UXSitemapStructurePagebyPageHandler.name,
       page_view_requests,
     );

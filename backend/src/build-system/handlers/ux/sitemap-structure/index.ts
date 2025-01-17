@@ -87,7 +87,7 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
       const uxStructureContent = await chatSyncWithClocker(
         context,
         {
-          model: 'gpt-4o',
+          model: 'gpt-4o-mini',
           messages,
         },
         'generateUXSiteMapStructre',

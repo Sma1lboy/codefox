@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import { BuildSequence } from './types';
 import { ProjectEventLogger } from './logger';
 import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
-
+import * as gpt3Encoder from 'gpt-3-encoder';
 /**
  * Node execution metrics
  */
@@ -88,13 +88,11 @@ export class BuildMonitor {
     input: string,
     output: string,
   ): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const encoder = require('gpt-3-encoder');
     const inputLength = input.length;
     const value = {
       step,
       input: inputLength,
-      output: encoder.encode(output).length,
+      output: gpt3Encoder.encode(output).length,
       generateDuration,
     };
     if (!this.timeRecorders.has(name)) {
@@ -308,5 +306,13 @@ export class BuildMonitor {
     });
 
     return report;
+  }
+  /**
+   * Get metrics for a specific sequence
+   * @param sequenceId The ID of the sequence
+   * @returns The metrics for the sequence, or undefined if not found
+   */
+  getSequenceMetrics(sequenceId: string): SequenceMetrics | undefined {
+    return this.sequenceMetrics.get(sequenceId);
   }
 }

@@ -1,20 +1,29 @@
 import { BuilderContext } from './context';
 
-// 基础构建接口
+/**
+ * Base interface for build configuration
+ */
 export interface BuildBase {
-  handler: BuildHandler;
+  /**
+   * Class reference that implements BuildHandler
+   */
+  handler: new () => BuildHandler;
   name?: string;
   description?: string;
   requires?: string[];
   options?: BuildOpts;
 }
 
-// 构建节点配置
+/**
+ * Build node configuration
+ */
 export interface BuildNode extends BuildBase {
   config?: Record<string, any>;
 }
 
-// 构建序列定义
+/**
+ * Build sequence definition
+ */
 export interface BuildSequence {
   id: string;
   version: string;
@@ -24,19 +33,25 @@ export interface BuildSequence {
   nodes: BuildNode[];
 }
 
-// 构建选项
+/**
+ * Build options
+ */
 export interface BuildOpts {
   projectPart?: 'frontend' | 'backend';
 }
 
-// 构建结果接口
+/**
+ * Build result interface
+ */
 export interface BuildResult<T = any> {
   success: boolean;
   data?: T;
   error?: Error;
 }
 
-// 构建执行状态
+/**
+ * Build execution state
+ */
 export interface BuildExecutionState {
   completed: Set<string>;
   pending: Set<string>;
@@ -44,29 +59,40 @@ export interface BuildExecutionState {
   waiting: Set<string>;
 }
 
-// 构建上下文
+/**
+ * Build context
+ */
 export interface BuildContext {
   data: Record<string, any>;
   completedNodes: Set<string>;
   pendingNodes: Set<string>;
 }
 
-// 构建处理器接口
+/**
+ * Build handler interface
+ */
 export interface BuildHandler<T = any> {
   run(context: BuilderContext, opts?: BuildOpts): Promise<BuildResult<T>>;
 }
 
-// 处理器构造函数类型
+/**
+ * Build handler constructor type
+ */
 export interface BuildHandlerConstructor<T = any> {
   new (): BuildHandler<T>;
 }
 
-// 特定输出类型（仅保留实际需要的具体类型定义）
+/**
+ * File structure output type
+ */
 export interface FileStructOutput {
   fileStructure: string;
   jsonFileStructure: string;
 }
 
+/**
+ * Backend requirement output type
+ */
 export interface BackendRequirementOutput {
   overview: string;
   implementation: string;
@@ -77,9 +103,13 @@ export interface BackendRequirementOutput {
   };
 }
 
-// 工具类型：从处理器中提取输出类型
+/**
+ * Extract handler type utility
+ */
 export type ExtractHandlerType<T> = T extends BuildHandler<infer U> ? U : never;
 
-// 工具类型：从处理器构造函数中提取输出类型
+/**
+ * Extract handler return type utility
+ */
 export type ExtractHandlerReturnType<T extends new () => BuildHandler<any>> =
   ExtractHandlerType<InstanceType<T>>;
