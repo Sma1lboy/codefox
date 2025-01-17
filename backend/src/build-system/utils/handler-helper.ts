@@ -17,3 +17,27 @@ export async function chatSyncWithClocker(
   BuildMonitor.timeRecorder(duration, id, step, inputContent, modelResponse);
   return modelResponse;
 }
+
+export async function batchChatSyncWithClock(
+  context: BuilderContext,
+  step: string,
+  id: string,
+  inputs: ChatInput[],
+): Promise<string[]> {
+  const startTime = new Date();
+  const modelResponses = await context.model.batchChatSync(inputs);
+  const endTime = new Date();
+  const duration = endTime.getTime() - startTime.getTime();
+
+  const inputContent = inputs
+    .map((input) => input.messages.map((m) => m.content).join(''))
+    .join('');
+  BuildMonitor.timeRecorder(
+    duration,
+    id,
+    step,
+    inputContent,
+    modelResponses.join(''),
+  );
+  return modelResponses;
+}

@@ -3,7 +3,10 @@ import { BuilderContext } from 'src/build-system/context';
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { prompts } from './prompt';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import {
+  batchChatSyncWithClock,
+  chatSyncWithClocker,
+} from 'src/build-system/utils/handler-helper';
 import { MessageInterface } from 'src/common/model-provider/types';
 import {
   MissingConfigurationError,
@@ -71,7 +74,12 @@ export class Level2UXSitemapStructureHandler implements BuildHandler<string> {
       ],
     }));
 
-    const refinedSections = await modelProvider.batchChatSync(requests);
+    const refinedSections = await batchChatSyncWithClock(
+      context,
+      'generate page-by-page by sections',
+      this.id,
+      requests,
+    );
 
     // TODO: deal with chat clocker
     // Combine the refined sections into the final document
