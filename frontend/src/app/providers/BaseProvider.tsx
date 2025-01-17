@@ -1,25 +1,27 @@
 'use client';
 
-import client from '@/lib/client';
-import { ApolloProvider } from '@apollo/client';
+import dynamic from 'next/dynamic';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'sonner';
 import { AuthProvider } from './AuthProvider';
+
+const DynamicApolloProvider = dynamic(() => import('./DynamicApolloProvider'), {
+  ssr: false,
+});
 
 interface ProvidersProps {
   children: React.ReactNode;
 }
 
-// Base Provider for the app
 export function BaseProviders({ children }: ProvidersProps) {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-      <ApolloProvider client={client}>
+      <DynamicApolloProvider>
         <AuthProvider>
           {children}
           <Toaster position="top-right" />
         </AuthProvider>
-      </ApolloProvider>
+      </DynamicApolloProvider>
     </ThemeProvider>
   );
 }
