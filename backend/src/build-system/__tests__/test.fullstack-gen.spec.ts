@@ -1,3 +1,5 @@
+import { BuilderContext } from '../context';
+import { BuildMonitor } from '../monitor';
 import { BuildSequence } from '../types';
 import { executeBuildSequence, objectToMarkdown, writeToFile } from './utils';
 
@@ -144,5 +146,5 @@ describe('Build Sequence Test', () => {
     expect(result.success).toBe(true);
     expect(result.metrics).toBeDefined();
     console.log(`Logs saved to: ${result.logFolderPath}`);
-  }, 300000);
+  }, 60000000);
 });

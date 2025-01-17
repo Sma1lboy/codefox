@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { ResponseTagError } from '../errors';
 
 const logger = new Logger('common-utils');
 
@@ -56,9 +57,13 @@ export function removeCodeBlockFences(input: string): string {
 }
 
 export function formatResponse(response: string): string {
-  return removeCodeBlockFences(
-    parseGenerateTag(removeCodeBlockFences(response)),
-  );
+  try {
+    return removeCodeBlockFences(
+      parseGenerateTag(removeCodeBlockFences(response)),
+    );
+  } catch (error) {
+    throw new ResponseTagError('Failed to format response: ' + error);
+  }
 }
 
 export function extractJsonFromText(content: string): {
@@ -68,6 +73,6 @@ export function extractJsonFromText(content: string): {
     return JSON.parse(content);
   } catch (error) {
     logger.error('Invalid JSON format in the Markdown content: ' + error);
-    return null;
+    throw new ResponseTagError('Failed to extract JSON from text.');
   }
 }
