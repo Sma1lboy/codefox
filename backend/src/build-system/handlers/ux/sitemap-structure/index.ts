@@ -10,10 +10,16 @@ import {
   ModelUnavailableError,
   ResponseParsingError,
 } from 'src/build-system/errors';
+import { UXSMDHandler } from '../sitemap-document';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
-// UXSMS: UX Sitemap Structure
+/**
+ * UXSMS: UX Sitemap Structure
+ **/
+
+@BuildNode()
+@BuildNodeRequire([UXSMDHandler])
 export class UXSitemapStructureHandler implements BuildHandler<string> {
-  readonly id = 'op:UX:SMS';
   private readonly logger = new Logger('UXSitemapStructureHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -22,7 +28,7 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
     // Extract relevant data from the context
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
-    const sitemapDoc = context.getNodeData('op:UX:SMD');
+    const sitemapDoc = context.getNodeData(UXSMDHandler);
 
     // Validate required parameters
     if (!projectName || typeof projectName !== 'string') {
@@ -85,7 +91,7 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
           messages,
         },
         'generateUXSiteMapStructre',
-        this.id,
+        UXSitemapStructureHandler.name,
       );
 
       if (!uxStructureContent || uxStructureContent.trim() === '') {

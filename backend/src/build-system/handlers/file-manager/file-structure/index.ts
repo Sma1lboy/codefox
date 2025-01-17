@@ -13,11 +13,16 @@ import {
   ResponseParsingError,
   MissingConfigurationError,
 } from 'src/build-system/errors';
+import { UXSMDHandler } from '../../ux/sitemap-document';
+import { UXDatamapHandler } from '../../ux/datamap';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
 /**
  * FileStructureHandler is responsible for generating the project's file and folder structure
  * based on the provided documentation.
  */
+@BuildNode()
+@BuildNodeRequire([UXSMDHandler, UXDatamapHandler])
 export class FileStructureHandler implements BuildHandler<FileStructOutput> {
   readonly id = 'op:FILE:STRUCT';
   private readonly logger: Logger = new Logger('FileStructureHandler');
@@ -31,8 +36,8 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
     // Retrieve projectName from context
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
-    const sitemapDoc = context.getNodeData('op:UX:SMD');
-    const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
+    const sitemapDoc = context.getNodeData(UXSMDHandler);
+    const datamapDoc = context.getNodeData(UXDatamapHandler);
     const projectPart = opts?.projectPart ?? 'frontend';
     const framework = context.getGlobalContext('framework') ?? 'react';
 

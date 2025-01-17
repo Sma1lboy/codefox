@@ -8,9 +8,12 @@ import {
   ModelUnavailableError,
 } from 'src/build-system/errors';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { UXDatamapHandler } from '../../ux/datamap';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
+@BuildNode()
+@BuildNodeRequire([UXDatamapHandler])
 export class DatabaseRequirementHandler implements BuildHandler<string> {
-  readonly id = 'op:DATABASE_REQ';
   private readonly logger = new Logger('DatabaseRequirementHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -19,7 +22,7 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
 
-    const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
+    const datamapDoc = context.getNodeData(UXDatamapHandler);
 
     if (!datamapDoc) {
       this.logger.error('Data mapping document is missing.');
@@ -43,7 +46,7 @@ export class DatabaseRequirementHandler implements BuildHandler<string> {
           messages: [{ content: prompt, role: 'system' }],
         },
         'generateDatabaseRequirementPrompt',
-        this.id,
+        DatabaseRequirementHandler.name,
       );
     } catch (error) {
       throw new ModelUnavailableError('Model Unavailable:' + error);

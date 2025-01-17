@@ -6,7 +6,7 @@ export async function chatSyncWithClocker(
   context: BuilderContext,
   input: ChatInput,
   step: string,
-  id: string,
+  name: string,
 ): Promise<string> {
   const startTime = new Date();
   const modelResponse = await context.model.chatSync(input);
@@ -14,7 +14,7 @@ export async function chatSyncWithClocker(
   const duration = endTime.getTime() - startTime.getTime();
 
   const inputContent = input.messages.map((m) => m.content).join('');
-  BuildMonitor.timeRecorder(duration, id, step, inputContent, modelResponse);
+  BuildMonitor.timeRecorder(duration, name, step, inputContent, modelResponse);
   return modelResponse;
 }
 

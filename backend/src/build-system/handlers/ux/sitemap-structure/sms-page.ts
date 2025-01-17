@@ -7,11 +7,14 @@ import {
   MissingConfigurationError,
   ResponseParsingError,
 } from 'src/build-system/errors';
+import { BuildNode } from 'src/build-system/hanlder-manager';
+import { UXSMDHandler } from '../sitemap-document';
+import { UXSitemapStructureHandler } from '.';
 
+@BuildNode()
 export class UXSitemapStructurePagebyPageHandler
   implements BuildHandler<string>
 {
-  readonly id = 'op:UX:SMS:PAGEBYPAGE';
   readonly logger = new Logger('UXSitemapStructurePagebyPageHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -19,8 +22,8 @@ export class UXSitemapStructurePagebyPageHandler
 
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
-    const sitemapDoc = context.getNodeData('op:UX:SMS');
-    const uxStructureDoc = context.getNodeData('op:UX:SMS');
+    const sitemapDoc = context.getNodeData(UXSMDHandler);
+    const uxStructureDoc = context.getNodeData(UXSitemapStructureHandler);
 
     // Validate required data
     if (!projectName || typeof projectName !== 'string') {
@@ -36,8 +39,6 @@ export class UXSitemapStructurePagebyPageHandler
         'Missing or invalid UX Structure document.',
       );
     }
-
-    const normalizedUxStructureDoc = uxStructureDoc.replace(/\r\n/g, '\n');
 
     // Extract sections from the UX Structure Document
     const sections = this.extractAllPageViewSections(uxStructureDoc);
@@ -92,7 +93,7 @@ export class UXSitemapStructurePagebyPageHandler
     const refinedGlobalCompSections = await batchChatSyncWithClock(
       context,
       'generate global components',
-      this.id,
+      UXSitemapStructurePagebyPageHandler.name,
       requests,
     );
     refinedSections.push(refinedGlobalCompSections);
@@ -149,7 +150,7 @@ export class UXSitemapStructurePagebyPageHandler
     const refinedPageViewSections = await batchChatSyncWithClock(
       context,
       'generate global components',
-      this.id,
+      UXSitemapStructurePagebyPageHandler.name,
       page_view_requests,
     );
     refinedSections.push(refinedPageViewSections);

@@ -18,9 +18,13 @@ import {
   buildDependencyGraph,
   validateAgainstVirtualDirectory,
 } from 'src/build-system/utils/file_generator_util';
+import { FileStructureHandler } from '../file-structure';
+import { UXDatamapHandler } from '../../ux/datamap';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
+@BuildNode()
+@BuildNodeRequire([FileStructureHandler, UXDatamapHandler])
 export class FileArchGenerateHandler implements BuildHandler<string> {
-  readonly id = 'op:FILE:ARCH';
   private readonly logger: Logger = new Logger('FileArchGenerateHandler');
   private virtualDir: VirtualDirectory;
 
@@ -29,8 +33,8 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
 
     this.virtualDir = context.virtualDirectory;
 
-    const fileStructure = context.getNodeData('op:FILE:STRUCT');
-    const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
+    const fileStructure = context.getNodeData(FileStructureHandler);
+    const datamapDoc = context.getNodeData(UXDatamapHandler);
 
     if (!fileStructure || !datamapDoc) {
       Logger.error(fileStructure);
@@ -54,7 +58,7 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
           messages: [{ content: prompt, role: 'system' }],
         },
         'generateFileArch',
-        this.id,
+        FileArchGenerateHandler.name,
       );
     } catch (error) {
       this.logger.error('Model is unavailable:' + error);

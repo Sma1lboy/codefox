@@ -1,9 +1,39 @@
 import { Logger } from '@nestjs/common';
-import { BuildStep, BuildSequence } from './types';
+import { BuildSequence } from './types';
 import { ProjectEventLogger } from './logger';
 import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
+
 /**
- * Metrics for sequence, step, and node execution
+ * Node execution metrics
+ */
+export interface NodeMetrics {
+  nodeId: string;
+  startTime: number;
+  endTime: number;
+  duration: number;
+  status: 'completed' | 'failed' | 'pending';
+  retryCount: number;
+  error?: Error;
+}
+
+/**
+ * Sequence execution metrics
+ */
+export interface SequenceMetrics {
+  sequenceId: string;
+  startTime: number;
+  endTime: number;
+  duration: number;
+  nodeMetrics: Map<string, NodeMetrics>;
+  nodesOrder: string[];
+  totalNodes: number;
+  completedNodes: number;
+  failedNodes: number;
+  successRate: number;
+}
+
+/**
+ * Build execution report structure
  */
 export interface BuildReport {
   metadata: {
@@ -14,80 +44,30 @@ export interface BuildReport {
   };
   summary: {
     spendTime: string[];
-    totalSteps: number;
-    completedSteps: number;
-    failedSteps: number;
     totalNodes: number;
     completedNodes: number;
     failedNodes: number;
     successRate: number;
   };
-  steps: Array<{
+  nodes: Array<{
     id: string;
     name: string;
     duration: number;
-    parallel: boolean;
-    status: 'completed' | 'failed';
-    nodesTotal: number;
-    nodesCompleted: number;
-    nodesFailed: number;
-    nodes: Array<{
-      id: string;
-      name: string;
-      duration: number;
-      status: 'completed' | 'failed' | 'pending';
-      retryCount: number;
-      error?: {
-        message: string;
-        stack?: string;
-      };
-    }>;
+    status: 'completed' | 'failed' | 'pending';
+    retryCount: number;
+    clock?: any[];
+    error?: {
+      message: string;
+      stack?: string;
+    };
   }>;
-}
-
-export interface NodeMetrics {
-  nodeId: string;
-  startTime: number;
-  endTime: number;
-  duration: number;
-  status: 'completed' | 'failed' | 'pending';
-  memory?: number;
-  tokensUsed?: number;
-  retryCount: number;
-  error?: Error;
-}
-
-export interface StepMetrics {
-  stepId: string;
-  startTime: number;
-  endTime: number;
-  duration: number;
-  nodeMetrics: Map<string, NodeMetrics>;
-  parallel: boolean;
-  totalNodes: number;
-  completedNodes: number;
-  failedNodes: number;
-}
-
-export interface SequenceMetrics {
-  sequenceId: string;
-  startTime: number;
-  endTime: number;
-  duration: number;
-  stepMetrics: Map<string, StepMetrics>;
-  totalSteps: number;
-  completedSteps: number;
-  failedSteps: number;
-  totalNodes: number;
-  successRate: number;
 }
 
 export class BuildMonitor {
   private static instance: BuildMonitor;
-  private logger: Logger; // TODO: adding more logger
+  private logger: Logger;
   private sequenceMetrics: Map<string, SequenceMetrics> = new Map();
   private static timeRecorders: Map<string, any[]> = new Map();
-
   private static model = OpenAIModelProvider.getInstance();
 
   private constructor() {
@@ -103,11 +83,11 @@ export class BuildMonitor {
 
   public static async timeRecorder(
     generateDuration: number,
-    id: string,
+    name: string,
     step: string,
     input: string,
     output: string,
-  ) {
+  ): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const encoder = require('gpt-3-encoder');
     const inputLength = input.length;
@@ -117,67 +97,46 @@ export class BuildMonitor {
       output: encoder.encode(output).length,
       generateDuration,
     };
-    if (!this.timeRecorders.has(id)) {
-      this.timeRecorders.set(id, []);
+    if (!this.timeRecorders.has(name)) {
+      this.timeRecorders.set(name, []);
     }
-    this.timeRecorders.get(id)!.push(value);
+    this.timeRecorders.get(name)!.push(value);
   }
 
   // Node-level monitoring
-  startNodeExecution(nodeId: string, sequenceId: string, stepId: string): void {
-    const metrics = this.getOrCreateNodeMetrics(nodeId, sequenceId, stepId);
+  startNodeExecution(nodeId: string, sequenceId: string): void {
+    const metrics = this.getOrCreateNodeMetrics(nodeId, sequenceId);
     metrics.startTime = Date.now();
     metrics.status = 'pending';
+
+    // Add node to execution order if not already present
+    const sequenceMetrics = this.sequenceMetrics.get(sequenceId);
+    if (sequenceMetrics && !sequenceMetrics.nodesOrder.includes(nodeId)) {
+      sequenceMetrics.nodesOrder.push(nodeId);
+    }
   }
 
   endNodeExecution(
     nodeId: string,
     sequenceId: string,
-    stepId: string,
     success: boolean,
     error?: Error,
   ): void {
-    const metrics = this.getOrCreateNodeMetrics(nodeId, sequenceId, stepId);
+    const metrics = this.getOrCreateNodeMetrics(nodeId, sequenceId);
     metrics.endTime = Date.now();
     metrics.duration = metrics.endTime - metrics.startTime;
     metrics.status = success ? 'completed' : 'failed';
     if (error) {
       metrics.error = error;
     }
+
+    // Update sequence metrics
+    this.updateSequenceMetrics(sequenceId);
   }
 
-  incrementNodeRetry(nodeId: string, sequenceId: string, stepId: string): void {
-    const metrics = this.getOrCreateNodeMetrics(nodeId, sequenceId, stepId);
+  incrementNodeRetry(nodeId: string, sequenceId: string): void {
+    const metrics = this.getOrCreateNodeMetrics(nodeId, sequenceId);
     metrics.retryCount++;
-  }
-
-  // Step-level monitoring
-  startStepExecution(
-    stepId: string,
-    sequenceId: string,
-    parallel: boolean,
-    totalNodes: number,
-  ): void {
-    const metrics = this.getOrCreateStepMetrics(stepId, sequenceId);
-    metrics.startTime = Date.now();
-    metrics.parallel = parallel;
-    metrics.totalNodes = totalNodes;
-  }
-
-  endStepExecution(stepId: string, sequenceId: string): void {
-    const metrics = this.getStepMetrics(sequenceId, stepId);
-    if (metrics) {
-      metrics.endTime = Date.now();
-      metrics.duration = metrics.endTime - metrics.startTime;
-
-      // Calculate completion statistics
-      metrics.completedNodes = Array.from(metrics.nodeMetrics.values()).filter(
-        (n) => n.status === 'completed',
-      ).length;
-      metrics.failedNodes = Array.from(metrics.nodeMetrics.values()).filter(
-        (n) => n.status === 'failed',
-      ).length;
-    }
   }
 
   // Sequence-level monitoring
@@ -187,14 +146,11 @@ export class BuildMonitor {
       startTime: Date.now(),
       endTime: 0,
       duration: 0,
-      stepMetrics: new Map(),
-      totalSteps: sequence.steps.length,
-      completedSteps: 0,
-      failedSteps: 0,
-      totalNodes: sequence.steps.reduce(
-        (sum, step) => sum + step.nodes.length,
-        0,
-      ),
+      nodeMetrics: new Map(),
+      nodesOrder: [],
+      totalNodes: sequence.nodes.length,
+      completedNodes: 0,
+      failedNodes: 0,
       successRate: 0,
     };
     this.sequenceMetrics.set(sequence.id, metrics);
@@ -209,22 +165,12 @@ export class BuildMonitor {
       metrics.endTime = Date.now();
       metrics.duration = metrics.endTime - metrics.startTime;
 
-      // Calculate final statistics
-      let completedNodes = 0;
-      let totalNodes = 0;
-
-      metrics.stepMetrics.forEach((stepMetric) => {
-        completedNodes += stepMetric.completedNodes;
-        totalNodes += stepMetric.totalNodes;
-      });
-
-      metrics.successRate = (completedNodes / totalNodes) * 100;
+      this.updateSequenceMetrics(sequenceId);
 
       const report = await this.generateStructuredReport(
         sequenceId,
         projectUUID,
       );
-      // log the event
       await ProjectEventLogger.getInstance().logEvent({
         timestamp: report.metadata.timestamp,
         projectId: report.metadata.projectId,
@@ -235,15 +181,30 @@ export class BuildMonitor {
     }
   }
 
-  // Utility methods
+  private updateSequenceMetrics(sequenceId: string): void {
+    const metrics = this.sequenceMetrics.get(sequenceId);
+    if (metrics) {
+      metrics.completedNodes = Array.from(metrics.nodeMetrics.values()).filter(
+        (n) => n.status === 'completed',
+      ).length;
+      metrics.failedNodes = Array.from(metrics.nodeMetrics.values()).filter(
+        (n) => n.status === 'failed',
+      ).length;
+      metrics.successRate = (metrics.completedNodes / metrics.totalNodes) * 100;
+    }
+  }
+
   private getOrCreateNodeMetrics(
     nodeId: string,
     sequenceId: string,
-    stepId: string,
   ): NodeMetrics {
-    const stepMetrics = this.getOrCreateStepMetrics(stepId, sequenceId);
-    if (!stepMetrics.nodeMetrics.has(nodeId)) {
-      stepMetrics.nodeMetrics.set(nodeId, {
+    const sequenceMetrics = this.sequenceMetrics.get(sequenceId);
+    if (!sequenceMetrics) {
+      throw new Error(`No metrics found for sequence ${sequenceId}`);
+    }
+
+    if (!sequenceMetrics.nodeMetrics.has(nodeId)) {
+      sequenceMetrics.nodeMetrics.set(nodeId, {
         nodeId,
         startTime: 0,
         endTime: 0,
@@ -252,109 +213,42 @@ export class BuildMonitor {
         retryCount: 0,
       });
     }
-    return stepMetrics.nodeMetrics.get(nodeId)!;
+    return sequenceMetrics.nodeMetrics.get(nodeId)!;
   }
 
-  private getOrCreateStepMetrics(
-    stepId: string,
-    sequenceId: string,
-  ): StepMetrics {
-    const sequenceMetrics = this.sequenceMetrics.get(sequenceId);
-    if (!sequenceMetrics) {
-      throw new Error(`No metrics found for sequence ${sequenceId}`);
-    }
-
-    if (!sequenceMetrics.stepMetrics.has(stepId)) {
-      sequenceMetrics.stepMetrics.set(stepId, {
-        stepId,
-        startTime: 0,
-        endTime: 0,
-        duration: 0,
-        nodeMetrics: new Map(),
-        parallel: false,
-        totalNodes: 0,
-        completedNodes: 0,
-        failedNodes: 0,
-      });
-    }
-    return sequenceMetrics.stepMetrics.get(stepId)!;
-  }
-
-  private getStepMetrics(
-    sequenceId: string,
-    stepId: string,
-  ): StepMetrics | undefined {
-    return this.sequenceMetrics.get(sequenceId)?.stepMetrics.get(stepId);
-  }
-
-  // Reporting methods
-  getSequenceMetrics(sequenceId: string): SequenceMetrics | undefined {
-    return this.sequenceMetrics.get(sequenceId);
-  }
-
-  /**
-   * Return a structured report for a sequence
-   * @param sequenceId sequenceId
-   * @param projectUUID unique identifier for the project
-   * @returns BuildReport
-   */
   async generateStructuredReport(
     sequenceId: string,
     projectUUID: string,
   ): Promise<BuildReport> {
-    const metrics = this.getSequenceMetrics(sequenceId);
+    const metrics = this.sequenceMetrics.get(sequenceId);
     if (!metrics) {
       throw new Error(`No metrics found for sequence ${sequenceId}`);
     }
 
-    let totalCompletedNodes = 0;
-    let totalFailedNodes = 0;
+    const nodes = metrics.nodesOrder
+      .map((nodeId) => {
+        const nodeMetric = metrics.nodeMetrics.get(nodeId);
+        if (!nodeMetric) return null;
 
-    const steps = Array.from(metrics.stepMetrics.entries()).map(
-      ([stepId, stepMetric]) => {
-        const nodes = Array.from(stepMetric.nodeMetrics.entries()).map(
-          ([nodeId, nodeMetric]) => {
-            const values = BuildMonitor.timeRecorders.get(nodeId);
-            return {
-              id: nodeId,
-              name: nodeId,
-              duration: nodeMetric.duration,
-              status: nodeMetric.status,
-              retryCount: nodeMetric.retryCount,
-              clock: values,
-              error: nodeMetric.error
-                ? {
-                    message: nodeMetric.error.message,
-                    stack: nodeMetric.error.stack,
-                  }
-                : undefined,
-            };
-          },
-        );
-
-        const completed = nodes.filter((n) => n.status === 'completed').length;
-        const failed = nodes.filter((n) => n.status === 'failed').length;
-
-        totalCompletedNodes += completed;
-        totalFailedNodes += failed;
-
+        const values = BuildMonitor.timeRecorders.get(nodeId);
         return {
-          id: stepId,
-          name: stepId,
-          duration: stepMetric.duration,
-          parallel: stepMetric.parallel,
-          status: (failed > 0 ? 'failed' : 'completed') as
-            | 'completed'
-            | 'failed',
-          nodesTotal: stepMetric.totalNodes,
-          nodesCompleted: completed,
-          nodesFailed: failed,
-          nodes,
+          id: nodeId,
+          name: nodeId,
+          duration: nodeMetric.duration,
+          status: nodeMetric.status,
+          retryCount: nodeMetric.retryCount,
+          clock: values,
+          error: nodeMetric.error
+            ? {
+                message: nodeMetric.error.message,
+                stack: nodeMetric.error.stack,
+              }
+            : undefined,
         };
-      },
-    );
+      })
+      .filter(Boolean);
 
-    const report: BuildReport = {
+    return {
       metadata: {
         projectId: projectUUID,
         sequenceId: metrics.sequenceId,
@@ -363,29 +257,19 @@ export class BuildMonitor {
       },
       summary: {
         spendTime: Array.from(BuildMonitor.timeRecorders.entries()).map(
-          ([id, time]) => `Step ${id} duration is ${time} ms`,
+          ([id, time]) => `Node ${id} duration is ${time} ms`,
         ),
-        totalSteps: metrics.totalSteps,
-        completedSteps: steps.filter((s) => s.status === 'completed').length,
-        failedSteps: steps.filter((s) => s.status === 'failed').length,
         totalNodes: metrics.totalNodes,
-        completedNodes: totalCompletedNodes,
-        failedNodes: totalFailedNodes,
-        successRate: (totalCompletedNodes / metrics.totalNodes) * 100,
+        completedNodes: metrics.completedNodes,
+        failedNodes: metrics.failedNodes,
+        successRate: metrics.successRate,
       },
-      steps,
+      nodes,
     };
-
-    return report;
   }
 
-  /**
-   * Get Report for a sequence as string, using for test
-   * @param sequenceId sequenceId
-   * @returns string report
-   */
-  public generateTextReport(sequenceId: string): string {
-    const metrics = this.getSequenceMetrics(sequenceId);
+  generateTextReport(sequenceId: string): string {
+    const metrics = this.sequenceMetrics.get(sequenceId);
     if (!metrics) {
       return `No metrics found for sequence ${sequenceId}`;
     }
@@ -394,52 +278,35 @@ export class BuildMonitor {
     report += `====================================\n`;
     report += `Total Duration: ${metrics.duration}ms\n`;
     report += `Success Rate: ${metrics.successRate.toFixed(2)}%\n`;
-    report += `Total Steps: ${metrics.totalSteps}\n`;
-    report += `Total Nodes: ${metrics.totalNodes}\n\n`;
+    report += `Total Nodes: ${metrics.totalNodes}\n`;
+    report += `Completed/Failed: ${metrics.completedNodes}/${metrics.failedNodes}\n\n`;
 
-    metrics.stepMetrics.forEach((stepMetric, stepId) => {
-      report += `Step: ${stepId}\n`;
-      report += `  Duration: ${stepMetric.duration}ms\n`;
-      report += `  Parallel: ${stepMetric.parallel}\n`;
-      report += `  Completed Nodes: ${stepMetric.completedNodes}/${stepMetric.totalNodes}\n`;
-      report += `  Failed Nodes: ${stepMetric.failedNodes}\n\n`;
+    metrics.nodesOrder.forEach((nodeId) => {
+      const nodeMetric = metrics.nodeMetrics.get(nodeId);
+      if (!nodeMetric) return;
 
-      stepMetric.nodeMetrics.forEach((nodeMetric, nodeId) => {
-        report += `    Node: ${nodeId}\n`;
-        report += `      Status: ${nodeMetric.status}\n`;
-        report += `      Duration: ${nodeMetric.duration}ms\n`;
-        report += `      Retries: ${nodeMetric.retryCount}\n`;
-        const values = BuildMonitor.timeRecorders.get(nodeId);
-        if (values) {
-          report += `       Clock:\n`;
-          values.forEach((value) => {
-            report += `          ${value.step}:\n`;
-            report += `             input token: ${value.input}\n`;
-            report += `             output token: ${value.output}\n`;
-            report += `             GenerationDuration: ${value.generateDuration}ms\n`;
-          });
-        }
+      report += `Node: ${nodeId}\n`;
+      report += `  Status: ${nodeMetric.status}\n`;
+      report += `  Duration: ${nodeMetric.duration}ms\n`;
+      report += `  Retries: ${nodeMetric.retryCount}\n`;
 
-        if (nodeMetric.error) {
-          report += `      Error: ${nodeMetric.error.message}\n`;
-        }
-        report += '\n';
-      });
+      const values = BuildMonitor.timeRecorders.get(nodeId);
+      if (values) {
+        report += `  Clock:\n`;
+        values.forEach((value) => {
+          report += `    ${value.step}:\n`;
+          report += `      Input Token: ${value.input}\n`;
+          report += `      Output Token: ${value.output}\n`;
+          report += `      Generation Duration: ${value.generateDuration}ms\n`;
+        });
+      }
+
+      if (nodeMetric.error) {
+        report += `  Error: ${nodeMetric.error.message}\n`;
+      }
+      report += '\n';
     });
 
     return report;
-  }
-
-  private currentStep: BuildStep | null = null;
-
-  setCurrentStep(step: BuildStep): void {
-    this.currentStep = step;
-  }
-
-  getCurrentStep(): BuildStep {
-    if (!this.currentStep) {
-      throw new Error('No current step set');
-    }
-    return this.currentStep;
   }
 }

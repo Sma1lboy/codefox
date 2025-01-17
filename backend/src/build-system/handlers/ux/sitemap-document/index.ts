@@ -4,11 +4,13 @@ import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { PRDHandler } from '../../product-manager/product-requirements-document/prd';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
+@BuildNode()
+@BuildNodeRequire([PRDHandler])
 export class UXSMDHandler implements BuildHandler<string> {
-  readonly id = 'op:UX:SMD';
   readonly logger: Logger = new Logger('UXSMDHandler');
-
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Generating UXSMD...');
 
@@ -16,7 +18,7 @@ export class UXSMDHandler implements BuildHandler<string> {
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
     const platform = context.getGlobalContext('platform') || 'Default Platform';
-    const prdContent = context.getNodeData('op:PRD');
+    const prdContent = context.getNodeData(PRDHandler);
 
     // Generate the prompt dynamically
     const prompt = prompts.generateUxsmdPrompt(projectName, platform);
@@ -84,7 +86,7 @@ export class UXSMDHandler implements BuildHandler<string> {
         messages: messages,
       },
       'generateUXSMDFromLLM',
-      this.id,
+      UXSMDHandler.name,
     );
 
     this.logger.log('Received full UXSMD content from LLM server.');

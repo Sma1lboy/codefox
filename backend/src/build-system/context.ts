@@ -1,18 +1,20 @@
 import {
   BuildExecutionState,
-  BuildNode,
   BuildResult,
   BuildSequence,
-  BuildStep,
-  NodeOutputMap,
+  BuildHandlerConstructor,
+  ExtractHandlerReturnType,
+  BuildHandler,
+  ExtractHandlerType,
+  BuildNode,
 } from './types';
 import { Logger } from '@nestjs/common';
 import { VirtualDirectory } from './virtual-dir';
 import { v4 as uuidv4 } from 'uuid';
 import { BuildMonitor } from './monitor';
-import { BuildHandlerManager } from './hanlder-manager';
 import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 import { RetryHandler } from './retry-handler';
+import { BuildHandlerManager } from './hanlder-manager';
 
 /**
  * Global data keys used throughout the build process
@@ -54,7 +56,7 @@ export class BuilderContext {
   private globalPromises: Set<Promise<any>> = new Set();
   private logger: Logger;
   private globalContext: Map<GlobalDataKeys | string, any> = new Map();
-  private nodeData: Map<string, any> = new Map();
+  private nodeData: Map<BuildHandlerConstructor, any> = new Map();
 
   private handlerManager: BuildHandlerManager;
   private retryHandler: RetryHandler;
@@ -89,21 +91,63 @@ export class BuilderContext {
     this.monitor.startSequenceExecution(this.sequence);
 
     try {
-      for (const step of this.sequence.steps) {
-        await this.executeStep(step);
+      const nodes = this.sequence.nodes;
+      const windowSize = 20;
+      let windowStart = 0;
 
-        const incompletedNodes = step.nodes.filter(
-          (node) => !this.executionState.completed.has(node.id),
+      while (windowStart < nodes.length) {
+        const windowEnd = Math.min(windowStart + windowSize, nodes.length);
+        const windowNodes = nodes.slice(windowStart, windowEnd);
+
+        const executableNodes = windowNodes.filter((node) =>
+          this.canExecute(node),
         );
 
-        if (incompletedNodes.length > 0) {
-          this.logger.warn(
-            `Step ${step.id} failed to complete nodes: ${incompletedNodes
-              .map((n) => n.id)
-              .join(', ')}`,
+        if (executableNodes.length > 0) {
+          await Promise.all(
+            executableNodes.map(async (node) => {
+              const handlerClass = node.handler
+                .constructor as BuildHandlerConstructor;
+              if (this.executionState.completed.has(handlerClass.name)) {
+                return;
+              }
+
+              this.monitor.startNodeExecution(
+                handlerClass.name,
+                this.sequence.id,
+              );
+
+              try {
+                this.logger.log(`Executing node ${handlerClass.name}`);
+                await this.executeNode(node);
+
+                this.monitor.endNodeExecution(
+                  handlerClass.name,
+                  this.sequence.id,
+                  true,
+                );
+              } catch (error) {
+                this.monitor.endNodeExecution(
+                  handlerClass.name,
+                  this.sequence.id,
+                  false,
+                  error instanceof Error ? error : new Error(String(error)),
+                );
+                throw error;
+              }
+            }),
           );
-          return;
         }
+
+        windowStart += windowSize;
+      }
+
+      const finalActivePromises = this.model.getAllActivePromises();
+      if (finalActivePromises.length > 0) {
+        this.logger.debug(
+          `Final wait for ${finalActivePromises.length} remaining LLM requests`,
+        );
+        await Promise.all(finalActivePromises);
       }
 
       this.logger.log(`Build sequence completed: ${this.sequence.id}`);
@@ -117,269 +161,82 @@ export class BuilderContext {
   }
 
   /**
-   * Executes a build step, handling both parallel and sequential node execution
-   * @param step The build step to execute
-   * @private
-   */
-  private async executeStep(step: BuildStep): Promise<void> {
-    this.logger.log(`Executing build step: ${step.id}`);
-    this.monitor.setCurrentStep(step);
-    this.monitor.startStepExecution(
-      step.id,
-      this.sequence.id,
-      step.parallel,
-      step.nodes.length,
-    );
-
-    try {
-      if (step.parallel) {
-        await this.executeParallelNodes(step);
-      } else {
-        await this.executeSequentialNodes(step);
-      }
-    } finally {
-      this.monitor.endStepExecution(step.id, this.sequence.id);
-    }
-  }
-
-  /**
-   * Executes nodes in parallel within a build step
-   * @param step The build step containing nodes to execute in parallel
-   * @private
-   */
-  private async executeParallelNodes(step: BuildStep): Promise<void> {
-    let remainingNodes = [...step.nodes];
-    const concurrencyLimit = 20;
-
-    while (remainingNodes.length > 0) {
-      const executableNodes = remainingNodes.filter((node) =>
-        this.canExecute(node.id),
-      );
-
-      if (executableNodes.length > 0) {
-        for (let i = 0; i < executableNodes.length; i += concurrencyLimit) {
-          const batch = executableNodes.slice(i, i + concurrencyLimit);
-
-          try {
-            batch.map(async (node) => {
-              if (this.executionState.completed.has(node.id)) {
-                return;
-              }
-
-              const currentStep = this.monitor.getCurrentStep();
-              this.monitor.startNodeExecution(
-                node.id,
-                this.sequence.id,
-                currentStep.id,
-              );
-
-              let res;
-              try {
-                if (!this.canExecute(node.id)) {
-                  this.logger.log(
-                    `Waiting for dependencies of node ${node.id}: ${node.requires?.join(
-                      ', ',
-                    )}`,
-                  );
-                  this.monitor.incrementNodeRetry(
-                    node.id,
-                    this.sequence.id,
-                    currentStep.id,
-                  );
-                  return;
-                }
-
-                this.logger.log(`Executing node ${node.id} in parallel batch`);
-                res = this.executeNodeById(node.id);
-                this.globalPromises.add(res);
-
-                this.monitor.endNodeExecution(
-                  node.id,
-                  this.sequence.id,
-                  currentStep.id,
-                  true,
-                );
-              } catch (error) {
-                this.monitor.endNodeExecution(
-                  node.id,
-                  this.sequence.id,
-                  currentStep.id,
-                  false,
-                  error instanceof Error ? error : new Error(String(error)),
-                );
-                throw error;
-              }
-            });
-
-            await Promise.all(this.globalPromises);
-            const activeModelPromises = this.model.getAllActivePromises();
-            if (activeModelPromises.length > 0) {
-              this.logger.debug(
-                `Waiting for ${activeModelPromises.length} active LLM requests to complete`,
-              );
-              await Promise.all(activeModelPromises);
-            }
-          } catch (error) {
-            this.logger.error(
-              `Error executing parallel nodes batch: ${error}`,
-              error instanceof Error ? error.stack : undefined,
-            );
-            throw error;
-          }
-        }
-
-        remainingNodes = remainingNodes.filter(
-          (node) => !this.executionState.completed.has(node.id),
-        );
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        const activeModelPromises = this.model.getAllActivePromises();
-        if (activeModelPromises.length > 0) {
-          this.logger.debug(
-            `Waiting for ${activeModelPromises.length} active LLM requests during retry`,
-          );
-          await Promise.all(activeModelPromises);
-        }
-      }
-    }
-
-    const finalActivePromises = this.model.getAllActivePromises();
-    if (finalActivePromises.length > 0) {
-      this.logger.debug(
-        `Final wait for ${finalActivePromises.length} remaining LLM requests`,
-      );
-      await Promise.all(finalActivePromises);
-    }
-  }
-
-  /**
-   * Executes nodes sequentially within a build step
-   * @param step The build step containing nodes to execute sequentially
-   * @private
-   */
-  private async executeSequentialNodes(step: BuildStep): Promise<void> {
-    for (const node of step.nodes) {
-      let retryCount = 0;
-      const maxRetries = 10;
-
-      while (
-        !this.executionState.completed.has(node.id) &&
-        retryCount < maxRetries
-      ) {
-        await this.executeNode(node);
-
-        if (!this.executionState.completed.has(node.id)) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
-          retryCount++;
-        }
-      }
-
-      if (!this.executionState.completed.has(node.id)) {
-        this.logger.warn(
-          `Failed to execute node ${node.id} after ${maxRetries} attempts`,
-        );
-      }
-    }
-  }
-
-  private async executeNode(node: BuildNode): Promise<void> {
-    if (this.executionState.completed.has(node.id)) {
-      return;
-    }
-
-    const currentStep = this.monitor.getCurrentStep();
-    this.monitor.startNodeExecution(node.id, this.sequence.id, currentStep.id);
-
-    try {
-      if (!this.canExecute(node.id)) {
-        this.logger.log(
-          `Waiting for dependencies of node ${node.id}: ${node.requires?.join(
-            ', ',
-          )}`,
-        );
-        this.monitor.incrementNodeRetry(
-          node.id,
-          this.sequence.id,
-          currentStep.id,
-        );
-        return;
-      }
-
-      this.logger.log(`Executing node ${node.id}`);
-      await this.executeNodeById(node.id);
-
-      this.monitor.endNodeExecution(
-        node.id,
-        this.sequence.id,
-        currentStep.id,
-        true,
-      );
-    } catch (error) {
-      this.monitor.endNodeExecution(
-        node.id,
-        this.sequence.id,
-        currentStep.id,
-        false,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-      throw error;
-    }
-  }
-
-  /**
    * Checks if a node can be executed based on its dependencies
-   * @param nodeId The ID of the node to check
+   * @param node The node to check
    * @returns boolean indicating if the node can be executed
    */
-  canExecute(nodeId: string): boolean {
-    const node = this.findNode(nodeId);
-
-    if (!node) return false;
+  private canExecute(node: BuildNode): boolean {
+    const handlerClass = node.handler.constructor as BuildHandlerConstructor;
+    const handlerName = handlerClass.name;
 
     if (
-      this.executionState.completed.has(nodeId) ||
-      this.executionState.pending.has(nodeId)
+      this.executionState.completed.has(handlerName) ||
+      this.executionState.pending.has(handlerName)
     ) {
-      //this.logger.debug(`Node ${nodeId} is already completed or pending.`);
       return false;
     }
 
-    return !node.requires?.some(
-      (dep) => !this.executionState.completed.has(dep),
+    if (!node.requires) return true;
+
+    return !node.requires.some(
+      (reqName) => !this.executionState.completed.has(reqName),
     );
   }
 
-  private async executeNodeById<T = any>(
-    nodeId: string,
-  ): Promise<BuildResult<T>> {
-    const node = this.findNode(nodeId);
-    if (!node) {
-      throw new Error(`Node not found: ${nodeId}`);
-    }
-
-    if (!this.canExecute(nodeId)) {
-      throw new Error(`Dependencies not met for node: ${nodeId}`);
-    }
+  /**
+   * Executes a specific node
+   * @param node The node to execute
+   * @returns Promise resolving to the build result
+   */
+  private async executeNode<T extends BuildHandler>(
+    node: BuildNode,
+  ): Promise<BuildResult<ExtractHandlerType<T>>> {
+    const handlerClass = node.handler.constructor as BuildHandlerConstructor;
+    const handlerName = handlerClass.name;
 
     try {
-      this.executionState.pending.add(nodeId);
-      const result = await this.invokeNodeHandler<T>(node);
-      this.executionState.completed.add(nodeId);
-      this.logger.log(`${nodeId} is completed`);
-      this.executionState.pending.delete(nodeId);
+      this.executionState.pending.add(handlerName);
+      const result = await this.invokeNodeHandler<ExtractHandlerType<T>>(node);
+      this.executionState.completed.add(handlerName);
+      this.logger.log(`${handlerName} is completed`);
+      this.executionState.pending.delete(handlerName);
 
-      this.nodeData.set(node.id, result.data);
+      this.setNodeData(handlerClass, result.data);
       return result;
     } catch (error) {
-      this.executionState.failed.add(nodeId);
-      this.executionState.pending.delete(nodeId);
+      this.executionState.failed.add(handlerName);
+      this.executionState.pending.delete(handlerName);
       throw error;
     }
   }
 
-  getExecutionState(): BuildExecutionState {
-    return { ...this.executionState };
+  /**
+   * Invokes a handler for a specific node
+   * @param node The node to execute
+   * @returns Promise resolving to the build result
+   */
+  private async invokeNodeHandler<T>(node: BuildNode): Promise<BuildResult<T>> {
+    const handlerClass = node.handler.constructor as BuildHandlerConstructor;
+    this.logger.log(`solving ${handlerClass.name}`);
+
+    if (!this.handlerManager.validateDependencies(handlerClass)) {
+      throw new Error(`Dependencies not met for handler: ${handlerClass.name}`);
+    }
+
+    try {
+      return await node.handler.run(this, node.options);
+    } catch (e) {
+      this.logger.error(`retrying ${handlerClass.name}`);
+      const result = await this.retryHandler.retryMethod(
+        e,
+        (node) => this.invokeNodeHandler(node),
+        [node],
+      );
+      if (result === undefined) {
+        throw e;
+      }
+      return result as BuildResult<T>;
+    }
   }
 
   /**
@@ -406,61 +263,33 @@ export class BuilderContext {
   }
 
   /**
-   * Retrieves node-specific data
-   * @param nodeId The ID of the node
-   * @returns The data associated with the node
+   * Retrieves node-specific data with type inference
+   * @param handlerClass The handler class to get data for
+   * @returns The strongly typed data associated with the handler
    */
-  getNodeData<NodeId extends keyof NodeOutputMap>(
-    nodeId: NodeId,
-  ): NodeOutputMap[NodeId];
-  getNodeData(nodeId: string): any;
-  getNodeData(nodeId: string) {
-    return this.nodeData.get(nodeId);
+  getNodeData<T extends BuildHandlerConstructor>(
+    handlerClass: T,
+  ): ExtractHandlerReturnType<T> | undefined {
+    return this.nodeData.get(handlerClass);
   }
 
   /**
-   * Sets node-specific data
-   * @param nodeId The ID of the node
-   * @param data The data to associate with the node
+   * Sets node-specific data with type checking
+   * @param handlerClass The handler class to set data for
+   * @param data The strongly typed data to associate with the handler
    */
-  setNodeData<NodeId extends keyof NodeOutputMap>(
-    nodeId: NodeId,
-    data: any,
+  setNodeData<T extends BuildHandlerConstructor>(
+    handlerClass: T,
+    data: ExtractHandlerReturnType<T>,
   ): void {
-    this.nodeData.set(nodeId, data);
+    this.nodeData.set(handlerClass, data);
+  }
+
+  getExecutionState(): BuildExecutionState {
+    return { ...this.executionState };
   }
 
   buildVirtualDirectory(jsonContent: string): boolean {
     return this.virtualDirectory.parseJsonStructure(jsonContent);
-  }
-
-  private findNode(nodeId: string): BuildNode | null {
-    for (const step of this.sequence.steps) {
-      const node = step.nodes.find((n) => n.id === nodeId);
-      if (node) return node;
-    }
-    return null;
-  }
-
-  private async invokeNodeHandler<T>(node: BuildNode): Promise<BuildResult<T>> {
-    const handler = this.handlerManager.getHandler(node.id);
-    this.logger.log(`sovling ${node.id}`);
-    if (!handler) {
-      throw new Error(`No handler found for node: ${node.id}`);
-    }
-    try {
-      return await handler.run(this, node.options);
-    } catch (e) {
-      this.logger.error(`retrying ${node.id}`);
-      const result = await this.retryHandler.retryMethod(
-        e,
-        (node) => this.invokeNodeHandler(node),
-        [node],
-      );
-      if (result === undefined) {
-        throw e;
-      }
-      return result as unknown as BuildResult<T>;
-    }
   }
 }

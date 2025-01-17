@@ -1,60 +1,17 @@
-import { ProjectInitHandler } from './handlers/project-init';
-import { BuildHandler } from './types';
-import { PRDHandler } from './handlers/product-manager/product-requirements-document/prd';
-import { UXSitemapStructureHandler } from './handlers/ux/sitemap-structure';
-import { UXDatamapHandler } from './handlers/ux/datamap';
-import { UXSMDHandler } from './handlers/ux/sitemap-document';
-import { FileStructureHandler } from './handlers/file-manager/file-structure';
-import { FileArchGenerateHandler } from './handlers/file-manager/file-arch';
-import { BackendCodeHandler } from './handlers/backend/code-generate';
-import { DBSchemaHandler } from './handlers/database/schemas/schemas';
-import { DatabaseRequirementHandler } from './handlers/database/requirements-document';
-import { FileGeneratorHandler } from './handlers/file-manager/file-generate';
-import { BackendRequirementHandler } from './handlers/backend/requirements-document';
-import { BackendFileReviewHandler } from './handlers/backend/file-review/file-review';
-import { UXSitemapStructurePagebyPageHandler } from './handlers/ux/sitemap-structure/sms-page';
-import { FrontendCodeHandler } from './handlers/frontend-code-generate';
+import { BuildHandler, BuildHandlerConstructor } from './types';
 
 /**
- * Manages the registration and retrieval of build handlers in the system
- * @class BuildHandlerManager
- * @description Singleton class responsible for:
- * - Maintaining a registry of all build handlers
- * - Providing access to specific handlers by ID
- * - Managing the lifecycle of built-in handlers
- * - Implementing the singleton pattern for global handler management
+ * 构建处理器管理器
  */
 export class BuildHandlerManager {
   private static instance: BuildHandlerManager;
-  private handlers: Map<string, BuildHandler> = new Map();
+  private handlers = new Map<BuildHandlerConstructor, BuildHandler>();
+  private dependencies = new Map<
+    BuildHandlerConstructor,
+    BuildHandlerConstructor[]
+  >();
 
-  private constructor() {
-    this.registerBuiltInHandlers();
-  }
-
-  private registerBuiltInHandlers() {
-    const builtInHandlers: BuildHandler[] = [
-      new ProjectInitHandler(),
-      new PRDHandler(),
-      new UXSitemapStructureHandler(),
-      new UXSitemapStructurePagebyPageHandler(),
-      new UXDatamapHandler(),
-      new UXSMDHandler(),
-      new FileStructureHandler(),
-      new FileArchGenerateHandler(),
-      new BackendCodeHandler(),
-      new DBSchemaHandler(),
-      new DatabaseRequirementHandler(),
-      new FileGeneratorHandler(),
-      new BackendRequirementHandler(),
-      new BackendFileReviewHandler(),
-      new FrontendCodeHandler(),
-    ];
-
-    for (const handler of builtInHandlers) {
-      this.handlers.set(handler.id, handler);
-    }
-  }
+  private constructor() {}
 
   static getInstance(): BuildHandlerManager {
     if (!BuildHandlerManager.instance) {
@@ -63,12 +20,103 @@ export class BuildHandlerManager {
     return BuildHandlerManager.instance;
   }
 
-  getHandler(nodeId: string): BuildHandler | undefined {
-    return this.handlers.get(nodeId);
+  /**
+   * 注册处理器
+   */
+  registerHandler<T extends BuildHandler>(
+    handlerClass: BuildHandlerConstructor<T>,
+  ): void {
+    if (!this.handlers.has(handlerClass)) {
+      this.handlers.set(handlerClass, new handlerClass());
+    }
   }
 
+  /**
+   * 获取处理器实例
+   */
+  getHandler<T extends BuildHandler>(
+    handlerClass: BuildHandlerConstructor<T>,
+  ): T {
+    let handler = this.handlers.get(handlerClass);
+    if (!handler) {
+      handler = new handlerClass();
+      this.handlers.set(handlerClass, handler);
+    }
+    return handler as T;
+  }
+
+  /**
+   * 注册处理器依赖
+   */
+  registerDependencies(
+    handlerClass: BuildHandlerConstructor,
+    dependencies: BuildHandlerConstructor[],
+  ): void {
+    this.dependencies.set(handlerClass, dependencies);
+  }
+
+  /**
+   * 获取处理器依赖
+   */
+  getDependencies(
+    handlerClass: BuildHandlerConstructor,
+  ): BuildHandlerConstructor[] {
+    return this.dependencies.get(handlerClass) || [];
+  }
+
+  /**
+   * 验证处理器依赖
+   */
+  validateDependencies(handlerClass: BuildHandlerConstructor): boolean {
+    const dependencies = this.getDependencies(handlerClass);
+    return dependencies.every((dep) => this.handlers.has(dep));
+  }
+
+  /**
+   * 清除所有注册的处理器
+   */
   clear(): void {
     this.handlers.clear();
-    this.registerBuiltInHandlers();
+    this.dependencies.clear();
   }
 }
+
+/**
+ * 处理器装饰器
+ */
+export function BuildNode() {
+  return function <T extends BuildHandlerConstructor>(target: T): T {
+    const manager = BuildHandlerManager.getInstance();
+    manager.registerHandler(target);
+    return target;
+  };
+}
+
+/**
+ * 依赖装饰器
+ */
+export function BuildNodeRequire(dependencies: BuildHandlerConstructor[]) {
+  return function <T extends BuildHandlerConstructor>(target: T): T {
+    const manager = BuildHandlerManager.getInstance();
+    manager.registerDependencies(target, dependencies);
+    return target;
+  };
+}
+
+// // 使用示例
+// @BuildNode()
+// @NodeRequire([/* 依赖处理器 */])
+// class ExampleHandler implements BuildHandler<string> {
+//   async run(
+//     context: BuilderContext,
+//     opts?: BuildOpts
+//   ): Promise<BuildResult<string>> {
+//     return {
+//       success: true,
+//       data: "Example result"
+//     };
+//   }
+// }
+
+// // 类型提取示例
+// type ExampleOutput = ExtractHandlerType<typeof ExampleHandler>; // string

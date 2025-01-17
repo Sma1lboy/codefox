@@ -1,4 +1,3 @@
-// frontend-code.handler.ts
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { Logger } from '@nestjs/common';
@@ -11,19 +10,28 @@ import normalizePath from 'normalize-path';
 import * as path from 'path';
 import { readFile } from 'fs/promises';
 
-// Utility functions (similar to your parseGenerateTag, removeCodeBlockFences)
 import { parseGenerateTag } from 'src/build-system/utils/strings';
 
-// The function from step #1
 import { generateFrontEndCodePrompt, generateCSSPrompt } from './prompt';
+import { UXSitemapStructureHandler } from '../ux/sitemap-structure';
+import { UXDatamapHandler } from '../ux/datamap';
+import { BackendRequirementHandler } from '../backend/requirements-document';
+import { FileArchGenerateHandler } from '../file-manager/file-arch';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
 /**
  * FrontendCodeHandler is responsible for generating the frontend codebase
  * based on the provided sitemap, data mapping documents, backend requirement documents,
  * frontendDependencyFile, frontendDependenciesContext, .
  */
+@BuildNode()
+@BuildNodeRequire([
+  UXSitemapStructureHandler,
+  UXDatamapHandler,
+  BackendRequirementHandler,
+  FileArchGenerateHandler,
+])
 export class FrontendCodeHandler implements BuildHandler<string> {
-  readonly id = 'op:FRONTEND:CODE';
   readonly logger: Logger = new Logger('FrontendCodeHandler');
   private virtualDir: VirtualDirectory;
 
@@ -37,10 +45,12 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     this.logger.log('Generating Frontend Code...');
 
     // 1. Retrieve the necessary input from context
-    const sitemapStruct = context.getNodeData('op:UX:SMS');
-    const uxDataMapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
-    const backendRequirementDoc = context.getNodeData('op:BACKEND:REQ');
-    const fileArchDoc = context.getNodeData('op:FILE:ARCH');
+    const sitemapStruct = context.getNodeData(UXSitemapStructureHandler);
+    const uxDataMapDoc = context.getNodeData(UXDatamapHandler);
+    const backendRequirementDoc = context.getNodeData(
+      BackendRequirementHandler,
+    );
+    const fileArchDoc = context.getNodeData(FileArchGenerateHandler);
 
     // 2. Grab any globally stored context as needed
     this.virtualDir = context.virtualDirectory;
