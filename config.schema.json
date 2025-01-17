@@ -1,7 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "required": ["chat"],
+  "required": [
+    "chat"
+  ],
   "unevaluatedProperties": false,
   "properties": {
     "chat": {
@@ -9,17 +11,27 @@
       "description": "Chat models configuration",
       "items": {
         "type": "object",
-        "required": ["model"],
+        "required": [
+          "model"
+        ],
         "properties": {
           "model": {
             "type": "string",
             "description": "Model name (e.g. gpt-4 for OpenAI API, or llama2 for local model)",
-            "examples": ["gpt-4", "gpt-3.5-turbo", "llama2"]
+            "examples": [
+              "gpt-4",
+              "gpt-3.5-turbo",
+              "llama2"
+            ]
           },
           "alias": {
             "type": "string",
             "description": "shown in the UI as the model name",
-            "examples": ["gpt-4", "gpt-3.5-turbo", "llama2"]
+            "examples": [
+              "gpt-4",
+              "gpt-3.5-turbo",
+              "llama2"
+            ]
           },
           "endpoint": {
             "type": "string",
@@ -39,7 +51,11 @@
           "task": {
             "type": "string",
             "description": "Optional: The specific task this model is optimized for",
-            "examples": ["chat", "code", "analysis"]
+            "examples": [
+              "chat",
+              "code",
+              "analysis"
+            ]
           }
         }
       }
@@ -49,12 +65,16 @@
       "description": "Embedding models configuration",
       "items": {
         "type": "object",
-        "required": ["model"],
+        "required": [
+          "model"
+        ],
         "properties": {
           "model": {
             "type": "string",
             "description": "Model name (e.g. text-embedding-ada-002)",
-            "examples": ["text-embedding-ada-002"]
+            "examples": [
+              "text-embedding-ada-002"
+            ]
           },
           "endpoint": {
             "type": "string",
@@ -75,7 +95,11 @@
           "task": {
             "type": "string",
             "description": "Optional: The specific task this model is optimized for",
-            "examples": ["text-embedding", "code-embedding", "semantic-search"]
+            "examples": [
+              "text-embedding",
+              "code-embedding",
+              "semantic-search"
+            ]
           }
         }
       }
