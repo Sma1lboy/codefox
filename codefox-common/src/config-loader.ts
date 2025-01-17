@@ -21,20 +21,21 @@ export interface AppConfig {
 }
 
 export const exampleConfigContent = `{
+  "$schema": "../config.schema.json",
   "chat": [
     {
-      "model": "gpt-4",                         
-      "endpoint": "https://api.openai.com/v1",   
-      "token": "your-openai-token",              
-      "default": true                            
+      "model": "gpt-4",
+      "endpoint": "https://api.openai.com/v1",
+      "token": "your-openai-token",
+      "default": true
     },
     {
-      "model": "llama2"                          
+      "model": "llama2"
     }
   ],
   "embedding": [
     {
-      "model": "text-embedding-ada-002",        
+      "model": "text-embedding-ada-002",
       "endpoint": "https://api.openai.com/v1",
       "token": "your-openai-token",
       "default": true

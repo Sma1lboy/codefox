@@ -22,7 +22,7 @@ export class RemoteOpenAIModelEngine implements ModelInstance {
 
     // Initialize queue with 30 RPS limit
     this.queue = new PQueue({
-      intervalCap: config.rps, // 30 requests
+      intervalCap: config.rps ?? 30, // 30 requests
       interval: 1000, // per 1000ms (1 second)
       carryoverConcurrencyCount: true, // Carry over pending tasks
       timeout: 30000, // 30 second timeout

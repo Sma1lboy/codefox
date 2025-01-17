@@ -6,13 +6,15 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
+    "build:common": "pnpm --filter codefox-common run build",
     "dev:turbo": "turbo dev",
     "dev": "tmuxinator start -p .tmuxinator/dev.yml",
-    "lint": "turbo lint",
-    "format": "turbo format",
+    "lint": "eslint . --ext .js,.ts,.tsx",
+    "format": "prettier --write .",
     "dev:backend": "turbo dev:backend",
     "test": "turbo test"
   },
+  "postinstall": "pnpm --filter codefox-common run build",
   "keywords": [],
   "author": "",
   "license": "ISC",
