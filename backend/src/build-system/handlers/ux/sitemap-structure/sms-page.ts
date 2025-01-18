@@ -19,17 +19,11 @@ export class UXSitemapStructurePagebyPageHandler
 
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
-    const sitemapDoc = context.getNodeData('op:UX:SMS');
     const uxStructureDoc = context.getNodeData('op:UX:SMS');
 
     // Validate required data
     if (!projectName || typeof projectName !== 'string') {
       throw new MissingConfigurationError('Missing or invalid projectName.');
-    }
-    if (!sitemapDoc || typeof sitemapDoc !== 'string') {
-      throw new MissingConfigurationError(
-        'Missing or invalid sitemap document.',
-      );
     }
     if (!uxStructureDoc || typeof uxStructureDoc !== 'string') {
       throw new MissingConfigurationError(
