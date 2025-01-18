@@ -10,7 +10,6 @@ export interface BuildBase {
   handler: new () => BuildHandler;
   name?: string;
   description?: string;
-  requires?: string[];
   options?: BuildOpts;
 }
 
@@ -73,6 +72,8 @@ export interface BuildContext {
  */
 export interface BuildHandler<T = any> {
   run(context: BuilderContext, opts?: BuildOpts): Promise<BuildResult<T>>;
+
+  dependencies?: BuildHandlerConstructor[];
 }
 
 /**

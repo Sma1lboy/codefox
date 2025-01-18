@@ -1,18 +1,19 @@
 import { BuildHandler, BuildHandlerConstructor } from './types';
 
 /**
- * 构建处理器管理器
+ * Build Handler Manager
+ * This class is a singleton responsible for managing instances of BuildHandlers.
  */
 export class BuildHandlerManager {
   private static instance: BuildHandlerManager;
   private handlers = new Map<BuildHandlerConstructor, BuildHandler>();
-  private dependencies = new Map<
-    BuildHandlerConstructor,
-    BuildHandlerConstructor[]
-  >();
 
   private constructor() {}
 
+  /**
+   * Get the singleton instance of BuildHandlerManager
+   * @returns The instance of BuildHandlerManager
+   */
   static getInstance(): BuildHandlerManager {
     if (!BuildHandlerManager.instance) {
       BuildHandlerManager.instance = new BuildHandlerManager();
@@ -21,18 +22,23 @@ export class BuildHandlerManager {
   }
 
   /**
-   * 注册处理器
+   * Register a build handler
+   * @param handlerClass The constructor of the handler to register
    */
   registerHandler<T extends BuildHandler>(
     handlerClass: BuildHandlerConstructor<T>,
   ): void {
     if (!this.handlers.has(handlerClass)) {
+      // Create an instance of the handler if not already registered
       this.handlers.set(handlerClass, new handlerClass());
     }
   }
 
   /**
-   * 获取处理器实例
+   * Get an instance of a registered build handler
+   * If the handler is not yet registered, it will be instantiated and registered.
+   * @param handlerClass The constructor of the handler to retrieve
+   * @returns An instance of the specified build handler
    */
   getHandler<T extends BuildHandler>(
     handlerClass: BuildHandlerConstructor<T>,
@@ -46,66 +52,44 @@ export class BuildHandlerManager {
   }
 
   /**
-   * 注册处理器依赖
-   */
-  registerDependencies(
-    handlerClass: BuildHandlerConstructor,
-    dependencies: BuildHandlerConstructor[],
-  ): void {
-    this.dependencies.set(handlerClass, dependencies);
-  }
-
-  /**
-   * 获取处理器依赖
-   */
-  getDependencies(
-    handlerClass: BuildHandlerConstructor,
-  ): BuildHandlerConstructor[] {
-    return this.dependencies.get(handlerClass) || [];
-  }
-
-  /**
-   * 验证处理器依赖
-   */
-  validateDependencies(handlerClass: BuildHandlerConstructor): boolean {
-    const dependencies = this.getDependencies(handlerClass);
-    return dependencies.every((dep) => this.handlers.has(dep));
-  }
-
-  /**
-   * 清除所有注册的处理器
+   * Clear all registered build handlers
+   * This will remove all handler instances from the manager.
    */
   clear(): void {
     this.handlers.clear();
-    this.dependencies.clear();
   }
 }
 
 /**
- * 处理器装饰器
+ * BuildNode Decorator
+ * A decorator to register a handler class as a build handler.
+ * This makes the handler class managed by the BuildHandlerManager.
  */
 export function BuildNode() {
   return function <T extends BuildHandlerConstructor>(target: T): T {
     const manager = BuildHandlerManager.getInstance();
-    manager.registerHandler(target);
+    manager.registerHandler(target); // Register the handler class
     return target;
   };
 }
 
 /**
- * 依赖装饰器
+ * BuildNodeRequire Decorator
+ * A decorator to define dependencies for the handler class.
+ * This specifies other handler classes that the current handler depends on.
+ * @param dependencies A list of build handler constructors that this handler depends on.
  */
 export function BuildNodeRequire(dependencies: BuildHandlerConstructor[]) {
   return function <T extends BuildHandlerConstructor>(target: T): T {
-    const manager = BuildHandlerManager.getInstance();
-    manager.registerDependencies(target, dependencies);
+    target.prototype.dependencies = dependencies || []; // Store the dependencies in the class prototype
     return target;
   };
 }
 
-// // 使用示例
+// Example usage:
+
 // @BuildNode()
-// @NodeRequire([/* 依赖处理器 */])
+// @BuildNodeRequire([/* Dependencies */])
 // class ExampleHandler implements BuildHandler<string> {
 //   async run(
 //     context: BuilderContext,
@@ -118,5 +102,6 @@ export function BuildNodeRequire(dependencies: BuildHandlerConstructor[]) {
 //   }
 // }
 
-// // 类型提取示例
-// type ExampleOutput = ExtractHandlerType<typeof ExampleHandler>; // string
+// Type extraction example:
+// type ExampleOutput = ExtractHandlerType<typeof ExampleHandler>;
+// This type will be 'string' in this case, as the handler returns a string.

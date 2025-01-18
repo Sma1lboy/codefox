@@ -7,11 +7,12 @@ import {
   MissingConfigurationError,
   ResponseParsingError,
 } from 'src/build-system/errors';
-import { BuildNode } from 'src/build-system/hanlder-manager';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import { UXSMDHandler } from '../sitemap-document';
 import { UXSitemapStructureHandler } from '.';
 
 @BuildNode()
+@BuildNodeRequire([UXSMDHandler, UXSitemapStructureHandler])
 export class UXSitemapStructurePagebyPageHandler
   implements BuildHandler<string>
 {

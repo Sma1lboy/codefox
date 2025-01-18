@@ -13,10 +13,10 @@ import {
 import { BuildNode } from 'src/build-system/hanlder-manager';
 
 @BuildNode()
-export class PRDHandler implements BuildHandler {
+export class PRDHandler implements BuildHandler<string> {
   readonly logger: Logger = new Logger('PRDHandler');
 
-  async run(context: BuilderContext): Promise<BuildResult> {
+  async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Generating PRD...');
 
     // Extract project data from the context

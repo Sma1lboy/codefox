@@ -19,6 +19,7 @@ export class UXSMDHandler implements BuildHandler<string> {
       context.getGlobalContext('projectName') || 'Default Project Name';
     const platform = context.getGlobalContext('platform') || 'Default Platform';
     const prdContent = context.getNodeData(PRDHandler);
+    this.logger.log('prd in uxsmd', prdContent);
 
     // Generate the prompt dynamically
     const prompt = prompts.generateUxsmdPrompt(projectName, platform);

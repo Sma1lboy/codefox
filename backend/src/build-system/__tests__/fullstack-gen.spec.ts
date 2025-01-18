@@ -2,6 +2,20 @@ import { isIntegrationTest } from 'src/common/utils';
 import { BuildSequence } from '../types';
 import { executeBuildSequence } from './utils';
 import { Logger } from '@nestjs/common';
+import { ProjectInitHandler } from '../handlers/project-init';
+import { PRDHandler } from '../handlers/product-manager/product-requirements-document/prd';
+import { UXSMDHandler } from '../handlers/ux/sitemap-document';
+import { UXSitemapStructureHandler } from '../handlers/ux/sitemap-structure';
+import { UXDatamapHandler } from '../handlers/ux/datamap';
+import { DatabaseRequirementHandler } from '../handlers/database/requirements-document';
+import { FileStructureHandler } from '../handlers/file-manager/file-structure';
+import { UXSitemapStructurePagebyPageHandler } from '../handlers/ux/sitemap-structure/sms-page';
+import { DBSchemaHandler } from '../handlers/database/schemas/schemas';
+import { FileArchGenerateHandler } from '../handlers/file-manager/file-arch';
+import { BackendRequirementHandler } from '../handlers/backend/requirements-document';
+import { BackendCodeHandler } from '../handlers/backend/code-generate';
+import { BackendFileReviewHandler } from '../handlers/backend/file-review/file-review';
+
 (isIntegrationTest ? describe : describe.skip)('Build Sequence Test', () => {
   it('should execute build sequence successfully', async () => {
     const sequence: BuildSequence = {
@@ -12,85 +26,87 @@ import { Logger } from '@nestjs/common';
       databaseType: 'SQLite',
       nodes: [
         {
-          id: 'op:PROJECT::STATE:SETUP',
+          handler: ProjectInitHandler,
           name: 'Project Folders Setup',
         },
         {
-          id: 'op:PRD',
+          handler: PRDHandler,
           name: 'Project Requirements Document Node',
         },
         {
-          id: 'op:UX:SMD',
+          handler: UXSMDHandler,
           name: 'UX Sitemap Document Node',
-          requires: ['op:PRD'],
         },
         {
-          id: 'op:UX:SMS',
+          handler: UXSitemapStructureHandler,
           name: 'UX Sitemap Structure Node',
-          requires: ['op:UX:SMD'],
+          // requires: ['op:UX:SMD'],
         },
         {
-          id: 'op:UX:DATAMAP:DOC',
+          handler: UXDatamapHandler,
           name: 'UX DataMap Document Node',
-          requires: ['op:UX:SMD'],
+          // requires: ['op:UX:SMD'],
         },
         {
-          id: 'op:DATABASE_REQ',
+          handler: DatabaseRequirementHandler,
           name: 'Database Requirements Node',
-          requires: ['op:UX:DATAMAP:DOC'],
+          // requires: ['op:UX:DATAMAP:DOC'],
         },
         {
-          id: 'op:FILE:STRUCT',
+          handler: FileStructureHandler,
           name: 'File Structure Generation',
-          requires: ['op:UX:SMD', 'op:UX:DATAMAP:DOC'],
+          // requires: ['op:UX:SMD', 'op:UX:DATAMAP:DOC'],
           options: {
             projectPart: 'frontend',
           },
         },
         {
-          id: 'op:UX:SMS:LEVEL2',
+          handler: UXSitemapStructurePagebyPageHandler,
           name: 'Level 2 UX Sitemap Structure Node details',
-          requires: ['op:UX:SMS'],
+          // requires: ['op:UX:SMS'],
         },
         {
-          id: 'op:DATABASE:SCHEMAS',
+          handler: DBSchemaHandler,
           name: 'Database Schemas Node',
-          requires: ['op:DATABASE_REQ'],
+          // requires: ['op:DATABASE_REQ'],
         },
         {
-          id: 'op:FILE:ARCH',
+          handler: FileArchGenerateHandler,
           name: 'File Arch',
-          requires: ['op:FILE:STRUCT', 'op:UX:DATAMAP:DOC'],
+          // requires: ['op:FILE:STRUCT', 'op:UX:DATAMAP:DOC'],
         },
         {
-          id: 'op:BACKEND:REQ',
+          handler: BackendRequirementHandler,
           name: 'Backend Requirements Node',
-          requires: ['op:DATABASE_REQ', 'op:UX:DATAMAP:DOC', 'op:UX:SMD'],
+          // requires: ['op:DATABASE_REQ', 'op:UX:DATAMAP:DOC', 'op:UX:SMD'],
         },
         {
-          id: 'op:BACKEND:CODE',
+          handler: BackendCodeHandler,
           name: 'Backend Code Generator Node',
-          requires: [
-            'op:DATABASE:SCHEMAS',
-            'op:UX:DATAMAP:DOC',
-            'op:BACKEND:REQ',
-          ],
+          // requires: [
+          //   'op:DATABASE:SCHEMAS',
+          //   'op:UX:DATAMAP:DOC',
+          //   'op:BACKEND:REQ',
+          // ],
         },
+        // {
+        //   handler:FrontendCodeHandler,
+        //   id: 'op:FRONTEND:CODE',
+        //   name: 'Frontend Code Generator Node',
+        // },
         {
-          id: 'op:FRONTEND:CODE',
-          name: 'Frontend Code Generator Node',
-        },
-        {
-          id: 'op:BACKEND:FILE:REVIEW',
+          handler: BackendFileReviewHandler,
           name: 'Backend File Review Node',
-          requires: ['op:BACKEND:CODE', 'op:BACKEND:REQ'],
+          // requires: ['op:BACKEND:CODE', 'op:BACKEND:REQ'],
         },
       ],
     };
 
     const result = await executeBuildSequence('fullstack-code-gen', sequence);
+
+    // Assertion: ensure the build sequence runs successfully
     expect(result.success).toBe(true);
     expect(result.metrics).toBeDefined();
     Logger.log(`Logs saved to: ${result.logFolderPath}`);
-  }, 300000);
+  }, 300000); // Set timeout to 5 minutes
 });
