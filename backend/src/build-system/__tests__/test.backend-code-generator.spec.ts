@@ -4,7 +4,7 @@ import { executeBuildSequence } from './utils';
 import { isIntegrationTest } from 'src/common/utils';
 import { PRDHandler } from '../handlers/product-manager/product-requirements-document/prd';
 import { UXSMDHandler } from '../handlers/ux/sitemap-document';
-import { DatabaseRequirementHandler } from '../handlers/database/requirements-document';
+import { DBRequirementHandler } from '../handlers/database/requirements-document';
 import { DBSchemaHandler } from '../handlers/database/schemas/schemas';
 import { BackendCodeHandler } from '../handlers/backend/code-generate';
 import { ProjectInitHandler } from '../handlers/project-init';
@@ -49,7 +49,7 @@ import { ProjectInitHandler } from '../handlers/project-init';
             },
 
             {
-              handler: DatabaseRequirementHandler,
+              handler: DBRequirementHandler,
               name: 'Database Requirements Node',
               // requires: ['op:UX:DATAMAP:DOC'],
             },

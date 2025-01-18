@@ -17,11 +17,11 @@ import {
   ModelUnavailableError,
   ResponseTagError,
 } from 'src/build-system/errors';
-import { DatabaseRequirementHandler } from '../requirements-document';
+import { DBRequirementHandler } from '../requirements-document';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
 @BuildNode()
-@BuildNodeRequire([DatabaseRequirementHandler])
+@BuildNodeRequire([DBRequirementHandler])
 export class DBSchemaHandler implements BuildHandler {
   private readonly logger: Logger = new Logger('DBSchemaHandler');
   async run(context: BuilderContext): Promise<BuildResult> {
@@ -32,7 +32,7 @@ export class DBSchemaHandler implements BuildHandler {
       context.getGlobalContext('projectName') || 'Default Project Name';
     const databaseType =
       context.getGlobalContext('databaseType') || 'PostgreSQL';
-    const dbRequirements = context.getNodeData(DatabaseRequirementHandler);
+    const dbRequirements = context.getNodeData(DBRequirementHandler);
     const uuid = context.getGlobalContext('projectUUID');
 
     // 2. Validate database type

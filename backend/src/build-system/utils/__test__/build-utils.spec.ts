@@ -3,13 +3,13 @@ import { Logger } from '@nestjs/common';
 import { ProjectInitHandler } from 'src/build-system/handlers/project-init';
 import { PRDHandler } from 'src/build-system/handlers/product-manager/product-requirements-document/prd';
 import { UXSMDHandler } from 'src/build-system/handlers/ux/sitemap-document';
-import { UXSitemapStructureHandler } from 'src/build-system/handlers/ux/sitemap-structure';
-import { UXDatamapHandler } from 'src/build-system/handlers/ux/datamap';
-import { DatabaseRequirementHandler } from 'src/build-system/handlers/database/requirements-document';
+import { UXSMSHandler } from 'src/build-system/handlers/ux/sitemap-structure';
+import { UXDMDHandler } from 'src/build-system/handlers/ux/datamap';
+import { DBRequirementHandler } from 'src/build-system/handlers/database/requirements-document';
 import { FileStructureHandler } from 'src/build-system/handlers/file-manager/file-structure';
-import { UXSitemapStructurePagebyPageHandler } from 'src/build-system/handlers/ux/sitemap-structure/sms-page';
+import { UXSMSPageByPageHandler } from 'src/build-system/handlers/ux/sitemap-structure/sms-page';
 import { DBSchemaHandler } from 'src/build-system/handlers/database/schemas/schemas';
-import { FileArchGenerateHandler } from 'src/build-system/handlers/file-manager/file-arch';
+import { FileFAHandler } from 'src/build-system/handlers/file-manager/file-arch';
 import { BackendRequirementHandler } from 'src/build-system/handlers/backend/requirements-document';
 import { BackendCodeHandler } from 'src/build-system/handlers/backend/code-generate';
 import { BackendFileReviewHandler } from 'src/build-system/handlers/backend/file-review/file-review';
@@ -39,15 +39,15 @@ describe('Build Sequence Test', () => {
           name: 'UX Sitemap Document Node',
         },
         {
-          handler: UXSitemapStructureHandler,
+          handler: UXSMSHandler,
           name: 'UX Sitemap Structure Node',
         },
         {
-          handler: UXDatamapHandler,
+          handler: UXDMDHandler,
           name: 'UX DataMap Document Node',
         },
         {
-          handler: DatabaseRequirementHandler,
+          handler: DBRequirementHandler,
           name: 'Database Requirements Node',
         },
         {
@@ -58,7 +58,7 @@ describe('Build Sequence Test', () => {
           },
         },
         {
-          handler: UXSitemapStructurePagebyPageHandler,
+          handler: UXSMSPageByPageHandler,
           name: 'Level 2 UX Sitemap Structure Node details',
         },
         {
@@ -66,7 +66,7 @@ describe('Build Sequence Test', () => {
           name: 'Database Schemas Node',
         },
         {
-          handler: FileArchGenerateHandler,
+          handler: FileFAHandler,
           name: 'File Arch',
         },
         {
@@ -132,15 +132,15 @@ describe('sortBuildSequence Tests', () => {
         },
 
         {
-          handler: UXSitemapStructureHandler,
+          handler: UXSMSHandler,
           name: 'UX Sitemap Structure Node',
         },
         {
-          handler: UXDatamapHandler,
+          handler: UXDMDHandler,
           name: 'UX DataMap Document Node',
         },
         {
-          handler: UXSitemapStructurePagebyPageHandler,
+          handler: UXSMSPageByPageHandler,
           name: 'Level 2 UX Sitemap Structure Node details',
         },
       ],

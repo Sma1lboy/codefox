@@ -9,8 +9,8 @@ import {
 } from 'src/build-system/errors';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
-import { DatabaseRequirementHandler } from '../../database/requirements-document';
-import { UXDatamapHandler } from '../../ux/datamap';
+import { DBRequirementHandler } from '../../database/requirements-document';
+import { UXDMDHandler } from '../../ux/datamap';
 import { UXSMDHandler } from '../../ux/sitemap-document';
 
 type BackendRequirementResult = {
@@ -29,7 +29,7 @@ type BackendRequirementResult = {
  */
 
 @BuildNode()
-@BuildNodeRequire([DatabaseRequirementHandler, UXDatamapHandler, UXSMDHandler])
+@BuildNodeRequire([DBRequirementHandler, UXDMDHandler, UXSMDHandler])
 export class BackendRequirementHandler
   implements BuildHandler<BackendRequirementResult>
 {
@@ -46,8 +46,8 @@ export class BackendRequirementHandler
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
 
-    const dbRequirements = context.getNodeData(DatabaseRequirementHandler);
-    const datamapDoc = context.getNodeData(UXDatamapHandler);
+    const dbRequirements = context.getNodeData(DBRequirementHandler);
+    const datamapDoc = context.getNodeData(UXDMDHandler);
     const sitemapDoc = context.getNodeData(UXSMDHandler);
 
     if (!dbRequirements || !datamapDoc || !sitemapDoc) {

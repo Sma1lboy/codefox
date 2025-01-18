@@ -5,13 +5,13 @@ import { Logger } from '@nestjs/common';
 import { ProjectInitHandler } from '../handlers/project-init';
 import { PRDHandler } from '../handlers/product-manager/product-requirements-document/prd';
 import { UXSMDHandler } from '../handlers/ux/sitemap-document';
-import { UXSitemapStructureHandler } from '../handlers/ux/sitemap-structure';
-import { UXDatamapHandler } from '../handlers/ux/datamap';
-import { DatabaseRequirementHandler } from '../handlers/database/requirements-document';
+import { UXSMSHandler } from '../handlers/ux/sitemap-structure';
+import { UXDMDHandler } from '../handlers/ux/datamap';
+import { DBRequirementHandler } from '../handlers/database/requirements-document';
 import { FileStructureHandler } from '../handlers/file-manager/file-structure';
-import { UXSitemapStructurePagebyPageHandler } from '../handlers/ux/sitemap-structure/sms-page';
+import { UXSMSPageByPageHandler } from '../handlers/ux/sitemap-structure/sms-page';
 import { DBSchemaHandler } from '../handlers/database/schemas/schemas';
-import { FileArchGenerateHandler } from '../handlers/file-manager/file-arch';
+import { FileFAHandler } from '../handlers/file-manager/file-arch';
 import { BackendRequirementHandler } from '../handlers/backend/requirements-document';
 import { BackendCodeHandler } from '../handlers/backend/code-generate';
 import { BackendFileReviewHandler } from '../handlers/backend/file-review/file-review';
@@ -38,17 +38,17 @@ import { BackendFileReviewHandler } from '../handlers/backend/file-review/file-r
           name: 'UX Sitemap Document Node',
         },
         {
-          handler: UXSitemapStructureHandler,
+          handler: UXSMSHandler,
           name: 'UX Sitemap Structure Node',
           // requires: ['op:UX:SMD'],
         },
         {
-          handler: UXDatamapHandler,
+          handler: UXDMDHandler,
           name: 'UX DataMap Document Node',
           // requires: ['op:UX:SMD'],
         },
         {
-          handler: DatabaseRequirementHandler,
+          handler: DBRequirementHandler,
           name: 'Database Requirements Node',
           // requires: ['op:UX:DATAMAP:DOC'],
         },
@@ -61,7 +61,7 @@ import { BackendFileReviewHandler } from '../handlers/backend/file-review/file-r
           },
         },
         {
-          handler: UXSitemapStructurePagebyPageHandler,
+          handler: UXSMSPageByPageHandler,
           name: 'Level 2 UX Sitemap Structure Node details',
           // requires: ['op:UX:SMS'],
         },
@@ -71,7 +71,7 @@ import { BackendFileReviewHandler } from '../handlers/backend/file-review/file-r
           // requires: ['op:DATABASE_REQ'],
         },
         {
-          handler: FileArchGenerateHandler,
+          handler: FileFAHandler,
           name: 'File Arch',
           // requires: ['op:FILE:STRUCT', 'op:UX:DATAMAP:DOC'],
         },

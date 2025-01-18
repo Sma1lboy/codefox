@@ -13,7 +13,7 @@ import {
 } from 'src/build-system/errors';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import { UXSMDHandler } from '../../ux/sitemap-document';
-import { UXDatamapHandler } from '../../ux/datamap';
+import { UXDMDHandler } from '../../ux/datamap';
 import { DBSchemaHandler } from '../../database/schemas/schemas';
 import { BackendRequirementHandler } from '../requirements-document';
 
@@ -23,7 +23,7 @@ import { BackendRequirementHandler } from '../requirements-document';
  */
 
 @BuildNode()
-@BuildNodeRequire([UXSMDHandler, UXDatamapHandler, DBSchemaHandler])
+@BuildNodeRequire([UXSMDHandler, UXDMDHandler, DBSchemaHandler])
 export class BackendCodeHandler implements BuildHandler<string> {
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     const projectName =
@@ -32,7 +32,7 @@ export class BackendCodeHandler implements BuildHandler<string> {
       context.getGlobalContext('databaseType') || 'Default database type';
     // Retrieve required documents
     const sitemapDoc = context.getNodeData(UXSMDHandler);
-    const datamapDoc = context.getNodeData(UXDatamapHandler);
+    const datamapDoc = context.getNodeData(UXDMDHandler);
     const databaseSchemas = context.getNodeData(DBSchemaHandler);
     const backendRequirementDoc =
       context.getNodeData(BackendRequirementHandler)?.overview || '';

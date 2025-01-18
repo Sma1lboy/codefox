@@ -13,10 +13,10 @@ import { readFile } from 'fs/promises';
 import { parseGenerateTag } from 'src/build-system/utils/strings';
 
 import { generateFrontEndCodePrompt, generateCSSPrompt } from './prompt';
-import { UXSitemapStructureHandler } from '../ux/sitemap-structure';
-import { UXDatamapHandler } from '../ux/datamap';
+import { UXSMSHandler } from '../ux/sitemap-structure';
+import { UXDMDHandler } from '../ux/datamap';
 import { BackendRequirementHandler } from '../backend/requirements-document';
-import { FileArchGenerateHandler } from '../file-manager/file-arch';
+import { FileFAHandler } from '../file-manager/file-arch';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
 /**
@@ -26,10 +26,10 @@ import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
  */
 @BuildNode()
 @BuildNodeRequire([
-  UXSitemapStructureHandler,
-  UXDatamapHandler,
+  UXSMSHandler,
+  UXDMDHandler,
   BackendRequirementHandler,
-  FileArchGenerateHandler,
+  FileFAHandler,
 ])
 export class FrontendCodeHandler implements BuildHandler<string> {
   readonly logger: Logger = new Logger('FrontendCodeHandler');
@@ -45,12 +45,12 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     this.logger.log('Generating Frontend Code...');
 
     // 1. Retrieve the necessary input from context
-    const sitemapStruct = context.getNodeData(UXSitemapStructureHandler);
-    const uxDataMapDoc = context.getNodeData(UXDatamapHandler);
+    const sitemapStruct = context.getNodeData(UXSMSHandler);
+    const uxDataMapDoc = context.getNodeData(UXDMDHandler);
     const backendRequirementDoc = context.getNodeData(
       BackendRequirementHandler,
     );
-    const fileArchDoc = context.getNodeData(FileArchGenerateHandler);
+    const fileArchDoc = context.getNodeData(FileFAHandler);
 
     // 2. Grab any globally stored context as needed
     this.virtualDir = context.virtualDirectory;

@@ -19,7 +19,7 @@ import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
 @BuildNode()
 @BuildNodeRequire([UXSMDHandler])
-export class UXSitemapStructureHandler implements BuildHandler<string> {
+export class UXSMSHandler implements BuildHandler<string> {
   private readonly logger = new Logger('UXSitemapStructureHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -91,7 +91,7 @@ export class UXSitemapStructureHandler implements BuildHandler<string> {
           messages,
         },
         'generateUXSiteMapStructre',
-        UXSitemapStructureHandler.name,
+        UXSMSHandler.name,
       );
 
       if (!uxStructureContent || uxStructureContent.trim() === '') {

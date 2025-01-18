@@ -1,10 +1,10 @@
 import { isIntegrationTest } from 'src/common/utils';
 import { PRDHandler } from '../handlers/product-manager/product-requirements-document/prd';
 import { ProjectInitHandler } from '../handlers/project-init';
-import { UXDatamapHandler } from '../handlers/ux/datamap';
+import { UXDMDHandler } from '../handlers/ux/datamap';
 import { UXSMDHandler } from '../handlers/ux/sitemap-document';
-import { UXSitemapStructureHandler } from '../handlers/ux/sitemap-structure';
-import { UXSitemapStructurePagebyPageHandler } from '../handlers/ux/sitemap-structure/sms-page';
+import { UXSMSHandler as UXSMSHandler } from '../handlers/ux/sitemap-structure';
+import { UXSMSPageByPageHandler } from '../handlers/ux/sitemap-structure/sms-page';
 import { BuildSequence } from '../types';
 import { executeBuildSequence } from './utils';
 
@@ -34,15 +34,15 @@ import { executeBuildSequence } from './utils';
         },
 
         {
-          handler: UXSitemapStructureHandler,
+          handler: UXSMSHandler,
           name: 'UX Sitemap Structure Node',
         },
         {
-          handler: UXDatamapHandler,
+          handler: UXDMDHandler,
           name: 'UX DataMap Document Node',
         },
         {
-          handler: UXSitemapStructurePagebyPageHandler,
+          handler: UXSMSPageByPageHandler,
           name: 'Level 2 UX Sitemap Structure Node details',
         },
       ],

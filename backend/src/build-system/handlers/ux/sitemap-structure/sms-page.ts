@@ -9,13 +9,11 @@ import {
 } from 'src/build-system/errors';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import { UXSMDHandler } from '../sitemap-document';
-import { UXSitemapStructureHandler } from '.';
+import { UXSMSHandler } from '.';
 
 @BuildNode()
-@BuildNodeRequire([UXSMDHandler, UXSitemapStructureHandler])
-export class UXSitemapStructurePagebyPageHandler
-  implements BuildHandler<string>
-{
+@BuildNodeRequire([UXSMDHandler, UXSMSHandler])
+export class UXSMSPageByPageHandler implements BuildHandler<string> {
   readonly logger = new Logger('UXSitemapStructurePagebyPageHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -24,7 +22,7 @@ export class UXSitemapStructurePagebyPageHandler
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
     const sitemapDoc = context.getNodeData(UXSMDHandler);
-    const uxStructureDoc = context.getNodeData(UXSitemapStructureHandler);
+    const uxStructureDoc = context.getNodeData(UXSMSHandler);
 
     // Validate required data
     if (!projectName || typeof projectName !== 'string') {
@@ -94,7 +92,7 @@ export class UXSitemapStructurePagebyPageHandler
     const refinedGlobalCompSections = await batchChatSyncWithClock(
       context,
       'generate global components',
-      UXSitemapStructurePagebyPageHandler.name,
+      UXSMSPageByPageHandler.name,
       requests,
     );
     refinedSections.push(refinedGlobalCompSections);
@@ -151,7 +149,7 @@ export class UXSitemapStructurePagebyPageHandler
     const refinedPageViewSections = await batchChatSyncWithClock(
       context,
       'generate page by page details',
-      UXSitemapStructurePagebyPageHandler.name,
+      UXSMSPageByPageHandler.name,
       page_view_requests,
     );
     refinedSections.push(refinedPageViewSections);

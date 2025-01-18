@@ -16,7 +16,7 @@ import { UXSMDHandler } from '../sitemap-document';
  */
 @BuildNode()
 @BuildNodeRequire([UXSMDHandler])
-export class UXDatamapHandler implements BuildHandler<string> {
+export class UXDMDHandler implements BuildHandler<string> {
   private readonly logger = new Logger('UXDatamapHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -51,7 +51,7 @@ export class UXDatamapHandler implements BuildHandler<string> {
           messages: [{ content: prompt, role: 'system' }],
         },
         'generateUXDataMap',
-        UXDatamapHandler.name,
+        UXDMDHandler.name,
       );
 
       this.logger.log('Successfully generated UX Data Map content.');
