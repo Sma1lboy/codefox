@@ -4,7 +4,6 @@ import {
   InMemoryCache,
   HttpLink,
   ApolloLink,
-  concat,
   from,
   split,
 } from '@apollo/client';
@@ -13,6 +12,7 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 
 import { getMainDefinition } from '@apollo/client/utilities';
+
 // HTTP Link
 const httpLink = new HttpLink({
   uri: process.env.NEXT_PUBLIC_GRAPHQL_URL,
@@ -22,14 +22,15 @@ const httpLink = new HttpLink({
   },
 });
 
-let wsLink;
+// WebSocket Link (only in browser environment)
+let wsLink = null;
 if (typeof window !== 'undefined') {
-  // WebSocket Link
   wsLink = new GraphQLWsLink(
     createClient({
       url: process.env.NEXT_PUBLIC_GRAPHQL_URL,
       connectionParams: () => {
-        return {};
+        const token = localStorage.getItem(LocalStore.accessToken);
+        return token ? { Authorization: `Bearer ${token}` } : {};
       },
     })
   );
@@ -79,24 +80,26 @@ const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
 });
 
 // Split traffic based on operation type
-const splitLink = split(
-  ({ query }) => {
-    if (!query) {
-      throw new Error('Query is undefined');
-    }
-    const definition = getMainDefinition(query);
-    return (
-      definition.kind === 'OperationDefinition' &&
-      definition.operation === 'subscription'
-    );
-  },
-  wsLink,
-  from([errorLink, requestLoggingMiddleware, authMiddleware, httpLink])
-);
+const splitLink = wsLink
+  ? split(
+      ({ query }) => {
+        if (!query) {
+          throw new Error('Query is undefined');
+        }
+        const definition = getMainDefinition(query);
+        return (
+          definition.kind === 'OperationDefinition' &&
+          definition.operation === 'subscription'
+        );
+      },
+      wsLink,
+      from([errorLink, requestLoggingMiddleware, authMiddleware, httpLink])
+    )
+  : from([errorLink, requestLoggingMiddleware, authMiddleware, httpLink]);
 
 // Create Apollo Client
 const client = new ApolloClient({
-  link: wsLink ? from([httpLink, wsLink]) : httpLink,
+  link: splitLink, // Use splitLink here
   cache: new InMemoryCache(),
   defaultOptions: {
     watchQuery: {

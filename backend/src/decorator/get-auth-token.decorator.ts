@@ -2,6 +2,7 @@
 import {
   createParamDecorator,
   ExecutionContext,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
@@ -27,6 +28,9 @@ export const GetUserIdFromToken = createParamDecorator(
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      Logger.debug(authHeader);
+      console.log(request.headers);
+      Logger.error('Authorization token is missing or invalid');
       throw new UnauthorizedException(
         'Authorization token is missing or invalid',
       );

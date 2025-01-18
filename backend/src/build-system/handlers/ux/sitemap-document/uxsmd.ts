@@ -35,11 +35,7 @@ export class UXSMDHandler implements BuildHandler<string> {
     }
 
     // Generate the prompt dynamically
-    const prompt = prompts.generateUxsmdrompt(
-      projectName,
-      prdContent,
-      platform,
-    );
+    const prompt = prompts.generateUxsmdPrompt(projectName, platform);
 
     // Send the prompt to the LLM server and process the response
 

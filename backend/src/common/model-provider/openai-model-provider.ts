@@ -7,7 +7,7 @@ import OpenAI from 'openai';
 import { Logger } from '@nestjs/common';
 import { Stream } from 'openai/streaming';
 import { ChatCompletionChunk as OpenAIChatCompletionChunk } from 'openai/resources/chat';
-import { ChatCompletionChunk } from 'src/chat/chat.model';
+import { ChatCompletionChunk, StreamStatus } from 'src/chat/chat.model';
 import PQueue from 'p-queue-es5';
 import { ConfigLoader, ModelConfig } from 'codefox-common';
 export class OpenAIModelProvider implements IModelProvider {
@@ -140,9 +140,13 @@ export class OpenAIModelProvider implements IModelProvider {
         try {
           const currentIterator = await createStream();
           const chunk = await currentIterator.next();
+          const temp = chunk.value as OpenAIChatCompletionChunk;
           return {
             done: chunk.done,
-            value: chunk.value as ChatCompletionChunk,
+            value: {
+              ...temp,
+              status: StreamStatus.STREAMING,
+            } as unknown as ChatCompletionChunk,
           };
         } catch (error) {
           stream = null;

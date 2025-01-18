@@ -22,9 +22,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const isRedirectingRef = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
-  const { refetch: checkToken } = useQuery(CHECK_TOKEN_QUERY, {
-    skip: true,
-  });
+  const { refetch: checkToken } = useQuery(CHECK_TOKEN_QUERY);
 
   useEffect(() => {
     let isMounted = true;
@@ -48,6 +46,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       const token = localStorage.getItem(LocalStore.accessToken);
 
+      console.log(token);
       if (!token) {
         isRedirectingRef.current = true;
         router.replace('/login');
@@ -79,6 +78,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             router.replace('/login');
             setIsAuthorized(false);
           } else {
+            console.log('token checked');
             setIsAuthorized(true);
           }
         }

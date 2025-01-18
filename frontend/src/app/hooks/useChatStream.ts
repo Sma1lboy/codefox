@@ -120,6 +120,7 @@ export function useChatStream({
       }
     },
     onError: (error) => {
+      console.log(error);
       toast.error('Connection error. Please try again.');
       setStreamStatus(StreamStatus.IDLE);
       finishChatResponse();
@@ -133,6 +134,7 @@ export function useChatStream({
         message,
         model: selectedModel,
       };
+      console.log(input);
 
       setStreamStatus(StreamStatus.STREAMING);
       setSubscription({

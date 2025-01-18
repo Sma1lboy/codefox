@@ -2,6 +2,7 @@ import { gql, useQuery } from '@apollo/client';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { LocalStore } from '@/lib/storage';
+import { GET_MODEL_TAGS } from '@/graphql/request';
 
 interface ModelsCache {
   models: string[];
@@ -48,23 +49,18 @@ export const useModels = () => {
 
   const { data, loading, error } = useQuery<{
     getAvailableModelTags: string[];
-  }>(
-    gql`
-      query {
-        getAvailableModelTags
+  }>(GET_MODEL_TAGS, {
+    skip: !shouldUpdateCache(),
+    onCompleted: (data) => {
+      console.log(data);
+      if (data?.getAvailableModelTags) {
+        updateCache(data.getAvailableModelTags);
       }
-    `,
-    {
-      skip: !shouldUpdateCache(),
-      onCompleted: (data) => {
-        if (data?.getAvailableModelTags) {
-          updateCache(data.getAvailableModelTags);
-        }
-      },
-    }
-  );
+    },
+  });
 
   if (error) {
+    console.log(error);
     toast.error('Failed to load models');
   }
 

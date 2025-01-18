@@ -38,6 +38,7 @@ export class ChatResolver {
   @JWTAuth()
   async triggerChatStream(@Args('input') input: ChatInput): Promise<boolean> {
     try {
+      console.log('processing chat');
       await this.chatService.saveMessage(
         input.chatId,
         input.message,
@@ -81,8 +82,10 @@ export class ChatResolver {
   async getAvailableModelTags(
     @GetUserIdFromToken() userId: string,
   ): Promise<string[]> {
+    this.logger.log('Fetching model tags for user:', userId);
     try {
       const response = await this.chatProxyService.fetchModelTags();
+      this.logger.log('Loaded model tags:', response);
       return response;
     } catch (error) {
       throw new Error('Failed to fetch model tags');
