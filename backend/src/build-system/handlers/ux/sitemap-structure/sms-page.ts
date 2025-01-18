@@ -21,17 +21,12 @@ export class UXSMSPageByPageHandler implements BuildHandler<string> {
 
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
-    const sitemapDoc = context.getNodeData(UXSMDHandler);
+
     const uxStructureDoc = context.getNodeData(UXSMSHandler);
 
     // Validate required data
     if (!projectName || typeof projectName !== 'string') {
       throw new MissingConfigurationError('Missing or invalid projectName.');
-    }
-    if (!sitemapDoc || typeof sitemapDoc !== 'string') {
-      throw new MissingConfigurationError(
-        'Missing or invalid sitemap document.',
-      );
     }
     if (!uxStructureDoc || typeof uxStructureDoc !== 'string') {
       throw new MissingConfigurationError(
