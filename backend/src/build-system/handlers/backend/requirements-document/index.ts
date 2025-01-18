@@ -8,6 +8,10 @@ import {
   ModelUnavailableError,
 } from 'src/build-system/errors';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
+import { DBRequirementHandler } from '../../database/requirements-document';
+import { UXDMDHandler } from '../../ux/datamap';
+import { UXSMDHandler } from '../../ux/sitemap-document';
 
 type BackendRequirementResult = {
   overview: string;
@@ -23,10 +27,12 @@ type BackendRequirementResult = {
  * BackendRequirementHandler is responsible for generating the backend requirements document.
  * Core Content Generation: API Endpoints, System Overview
  */
+
+@BuildNode()
+@BuildNodeRequire([DBRequirementHandler, UXDMDHandler, UXSMDHandler])
 export class BackendRequirementHandler
   implements BuildHandler<BackendRequirementResult>
 {
-  readonly id = 'op:BACKEND:REQ';
   private readonly logger: Logger = new Logger('BackendRequirementHandler');
 
   async run(
@@ -40,9 +46,9 @@ export class BackendRequirementHandler
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
 
-    const dbRequirements = context.getNodeData('op:DATABASE_REQ');
-    const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
-    const sitemapDoc = context.getNodeData('op:UX:SMD');
+    const dbRequirements = context.getNodeData(DBRequirementHandler);
+    const datamapDoc = context.getNodeData(UXDMDHandler);
+    const sitemapDoc = context.getNodeData(UXSMDHandler);
 
     if (!dbRequirements || !datamapDoc || !sitemapDoc) {
       this.logger.error(
@@ -73,7 +79,7 @@ export class BackendRequirementHandler
           messages: [{ content: overviewPrompt, role: 'system' }],
         },
         'generateBackendOverviewPrompt',
-        this.id,
+        BackendRequirementHandler.name,
       );
     } catch (error) {
       throw new ModelUnavailableError('Model is unavailable:' + error);

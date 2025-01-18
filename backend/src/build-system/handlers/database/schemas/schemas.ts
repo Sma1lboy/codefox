@@ -17,11 +17,13 @@ import {
   ModelUnavailableError,
   ResponseTagError,
 } from 'src/build-system/errors';
+import { DBRequirementHandler } from '../requirements-document';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
+@BuildNode()
+@BuildNodeRequire([DBRequirementHandler])
 export class DBSchemaHandler implements BuildHandler {
-  readonly id = 'op:DATABASE:SCHEMAS';
   private readonly logger: Logger = new Logger('DBSchemaHandler');
-
   async run(context: BuilderContext): Promise<BuildResult> {
     this.logger.log('Generating Database Schemas...');
 
@@ -30,7 +32,7 @@ export class DBSchemaHandler implements BuildHandler {
       context.getGlobalContext('projectName') || 'Default Project Name';
     const databaseType =
       context.getGlobalContext('databaseType') || 'PostgreSQL';
-    const dbRequirements = context.getNodeData('op:DATABASE_REQ');
+    const dbRequirements = context.getNodeData(DBRequirementHandler);
     const uuid = context.getGlobalContext('projectUUID');
 
     // 2. Validate database type
@@ -68,7 +70,7 @@ export class DBSchemaHandler implements BuildHandler {
             messages: [{ content: analysisPrompt, role: 'system' }],
           },
           'analyzeDatabaseRequirements',
-          this.id,
+          DBSchemaHandler.name,
         );
         dbAnalysis = formatResponse(analysisResponse);
       } catch (error) {
@@ -93,7 +95,7 @@ export class DBSchemaHandler implements BuildHandler {
             messages: [{ content: schemaPrompt, role: 'system' }],
           },
           'generateDatabaseSchema',
-          this.id,
+          DBSchemaHandler.name,
         );
         schemaContent = formatResponse(schemaResponse);
       } catch (error) {
@@ -117,7 +119,7 @@ export class DBSchemaHandler implements BuildHandler {
             messages: [{ content: validationPrompt, role: 'system' }],
           },
           'validateDatabaseSchema',
-          this.id,
+          DBSchemaHandler.name,
         );
         validationResult = formatResponse(validationResponse);
       } catch (error) {

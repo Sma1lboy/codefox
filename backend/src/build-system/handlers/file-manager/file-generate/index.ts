@@ -13,15 +13,18 @@ import {
   FileWriteError,
 } from 'src/build-system/errors';
 import { getProjectPath } from 'codefox-common';
+import { FileFAHandler } from '../file-arch';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
+@BuildNode()
+@BuildNodeRequire([FileFAHandler])
 export class FileGeneratorHandler implements BuildHandler<string> {
-  readonly id = 'op:FILE:GENERATE';
   private readonly logger = new Logger('FileGeneratorHandler');
   private virtualDir: VirtualDirectory;
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.virtualDir = context.virtualDirectory;
-    const fileArchDoc = context.getNodeData('op:FILE:ARCH');
+    const fileArchDoc = context.getNodeData(FileFAHandler);
     const uuid = context.getGlobalContext('projectUUID');
 
     if (!fileArchDoc) {

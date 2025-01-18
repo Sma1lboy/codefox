@@ -1,56 +1,56 @@
 import { BuilderContext } from './context';
 
+/**
+ * Base interface for build configuration
+ */
 export interface BuildBase {
-  id: string;
+  /**
+   * Class reference that implements BuildHandler
+   */
+  handler: new () => BuildHandler;
   name?: string;
   description?: string;
-  requires?: string[];
   options?: BuildOpts;
 }
 
+/**
+ * Build node configuration
+ */
 export interface BuildNode extends BuildBase {
   config?: Record<string, any>;
 }
 
-export interface BuildStep {
-  id: string;
-  name: string;
-  description?: string;
-  parallel?: boolean;
-  nodes: BuildNode[];
-}
-
+/**
+ * Build sequence definition
+ */
 export interface BuildSequence {
   id: string;
   version: string;
   name: string;
   description?: string;
-  //TODO: adding dependencies infos list here
-  //TODO: adding type for database maybe
   databaseType?: string;
-  steps: BuildStep[];
+  nodes: BuildNode[];
 }
 
-export interface BuildHandlerContext {
-  data: Record<string, any>;
-  run: (nodeId: string) => Promise<BuildResult>;
+/**
+ * Build options
+ */
+export interface BuildOpts {
+  projectPart?: 'frontend' | 'backend';
 }
 
-export interface BuildHandlerRegistry {
-  [key: string]: BuildHandler;
-}
-export interface BuildContext {
-  data: Record<string, any>;
-  completedNodes: Set<string>;
-  pendingNodes: Set<string>;
-}
-
+/**
+ * Build result interface
+ */
 export interface BuildResult<T = any> {
   success: boolean;
   data?: T;
   error?: Error;
 }
 
+/**
+ * Build execution state
+ */
 export interface BuildExecutionState {
   completed: Set<string>;
   pending: Set<string>;
@@ -58,55 +58,59 @@ export interface BuildExecutionState {
   waiting: Set<string>;
 }
 
-export interface BuildOpts {
-  projectPart?: 'frontend' | 'backend';
+/**
+ * Build context
+ */
+export interface BuildContext {
+  data: Record<string, any>;
+  completedNodes: Set<string>;
+  pendingNodes: Set<string>;
 }
+
+/**
+ * Build handler interface
+ */
 export interface BuildHandler<T = any> {
-  // Unique identifier for the handler
-  id: string;
-
-  /**
-   *
-   * @param context the context object for the build
-   * @param model model provider for the build
-   * @param args the request arguments
-   */
   run(context: BuilderContext, opts?: BuildOpts): Promise<BuildResult<T>>;
+
+  dependencies?: BuildHandlerConstructor[];
 }
 
+/**
+ * Build handler constructor type
+ */
+export interface BuildHandlerConstructor<T = any> {
+  new (): BuildHandler<T>;
+}
+
+/**
+ * File structure output type
+ */
 export interface FileStructOutput {
-  /**
-   * Tree File Structure:
-   * src:
-   *  - components:
-   */
   fileStructure: string;
-  /**
-   * Example JSON file structure:
-   *
-   */
   jsonFileStructure: string;
 }
-export interface NodeOutputMap {
-  'op:DATABASE_REQ': string;
-  'op:PRD': string;
-  'op:UX:SMD': string;
-  'op:UX:SMS': string;
-  'op:UX:SMS:LEVEL2': string;
-  'op:UX:DATAMAP:DOC': string;
-  'op:FILE:STRUCT': FileStructOutput;
-  'op:FILE:ARCH': string;
-  'op:FILE:GENERATE': string;
-  'op:BACKEND:CODE': string;
-  'op:BACKEND:REQ': {
-    overview: string;
-    implementation: string;
-    config: {
-      language: string;
-      framework: string;
-      packages: Record<string, string>;
-    };
+
+/**
+ * Backend requirement output type
+ */
+export interface BackendRequirementOutput {
+  overview: string;
+  implementation: string;
+  config: {
+    language: string;
+    framework: string;
+    packages: Record<string, string>;
   };
-  'op:DATABASE:SCHEMAS': string;
-  'op:BACKEND:FILE:REVIEW': string;
 }
+
+/**
+ * Extract handler type utility
+ */
+export type ExtractHandlerType<T> = T extends BuildHandler<infer U> ? U : never;
+
+/**
+ * Extract handler return type utility
+ */
+export type ExtractHandlerReturnType<T extends new () => BuildHandler<any>> =
+  ExtractHandlerType<InstanceType<T>>;

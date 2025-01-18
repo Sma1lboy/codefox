@@ -8,12 +8,15 @@ import {
   MissingConfigurationError,
   ModelUnavailableError,
 } from 'src/build-system/errors';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
+import { UXSMDHandler } from '../sitemap-document';
 
 /**
  * Handler for generating the UX Data Map document.
  */
-export class UXDatamapHandler implements BuildHandler<string> {
-  readonly id = 'op:UX:DATAMAP:DOC';
+@BuildNode()
+@BuildNodeRequire([UXSMDHandler])
+export class UXDMDHandler implements BuildHandler<string> {
   private readonly logger = new Logger('UXDatamapHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -22,7 +25,7 @@ export class UXDatamapHandler implements BuildHandler<string> {
     // Extract relevant data from the context
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
-    const sitemapDoc = context.getNodeData('op:UX:SMD');
+    const sitemapDoc = context.getNodeData(UXSMDHandler);
 
     // Validate required data
     if (!projectName || typeof projectName !== 'string') {
@@ -48,7 +51,7 @@ export class UXDatamapHandler implements BuildHandler<string> {
           messages: [{ content: prompt, role: 'system' }],
         },
         'generateUXDataMap',
-        this.id,
+        UXDMDHandler.name,
       );
 
       this.logger.log('Successfully generated UX Data Map content.');
