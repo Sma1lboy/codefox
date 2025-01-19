@@ -18,6 +18,7 @@ import path from 'path';
 import { readFile } from 'fs-extra';
 import { generateCSSPrompt, generateFrontEndCodePrompt } from './prompt';
 import { parseGenerateTag } from 'src/build-system/utils/strings';
+import { ResponseParsingError } from 'src/build-system/errors';
 
 /**
  * FrontendCodeHandler is responsible for generating the frontend codebase
@@ -94,90 +95,102 @@ export class FrontendCodeHandler implements BuildHandler<string> {
 
           // Gather direct dependencies
           const directDepsArray = fileInfos[file]?.dependsOn || [];
-          let dependenciesContext = '';
+          const dependenciesContext = '';
 
-          //gather the contents of each dependency into a single string.
+          // Read each dependency and append to dependenciesContext
+          let dependenciesText = '';
           for (const dep of directDepsArray) {
             try {
-              // Resolve against frontendPath to get the absolute path
               const resolvedDepPath = normalizePath(
                 path.resolve(frontendPath, 'src', dep),
               );
-
-              // Read the file. (may want to guard so only read certain file types.)
-              const fileContent = await readFile(resolvedDepPath, 'utf-8');
-
-              //just append a code:
-              dependenciesContext += `\n\n[Dependency: ${dep}]\n\`\`\`\n${fileContent}\n\`\`\`\n`;
-            } catch (readError) {
-              // If the file doesn't exist or can't be read, log a warning.
+              const depContent = await readFile(resolvedDepPath, 'utf-8');
+              dependenciesText += `\n\nprevious code **${dep}** is:\n\`\`\`typescript\n${depContent}\n\`\`\`\n`;
+            } catch (err) {
               this.logger.warn(
-                `Failed to read dependency "${dep}" for file "${file}": ${readError}`,
+                `Failed to read dependency "${dep}" for file "${file}": ${err}`,
+              );
+              throw new ResponseParsingError(
+                `Error generating code for ${file}:`,
               );
             }
           }
 
-          // Format for the prompt
-          const directDependencies = directDepsArray.join('\n');
-
-          this.logger.log(
-            `Generating file in dependency order: ${currentFullFilePath}`,
-          );
-          this.logger.log(
-            `2 Generating file in dependency order directDependencies: ${directDependencies}`,
-          );
-
+          // 5. Build prompt text depending on file extension
+          const fileExtension = path.extname(file);
           let frontendCodePrompt = '';
-
-          if (fileExtension === 'css') {
+          if (fileExtension === '.css') {
             frontendCodePrompt = generateCSSPrompt(
-              sitemapStruct,
-              uxDataMapDoc,
               file,
-              directDependencies,
-              dependenciesContext,
+              directDepsArray.join('\n'),
             );
           } else {
-            // Generate the prompt
+            // default: treat as e.g. .ts, .js, .vue, .jsx, etc.
             frontendCodePrompt = generateFrontEndCodePrompt(
-              sitemapStruct,
-              uxDataMapDoc,
-              backendRequirementDoc.overview,
               file,
-              directDependencies,
-              dependenciesContext,
+              directDepsArray.join('\n'),
             );
           }
           this.logger.log(
-            'generate code prompt for frontendCodePrompt or css: ' +
-              frontendCodePrompt,
+            `Prompt for file "${file}":\n${frontendCodePrompt}\n`,
           );
 
-          this.logger.debug('Generated frontend code prompt.');
+          const messages = [
+            {
+              role: 'system' as const,
+              content: frontendCodePrompt,
+            },
+            {
+              role: 'user' as const,
+              content: `This is the Sitemap Structure:
+              ${sitemapStruct}
+              
+              Next will provide Sitemap Structure.`,
+            },
+            {
+              role: 'user' as const,
+              content: `This is the UX Datamap Documentation:
+              ${uxDataMapDoc}
+              
+              Next will provide UX Datamap Documentation.`,
+            },
+            {
+              role: 'user' as const,
+              content: `This is the Backend Requirement Documentation:
+              ${backendRequirementDoc}
+              
+              Next will provide Backend Requirement Documentation.`,
+            },
 
+            {
+              role: 'user' as const,
+              content: `Dependencies for ${file}:\n${dependenciesText}\n
+
+            Now generate code for "${file}".`,
+            },
+          ];
+
+          // 6. Call your Chat Model
           let generatedCode = '';
           try {
-            // Call the model
-            const modelResponse = await context.model.chatSync(
-              {
-                content: frontendCodePrompt,
-              },
-              'gpt-4o-mini', // or whichever model you need
+            const modelResponse = await batchChatSyncWithClock(
+              context,
+              'generate frontend code',
+              FrontendCodeHandler.name,
+              [
+                {
+                  model: 'gpt-4o',
+                  messages,
+                },
+              ],
             );
 
-            // Parse the output
-            generatedCode = parseGenerateTag(modelResponse);
-
-            this.logger.debug(
-              'Frontend code generated and parsed successfully.',
+            generatedCode = parseGenerateTag(modelResponse[0]);
+          } catch (err) {
+            this.logger.error(`Error generating code for ${file}:`, err);
+            throw new ResponseParsingError(
+              `Error generating code for ${file}:`,
             );
-          } catch (error) {
-            // Return error
-            this.logger.error('Error during frontend code generation:', error);
-            return {
-              success: false,
-              error: new Error('Failed to generate frontend code.'),
-            };
           }
 
           // 7. Write the file to the filesystem
