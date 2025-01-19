@@ -1,0 +1,28 @@
+name: codefox
+root: <%= ENV["PWD"] %>
+
+on_project_start: tmux set-option -g prefix C-a
+
+windows:
+  - backend:
+      root: <%= ENV["PWD"] %>/backend
+      panes:
+        - backend:
+            - echo "Backend Server (Ctrl+a 1 to focus, Ctrl+a r to restart)"
+            - pnpm dev
+  - frontend:
+      root: <%= ENV["PWD"] %>/frontend
+      layout: main-vertical
+      panes:
+        - frontend:
+            - echo "Frontend Server (Ctrl+a 2 to focus, Ctrl+a r to restart)"
+            - pnpm dev
+        - codegen:
+            - echo "Codegen Watch (Ctrl+a 2 to focus, Ctrl+a r to restart)"
+            - pnpm generate:watch
+  - llm:
+      root: <%= ENV["PWD"] %>/llm-server
+      panes:
+        - llm:
+            - echo "LLM Server (Ctrl+a 3 to focus, Ctrl+a r to restart)"
+            - pnpm dev

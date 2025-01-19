@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { ChatCompletionChunk, Chat, StreamStatus } from './chat.model';
+import { ChatCompletionChunk, Chat } from './chat.model';
 import { Message, MessageRole } from 'src/chat/message.model';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -11,25 +10,30 @@ import {
   UpdateChatTitleInput,
 } from 'src/chat/dto/chat.input';
 import { CustomAsyncIterableIterator } from 'src/common/model-provider/types';
-import { ModelProvider } from 'src/common/model-provider';
+import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 
 @Injectable()
 export class ChatProxyService {
   private readonly logger = new Logger('ChatProxyService');
+  private readonly models: OpenAIModelProvider =
+    OpenAIModelProvider.getInstance();
 
-  constructor(
-    private httpService: HttpService,
-    private readonly models: ModelProvider,
-  ) {}
+  constructor() {}
 
   streamChat(
     input: ChatInput,
   ): CustomAsyncIterableIterator<ChatCompletionChunk> {
-    return this.models.chat(input.message, input.model, input.chatId);
+    return this.models.chat(
+      {
+        messages: [{ role: MessageRole.User, content: input.message }],
+        model: input.model,
+      },
+      input.model,
+    );
   }
 
-  async fetchModelTags(): Promise<any> {
-    return this.models.fetchModelsName();
+  async fetchModelTags(): Promise<string[]> {
+    return await this.models.fetchModelsName();
   }
 }
 
@@ -46,7 +50,7 @@ export class ChatService {
     const chat = await this.chatRepository.findOne({
       where: { id: chatId, isDeleted: false },
     });
-    console.log(chat);
+    Logger.log(chat);
 
     if (chat && chat.messages) {
       // Sort messages by createdAt in ascending order

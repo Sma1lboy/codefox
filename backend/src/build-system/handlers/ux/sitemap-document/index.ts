@@ -1,15 +1,16 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
-import { ModelProvider } from 'src/common/model-provider';
 import { Logger } from '@nestjs/common';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { MessageInterface } from 'src/common/model-provider/types';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import { PRDHandler } from '../../product-manager/product-requirements-document/prd';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
+@BuildNode()
+@BuildNodeRequire([PRDHandler])
 export class UXSMDHandler implements BuildHandler<string> {
-  readonly id = 'op:UX:SMD';
   readonly logger: Logger = new Logger('UXSMDHandler');
-
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Generating UXSMD...');
 
@@ -17,13 +18,18 @@ export class UXSMDHandler implements BuildHandler<string> {
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
     const platform = context.getGlobalContext('platform') || 'Default Platform';
-    const prdContent = context.getNodeData('op:PRD');
+    const prdContent = context.getNodeData(PRDHandler);
+    this.logger.log('prd in uxsmd', prdContent);
 
     // Generate the prompt dynamically
-    const prompt = prompts.generateUxsmdrompt(projectName, platform);
+    const prompt = prompts.generateUxsmdPrompt(projectName, platform);
 
     // Send the prompt to the LLM server and process the response
-    const uxsmdContent = await this.generateUXSMDFromLLM(prompt, prdContent);
+    const uxsmdContent = await this.generateUXSMDFromLLM(
+      context,
+      prompt,
+      prdContent,
+    );
 
     // Store the generated document in the context
     context.setGlobalContext('uxsmdDocument', uxsmdContent);
@@ -36,42 +42,53 @@ export class UXSMDHandler implements BuildHandler<string> {
   }
 
   private async generateUXSMDFromLLM(
+    context: BuilderContext,
     prompt: string,
     prdContent: string,
   ): Promise<string> {
-    const messages: MessageInterface[] = [
+    const messages = [
       {
-        role: 'system',
+        role: 'system' as const,
         content: prompt,
       },
       {
-        role: 'user',
+        role: 'user' as const,
         content: `
-          Here is the Product Requirements Document (PRD):
+          Here is the **Product Requirements Document (PRD)**:
 
           ${prdContent}
 
-          Please generate the Full UX Sitemap Document now, focusing on MVP features but ensuring each page (especially Home) has enough detail to be functional.`,
+          Please generate the Full UX Sitemap Document now, focusing on MVP features but ensuring each page has enough detail to be functional.`,
       },
       {
-        role: 'user',
-        content: `Check if you meet all PRD details, add more pages, and details if needed. Focus on MVP (Minimum Viable Product).`,
+        role: 'user' as const,
+        content: `**Validation Step:**  
+      - **Review your output** to ensure **100% coverage** of the PRD.
+      - Make sure you covered all global_view_* and page_view_* in UX Sitemap Document, If any of them is missing add them based on the system prompt.
+      - If any critical pages, features, or flows are **missing**, **add them**.  
+      - Adjust for **navigation completeness**, making sure all interactions and workflows are **correctly linked**.`,
       },
       {
-        role: 'user',
-        content: `Please add more detail about the Core Components in each <gen_page>. 
-      Focus on step-by-step actions the user takes, and any alternative paths mentioned in the PRD. 
-      Also, expand on how these components interrelate to the page's primary features.`,
+        role: 'user' as const,
+        content: `**Final Refinement:**  
+        - **Expand the Unique UI Pages **, adding page_view_* if needed:
+        - **Expand the page_views **, adding more details on:
+        - **Step-by-step user actions** within each page.
+        - **Alternative user paths** (e.g., different ways a user might complete an action).  
+        - **How components within the page interact** with each other and primary features.
+      - **Ensure clarity** so developers can implement the structure **without assumptions**.`,
       },
     ];
 
-    const modelProvider = ModelProvider.getInstance();
-    const model = 'gpt-4o-mini';
-
-    const uxsmdContent = await modelProvider.chatSync({
-      model,
-      messages,
-    });
+    const uxsmdContent = await chatSyncWithClocker(
+      context,
+      {
+        model: 'gpt-4o-mini',
+        messages: messages,
+      },
+      'generateUXSMDFromLLM',
+      UXSMDHandler.name,
+    );
 
     this.logger.log('Received full UXSMD content from LLM server.');
     return uxsmdContent;

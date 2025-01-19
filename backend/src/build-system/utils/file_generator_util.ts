@@ -3,7 +3,6 @@ import * as path from 'path';
 import { Logger } from '@nestjs/common';
 import { VirtualDirectory } from '../virtual-dir';
 import { extractJsonFromMarkdown } from 'src/build-system/utils/strings';
-import normalizePath from 'normalize-path';
 import toposort from 'toposort';
 
 interface FileDependencyInfo {
@@ -16,7 +15,69 @@ interface GenerateFilesDependencyResult {
   fileInfos: Record<string, FileDependencyInfo>;
 }
 
+interface GenerateFilesDependencyLayerResult {
+  concurrencyLayers: string[][];
+  fileInfos: Record<string, FileDependencyInfo>;
+}
+
 const logger = new Logger('FileGeneratorUtil');
+
+export async function generateFilesDependencyWithLayers(
+  jsonString: string,
+  virtualDirectory: VirtualDirectory,
+): Promise<GenerateFilesDependencyLayerResult> {
+  // 1. Parse for JSON
+  const jsonData = JSON.parse(jsonString);
+
+  // 2. Build a "fileInfos" object with .dependsOn
+  const { fileInfos, nodes } = buildDependencyLayerGraph(jsonData);
+
+  // 3. Validate the files actually exist in VirtualDirectory
+  validateAgainstVirtualDirectory(nodes, virtualDirectory);
+
+  // 4. Build concurrency layers with Kahn’s Algorithm
+  const concurrencyLayers = buildConcurrencyLayers(nodes, fileInfos);
+
+  // Optionally check for cycles (if you didn’t do it inside buildConcurrencyLayers)
+  // detectCycles(...) or similar
+
+  logger.log('All files dependency layers generated successfully.');
+
+  return {
+    concurrencyLayers,
+    fileInfos,
+  };
+}
+
+function buildDependencyLayerGraph(jsonData: {
+  files: Record<string, { dependsOn: string[] }>;
+}): {
+  fileInfos: Record<string, FileDependencyInfo>;
+  nodes: Set<string>;
+} {
+  const fileInfos: Record<string, FileDependencyInfo> = {};
+  const nodes = new Set<string>();
+
+  Object.entries(jsonData.files).forEach(([fileName, details]) => {
+    nodes.add(fileName);
+
+    // Initialize the record
+    fileInfos[fileName] = {
+      filePath: fileName,
+      dependsOn: [],
+    };
+
+    // In the JSON, "dependsOn" is an array of file paths
+    details.dependsOn.forEach((dep) => {
+      const resolvedDep = resolveDependency(fileName, dep);
+      nodes.add(resolvedDep);
+
+      fileInfos[fileName].dependsOn.push(resolvedDep);
+    });
+  });
+
+  return { fileInfos, nodes };
+}
 
 /**
  * Generates files based on JSON extracted from a Markdown document.
@@ -173,4 +234,78 @@ export async function createFile(
   await fs.writeFile(filePath, generatedCode, 'utf8');
 
   logger.log(`File created: ${filePath}`);
+}
+
+/**
+ * Creates concurrency layers (or "waves") of files so that
+ * files with no remaining dependencies can be processed in parallel.
+ *
+ * @param nodes - The set of all files in your project.
+ * @param fileInfos - A record of each file and its direct dependencies.
+ * @returns An array of arrays, where each sub-array is a concurrency layer.
+ */
+function buildConcurrencyLayers(
+  nodes: Set<string>,
+  fileInfos: Record<string, { dependsOn: string[] }>,
+): string[][] {
+  // 1. Compute in-degrees: how many dependencies each file has
+  const inDegree: Record<string, number> = {};
+  for (const file of nodes) {
+    inDegree[file] = 0;
+  }
+
+  // For each file, increment the in-degree of the file that depends on it
+  // In fileInfos, "fileInfos[child].dependsOn = [dep1, dep2...]"
+  // means edges: dep1 -> child, dep2 -> child, etc.
+  // So the child’s in-degree = # of dependencies
+  for (const child of nodes) {
+    const deps = fileInfos[child]?.dependsOn || [];
+    for (const dep of deps) {
+      inDegree[child] = (inDegree[child] ?? 0) + 1;
+    }
+  }
+
+  // 2. Collect the initial layer: all files with in-degree == 0
+  let layer = Object.entries(inDegree)
+    .filter(([_, deg]) => deg === 0)
+    .map(([file]) => file);
+
+  const resultLayers: string[][] = [];
+
+  // 3. Build each layer until no more zero in-degree nodes remain
+  while (layer.length > 0) {
+    resultLayers.push(layer);
+
+    // We'll build the next layer by removing all the current layer’s
+    // edges from the graph.
+    const nextLayer: string[] = [];
+
+    // For each file in the current layer
+    for (const file of layer) {
+      // Find "children" (which are the files that depend on `file`)
+      for (const possibleChild of nodes) {
+        if (fileInfos[possibleChild]?.dependsOn?.includes(file)) {
+          // Decrement the child's in-degree
+          inDegree[possibleChild]--;
+          if (inDegree[possibleChild] === 0) {
+            nextLayer.push(possibleChild);
+          }
+        }
+      }
+    }
+
+    layer = nextLayer;
+  }
+
+  // 4. If there are any files left with in-degree > 0, there's a cycle
+  const unprocessed = Object.entries(inDegree).filter(([_, deg]) => deg > 0);
+  if (unprocessed.length > 0) {
+    throw new Error(
+      `Cycle or leftover dependencies detected for: ${unprocessed
+        .map(([f]) => f)
+        .join(', ')}`,
+    );
+  }
+
+  return resultLayers;
 }

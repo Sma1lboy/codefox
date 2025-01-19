@@ -213,7 +213,6 @@ export type Query = {
   getChatDetails?: Maybe<Chat>;
   getChatHistory: Array<Message>;
   getHello: Scalars['String']['output'];
-  getMessageDetail?: Maybe<Message>;
   getProjectDetails: Project;
   getUserChats?: Maybe<Array<Chat>>;
   getUserProjects: Array<Project>;
@@ -233,10 +232,6 @@ export type QueryGetChatHistoryArgs = {
   chatId: Scalars['String']['input'];
 };
 
-export type QueryGetMessageDetailArgs = {
-  messageId: Scalars['String']['input'];
-};
-
 export type QueryGetProjectDetailsArgs = {
   projectId: Scalars['String']['input'];
 };
@@ -247,7 +242,7 @@ export type RegisterUserInput = {
   username: Scalars['String']['input'];
 };
 
-export type Role = 'Model' | 'User';
+export type Role = 'Assistant' | 'System' | 'User';
 
 export type StreamStatus = 'DONE' | 'STREAMING';
 
@@ -503,6 +498,7 @@ export type ChatCompletionChunkTypeResolvers<
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   model?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   object?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['StreamStatus'], ParentType, ContextType>;
   systemFingerprint?: Resolver<
     Maybe<ResolversTypes['String']>,
     ParentType,
@@ -616,6 +612,12 @@ export type MutationResolvers<
       'packageId' | 'projectId'
     >
   >;
+  triggerChatStream?: Resolver<
+    ResolversTypes['Boolean'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationTriggerChatStreamArgs, 'input'>
+  >;
   updateChatTitle?: Resolver<
     Maybe<ResolversTypes['Chat']>,
     ParentType,
@@ -701,12 +703,6 @@ export type QueryResolvers<
     RequireFields<QueryGetChatHistoryArgs, 'chatId'>
   >;
   getHello?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  getMessageDetail?: Resolver<
-    Maybe<ResolversTypes['Message']>,
-    ParentType,
-    ContextType,
-    RequireFields<QueryGetMessageDetailArgs, 'messageId'>
-  >;
   getProjectDetails?: Resolver<
     ResolversTypes['Project'],
     ParentType,

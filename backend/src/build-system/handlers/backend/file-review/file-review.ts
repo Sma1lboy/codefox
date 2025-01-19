@@ -6,105 +6,156 @@ import * as path from 'path';
 
 import { prompts } from './prompt';
 import { formatResponse } from 'src/build-system/utils/strings';
+import { MessageInterface } from 'src/common/model-provider/types';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
+import {
+  FileNotFoundError,
+  FileModificationError,
+  ResponseParsingError,
+  ModelUnavailableError,
+} from 'src/build-system/errors';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
+import { BackendRequirementHandler } from '../requirements-document';
+import { BackendCodeHandler } from '../code-generate';
 
-// TODO(Sma1lboy): we need a better way to handle handler pre requirements
 /**
- *
- * Responsible for review all relate src root file and consider to modify them
- * such as package.json, tsconfig.json, .env, etc. in js/ts project
+ * Responsible for reviewing all related source root files and considering modifications
+ * such as package.json, tsconfig.json, .env, etc., in JS/TS projects.
  * @requires [op:BACKEND:REQ] - BackendRequirementHandler
  */
+@BuildNode()
+@BuildNodeRequire([BackendRequirementHandler, BackendCodeHandler])
 export class BackendFileReviewHandler implements BuildHandler<string> {
-  readonly id = 'op:BACKEND:FILE:REVIEW';
   readonly logger: Logger = new Logger('BackendFileModificationHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Starting backend file modification process...');
 
-    try {
-      const backendPath =
-        context.getGlobalContext('backendPath') || './backend';
-      const projectName =
-        context.getGlobalContext('projectName') || 'Default Project Name';
-      const description =
-        context.getGlobalContext('description') ||
-        'Default Project Description';
-      const projectOverview = `
+    const backendPath = context.getGlobalContext('backendPath') || './backend';
+    const projectName =
+      context.getGlobalContext('projectName') || 'Default Project Name';
+    const description =
+      context.getGlobalContext('description') || 'Default Project Description';
+    const projectOverview = `
         project name: ${projectName}
         project description: ${description},
       `;
-      const backendRequirement = context.getNodeData('op:BACKEND:REQ').overview;
-      const backendCode = [context.getNodeData('op:BACKEND:CODE')]; // Convert to array for now
 
-      // 1. Identify files to modify
+    const backendRequirement = context.getNodeData(
+      BackendRequirementHandler,
+    )?.overview;
+    const backendCode = [context.getNodeData(BackendCodeHandler)];
+
+    if (!backendRequirement) {
+      throw new FileNotFoundError('Backend requirements are missing.');
+    }
+
+    let files: string[];
+    try {
       this.logger.log(`Scanning backend directory: ${backendPath}`);
-      const files = await fs.readdir(backendPath);
+      files = await fs.readdir(backendPath);
       this.logger.debug(`Found files: ${files.join(', ')}`);
+    } catch (error) {
+      throw new FileNotFoundError(
+        'No files found in the backend directory:' + error,
+      );
+    }
 
-      const filePrompt = prompts.identifyBackendFilesToModify(
-        files,
+    const filePrompt = prompts.identifyBackendFilesToModify(
+      files,
+      backendRequirement,
+      projectOverview,
+      backendCode,
+    );
+
+    let modelResponse: string;
+
+    try {
+      const messages: MessageInterface[] = [
+        { content: filePrompt, role: 'system' },
+      ];
+      modelResponse = await chatSyncWithClocker(
+        context,
+        {
+          model: 'gpt-4o-mini',
+          messages,
+        },
+        'generateBackendCode',
+        BackendFileReviewHandler.name,
+      );
+    } catch (error) {
+      throw new ModelUnavailableError('Model Unavailable:' + error);
+    }
+
+    const filesToModify = this.parseFileIdentificationResponse(modelResponse);
+    if (!filesToModify.length) {
+      throw new FileModificationError('No files identified for modification.');
+    }
+    this.logger.log(`Files to modify: ${filesToModify.join(', ')}`);
+
+    for (const fileName of filesToModify) {
+      const filePath = path.join(backendPath, fileName);
+      let currentContent: string;
+      try {
+        currentContent = await fs.readFile(filePath, 'utf-8');
+      } catch (error) {
+        throw new FileNotFoundError(
+          `Failed to read file: ${fileName}:` + error,
+        );
+      }
+      const modificationPrompt = prompts.generateFileModificationPrompt(
+        fileName,
+        currentContent,
         backendRequirement,
         projectOverview,
         backendCode,
       );
 
-      const modelResponse = await context.model.chatSync({
-        model: 'gpt-4o-mini',
-        messages: [{ content: filePrompt, role: 'system' }],
-      });
-
-      const filesToModify = this.parseFileIdentificationResponse(modelResponse);
-      this.logger.log(`Files to modify: ${filesToModify.join(', ')}`);
-
-      // 2. Modify each identified file
-      for (const fileName of filesToModify) {
-        const filePath = path.join(backendPath, fileName);
-        try {
-          // Read current content
-          const currentContent = await fs.readFile(filePath, 'utf-8');
-
-          // Generate modification prompt
-          const modificationPrompt = prompts.generateFileModificationPrompt(
-            fileName,
-            currentContent,
-            backendRequirement,
-            projectOverview,
-            backendCode,
-          );
-
-          // Get modified content
-          const response = await context.model.chatSync({
+      let response;
+      try {
+        response = await chatSyncWithClocker(
+          context,
+          {
             model: 'gpt-4o-mini',
             messages: [{ content: modificationPrompt, role: 'system' }],
-          });
-
-          // Extract new content and write back
-          const newContent = formatResponse(response);
-          await fs.writeFile(filePath, newContent, 'utf-8');
-
-          this.logger.log(`Successfully modified ${fileName}`);
-        } catch (error) {
-          this.logger.error(`Error modifying file ${fileName}:`, error);
-          throw error;
-        }
+          },
+          'generateBackendFile',
+          BackendFileReviewHandler.name,
+        );
+      } catch (error) {
+        throw new ModelUnavailableError('Model Unavailable:' + error);
       }
+      const newContent = formatResponse(response);
 
-      return {
-        success: true,
-        data: `Modified files: ${filesToModify.join(', ')}`,
-      };
-    } catch (error) {
-      this.logger.error('Error during backend file modification:', error);
-      return {
-        success: false,
-        error: new Error('Failed to modify backend files.'),
-      };
+      await fs.writeFile(filePath, newContent, 'utf-8');
+
+      this.logger.log(`Successfully modified ${fileName}`);
     }
+
+    return {
+      success: true,
+      data: `Modified files: ${filesToModify.join(', ')}`,
+    };
   }
 
+  /**
+   * Parses the file identification response from the model.
+   */
   parseFileIdentificationResponse(response: string): string[] {
-    const parsedResponse = JSON.parse(formatResponse(response));
-    this.logger.log('Parsed file identification response:', parsedResponse);
-    return parsedResponse;
+    try {
+      const parsedResponse = JSON.parse(formatResponse(response));
+      if (!Array.isArray(parsedResponse)) {
+        throw new ResponseParsingError(
+          'File identification response is not an array.',
+        );
+      }
+      this.logger.log('Parsed file identification response:', parsedResponse);
+      return parsedResponse;
+    } catch (error) {
+      this.logger.error('Error parsing file identification response:', error);
+      throw new ResponseParsingError(
+        'Failed to parse file identification response.',
+      );
+    }
   }
 }
