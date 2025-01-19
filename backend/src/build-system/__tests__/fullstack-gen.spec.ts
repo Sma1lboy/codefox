@@ -6,7 +6,6 @@ import { ProjectInitHandler } from '../handlers/project-init';
 import { PRDHandler } from '../handlers/product-manager/product-requirements-document/prd';
 import { UXSMDHandler } from '../handlers/ux/sitemap-document';
 import { UXSMSHandler } from '../handlers/ux/sitemap-structure';
-import { UXDMDHandler } from '../handlers/ux/datamap';
 import { DBRequirementHandler } from '../handlers/database/requirements-document';
 import { FileStructureHandler } from '../handlers/file-manager/file-structure';
 import { UXSMSPageByPageHandler } from '../handlers/ux/sitemap-structure/sms-page';
