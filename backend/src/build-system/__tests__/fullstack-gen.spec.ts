@@ -43,9 +43,22 @@ import { BackendFileReviewHandler } from '../handlers/backend/file-review/file-r
           // requires: ['op:UX:SMD'],
         },
         {
-          handler: UXDMDHandler,
-          name: 'UX DataMap Document Node',
-          // requires: ['op:UX:SMD'],
+          handler: DBRequirementHandler,
+          name: 'Database Requirements Node',
+          // requires: ['op:UX:DATAMAP:DOC'],
+        },
+        {
+          handler: FileStructureHandler,
+          name: 'File Structure Generation',
+          // requires: ['op:UX:SMD', 'op:UX:DATAMAP:DOC'],
+          options: {
+            projectPart: 'frontend',
+          },
+        },
+        {
+          handler: UXSMSPageByPageHandler,
+          name: 'Level 2 UX Sitemap Structure Node details',
+          // requires: ['op:UX:SMS'],
         },
         {
           handler: DBRequirementHandler,
