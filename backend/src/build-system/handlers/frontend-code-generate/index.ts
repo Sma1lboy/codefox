@@ -90,20 +90,21 @@ export class FrontendCodeHandler implements BuildHandler<string> {
 
           // Resolve the absolute path where this file should be generated
           const currentFullFilePath = normalizePath(
-            path.resolve(frontendPath, 'src', file),
-          );
+            path.resolve(frontendPath, file),
+          ); // src
 
           // Gather direct dependencies
           const directDepsArray = fileInfos[file]?.dependsOn || [];
-          const dependenciesContext = '';
 
           // Read each dependency and append to dependenciesContext
           let dependenciesText = '';
           for (const dep of directDepsArray) {
             try {
+              // need to check if it really reflect the real path
               const resolvedDepPath = normalizePath(
                 path.resolve(frontendPath, 'src', dep),
               );
+              // this.logger.log(`Resolved dependency path: ${resolvedDepPath}`);
               const depContent = await readFile(resolvedDepPath, 'utf-8');
               dependenciesText += `\n\nprevious code **${dep}** is:\n\`\`\`typescript\n${depContent}\n\`\`\`\n`;
             } catch (err) {
