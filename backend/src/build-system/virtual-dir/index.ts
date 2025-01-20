@@ -91,10 +91,6 @@ export class VirtualDirectory {
     const normalizedPath = this.normalizePath(inputPath);
     const parts = normalizedPath.split('/').filter(Boolean);
 
-    // // If the path starts with 'src', remove that segment
-    // if (parts[0] === 'src') {
-    //   parts.shift(); // Remove the 'src' segment
-    // }
     if (parts.length === 0) {
       return null;
     }
