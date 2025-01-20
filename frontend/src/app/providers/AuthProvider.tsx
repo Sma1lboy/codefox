@@ -1,10 +1,8 @@
 import { usePathname, useRouter } from 'next/navigation';
-import { useQuery } from '@apollo/client';
+import { useLazyQuery, useQuery } from '@apollo/client';
 import { CHECK_TOKEN_QUERY } from '@/graphql/request';
 import { LocalStore } from '@/lib/storage';
 import { useEffect, useState, useRef } from 'react';
-import { useTheme } from 'next-themes';
-import { Loader2 } from 'lucide-react';
 import { LoadingPage } from '@/components/global-loading';
 
 const VALIDATION_TIMEOUT = 5000;
@@ -22,7 +20,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const isRedirectingRef = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
-  const { refetch: checkToken } = useQuery(CHECK_TOKEN_QUERY);
+  const [checkToken] = useLazyQuery(CHECK_TOKEN_QUERY);
 
   useEffect(() => {
     let isMounted = true;
@@ -68,8 +66,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       try {
         const { data } = await checkToken({
-          input: { token },
-        });
+           variables: {
+            input: {
+              token,
+            },
+          },
+        }); 
 
         if (isMounted) {
           if (!data?.checkToken) {
