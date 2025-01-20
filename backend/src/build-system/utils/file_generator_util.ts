@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { VirtualDirectory } from '../virtual-dir';
 import { extractJsonFromMarkdown } from 'src/build-system/utils/strings';
 import toposort from 'toposort';
+import { ResponseParsingError } from '../errors';
 
 interface FileDependencyInfo {
   filePath: string;
@@ -213,7 +214,8 @@ export function validateAgainstVirtualDirectory(
   });
 
   if (invalidFiles.length > 0) {
-    throw new Error(
+    logger.log(virtualDir.getAllFiles());
+    throw new ResponseParsingError(
       `The following files do not exist in the project structure:\n${invalidFiles.join('\n')}`,
     );
   }
