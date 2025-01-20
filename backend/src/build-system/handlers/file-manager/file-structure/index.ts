@@ -1,9 +1,4 @@
-import {
-  BuildHandler,
-  BuildOpts,
-  BuildResult,
-  FileStructOutput,
-} from 'src/build-system/types';
+import { BuildHandler, BuildOpts, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
@@ -23,14 +18,14 @@ import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
  */
 @BuildNode()
 @BuildNodeRequire([UXSMDHandler, UXDMDHandler])
-export class FileStructureHandler implements BuildHandler<FileStructOutput> {
+export class FileStructureHandler implements BuildHandler<string> {
   readonly id = 'op:FILE:STRUCT';
   private readonly logger: Logger = new Logger('FileStructureHandler');
 
   async run(
     context: BuilderContext,
     opts?: BuildOpts,
-  ): Promise<BuildResult<FileStructOutput>> {
+  ): Promise<BuildResult<string>> {
     this.logger.log('Generating File Structure Document...');
 
     // Retrieve projectName from context
@@ -119,15 +114,13 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
     }
 
     this.logger.log(
-      'File structure JSON content and virtual directory built successfully.',
+      `File structure JSON content and virtual directory built successfully.
+    ${removeCodeBlockFences(fileStructureContent)}}`,
     );
 
     return {
       success: true,
-      data: {
-        fileStructure: removeCodeBlockFences(fileStructureContent),
-        jsonFileStructure: removeCodeBlockFences(fileStructureJsonContent),
-      },
+      data: removeCodeBlockFences(fileStructureContent),
     };
   }
 
