@@ -38,18 +38,22 @@ ${datamapDoc}
 3. **Output Requirements**:
    - The JSON object must strictly follow this structure:
      \`\`\`json
+     <GENERATE>
      {
        "files": {
-         "path/to/file1": {
+         "src/path/to/file1": {
            "dependsOn": ["path/to/dependency1", "path/to/dependency2"]
          },
-         "path/to/file2": {
+         "src/path/to/file2": {
            "dependsOn": []
          }
        }
      }
+     </GENERATE>
      \`\`\`
-   - Wrap the JSON output with \`<GENERATE></GENERATE>\` tags.
+    - Keys in the files object must be file paths starting with src/.
+    - Use relative paths for dependencies wherever possible (./filename for same-folder dependencies, ../filename for parent-folder dependencies).
+    - Wrap the JSON output with \`<GENERATE></GENERATE>\` tags.
 
 ### Notes
 - **CSS Dependencies**: Any file that relies on a CSS/SCSS module file (e.g., \`Header.module.css\`) must list it in the \`dependsOn\` array.

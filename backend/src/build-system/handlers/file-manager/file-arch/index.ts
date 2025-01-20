@@ -37,8 +37,6 @@ export class FileFAHandler implements BuildHandler<string> {
     const datamapDoc = context.getNodeData(UXDMDHandler);
 
     if (!fileStructure || !datamapDoc) {
-      Logger.error(fileStructure);
-      Logger.error(datamapDoc);
       throw new InvalidParameterError(
         'Missing required parameters: fileStructure or datamapDoc.',
       );
