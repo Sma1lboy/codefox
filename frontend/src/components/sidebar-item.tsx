@@ -47,7 +47,9 @@ export function SideBarItem({
       toast.success('Chat deleted successfully');
       refetchChats();
       if (isSelected) {
-        router.push('/');
+        window.history.pushState({}, '', '/');
+        const event = new Event('newchat'); 
+        window.dispatchEvent(event);
       }
     },
     onError: (error) => {
@@ -86,7 +88,7 @@ export function SideBarItem({
       )}
     >
       <Link
-        href={`/${id}`}
+        href={`/?id=${id}`}
         className="flex-1 flex gap-3 items-center truncate"
         onClick={handleChatClick}
       >

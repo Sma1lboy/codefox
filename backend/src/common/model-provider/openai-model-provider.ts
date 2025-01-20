@@ -140,11 +140,11 @@ export class OpenAIModelProvider implements IModelProvider {
         try {
           const currentIterator = await createStream();
           const chunk = await currentIterator.next();
-          const temp = chunk.value as OpenAIChatCompletionChunk;
+          const chunkValue = chunk.value as OpenAIChatCompletionChunk;
           return {
             done: chunk.done,
             value: {
-              ...temp,
+              ...chunkValue,
               status: StreamStatus.STREAMING,
             } as unknown as ChatCompletionChunk,
           };

@@ -38,7 +38,6 @@ export class ChatResolver {
   @JWTAuth()
   async triggerChatStream(@Args('input') input: ChatInput): Promise<boolean> {
     try {
-      console.log('processing chat');
       await this.chatService.saveMessage(
         input.chatId,
         input.message,
@@ -95,6 +94,7 @@ export class ChatResolver {
   @Query(() => [Chat], { nullable: true })
   async getUserChats(@GetUserIdFromToken() userId: string): Promise<Chat[]> {
     const user = await this.userService.getUserChats(userId);
+
     return user ? user.chats : [];
   }
   // To do: message need a update resolver
