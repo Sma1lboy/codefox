@@ -42,10 +42,40 @@ export class FileFAHandler implements BuildHandler<string> {
       );
     }
 
-    const prompt = generateFileArchPrompt(
-      JSON.stringify(fileStructure.jsonFileStructure, null, 2),
-      JSON.stringify(datamapDoc, null, 2),
-    );
+    const prompt = generateFileArchPrompt();
+
+    const messages = [
+      {
+        role: 'system' as const,
+        content: prompt,
+      },
+      {
+        role: 'user' as const,
+        content: `
+          **Page-by-Page Analysis**
+          The following is a detailed analysis of each page. Use this information to understand specific roles, interactions, and dependencies.
+
+          ${datamapDoc}
+
+          Next, I'll provide the **Directory Structure**.`,
+      },
+      {
+        role: 'user' as const,
+        content: `
+          **Directory Structure**:
+          The following is the project's directory structure. Use this to identify files and folders.
+
+          ${fileStructure}
+
+          Please generate the full File Architecture JSON object now, ensuring adherence to all the rules.`,
+      },
+      {
+        role: 'user' as const,
+        content: `**Final Check:**
+      - Ensure the JSON structure is correct.
+      - Ensure all files and dependencies are included.`,
+      },
+    ];
 
     let fileArchContent: string;
     try {
@@ -53,7 +83,7 @@ export class FileFAHandler implements BuildHandler<string> {
         context,
         {
           model: 'gpt-4o-mini',
-          messages: [{ content: prompt, role: 'system' }],
+          messages,
         },
         'generateFileArch',
         FileFAHandler.name,
