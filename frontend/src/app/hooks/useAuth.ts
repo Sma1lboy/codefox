@@ -42,7 +42,7 @@ export const useAuth = () => {
     {
       variables: {
         input: {
-          token: "",
+          token: '',
         },
       },
       skip: true,

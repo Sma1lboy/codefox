@@ -37,7 +37,7 @@ function Sidebar({
   const handleNewChat = useCallback(() => {
     //force reload to reset the chat state
     window.history.pushState({}, '', '/');
-    const event = new Event('newchat'); 
+    const event = new Event('newchat');
     window.dispatchEvent(event);
   }, []);
 
@@ -82,8 +82,9 @@ function Sidebar({
                   id={chat.id}
                   title={chat.title}
                   isSelected={currentChatId === chat.id}
-                  onSelect={() => 
-                        window.history.replaceState({}, '', `/?id=${chat.id}`)}
+                  onSelect={() =>
+                    window.history.replaceState({}, '', `/?id=${chat.id}`)
+                  }
                   refetchChats={onRefetch}
                 />
               ))}

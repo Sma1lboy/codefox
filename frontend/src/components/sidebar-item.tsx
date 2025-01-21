@@ -48,7 +48,7 @@ export function SideBarItem({
       refetchChats();
       if (isSelected) {
         window.history.pushState({}, '', '/');
-        const event = new Event('newchat'); 
+        const event = new Event('newchat');
         window.dispatchEvent(event);
       }
     },
