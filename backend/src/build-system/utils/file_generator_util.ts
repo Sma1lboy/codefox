@@ -4,7 +4,7 @@ import { Logger } from '@nestjs/common';
 import { VirtualDirectory } from '../virtual-dir';
 import { extractJsonFromMarkdown } from 'src/build-system/utils/strings';
 import toposort from 'toposort';
-import { ResponseParsingError } from '../errors';
+import { readFile } from 'fs-extra';
 
 interface FileDependencyInfo {
   filePath: string;
@@ -102,6 +102,44 @@ export async function generateFilesDependency(
     sortedFiles,
     fileInfos,
   };
+}
+
+/**
+ * Attempts to read a file's content, retrying up to `maxRetries` times
+ * if a read error occurs (e.g., file not found or locked).
+ *
+ * @param filePath - The absolute path to the file you want to read
+ * @param maxRetries - The number of retry attempts
+ * @param delayMs - Delay (in ms) between retry attempts
+ */
+export async function readFileWithRetries(
+  filePath: string,
+  maxRetries = 3,
+  delayMs = 200,
+): Promise<string> {
+  let attempt = 0;
+  let lastError: any;
+
+  while (attempt < maxRetries) {
+    try {
+      const content = await readFile(filePath, 'utf-8');
+      return content;
+    } catch (error) {
+      lastError = error;
+      attempt++;
+
+      // Optionally log a warning or debug
+      // console.warn(`Failed to read file: ${filePath}, attempt #${attempt}`);
+
+      // Wait a short delay before retrying
+      if (attempt < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+
+  // If we exhausted all retries, re-throw the last error
+  throw lastError;
 }
 
 /**
@@ -204,7 +242,7 @@ export function resolveDependency(
 export function validateAgainstVirtualDirectory(
   nodes: Set<string>,
   virtualDir: VirtualDirectory,
-): boolean {
+): string {
   const invalidFiles: string[] = [];
 
   nodes.forEach((filePath) => {
@@ -215,11 +253,12 @@ export function validateAgainstVirtualDirectory(
 
   if (invalidFiles.length > 0) {
     logger.log(virtualDir.getAllFiles());
-    throw new ResponseParsingError(
+    logger.error(
       `The following files do not exist in the project structure:\n${invalidFiles.join('\n')}`,
     );
+    return invalidFiles.join('\n');
   }
-  return true;
+  return null;
 }
 
 /**

@@ -5,6 +5,7 @@ import { batchChatSyncWithClock } from 'src/build-system/utils/handler-helper';
 import {
   createFile,
   generateFilesDependencyWithLayers,
+  readFileWithRetries,
 } from '../../utils/file_generator_util';
 import { VirtualDirectory } from '../../virtual-dir';
 
@@ -15,7 +16,6 @@ import { FileFAHandler } from '../file-manager/file-arch';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import normalizePath from 'normalize-path';
 import path from 'path';
-import { readFile } from 'fs-extra';
 import { generateCSSPrompt, generateFrontEndCodePrompt } from './prompt';
 import { parseGenerateTag } from 'src/build-system/utils/strings';
 import { ResponseParsingError } from 'src/build-system/errors';
@@ -102,17 +102,19 @@ export class FrontendCodeHandler implements BuildHandler<string> {
             try {
               // need to check if it really reflect the real path
               const resolvedDepPath = normalizePath(
-                path.resolve(frontendPath, 'src', dep),
+                path.resolve(frontendPath, dep),
               );
-              // this.logger.log(`Resolved dependency path: ${resolvedDepPath}`);
-              const depContent = await readFile(resolvedDepPath, 'utf-8');
+
+              // Read the content of the dependency file
+              const depContent = await readFileWithRetries(
+                resolvedDepPath,
+                3,
+                200,
+              );
               dependenciesText += `\n\nprevious code **${dep}** is:\n\`\`\`typescript\n${depContent}\n\`\`\`\n`;
             } catch (err) {
               this.logger.warn(
                 `Failed to read dependency "${dep}" for file "${file}": ${err}`,
-              );
-              throw new ResponseParsingError(
-                `Error generating code for ${file}:`,
               );
             }
           }
@@ -132,9 +134,9 @@ export class FrontendCodeHandler implements BuildHandler<string> {
               directDepsArray.join('\n'),
             );
           }
-          this.logger.log(
-            `Prompt for file "${file}":\n${frontendCodePrompt}\n`,
-          );
+          // this.logger.log(
+          //   `Prompt for file "${file}":\n${frontendCodePrompt}\n`,
+          // );
 
           const messages = [
             {
