@@ -28,8 +28,6 @@ export const GetUserIdFromToken = createParamDecorator(
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      Logger.debug(authHeader);
-      console.log(request.headers);
       Logger.error('Authorization token is missing or invalid');
       throw new UnauthorizedException(
         'Authorization token is missing or invalid',
