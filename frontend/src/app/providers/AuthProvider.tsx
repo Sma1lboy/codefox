@@ -66,12 +66,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       try {
         const { data } = await checkToken({
-           variables: {
+          variables: {
             input: {
               token,
             },
           },
-        }); 
+        });
 
         if (isMounted) {
           if (!data?.checkToken) {

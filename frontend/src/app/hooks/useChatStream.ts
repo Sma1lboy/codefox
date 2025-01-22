@@ -49,12 +49,11 @@ export function useChatStream({
     variables: null,
   });
 
-  
   const updateChatId = () => {
-      setCurrentChatId('');
+    setCurrentChatId('');
   };
 
-   window.addEventListener('newchat', updateChatId);
+  window.addEventListener('newchat', updateChatId);
 
   const [triggerChat] = useMutation(TRIGGER_CHAT, {
     onCompleted: () => {
@@ -72,7 +71,7 @@ export function useChatStream({
       setCurrentChatId(newChatId);
       await startChatStream(newChatId, input);
       window.history.pushState({}, '', `/?id=${newChatId}`);
-      console.log(`new chat: ${newChatId}`)
+      console.log(`new chat: ${newChatId}`);
     },
     onError: () => {
       toast.error('Failed to create chat');
@@ -137,14 +136,13 @@ export function useChatStream({
 
   const startChatStream = async (targetChatId: string, message: string) => {
     try {
-      
       const input: ChatInput = {
         chatId: targetChatId,
         message,
         model: selectedModel,
       };
       console.log(input);
-      
+
       setInput('');
       setStreamStatus(StreamStatus.STREAMING);
       setSubscription({
@@ -154,7 +152,6 @@ export function useChatStream({
 
       await new Promise((resolve) => setTimeout(resolve, 100));
       await triggerChat({ variables: { input } });
-      
     } catch (err) {
       toast.error('Failed to start chat');
       setStreamStatus(StreamStatus.IDLE);

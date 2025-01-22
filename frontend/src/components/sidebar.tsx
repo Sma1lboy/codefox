@@ -83,8 +83,9 @@ function Sidebar({
                   id={chat.id}
                   title={chat.title}
                   isSelected={currentChatId === chat.id}
-                  onSelect={() => 
-                        window.history.replaceState({}, '', `/?id=${chat.id}`)}
+                  onSelect={() =>
+                    window.history.replaceState({}, '', `/?id=${chat.id}`)
+                  }
                   refetchChats={onRefetch}
                 />
               ))}
