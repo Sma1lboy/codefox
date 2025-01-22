@@ -120,7 +120,7 @@ export class FileStructureHandler implements BuildHandler<string> {
 
     return {
       success: true,
-      data: removeCodeBlockFences(fileStructureContent),
+      data: removeCodeBlockFences(fileStructureJsonContent),
     };
   }
 
