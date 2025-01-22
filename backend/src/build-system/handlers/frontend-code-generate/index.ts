@@ -2,11 +2,8 @@ import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { Logger } from '@nestjs/common';
 import { batchChatSyncWithClock } from 'src/build-system/utils/handler-helper';
-import {
-  createFile,
-  generateFilesDependencyWithLayers,
-  readFileWithRetries,
-} from '../../utils/file_generator_util';
+import { generateFilesDependencyWithLayers } from '../../utils/file_generator_util';
+import { readFileWithRetries, createFileWithRetries } from '../../utils/files';
 import { VirtualDirectory } from '../../virtual-dir';
 
 import { UXSMSHandler } from '../ux/sitemap-structure';
@@ -18,7 +15,6 @@ import normalizePath from 'normalize-path';
 import path from 'path';
 import { generateCSSPrompt, generateFrontEndCodePrompt } from './prompt';
 import { parseGenerateTag } from 'src/build-system/utils/strings';
-import { ResponseParsingError } from 'src/build-system/errors';
 
 /**
  * FrontendCodeHandler is responsible for generating the frontend codebase
@@ -82,128 +78,159 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         )}]\n`,
       );
 
-      await Promise.all(
-        layer.map(async (file) => {
-          this.logger.log(
-            `Layer #${layerIndex + 1}, generating code for file: ${file}`,
-          );
+      const maxRetries = 3; // Maximum retry attempts per file
+      const delayMs = 200; // Delay between retries for a file
+      let remainingFiles = [...layer]; // Start with all files in the layer
 
-          // Resolve the absolute path where this file should be generated
-          const currentFullFilePath = normalizePath(
-            path.resolve(frontendPath, file),
-          ); // src
+      for (
+        let attempt = 1;
+        attempt <= maxRetries && remainingFiles.length > 0;
+        attempt++
+      ) {
+        const failedFiles: string[] = [];
 
-          // Gather direct dependencies
-          const directDepsArray = fileInfos[file]?.dependsOn || [];
+        await Promise.all(
+          remainingFiles.map(async (file) => {
+            this.logger.log(
+              `Layer #${layerIndex + 1}, generating code for file: ${file}`,
+            );
 
-          // Read each dependency and append to dependenciesContext
-          let dependenciesText = '';
-          for (const dep of directDepsArray) {
-            try {
-              // need to check if it really reflect the real path
-              const resolvedDepPath = normalizePath(
-                path.resolve(frontendPath, dep),
+            // Resolve the absolute path where this file should be generated
+            const currentFullFilePath = normalizePath(
+              path.resolve(frontendPath, file),
+            ); // src
+
+            // Gather direct dependencies
+            const directDepsArray = fileInfos[file]?.dependsOn || [];
+
+            // Read each dependency and append to dependenciesContext
+            let dependenciesText = '';
+            for (const dep of directDepsArray) {
+              try {
+                // need to check if it really reflect the real path
+                const resolvedDepPath = normalizePath(
+                  path.resolve(frontendPath, dep),
+                );
+
+                // Read the content of the dependency file
+                const depContent = await readFileWithRetries(
+                  resolvedDepPath,
+                  maxRetries,
+                  delayMs,
+                );
+                dependenciesText += `\n\nprevious code **${dep}** is:\n\`\`\`typescript\n${depContent}\n\`\`\`\n`;
+              } catch (err) {
+                this.logger.warn(
+                  `Failed to read dependency "${dep}" for file "${file}": ${err}`,
+                );
+              }
+            }
+
+            // 5. Build prompt text depending on file extension
+            const fileExtension = path.extname(file);
+            let frontendCodePrompt = '';
+            if (fileExtension === '.css') {
+              frontendCodePrompt = generateCSSPrompt(
+                file,
+                directDepsArray.join('\n'),
               );
-
-              // Read the content of the dependency file
-              const depContent = await readFileWithRetries(
-                resolvedDepPath,
-                3,
-                200,
-              );
-              dependenciesText += `\n\nprevious code **${dep}** is:\n\`\`\`typescript\n${depContent}\n\`\`\`\n`;
-            } catch (err) {
-              this.logger.warn(
-                `Failed to read dependency "${dep}" for file "${file}": ${err}`,
+            } else {
+              // default: treat as e.g. .ts, .js, .vue, .jsx, etc.
+              frontendCodePrompt = generateFrontEndCodePrompt(
+                file,
+                directDepsArray.join('\n'),
               );
             }
-          }
+            // this.logger.log(
+            //   `Prompt for file "${file}":\n${frontendCodePrompt}\n`,
+            // );
 
-          // 5. Build prompt text depending on file extension
-          const fileExtension = path.extname(file);
-          let frontendCodePrompt = '';
-          if (fileExtension === '.css') {
-            frontendCodePrompt = generateCSSPrompt(
-              file,
-              directDepsArray.join('\n'),
-            );
-          } else {
-            // default: treat as e.g. .ts, .js, .vue, .jsx, etc.
-            frontendCodePrompt = generateFrontEndCodePrompt(
-              file,
-              directDepsArray.join('\n'),
-            );
-          }
-          // this.logger.log(
-          //   `Prompt for file "${file}":\n${frontendCodePrompt}\n`,
-          // );
-
-          const messages = [
-            {
-              role: 'system' as const,
-              content: frontendCodePrompt,
-            },
-            {
-              role: 'user' as const,
-              content: `This is the Sitemap Structure:
+            const messages = [
+              {
+                role: 'system' as const,
+                content: frontendCodePrompt,
+              },
+              {
+                role: 'user' as const,
+                content: `This is the Sitemap Structure:
               ${sitemapStruct}
               
               Next will provide Sitemap Structure.`,
-            },
-            {
-              role: 'user' as const,
-              content: `This is the UX Datamap Documentation:
+              },
+              {
+                role: 'user' as const,
+                content: `This is the UX Datamap Documentation:
               ${uxDataMapDoc}
               
               Next will provide UX Datamap Documentation.`,
-            },
-            {
-              role: 'user' as const,
-              content: `This is the Backend Requirement Documentation:
+              },
+              {
+                role: 'user' as const,
+                content: `This is the Backend Requirement Documentation:
               ${backendRequirementDoc}
               
               Next will provide Backend Requirement Documentation.`,
-            },
+              },
 
-            {
-              role: 'user' as const,
-              content: `Dependencies for ${file}:\n${dependenciesText}\n
+              {
+                role: 'user' as const,
+                content: `Dependencies:
+                
+                  ${dependenciesText}\n
 
             Now generate code for "${file}".`,
-            },
-          ];
+              },
+            ];
 
-          // 6. Call your Chat Model
-          let generatedCode = '';
-          try {
-            const modelResponse = await batchChatSyncWithClock(
-              context,
-              'generate frontend code',
-              FrontendCodeHandler.name,
-              [
-                {
-                  model: 'gpt-4o',
-                  messages,
-                },
-              ],
+            // 6. Call your Chat Model
+            let generatedCode = '';
+            try {
+              const modelResponse = await batchChatSyncWithClock(
+                context,
+                'generate frontend code',
+                FrontendCodeHandler.name,
+                [
+                  {
+                    model: 'gpt-4o',
+                    messages,
+                  },
+                ],
+              );
+
+              generatedCode = parseGenerateTag(modelResponse[0]);
+
+              // 7. Write the file to the filesystem
+              await createFileWithRetries(
+                currentFullFilePath,
+                generatedCode,
+                maxRetries,
+                delayMs,
+              );
+            } catch (err) {
+              this.logger.error(`Error generating code for ${file}:`, err);
+              failedFiles.push(file);
+              // throw new ResponseParsingError(
+              //   `Error generating code for ${file}:`,
+              // );
+            }
+
+            this.logger.log(
+              `Layer #${layerIndex + 1}, completed generation for file: ${file}`,
             );
+          }),
+        );
 
-            generatedCode = parseGenerateTag(modelResponse[0]);
-          } catch (err) {
-            this.logger.error(`Error generating code for ${file}:`, err);
-            throw new ResponseParsingError(
-              `Error generating code for ${file}:`,
-            );
-          }
-
-          // 7. Write the file to the filesystem
-          await createFile(currentFullFilePath, generatedCode);
-
-          this.logger.log(
-            `Layer #${layerIndex + 1}, completed generation for file: ${file}`,
+        // Check if there are still files to retry
+        if (failedFiles.length > 0) {
+          this.logger.warn(
+            `Retrying failed files: ${failedFiles.join(', ')} (Attempt #${attempt})`,
           );
-        }),
-      );
+          remainingFiles = failedFiles; // Retry only the failed files
+          await new Promise((resolve) => setTimeout(resolve, delayMs)); // Add delay between retries
+        } else {
+          remainingFiles = []; // All files in this layer succeeded
+        }
+      }
 
       this.logger.log(
         `\n==== Finished concurrency layer #${layerIndex + 1} ====\n`,

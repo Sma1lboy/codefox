@@ -77,3 +77,84 @@ export function buildProjectPath(
 ): string {
   return path.join(getProjectsDir(), projectUUID, folderName || '');
 }
+
+/**
+ * Attempts to read a file's content, retrying up to `maxRetries` times
+ * if a read error occurs (e.g., file not found or locked).
+ *
+ * @param filePath - The absolute path to the file you want to read
+ * @param maxRetries - The number of retry attempts
+ * @param delayMs - Delay (in ms) between retry attempts
+ */
+export async function readFileWithRetries(
+  filePath: string,
+  maxRetries = 3,
+  delayMs = 200,
+): Promise<string> {
+  let attempt = 0;
+  let lastError: any;
+
+  while (attempt < maxRetries) {
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+      return content;
+    } catch (error) {
+      lastError = error;
+      attempt++;
+
+      // Optionally log a warning or debug
+      // console.warn(`Failed to read file: ${filePath}, attempt #${attempt}`);
+
+      // Wait a short delay before retrying
+      if (attempt < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+
+  // If we exhausted all retries, re-throw the last error
+  throw lastError;
+}
+
+/**
+ * Attempts to create a file, retrying up to `maxRetries` times if it fails.
+ *
+ * @param filePath - The path to the file to be written.
+ * @param content - The content to write to the file.
+ * @param maxRetries - The number of retry attempts.
+ * @param delayMs - Delay (in ms) between retry attempts.
+ */
+export async function createFileWithRetries(
+  filePath: string,
+  content: string,
+  maxRetries = 3,
+  delayMs = 200,
+): Promise<void> {
+  let attempt = 0;
+  let lastError: any;
+
+  while (attempt < maxRetries) {
+    try {
+      // Ensure the directory exists
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+
+      // Write the file
+      await fs.writeFile(filePath, content, 'utf-8');
+      return; // Success, exit the retry loop
+    } catch (error) {
+      lastError = error;
+      attempt++;
+
+      // Optionally log a warning
+      logger.warn(`Failed to write file: ${filePath}, attempt #${attempt}`);
+
+      // Wait before retrying
+      if (attempt < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+
+  // If all retries fail, rethrow the last error
+  throw lastError;
+}
