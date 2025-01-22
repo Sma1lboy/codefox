@@ -9,6 +9,7 @@ import { GET_CHAT_HISTORY } from '@/graphql/request';
 import { useQuery } from '@apollo/client';
 import { toast } from 'sonner';
 import { useChatList } from '../hooks/useChatList';
+import { EventEnum } from '@/components/enum';
 
 export default function Home() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -47,7 +48,13 @@ export default function Home() {
     setChatId('');
   };
 
-  window.addEventListener('newchat', updateChatId);
+  useEffect(() => {
+    window.addEventListener(EventEnum.NEW_CHAT, updateChatId);
+
+    return () => {
+      window.removeEventListener(EventEnum.NEW_CHAT, updateChatId);
+    };
+  }, []);
 
   const { loadingSubmit, handleSubmit, handleInputChange, stop } =
     useChatStream({
