@@ -106,7 +106,6 @@ export class ChatService {
   async deleteChat(chatId: string): Promise<boolean> {
     const chat = await this.chatRepository.findOne({
       where: { id: chatId, isDeleted: false },
-      relations: ['messages'],
     });
 
     if (chat) {
@@ -114,7 +113,6 @@ export class ChatService {
       chat.isDeleted = true;
       chat.isActive = false;
       await this.chatRepository.save(chat);
-
       return true;
     }
     return false;
