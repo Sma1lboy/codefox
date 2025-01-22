@@ -81,7 +81,7 @@ export class ResponseParsingError extends RetryableError {
  * Indicates that expected tags in the response are missing or invalid during content generation or parsing.
  * Non-retryable error.
  */
-export class ResponseTagError extends NonRetryableError {
+export class ResponseTagError extends RetryableError {
   constructor(message: string) {
     super(message);
     this.name = 'ResponseTagError';

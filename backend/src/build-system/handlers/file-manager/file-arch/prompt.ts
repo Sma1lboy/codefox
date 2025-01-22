@@ -1,22 +1,5 @@
-export const generateFileArchPrompt = (
-  fileStructure: string,
-  datamapDoc: string,
-): string => {
+export const generateFileArchPrompt = (): string => {
   return `You are a File Architecture Analyzer. Your task is to analyze the given project directory structure and the detailed page-by-page analysis, then output a JSON object detailing the file dependencies. The output JSON must be wrapped in <GENERATE></GENERATE> tags.
-
-### Directory Structure Input
-The following is the project's directory structure. Use this to identify files and folders.
-
-\`\`\`
-${fileStructure}
-\`\`\`
-
-### Page-by-Page Analysis Input
-The following is a detailed analysis of each page. Use this information to understand specific roles, interactions, and dependencies.
-
-\`\`\`
-${datamapDoc}
-\`\`\`
 
 ### Instructions
 1. **Analyze the Inputs**:
@@ -38,18 +21,22 @@ ${datamapDoc}
 3. **Output Requirements**:
    - The JSON object must strictly follow this structure:
      \`\`\`json
+     <GENERATE>
      {
        "files": {
-         "path/to/file1": {
+         "src/path/to/file1": {
            "dependsOn": ["path/to/dependency1", "path/to/dependency2"]
          },
-         "path/to/file2": {
+         "src/path/to/file2": {
            "dependsOn": []
          }
        }
      }
+     </GENERATE>
      \`\`\`
-   - Wrap the JSON output with \`<GENERATE></GENERATE>\` tags.
+    - Keys in the files object must be file paths starting with src/.
+    - Use relative paths for dependencies wherever possible (./filename for same-folder dependencies, ../filename for parent-folder dependencies).
+    - Wrap the JSON output with \`<GENERATE></GENERATE>\` tags.
 
 ### Notes
 - **CSS Dependencies**: Any file that relies on a CSS/SCSS module file (e.g., \`Header.module.css\`) must list it in the \`dependsOn\` array.

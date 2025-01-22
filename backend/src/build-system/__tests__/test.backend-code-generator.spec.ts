@@ -1,12 +1,13 @@
-/* eslint-disable no-console */
-import { BuilderContext } from 'src/build-system/context';
 import { BuildSequence } from '../types';
 import * as fs from 'fs';
-import * as path from 'path';
-import { writeToFile } from './utils';
+import { executeBuildSequence } from './utils';
 import { isIntegrationTest } from 'src/common/utils';
-import { Logger } from '@nestjs/common';
-
+import { PRDHandler } from '../handlers/product-manager/product-requirements-document/prd';
+import { UXSMDHandler } from '../handlers/ux/sitemap-document';
+import { DBRequirementHandler } from '../handlers/database/requirements-document';
+import { DBSchemaHandler } from '../handlers/database/schemas/schemas';
+import { BackendCodeHandler } from '../handlers/backend/code-generate';
+import { ProjectInitHandler } from '../handlers/project-init';
 (isIntegrationTest ? describe : describe.skip)(
   'Sequence: PRD -> UXSD -> UXDD -> UXSS -> DBSchemas -> BackendCodeGenerator',
   () => {
@@ -25,112 +26,50 @@ import { Logger } from '@nestjs/common';
           name: 'Spotify-like Music Web',
           description: 'Users can play music',
           databaseType: 'SQLite',
-          steps: [
+          nodes: [
             {
-              id: 'step-1',
-              name: 'Generate PRD',
-              nodes: [
-                {
-                  id: 'op:PRD',
-                  name: 'PRD Generation Node',
-                },
-              ],
+              handler: ProjectInitHandler,
+              name: 'Project Folders Setup',
             },
             {
-              id: 'step-2',
-              name: 'Generate UX Sitemap Document',
-              nodes: [
-                {
-                  id: 'op:UX:SMD',
-                  name: 'UX Sitemap Document Node',
-                  requires: ['op:PRD'],
-                },
-              ],
+              handler: PRDHandler,
+              name: 'PRD Generation Node',
             },
+
             {
-              id: 'step-3',
-              name: 'Generate UX Data Map Document',
-              nodes: [
-                {
-                  id: 'op:UX:DATAMAP:DOC',
-                  name: 'UX Data Map Document Node',
-                  requires: ['op:UX:SMD'],
-                },
-              ],
+              handler: UXSMDHandler,
+              name: 'UX Sitemap Document Node',
+              // requires: ['op:PRD'],
             },
+
             {
-              id: 'step-4',
-              name: 'Generate Database Requirements',
-              nodes: [
-                {
-                  id: 'op:DATABASE_REQ',
-                  name: 'Database Requirements Node',
-                  requires: ['op:UX:DATAMAP:DOC'],
-                },
-              ],
+              handler: UXSMDHandler,
+              name: 'UX Data Map Document Node',
+              // requires: ['op:UX:SMD'],
             },
+
             {
-              id: 'step-5',
-              name: 'Generate Database Schemas',
-              nodes: [
-                {
-                  id: 'op:DATABASE:SCHEMAS',
-                  name: 'Database Schemas Node',
-                  requires: ['op:DATABASE_REQ'],
-                },
-              ],
+              handler: DBRequirementHandler,
+              name: 'Database Requirements Node',
+              // requires: ['op:UX:DATAMAP:DOC'],
             },
+
             {
-              id: 'step-6',
-              name: 'Generate Backend Code',
-              nodes: [
-                {
-                  id: 'op:BACKEND:CODE',
-                  name: 'Backend Code Generator Node',
-                  requires: ['op:DATABASE:SCHEMAS', 'op:UX:DATAMAP:DOC'],
-                },
-              ],
+              handler: DBSchemaHandler,
+              name: 'Database Schemas Node',
+              // requires: ['op:DATABASE_REQ'],
+            },
+
+            {
+              handler: BackendCodeHandler,
+              name: 'Backend Code Generator Node',
+              // requires: ['op:DATABASE:SCHEMAS', 'op:UX:DATAMAP:DOC'],
             },
           ],
         };
 
         // Initialize the BuilderContext with the defined sequence and environment
-        const context = new BuilderContext(sequence, 'test-env');
-
-        try {
-          // Execute the build sequence
-          await context.execute();
-
-          // Iterate through each step and node to retrieve and log results
-          for (const step of sequence.steps) {
-            for (const node of step.nodes) {
-              const resultData = await context.getNodeData(node.id);
-              Logger.log(`Result for ${node.name}:`, resultData);
-
-              if (resultData) {
-                writeToFile(logFolderPath, node.name, resultData);
-              } else {
-                Logger.error(
-                  `Handler ${node.name} failed with error:`,
-                  resultData.error,
-                );
-              }
-            }
-          }
-
-          Logger.log(
-            'Sequence executed successfully. Logs stored in:',
-            logFolderPath,
-          );
-        } catch (error) {
-          Logger.error('Error during sequence execution:', error);
-          fs.writeFileSync(
-            path.join(logFolderPath, 'error.txt'),
-            `Error: ${error.message}\n${error.stack}`,
-            'utf8',
-          );
-          throw new Error('Sequence execution failed.');
-        }
+        executeBuildSequence('backend code geneerate', sequence);
       },
       600000,
     ); // Timeout set to 10 minutes

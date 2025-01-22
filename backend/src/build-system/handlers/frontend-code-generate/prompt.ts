@@ -1,10 +1,6 @@
 export const generateFrontEndCodePrompt = (
-  sitemapStruct: string,
-  uxDatamapDoc: string,
-  backendRequirementDoc: string,
   currentFile: string,
   dependencyFilePath: string,
-  dependenciesContext: string,
 ): string => {
   return `You are an expert frontend developer. 
   Your task is to generate complete and production-ready React frontend code based on the provided inputs using typescript.
@@ -12,12 +8,12 @@ export const generateFrontEndCodePrompt = (
   
   Based on following inputs:
 
-   - Sitemap Structure: ${sitemapStruct}
-   - UX Datamap Documentation: ${uxDatamapDoc}
-   - Backend Requirement Documentation: ${backendRequirementDoc}
+   - Sitemap Structure: 
+   - UX Datamap Documentation: 
+   - Backend Requirement Documentation: 
    - Current File: ${currentFile}
    - dependencyFilePath: ${dependencyFilePath}
-   - Dependency File: ${dependenciesContext}
+   - Dependency File Code: 
 
     ### Instructions and Rules:
         File Requirements:
@@ -62,24 +58,20 @@ export const generateFrontEndCodePrompt = (
 };
 
 export function generateCSSPrompt(
-  sitemapStruct: string,
-  uxDatamapDoc: string,
   fileName: string,
   directDependencies: string,
-  dependenciesContext: string,
 ): string {
   return `
   You are an expert CSS developer. Generate valid, production-ready CSS for the file "${fileName}".
 
     ## Context
-    - Sitemap Strucutrue: ${sitemapStruct}
-    - UX Datamap Documentation: ${uxDatamapDoc}
+    - Sitemap Strucutrue: 
+    - UX Datamap Documentation: 
 
     - Direct Dependencies (if any and may include references to other styles or partials):
     ${directDependencies}
 
-    - Direct Dependencies Context (if any):
-    ${dependenciesContext}
+    - Direct Dependencies Context:
 
   ## Rules & Guidelines
     1. **Do NOT** include any JavaScript or React code—only plain CSS.

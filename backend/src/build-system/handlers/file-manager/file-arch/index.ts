@@ -18,9 +18,13 @@ import {
   buildDependencyGraph,
   validateAgainstVirtualDirectory,
 } from 'src/build-system/utils/file_generator_util';
+import { FileStructureHandler } from '../file-structure';
+import { UXDMDHandler } from '../../ux/datamap';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
-export class FileArchGenerateHandler implements BuildHandler<string> {
-  readonly id = 'op:FILE:ARCH';
+@BuildNode()
+@BuildNodeRequire([FileStructureHandler, UXDMDHandler])
+export class FileFAHandler implements BuildHandler<string> {
   private readonly logger: Logger = new Logger('FileArchGenerateHandler');
   private virtualDir: VirtualDirectory;
 
@@ -29,21 +33,49 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
 
     this.virtualDir = context.virtualDirectory;
 
-    const fileStructure = context.getNodeData('op:FILE:STRUCT');
-    const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
+    const fileStructure = context.getNodeData(FileStructureHandler);
+    const datamapDoc = context.getNodeData(UXDMDHandler);
 
     if (!fileStructure || !datamapDoc) {
-      Logger.error(fileStructure);
-      Logger.error(datamapDoc);
       throw new InvalidParameterError(
         'Missing required parameters: fileStructure or datamapDoc.',
       );
     }
 
-    const prompt = generateFileArchPrompt(
-      JSON.stringify(fileStructure.jsonFileStructure, null, 2),
-      JSON.stringify(datamapDoc, null, 2),
-    );
+    const prompt = generateFileArchPrompt();
+
+    const messages = [
+      {
+        role: 'system' as const,
+        content: prompt,
+      },
+      {
+        role: 'user' as const,
+        content: `
+          **Page-by-Page Analysis**
+          The following is a detailed analysis of each page. Use this information to understand specific roles, interactions, and dependencies.
+
+          ${datamapDoc}
+
+          Next, I'll provide the **Directory Structure**.`,
+      },
+      {
+        role: 'user' as const,
+        content: `
+          **Directory Structure**:
+          The following is the project's directory structure. Use this to identify files and folders.
+
+          ${fileStructure}
+
+          Please generate the full File Architecture JSON object now, ensuring adherence to all the rules.`,
+      },
+      {
+        role: 'user' as const,
+        content: `**Final Check:**
+      - Ensure the JSON structure is correct.
+      - Ensure all files and dependencies are included.`,
+      },
+    ];
 
     let fileArchContent: string;
     try {
@@ -51,10 +83,10 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
         context,
         {
           model: 'gpt-4o-mini',
-          messages: [{ content: prompt, role: 'system' }],
+          messages,
         },
         'generateFileArch',
-        this.id,
+        FileFAHandler.name,
       );
     } catch (error) {
       this.logger.error('Model is unavailable:' + error);

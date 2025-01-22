@@ -7,11 +7,13 @@ import {
   MissingConfigurationError,
   ResponseParsingError,
 } from 'src/build-system/errors';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
+import { UXSMDHandler } from '../sitemap-document';
+import { UXSMSHandler } from '.';
 
-export class UXSitemapStructurePagebyPageHandler
-  implements BuildHandler<string>
-{
-  readonly id = 'op:UX:SMS:PAGEBYPAGE';
+@BuildNode()
+@BuildNodeRequire([UXSMDHandler, UXSMSHandler])
+export class UXSMSPageByPageHandler implements BuildHandler<string> {
   readonly logger = new Logger('UXSitemapStructurePagebyPageHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -19,25 +21,18 @@ export class UXSitemapStructurePagebyPageHandler
 
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
-    const sitemapDoc = context.getNodeData('op:UX:SMS');
-    const uxStructureDoc = context.getNodeData('op:UX:SMS');
+
+    const uxStructureDoc = context.getNodeData(UXSMSHandler);
 
     // Validate required data
     if (!projectName || typeof projectName !== 'string') {
       throw new MissingConfigurationError('Missing or invalid projectName.');
-    }
-    if (!sitemapDoc || typeof sitemapDoc !== 'string') {
-      throw new MissingConfigurationError(
-        'Missing or invalid sitemap document.',
-      );
     }
     if (!uxStructureDoc || typeof uxStructureDoc !== 'string') {
       throw new MissingConfigurationError(
         'Missing or invalid UX Structure document.',
       );
     }
-
-    const normalizedUxStructureDoc = uxStructureDoc.replace(/\r\n/g, '\n');
 
     // Extract sections from the UX Structure Document
     const sections = this.extractAllPageViewSections(uxStructureDoc);
@@ -92,7 +87,7 @@ export class UXSitemapStructurePagebyPageHandler
     const refinedGlobalCompSections = await batchChatSyncWithClock(
       context,
       'generate global components',
-      this.id,
+      UXSMSPageByPageHandler.name,
       requests,
     );
     refinedSections.push(refinedGlobalCompSections);
@@ -148,8 +143,8 @@ export class UXSitemapStructurePagebyPageHandler
 
     const refinedPageViewSections = await batchChatSyncWithClock(
       context,
-      'generate global components',
-      this.id,
+      'generate page by page details',
+      UXSMSPageByPageHandler.name,
       page_view_requests,
     );
     refinedSections.push(refinedPageViewSections);
