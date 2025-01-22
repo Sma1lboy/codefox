@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { EventEnum } from './enum';
 
 interface SideBarItemProps {
   id: string;
@@ -48,7 +49,7 @@ export function SideBarItem({
       refetchChats();
       if (isSelected) {
         window.history.pushState({}, '', '/');
-        const event = new Event('newchat'); 
+        const event = new Event(EventEnum.NEW_CHAT);
         window.dispatchEvent(event);
       }
     },

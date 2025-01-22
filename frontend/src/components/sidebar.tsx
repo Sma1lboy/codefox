@@ -8,6 +8,7 @@ import SidebarSkeleton from './sidebar-skeleton';
 import UserSettings from './user-settings';
 import { SideBarItem } from './sidebar-item';
 import { Chat } from '@/graphql/type';
+import { EventEnum } from './enum';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -37,7 +38,7 @@ function Sidebar({
   const handleNewChat = useCallback(() => {
     //force reload to reset the chat state
     window.history.pushState({}, '', '/');
-    const event = new Event('newchat'); 
+    const event = new Event(EventEnum.NEW_CHAT);
     window.dispatchEvent(event);
   }, []);
 
