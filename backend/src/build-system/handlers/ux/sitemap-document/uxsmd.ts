@@ -34,8 +34,8 @@
 //       throw new MissingConfigurationError('Missing or invalid PRD content.');
 //     }
 
-    // Generate the prompt dynamically
-    // const prompt = prompts.generateUxsmdPrompt(projectName, platform);
+// Generate the prompt dynamically
+// const prompt = prompts.generateUxsmdPrompt(projectName, platform);
 //     // Generate the prompt dynamically
 //     const prompt = prompts.generateUxsmdrompt(
 //       projectName,
