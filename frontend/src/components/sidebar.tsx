@@ -8,6 +8,7 @@ import SidebarSkeleton from './sidebar-skeleton';
 import UserSettings from './user-settings';
 import { SideBarItem } from './sidebar-item';
 import { Chat } from '@/graphql/type';
+import { EventEnum } from './enum';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -36,7 +37,9 @@ function Sidebar({
 
   const handleNewChat = useCallback(() => {
     //force reload to reset the chat state
-    window.location.href = '/';
+    window.history.pushState({}, '', '/');
+    const event = new Event(EventEnum.NEW_CHAT);
+    window.dispatchEvent(event);
   }, []);
 
   if (loading) return <SidebarSkeleton />;
@@ -80,7 +83,9 @@ function Sidebar({
                   id={chat.id}
                   title={chat.title}
                   isSelected={currentChatId === chat.id}
-                  onSelect={() => router.push(`/${chat.id}`)}
+                  onSelect={() =>
+                    window.history.replaceState({}, '', `/?id=${chat.id}`)
+                  }
                   refetchChats={onRefetch}
                 />
               ))}

@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { EventEnum } from './enum';
 
 interface SideBarItemProps {
   id: string;
@@ -47,7 +48,9 @@ export function SideBarItem({
       toast.success('Chat deleted successfully');
       refetchChats();
       if (isSelected) {
-        router.push('/');
+        window.history.pushState({}, '', '/');
+        const event = new Event(EventEnum.NEW_CHAT);
+        window.dispatchEvent(event);
       }
     },
     onError: (error) => {
@@ -86,7 +89,7 @@ export function SideBarItem({
       )}
     >
       <Link
-        href={`/${id}`}
+        href={`/?id=${id}`}
         className="flex-1 flex gap-3 items-center truncate"
         onClick={handleChatClick}
       >
