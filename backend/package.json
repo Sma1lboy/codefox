@@ -5,7 +5,7 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
-  "packageManager": "pnpm@9.1.2",
+  "packageManager": "pnpm@9.1.0",
   "scripts": {
     "build": "pnpm run build:common && nest build",
     "build:common": "pnpm --filter codefox-common run build",
