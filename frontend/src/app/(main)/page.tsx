@@ -5,18 +5,15 @@ import { Message } from '@/components/types';
 import { useModels } from '../hooks/useModels';
 import ChatContent from '@/components/chat/chat';
 import { useChatStream } from '../hooks/useChatStream';
-import { useParams } from 'next/navigation';
 import { GET_CHAT_HISTORY } from '@/graphql/request';
 import { useQuery } from '@apollo/client';
 import { toast } from 'sonner';
 import { useChatList } from '../hooks/useChatList';
 
 export default function Home() {
-
-  
-  const urlParams = new URLSearchParams(window.location.search); // 读取查询参数
-  const [chatId, setChatId] = useState(''); // 获取参数 'id'
-// Core message states
+  const urlParams = new URLSearchParams(window.location.search);
+  const [chatId, setChatId] = useState('');
+  // Core message states
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
@@ -25,14 +22,14 @@ export default function Home() {
   const [selectedModel, setSelectedModel] = useState<string>(
     models[0] || 'gpt-4o'
   );
-  
-  const {refetchChats} = useChatList();
+
+  const { refetchChats } = useChatList();
 
   useEffect(() => {
     setChatId(urlParams.get('id') || '');
     refetchChats();
     console.log(`update ${urlParams.get('id')}`);
-  },[urlParams])
+  }, [urlParams]);
 
   useQuery(GET_CHAT_HISTORY, {
     variables: { chatId },
@@ -47,10 +44,10 @@ export default function Home() {
   });
 
   const updateChatId = () => {
-      setChatId('');
+    setChatId('');
   };
 
-   window.addEventListener('newchat', updateChatId);
+  window.addEventListener('newchat', updateChatId);
 
   const { loadingSubmit, handleSubmit, handleInputChange, stop } =
     useChatStream({
@@ -60,8 +57,6 @@ export default function Home() {
       setMessages,
       selectedModel,
     });
-  
-  
 
   return (
     <ChatContent
