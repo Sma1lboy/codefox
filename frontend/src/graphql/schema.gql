@@ -118,6 +118,7 @@ type ProjectPackages {
 }
 
 type Query {
+  addPackage(name: String!): Boolean!
   checkToken(input: CheckTokenInput!): Boolean!
   getAvailableModelTags: [String!]
   getChatDetails(chatId: String!): Chat
@@ -128,6 +129,7 @@ type Query {
   getUserProjects: [Project!]!
   logout: Boolean!
   me: User!
+  searchPackage(name: String!): String!
 }
 
 input RegisterUserInput {

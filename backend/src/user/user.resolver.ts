@@ -15,6 +15,7 @@ import {
   GetAuthToken,
   GetUserIdFromToken,
 } from 'src/decorator/get-auth-token.decorator';
+import DependenciesEmbeddingHandler from 'src/build-system/dependencies-context/dependencies-embedding-handler';
 
 @Resolver(() => User)
 export class UserResolver {
@@ -35,6 +36,21 @@ export class UserResolver {
     @Args('input') loginUserInput: LoginUserInput,
   ): Promise<LoginResponse> {
     return this.authService.login(loginUserInput);
+  }
+  public test = new DependenciesEmbeddingHandler();
+  @Query(() => Boolean)
+  async addPackage(@Args('name') name: string): Promise<boolean> {
+    console.log('addPackage');
+    await this.test.addPackages([{ name: 'lodash', version: '4.17.21' }]);
+    console.log('addPackage done');
+    return true;
+  }
+
+  @Query(() => String)
+  async searchPackage(@Args('name') name: string): Promise<string> {
+    const res = await this.test.searchContext('lodash');
+    console.log('searchPackage', res);
+    return JSON.stringify(res);
   }
 
   @Query(() => Boolean)

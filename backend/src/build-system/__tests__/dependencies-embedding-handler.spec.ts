@@ -1,177 +1,80 @@
-import axios from 'axios';
-import DependenciesEmbeddingHandler from '../dependencies-embedding-handler';
-import { Logger } from '@nestjs/common';
+import DependenciesEmbeddingHandler from '../dependencies-context/dependencies-embedding-handler';
 
-// Initialize a global logger instance
-const logger = new Logger('dependencies embed tester');
-
-// Mock axios to control HTTP requests during tests
-jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
-
-// Mock fastembed to control embedding behavior during tests
-jest.mock('fastembed', () => ({
-  EmbeddingModel: {
-    BGEBaseEN: 'BGEBaseEN',
-  },
-  FlagEmbedding: {
-    init: jest.fn().mockResolvedValue({
-      passageEmbed: jest.fn(async function* (
-        types: string[],
-        batchSize: number,
-      ) {
-        for (const type of types) {
-          // Yield simulated embedding data as Float32Array
-          yield [new Float32Array([1, 2, 3])];
-        }
+const mockAdd = jest.fn().mockResolvedValue(true);
+const mockQuery = jest.fn().mockResolvedValue({
+  documents: [
+    [
+      JSON.stringify({
+        name: 'react',
+        version: '18.2.0',
+        content: 'React component lifecycle',
       }),
-      queryEmbed: jest.fn(async (query: string) => [1, 2, 3]),
+    ],
+  ],
+  metadatas: [[{ name: 'react', version: '18.2.0' }]],
+});
+
+jest.mock('chromadb', () => ({
+  ChromaClient: jest.fn().mockImplementation(() => ({
+    getOrCreateCollection: jest.fn().mockResolvedValue({
+      add: mockAdd,
+      query: mockQuery,
     }),
-  },
+  })),
 }));
 
 describe('DependenciesEmbeddingHandler', () => {
   let handler: DependenciesEmbeddingHandler;
 
-  beforeEach(() => {
-    // Initialize a new instance of DependenciesEmbeddingHandler before each test
-    handler = new DependenciesEmbeddingHandler();
-    // Clear all mock calls and instances before each test
+  beforeEach(async () => {
     jest.clearAllMocks();
+    handler = new DependenciesEmbeddingHandler();
+    await handler['initPromise'];
   });
 
-  /**
-   * Test Case: Successfully add a package with built-in type definitions
-   *
-   * Purpose:
-   * - To verify that DependenciesEmbeddingHandler can correctly add a package that includes built-in type definitions.
-   * - To ensure that the handler retrieves the package's package.json, extracts the type definitions, and generates embeddings.
-   *
-   * Steps:
-   * 1. Mock axios.get to return a package.json containing the 'types' field.
-   * 2. Mock axios.get to return the content of the type definitions file.
-   * 3. Call the addPackage method to add the package.
-   * 4. Verify that the package information is correctly stored, including the generated embedding.
-   */
-  test('should successfully add a package with built-in types', async () => {
-    // Mock the response for fetching package.json, including the 'types' field
-    mockedAxios.get.mockImplementationOnce(() =>
-      Promise.resolve({
-        data: {
-          name: 'test-package',
-          version: '1.0.0',
-          types: 'dist/index.d.ts',
-        },
-      }),
-    );
-
-    // Mock the response for fetching the type definitions file
-    mockedAxios.get.mockImplementationOnce(() =>
-      Promise.resolve({
-        data: `
-          interface TestInterface {
-            prop1: string;
-            prop2: number;
-          }
-          
-          type TestType = {
-            field1: string;
-            field2: boolean;
-          };
-        `,
-      }),
-    );
-
-    // Add the package using the handler
-    await handler.addPackage('test-package', '1.0.0');
-
-    // Retrieve the added package information
-    const packageInfo = handler.getPackageInfo('test-package');
-
-    // Assertions to ensure the package was added correctly
-    expect(packageInfo).toBeDefined();
-    expect(packageInfo?.name).toBe('test-package');
-    expect(packageInfo?.version).toBe('1.0.0');
-    expect(packageInfo?.embedding).toBeDefined();
+  test('should initialize successfully', () => {
+    expect(handler).toBeDefined();
   });
 
-  /**
-   * Test Case: Successfully search for relevant type definitions
-   *
-   * Purpose:
-   * - To verify that DependenciesEmbeddingHandler can generate query embeddings from a search string and return the most relevant packages.
-   * - To ensure that similarity calculations are accurate and results are correctly sorted based on similarity.
-   *
-   * Why the Search Returns Relevant Results:
-   * - The `FlagEmbedding` mock is set up to return identical embeddings for both package types and the query.
-   * - This setup ensures that the cosine similarity between the query embedding and each package's embedding is maximized for relevant packages.
-   * - As a result, the search function can accurately identify and return the most relevant packages based on the query.
-   *
-   * Steps:
-   * 1. Mock axios.get to return package.json and type definitions for two different packages.
-   * 2. Call addPackage method to add both packages.
-   * 3. Use a search query to call searchContext method.
-   * 4. Verify that the search results contain the relevant package and are sorted by similarity.
-   */
-  test('should successfully search for relevant type definitions', async () => {
-    // Mock responses for the first package's package.json and type definitions
-    mockedAxios.get
-      .mockImplementationOnce(() =>
-        Promise.resolve({
-          data: {
-            types: 'index.d.ts',
-          },
-        }),
-      )
-      .mockImplementationOnce(() =>
-        Promise.resolve({
-          data: `
-            interface UserInterface {
-              id: string;
-              name: string;
-              email: string;
-            }
-          `,
-        }),
-      )
-      // Mock responses for the second package's package.json and type definitions
-      .mockImplementationOnce(() =>
-        Promise.resolve({
-          data: {
-            types: 'index.d.ts',
-          },
-        }),
-      )
-      .mockImplementationOnce(() =>
-        Promise.resolve({
-          data: `
-            interface ProductInterface {
-              id: string;
-              price: number;
-              description: string;
-            }
-          `,
-        }),
-      );
+  test('should add package successfully', async () => {
+    const packageName = 'react';
+    const version = '18.2.0';
 
-    // Add the first package 'user-package'
-    await handler.addPackage('user-package', '1.0.0');
-    // Add the second package 'product-package'
-    await handler.addPackage('product-package', '1.0.0');
+    await handler.addPackage(packageName, version);
+  });
 
-    const searchQuery = 'user interface with email';
+  test('should add multiple packages', async () => {
+    const packages = [
+      { name: 'react', version: '18.2.0' },
+      { name: 'lodash', version: '4.17.21' },
+    ];
 
-    // Log the search query
-    logger.log('Search Query:', searchQuery);
+    await handler.addPackages(packages);
+    expect(mockAdd).toHaveBeenCalled();
+  });
 
-    // Perform the search using the handler
-    const results = await handler.searchContext(searchQuery);
+  test('should return search results', async () => {
+    const query = 'React component lifecycle';
+    const results = await handler.searchContext(query);
 
-    // Log the search results
-    logger.log('Search Results:', results);
+    expect(results[0]).toEqual({
+      name: 'react',
+      version: '18.2.0',
+      content: 'React component lifecycle',
+    });
+  });
 
-    // Assertions to ensure that search results are as expected
-    expect(results.length).toBeGreaterThan(0);
-    expect(results[0].types?.content[0]).toContain('UserInterface');
-  }, 100000);
+  test('should handle empty search results', async () => {
+    mockQuery.mockResolvedValueOnce({
+      documents: [[]],
+    });
+
+    const results = await handler.searchContext('nonexistent');
+    expect(results).toHaveLength(0);
+  });
+
+  test('should handle query failure', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('Query failed'));
+    await expect(handler.searchContext('test')).rejects.toThrow('Query failed');
+  });
 });
