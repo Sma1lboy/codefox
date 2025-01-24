@@ -20,38 +20,54 @@ import { useMutation } from '@apollo/client';
 import { MoreHorizontal, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { EventEnum } from './enum';
 
 interface SideBarItemProps {
   id: string;
+  currentChatId: string;
   title: string;
-  isSelected: boolean;
   onSelect: (id: string) => void;
   refetchChats: () => void;
 }
 
 export function SideBarItem({
   id,
+  currentChatId,
   title,
-  isSelected,
   onSelect,
   refetchChats,
 }: SideBarItemProps) {
-  const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
+  const [variant, setVariant] = useState<
+    'ghost' | 'link' | 'secondary' | 'default' | 'destructive' | 'outline'
+  >('ghost');
+
+  useEffect(() => {
+    const selected = currentChatId === id;
+    setIsSelected(selected);
+    if (selected) {
+      setVariant('secondary'); // 类型安全
+    } else {
+      setVariant('ghost'); // 类型安全
+    }
+    refetchChats();
+    console.log(`update sidebar ${currentChatId}`);
+  }, [currentChatId]);
 
   const [deleteChat] = useMutation(DELETE_CHAT, {
     onCompleted: () => {
       toast.success('Chat deleted successfully');
-      refetchChats();
+      console.log(`${id} ${isSelected}`);
       if (isSelected) {
-        window.history.pushState({}, '', '/');
+        window.history.replaceState({}, '', '/');
         const event = new Event(EventEnum.NEW_CHAT);
         window.dispatchEvent(event);
       }
+      refetchChats();
     },
     onError: (error) => {
       console.error('Error deleting chat:', error);
@@ -83,7 +99,7 @@ export function SideBarItem({
     <div
       className={cn(
         buttonVariants({
-          variant: isSelected ? 'secondaryLink' : 'ghost',
+          variant,
         }),
         'flex justify-between w-full h-14 text-base font-normal items-center group'
       )}
