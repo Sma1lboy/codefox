@@ -71,14 +71,14 @@ function CustomSidebar({
     >
       <Sidebar collapsible="icon" side="left">
         <SidebarTrigger
-          className="lg:flex items-center justify-center cursor-pointer p-2 lg:mx-4 lg:my-2"
+          className={`lg:flex items-center justify-center cursor-pointer p-2 ${isSimple ? 'ml-[25%]' : 'ml-[100%]'}`}
           onClick={() => setIsSimple(!isSimple)}
         ></SidebarTrigger>
 
         <Button
           onClick={() => handleNewChat()}
           variant="ghost"
-          className="flex justify-between w-full h-14 text-sm xl:text-lg font-normal items-center"
+          className={` flex justify-between w-full h-14 text-sm xl:text-lg font-normal items-center`}
         >
           {!isSimple && (
             <div className="flex gap-3 items-center">
@@ -95,8 +95,7 @@ function CustomSidebar({
             </div>
           )}
           <SquarePen
-            size={isSimple ? 48 : 18}
-            className={`shrink-0 ${isSimple ? 'w-7 h-7' : 'w-4 h-4'} m-2`}
+            className={`shrink-0 ${isSimple ? 'ml-[12.5%]' : 'm-5'}`}
           />
         </Button>
         <SidebarContent>
