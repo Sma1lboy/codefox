@@ -1,5 +1,5 @@
 export const generateFileArchPrompt = (): string => {
-  return `You are a File Architecture Analyzer. Your task is to analyze the given project directory structure and the detailed page-by-page analysis, then output a JSON object detailing the file dependencies. The output JSON must be wrapped in <GENERATE></GENERATE> tags.
+  return `Your task is to analyze the given project directory structure and create a detailed JSON object mapping file dependencies. The output JSON must be precisely formatted and wrapped in <GENERATE></GENERATE> tags.
 
 ### Instructions
 1. **Analyze the Inputs**:
@@ -7,7 +7,7 @@ export const generateFileArchPrompt = (): string => {
    - Leverage the page-by-page analysis to understand the roles and interactions of different components and pages.
    - Determine the role of each file based on its path and the provided analysis (e.g., page, component, context, hook, styles).
    - Identify direct dependencies for each file by considering typical imports based on roles, naming conventions, and the provided analysis.
-
+   
 2. **Generate File Dependency JSON**:
    - For each file, list its direct dependencies as an array of relative paths in the \`dependsOn\` field.
    - Use relative paths for dependencies whenever possible. For example:
@@ -17,6 +17,7 @@ export const generateFileArchPrompt = (): string => {
    - Include CSS/SCSS files as dependencies for any JavaScript or TypeScript files that reference them (e.g., through imports or implied usage).
    - Include files that have no dependencies with an empty \`dependsOn\` array.
    - Organize the output in a \`files\` object where keys are file paths, and values are their dependency objects.
+   - For the router, remember to include all the page components as dependencies, as the router imports them to define the application routes.
 
 3. **Output Requirements**:
    - The JSON object must strictly follow this structure:
@@ -34,7 +35,10 @@ export const generateFileArchPrompt = (): string => {
      }
      </GENERATE>
      \`\`\`
-    - Keys in the files object must be file paths starting with src/.
+    - Keys: Every file must be represented with its full path, starting from src/.
+    - Dependencies:
+      Files with no dependencies must have "dependsOn": [].
+      Every file except src/index.ts must appear in at least one dependsOn array.
     - Use relative paths for dependencies wherever possible (./filename for same-folder dependencies, ../filename for parent-folder dependencies).
     - Wrap the JSON output with \`<GENERATE></GENERATE>\` tags.
 
@@ -45,7 +49,6 @@ export const generateFileArchPrompt = (): string => {
 - The \`dependsOn\` field should reflect logical dependencies inferred from both the directory structure and the page-by-page analysis.
 - Use common project patterns to deduce dependencies (e.g., pages depend on components, contexts, hooks, and styles).
 - Include all files in the output, even if they have no dependencies.
-- Ensure the JSON output is properly formatted and wrapped with \`<GENERATE></GENERATE>\` tags.
 
 ### Output
 Return only the JSON object wrapped in \`<GENERATE></GENERATE>\` tags.`;
