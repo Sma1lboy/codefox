@@ -95,8 +95,8 @@ function CustomSidebar({
             </div>
           )}
           <SquarePen
-            size={isSimple ? 48 : 18} // 如果是 Simple 模式，图标放大
-            className={`shrink-0 ${isSimple ? 'w-7 h-7' : 'w-4 h-4'} m-2`} // 动态调整宽高
+            size={isSimple ? 48 : 18}
+            className={`shrink-0 ${isSimple ? 'w-7 h-7' : 'w-4 h-4'} m-2`}
           />
         </Button>
         <SidebarContent>
