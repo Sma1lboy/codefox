@@ -13,8 +13,8 @@ export const prompts = {
   },
   */
 
-  convertTreeToJsonPrompt: (treeMarkdown: string): string => {
-    return `You are a highly skilled developer. Your task is to convert the given file and folder structure, currently represented in an ASCII tree format, into a JSON structure. The JSON structure must:
+  convertTreeToJsonPrompt: (): string => {
+    return `You are a highly skilled developer. Your task is to convert the previous file and folder structure, currently represented in an ASCII tree format, into a JSON structure. The JSON structure must:
     
     - Represent directories and files in a hierarchical manner.
     - Use objects with "type" and "name" keys.
@@ -26,11 +26,6 @@ export const prompts = {
         - "type": "file"
         - "name": "<filename.ext>"
     - Maintain the same nesting as the original ASCII tree.
-    
-    **Input Tree:**
-    \`\`\`
-    ${treeMarkdown}
-    \`\`\`
     
     **Output Format:**
     Return a JSON object of the form:
@@ -84,20 +79,21 @@ export const prompts = {
         roleDescription = 'an expert frontend developer';
         includeSections = `
           Folder Structure:
-            components: Reusable UI elements grouped by category (e.g., common, layout, specific).
-            contexts: Global state management (e.g., auth, theme, player).
-            hooks: Custom hooks for data fetching and state management.
-            pages: Route-specific views (e.g., Home, Search, Playlist).
-            utils: Utility functions (e.g., constants, helpers, validators).
+            component: Reusable UI elements grouped by category (e.g., common, layout, specific).
+            context: Global state management (e.g., auth, theme, player).
+            hook: Custom hooks for data fetching and state management.
+            page: Route-specific views (e.g., Home, Search, Playlist).
+            util: Utility functions (e.g., constants, helpers, validators).
             api: Organized API logic (e.g., auth, music, user).
             router.ts: Central routing configuration.
-            index.ts: Application entry point.
+            index.tsx: Application entry point.
         `;
         excludeSections = `
           Do Not Include:
             Asset folders (e.g., images, icons, fonts).
             Test folders or files.
             Service folders unrelated to API logic.
+            Dont need .css files.
         `;
         fileNamingGuidelines = `
           File Naming Guidelines:
@@ -105,7 +101,6 @@ export const prompts = {
             For components, include an index.tsx file in each folder to simplify imports.
             Each component should have its own folder named after the component (e.g., Button/).
             Use index.tsx as the main file inside the component folder.
-            Component-specific styles must be in index.css within the same folder as the component.
         `;
         break;
 
@@ -149,8 +144,8 @@ export const prompts = {
     Based on the following input:
     
      - Project name: ${projectName}
-     - Sitemap Documentation: ${sitemapDoc}
-     - Data Analysis Doc: ${dataAnalysisDoc}
+     - Sitemap Documentation (provide by user)
+     - Data Analysis Doc: (provide by user)
     
     ### Instructions and Rules:
     
