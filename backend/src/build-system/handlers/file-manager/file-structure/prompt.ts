@@ -79,12 +79,12 @@ export const prompts = {
         roleDescription = 'an expert frontend developer';
         includeSections = `
           Folder Structure:
-            component: Reusable UI elements grouped by category (e.g., common, layout, specific).
-            context: Global state management (e.g., auth, theme, player).
-            hook: Custom hooks for data fetching and state management.
-            page: Route-specific views (e.g., Home, Search, Playlist).
-            util: Utility functions (e.g., constants, helpers, validators).
-            api: Organized API logic (e.g., auth, music, user).
+            components: Reusable UI elements grouped by category (e.g., common, layout, specific).
+            contexts: Global state management (e.g., auth, theme, player).
+            hooks: Custom hooks for data fetching and state management.
+            pages: Route-specific views (e.g., Home, Search, Playlist).
+            utils: Utility functions (e.g., constants, helpers, validators).
+            apis: Organized API logic (e.g., auth, music, user).
             router.ts: Central routing configuration.
             index.tsx: Application entry point.
         `;
