@@ -286,12 +286,12 @@ SidebarTrigger.displayName = 'SidebarTrigger';
 
 const SidebarRail = React.forwardRef<
   HTMLButtonElement,
-  React.ComponentProps<"button"> & {
+  React.ComponentProps<'button'> & {
     setIsSimple: React.Dispatch<React.SetStateAction<boolean>>;
     isSimple: boolean;
   }
 >(({ className, setIsSimple, isSimple, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
+  const { toggleSidebar } = useSidebar();
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     toggleSidebar(); // 保留原有的逻辑
     setIsSimple(!isSimple); // 更新 isSimple 状态
