@@ -27,6 +27,10 @@ export default function MainLayout({
   } = useChatList();
 
   useEffect(() => {
+    document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(isCollapsed)}; path=/; max-age=604800`;
+  }, [isCollapsed]);
+
+  useEffect(() => {
     const checkScreenWidth = () => {
       setIsMobile(window.innerWidth <= 1023);
     };
@@ -36,6 +40,8 @@ export default function MainLayout({
       window.removeEventListener('resize', checkScreenWidth);
     };
   }, []);
+
+  console.log(`${isCollapsed}, ${isMobile}`);
 
   return (
     <main className="flex h-[calc(100dvh)] flex-col items-center">
@@ -56,17 +62,16 @@ export default function MainLayout({
             minSize={isMobile ? 4 : 12}
             maxSize={isMobile ? 10 : 16}
             onCollapse={() => {
+              console.log(`setting collapse to T`);
               setIsCollapsed(true);
-              document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(true)};`;
             }}
             onExpand={() => {
+              console.log(`setting collapse to F`);
               setIsCollapsed(false);
-              document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(false)};`;
             }}
             className={cn(
-              isCollapsed
-                ? 'min-w-[50px] md:min-w-[70px] transition-all duration-300 ease-in-out'
-                : 'md:min-w-[200px] transition-all duration-300 ease-in-out'
+              'transition-all duration-300 ease-in-out',
+              isCollapsed ? 'min-w-[50px] md:min-w-[70px]' : 'md:min-w-[200px]'
             )}
           >
             {loading ? (

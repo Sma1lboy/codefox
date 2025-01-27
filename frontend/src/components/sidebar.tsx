@@ -16,7 +16,10 @@ import {
   SidebarGroupContent,
   SidebarTrigger,
   Sidebar,
+  SidebarRail,
+  SidebarFooter,
 } from './ui/sidebar';
+import { cn } from '@/lib/utils';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -54,49 +57,49 @@ function CustomSidebar({
     console.error('Error loading chats:', error);
     return null;
   }
+  console.log(`${isCollapsed}, ${isMobile}, ${isSimple}`);
 
-  const handleSidebarToggle = (e: React.MouseEvent) => {
-    const clientX = e.clientX;
-    if (clientX < 100) {
-      // 判断拖拽位置是否触发简化模式
-      setIsSimple(true);
-    } else {
-      setIsSimple(false);
-    }
-  };
   return (
     <div
       data-collapsed={isCollapsed}
-      className="relative justify-between group lg:bg-accent/20 lg:dark:bg-card/10 flex flex-col h-full gap-4 p-2 data-[collapsed=true]:p-2"
+      className="relative justify-between group lg:bg-accent/0 lg:dark:bg-card/0 flex flex-col h-full"
     >
       <Sidebar collapsible="icon" side="left">
         <SidebarTrigger
-          className={`lg:flex items-center justify-center cursor-pointer p-2 ${isSimple ? 'ml-[25%]' : 'ml-[100%]'}`}
+          className={`lg:flex items-center justify-center cursor-pointer p-2 ml-3.5 mt-2`}
           onClick={() => setIsSimple(!isSimple)}
         ></SidebarTrigger>
 
         <Button
           onClick={() => handleNewChat()}
           variant="ghost"
-          className={` flex justify-between w-full h-14 text-sm xl:text-lg font-normal items-center`}
+          className={`flex justify-between w-[90%] h-14 text-sm xl:text-lg font-normal items-center ml-[5%]`}
         >
+          <Image
+            src="/codefox.svg"
+            alt="AI"
+            width={48}
+            height={48}
+            className={`flex-shrink-0 dark:invert ${isSimple ? 'm-auto' : ''}`}
+          />
           {!isSimple && (
-            <div className="flex gap-3 items-center">
-              {!isCollapsed && !isMobile && (
-                <Image
-                  src="/codefox.svg"
-                  alt="AI"
-                  width={28}
-                  height={28}
-                  className="dark:invert hidden 2xl:block"
+            <div
+              className={cn('flex items-center', {
+                'gap-7': !isMobile,
+                'gap-4': isMobile,
+              })}
+            >
+              New chat
+              {(!isCollapsed || isMobile) && (
+                <SquarePen
+                  className={cn('shrink-0', {
+                    'ml-[12.5%]': isSimple && !isMobile,
+                    'm-3': !isSimple,
+                  })}
                 />
               )}
-              New chat
             </div>
           )}
-          <SquarePen
-            className={`shrink-0 ${isSimple ? 'ml-[12.5%]' : 'm-5'}`}
-          />
         </Button>
         <SidebarContent>
           <SidebarGroup>
@@ -120,9 +123,11 @@ function CustomSidebar({
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
-        <div className="justify-end px-2 py-2 w-full border-t">
+        <SidebarFooter>
           <UserSettings isSimple={isSimple} />
-        </div>
+        </SidebarFooter>
+
+        <SidebarRail setIsSimple={setIsSimple} isSimple={isSimple} />
       </Sidebar>
     </div>
   );

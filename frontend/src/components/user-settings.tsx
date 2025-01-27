@@ -6,12 +6,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+
+import PullModel from './pull-model';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { GearIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/app/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, memo } from 'react';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+} from '@radix-ui/react-dialog';
+import EditUsernameForm from './edit-username-form';
+import { DialogHeader } from './ui/dialog';
+import DetailSettings from './detail-settings';
 
 interface UserSettingsProps {
   isSimple: boolean;
@@ -44,7 +55,7 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
       <Button
         variant="ghost"
         className={`flex justify-start ${
-          isSimple ? 'w-10 h-10 p-0' : 'gap-2 w-full h-12'
+          isSimple ? 'w-10 h-12 p-auto' : 'gap-2 w-full h-12 p-1'
         }`}
       >
         <Avatar className="flex items-center justify-center">
@@ -60,10 +71,13 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{avatarButton}</DropdownMenuTrigger>
       <DropdownMenuContent className="w-48">
-        <DropdownMenuItem>
-          <GearIcon className="mr-2" />
-          Settings
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+          <PullModel />
         </DropdownMenuItem>
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+          <DetailSettings />
+        </DropdownMenuItem>
+
         <DropdownMenuItem
           onSelect={handleLogout}
           className="text-red-500 hover:text-red-600"

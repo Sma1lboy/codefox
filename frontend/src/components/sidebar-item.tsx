@@ -106,7 +106,7 @@ export function SideBarItem({
     >
       <Link
         href={`/?id=${id}`}
-        className="flex-1 flex gap-3 items-center truncate"
+        className="flex-1 flex gap-3 items-center truncate ml-2"
         onClick={handleChatClick}
       >
         <div className="flex flex-col">
@@ -119,7 +119,7 @@ export function SideBarItem({
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="flex justify-end items-center dropdown-trigger"
+              className="flex justify-end items-center dropdown-trigger mr-2"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -138,7 +138,7 @@ export function SideBarItem({
             >
               <Button
                 variant="ghost"
-                className="w-full flex gap-2 hover:text-red-500 text-red-500 justify-start items-center"
+                className="w-full flex hover:text-red-500 text-red-500 justify-start items-center"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();

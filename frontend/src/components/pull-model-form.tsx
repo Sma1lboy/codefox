@@ -135,6 +135,7 @@ export default function PullModelForm() {
     setName(e.currentTarget.value);
   };
 
+  console.log('enter model');
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
