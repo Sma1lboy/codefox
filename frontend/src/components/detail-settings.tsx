@@ -16,26 +16,25 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import { DownloadIcon } from '@radix-ui/react-icons';
+import { DownloadIcon, GearIcon } from '@radix-ui/react-icons';
 import PullModelForm from './pull-model-form';
+import EditUsernameForm from './edit-username-form';
 
-export default function PullModel() {
+export default function DetailSettings() {
   const [isOpen, setIsOpen] = React.useState(false);
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger>
+      <DialogTrigger className="w-full">
         <div className="flex w-full gap-2 p-1 items-center cursor-pointer">
-          <DownloadIcon className="w-4 h-4" />
-          <p>Pull model</p>
+          <GearIcon className="w-4 h-4" />
+          Settings
         </div>
       </DialogTrigger>
-
-      <DialogContent className="space-y-2">
-        <DialogDescription>
-          Specify the model you want to pull and download to your device.
-        </DialogDescription>
-        <DialogTitle>Pull Model</DialogTitle>
-        <PullModelForm />
+      <DialogContent>
+        <DialogHeader className="space-y-4">
+          <DialogTitle>Settings</DialogTitle>
+          <EditUsernameForm setOpen={setIsOpen} />
+        </DialogHeader>
       </DialogContent>
     </Dialog>
   );
