@@ -253,10 +253,8 @@ export class BuilderContext {
         // Mark the node as completed and update the state
         this.executionState.completed.add(handlerName);
         this.executionState.pending.delete(handlerName);
-
         // Store the result of the node execution
         this.setNodeData(node.handler, result.data);
-        this.logger.log(`[Node Completed] ${handlerName}`);
         return result;
       })
       .catch((error) => {
@@ -291,10 +289,6 @@ export class BuilderContext {
 
       // Loop over all nodes and execute them one by one
       while (currentIndex < nodes.length) {
-        this.logger.debug(
-          `[Execution Status] Current index: ${currentIndex}, Running nodes: ${runningPromises.size}`,
-        );
-
         const currentNode = nodes[currentIndex];
         if (!currentNode?.handler) {
           this.logger.error(
@@ -304,15 +298,8 @@ export class BuilderContext {
         }
 
         const handlerName = currentNode.handler.name;
-        this.logger.debug(
-          `[Node Execution] ${handlerName}, and this can execute: ${this.canExecute(currentNode)}`,
-        );
-
         // If the node cannot be executed yet, wait for dependencies to resolve
         if (!this.canExecute(currentNode)) {
-          this.logger.debug(
-            `[Waiting Dependencies] Paused at node ${handlerName}, will check again in ${this.POLL_INTERVAL}ms`,
-          );
           await new Promise((resolve) =>
             setTimeout(resolve, this.POLL_INTERVAL),
           );
@@ -329,7 +316,7 @@ export class BuilderContext {
                 this.sequence.id,
                 true, // Mark the node execution as successful
               );
-              runningPromises.delete(nodePromise); // Remove the node from the running list
+              runningPromises.delete(nodePromise);
               return result;
             })
             .catch((error) => {
@@ -345,9 +332,6 @@ export class BuilderContext {
 
           // Add the node promise to the running promises set
           runningPromises.add(nodePromise);
-          this.logger.debug(
-            `[Node Started] ${handlerName}, Total running: ${runningPromises.size}`,
-          );
           // Only increase the index if the node has been successfully started
           currentIndex++;
         } catch (error) {
@@ -402,21 +386,16 @@ export class BuilderContext {
    * @returns True if all dependencies are met, otherwise false.
    */
   private checkNodeDependencies(node: BuildNode): boolean {
-    this.logger.debug(`Checking dependencies for ${node.handler.name}`);
     const handlerClass = this.handlerManager.getHandler(node.handler);
 
     // If the node has no dependencies, it's ready to execute
     if (!handlerClass.dependencies?.length) {
-      this.logger.debug(`No dependencies for ${node.handler.name}`);
       return true;
     }
 
     // Check each dependency for the node
     for (const dep of handlerClass.dependencies) {
       if (!this.executionState.completed.has(dep.name)) {
-        this.logger.debug(
-          `Dependency ${dep.name} not met for ${node.handler.name}`,
-        );
         return false;
       }
     }

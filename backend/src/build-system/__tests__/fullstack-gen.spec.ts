@@ -14,6 +14,7 @@ import { FileFAHandler } from '../handlers/file-manager/file-arch';
 import { BackendRequirementHandler } from '../handlers/backend/requirements-document';
 import { BackendCodeHandler } from '../handlers/backend/code-generate';
 import { BackendFileReviewHandler } from '../handlers/backend/file-review/file-review';
+import { UXDMDHandler } from '../handlers/ux/datamap';
 
 (isIntegrationTest ? describe : describe.skip)('Build Sequence Test', () => {
   it('should execute build sequence successfully', async () => {
@@ -42,22 +43,8 @@ import { BackendFileReviewHandler } from '../handlers/backend/file-review/file-r
           // requires: ['op:UX:SMD'],
         },
         {
-          handler: DBRequirementHandler,
-          name: 'Database Requirements Node',
-          // requires: ['op:UX:DATAMAP:DOC'],
-        },
-        {
-          handler: FileStructureHandler,
-          name: 'File Structure Generation',
-          // requires: ['op:UX:SMD', 'op:UX:DATAMAP:DOC'],
-          options: {
-            projectPart: 'frontend',
-          },
-        },
-        {
-          handler: UXSMSPageByPageHandler,
-          name: 'Level 2 UX Sitemap Structure Node details',
-          // requires: ['op:UX:SMS'],
+          handler: UXDMDHandler,
+          name: 'UX DataMap Document Node',
         },
         {
           handler: DBRequirementHandler,
@@ -109,7 +96,6 @@ import { BackendFileReviewHandler } from '../handlers/backend/file-review/file-r
         {
           handler: BackendFileReviewHandler,
           name: 'Backend File Review Node',
-          // requires: ['op:BACKEND:CODE', 'op:BACKEND:REQ'],
         },
       ],
     };
