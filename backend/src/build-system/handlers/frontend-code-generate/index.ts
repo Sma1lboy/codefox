@@ -1,7 +1,7 @@
 import { BuildHandler, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { Logger } from '@nestjs/common';
-import { batchChatSyncWithClock } from 'src/build-system/utils/handler-helper';
+import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import { generateFilesDependencyWithLayers } from '../../utils/file_generator_util';
 import { readFileWithRetries, createFileWithRetries } from '../../utils/files';
 import { VirtualDirectory } from '../../virtual-dir';
@@ -14,7 +14,9 @@ import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import normalizePath from 'normalize-path';
 import path from 'path';
 import { generateCSSPrompt, generateFrontEndCodePrompt } from './prompt';
-import { parseGenerateTag } from 'src/build-system/utils/strings';
+import { formatResponse } from 'src/build-system/utils/strings';
+import { writeFileSync } from 'fs';
+import { MessageInterface } from 'src/common/model-provider/types';
 
 /**
  * FrontendCodeHandler is responsible for generating the frontend codebase
@@ -87,7 +89,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         attempt <= maxRetries && remainingFiles.length > 0;
         attempt++
       ) {
-        const failedFiles: string[] = [];
+        const failedFiles: any[] = [];
 
         await Promise.all(
           remainingFiles.map(async (file) => {
@@ -174,31 +176,36 @@ export class FrontendCodeHandler implements BuildHandler<string> {
 
               // Next will provide Backend Requirement Documentation.`,
               // },
-
+              {
+                role: 'assistant',
+                content:
+                  "Good, now provider your dependencies, it's okay dependencies are empty, which means you don't have any dependencies",
+              },
               {
                 role: 'user' as const,
                 content: `Dependencies:
                 
-                  ${dependenciesText}\n`,
+                  ${dependenciesText}\n
+                  Now you can provide the code.
+                  `,
               },
-            ];
+            ] as MessageInterface[];
 
             // 6. Call your Chat Model
             let generatedCode = '';
+            let modelResponse = '';
             try {
-              const modelResponse = await batchChatSyncWithClock(
+              modelResponse = await chatSyncWithClocker(
                 context,
+                {
+                  model: 'gpt-4o',
+                  messages,
+                },
                 'generate frontend code',
                 FrontendCodeHandler.name,
-                [
-                  {
-                    model: 'gpt-4o',
-                    messages,
-                  },
-                ],
               );
 
-              generatedCode = parseGenerateTag(modelResponse[0]);
+              generatedCode = formatResponse(modelResponse);
 
               // 7. Write the file to the filesystem
               await createFileWithRetries(
@@ -209,10 +216,16 @@ export class FrontendCodeHandler implements BuildHandler<string> {
               );
             } catch (err) {
               this.logger.error(`Error generating code for ${file}:`, err);
-              failedFiles.push(file);
-              // throw new ResponseParsingError(
-              //   `Error generating code for ${file}:`,
-              // );
+              // FIXME: remove this later
+              failedFiles.push(
+                JSON.stringify({
+                  file: file,
+                  error: err,
+                  modelResponse,
+                  generatedCode,
+                  messages,
+                }),
+              );
             }
 
             this.logger.log(
@@ -223,6 +236,11 @@ export class FrontendCodeHandler implements BuildHandler<string> {
 
         // Check if there are still files to retry
         if (failedFiles.length > 0) {
+          writeFileSync(
+            `./failedFiles-${attempt}.json`,
+            JSON.stringify(failedFiles),
+            'utf-8',
+          );
           this.logger.warn(
             `Retrying failed files: ${failedFiles.join(', ')} (Attempt #${attempt})`,
           );
