@@ -106,6 +106,9 @@ export class FrontendCodeHandler implements BuildHandler<string> {
             // Read each dependency and append to dependenciesContext
             let dependenciesText = '';
             for (const dep of directDepsArray) {
+              this.logger.log(
+                `Layer #${layerIndex + 1}, file "${file}" → reading dependency "${dep}"`,
+              );
               try {
                 // need to check if it really reflect the real path
                 const resolvedDepPath = normalizePath(
@@ -118,7 +121,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
                   maxRetries,
                   delayMs,
                 );
-                dependenciesText += `\n\nprevious code **${dep}** is:\n\`\`\`typescript\n${depContent}\n\`\`\`\n`;
+
+                dependenciesText += `\n\n<dependency>  File path: ${dep} \n\`\`\`typescript\n${depContent}\n\`\`\`\n </dependency>`;
               } catch (err) {
                 this.logger.warn(
                   `Failed to read dependency "${dep}" for file "${file}": ${err}`,
@@ -152,33 +156,30 @@ export class FrontendCodeHandler implements BuildHandler<string> {
               },
               {
                 role: 'user' as const,
-                content: `This is the Sitemap Structure:
+                content: `**Sitemap Structure**
               ${sitemapStruct}
-              
-              Next will provide Sitemap Structure.`,
+              `,
               },
-              {
-                role: 'user' as const,
-                content: `This is the UX Datamap Documentation:
-              ${uxDataMapDoc}
-              
-              Next will provide UX Datamap Documentation.`,
-              },
-              {
-                role: 'user' as const,
-                content: `This is the Backend Requirement Documentation:
-              ${backendRequirementDoc}
-              
-              Next will provide Backend Requirement Documentation.`,
-              },
+              // {
+              //   role: 'user' as const,
+              //   content: `This is the UX Datamap Documentation:
+              // ${uxDataMapDoc}
+
+              // Next will provide UX Datamap Documentation.`,
+              // },
+              // {
+              //   role: 'user' as const,
+              //   content: `This is the Backend Requirement Documentation:
+              // ${backendRequirementDoc}
+
+              // Next will provide Backend Requirement Documentation.`,
+              // },
 
               {
                 role: 'user' as const,
                 content: `Dependencies:
                 
-                  ${dependenciesText}\n
-
-            Now generate code for "${file}".`,
+                  ${dependenciesText}\n`,
               },
             ];
 

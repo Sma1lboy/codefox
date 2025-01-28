@@ -18,6 +18,7 @@ export const generateFileArchPrompt = (): string => {
    - Include files that have no dependencies with an empty \`dependsOn\` array.
    - Organize the output in a \`files\` object where keys are file paths, and values are their dependency objects.
    - For the router, remember to include all the page components as dependencies, as the router imports them to define the application routes.
+   - For the src/index.tsx, remember to include router.ts.
 
 3. **Output Requirements**:
    - The JSON object must strictly follow this structure:
