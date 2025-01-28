@@ -12,11 +12,7 @@ import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
 import { formatResponse } from 'src/build-system/utils/strings';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
-import {
-  FileWriteError,
-  ModelUnavailableError,
-  ResponseTagError,
-} from 'src/build-system/errors';
+import { FileWriteError, ModelUnavailableError } from 'src/build-system/errors';
 import { DBRequirementHandler } from '../requirements-document';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
