@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
-import { BuildSequence, BuildHandlerConstructor } from '../types';
+import { BuildSequence } from '../types';
 import { BuilderContext } from '../context';
 import { BuildMonitor } from '../monitor';
 
@@ -89,113 +89,10 @@ export async function executeBuildSequence(
   const context = new BuilderContext(sequence, 'test-env');
   const monitor = BuildMonitor.getInstance();
 
-  try {
-    console.time('Total Execution Time');
-    await context.execute();
-    console.timeEnd('Total Execution Time');
+  await context.execute();
 
-    const monitorReport = monitor.generateTextReport(sequence.id);
-    fs.writeFileSync(
-      path.join(logFolderPath, 'execution-metrics.txt'),
-      monitorReport,
-      'utf8',
-    );
-
-    const sequenceMetrics = monitor.getSequenceMetrics(sequence.id);
-    if (sequenceMetrics) {
-      const metricsJson = {
-        totalDuration: `${sequenceMetrics.duration}ms`,
-        successRate: `${sequenceMetrics.successRate.toFixed(2)}%`,
-        totalNodes: sequenceMetrics.totalNodes,
-        completedNodes: sequenceMetrics.completedNodes,
-        failedNodes: sequenceMetrics.failedNodes,
-        startTime: new Date(sequenceMetrics.startTime).toISOString(),
-        endTime: new Date(sequenceMetrics.endTime).toISOString(),
-      };
-
-      fs.writeFileSync(
-        path.join(logFolderPath, 'metrics.json'),
-        JSON.stringify(metricsJson, null, 2),
-        'utf8',
-      );
-
-      Logger.log('\nSequence Metrics:');
-      console.table(metricsJson);
-    }
-
-    // Log node results
-    for (const node of sequence.nodes) {
-      const handlerClass = node.handler as BuildHandlerConstructor;
-      const resultData = context.getNodeData(handlerClass);
-      const nodeMetrics = sequenceMetrics?.nodeMetrics.get(handlerClass.name);
-
-      if (resultData) {
-        const content =
-          typeof resultData === 'object'
-            ? objectToMarkdown(resultData)
-            : resultData;
-        writeToFile(logFolderPath, node.name || handlerClass.name, content);
-      } else {
-        Logger.error(
-          `Error: Handler ${node.name || handlerClass.name} failed to produce result data`,
-        );
-        writeToFile(
-          logFolderPath,
-          `${node.name || handlerClass.name}-error`,
-          objectToMarkdown({
-            error: 'No result data',
-            metrics: nodeMetrics,
-          }),
-        );
-      }
-    }
-
-    const summary = {
-      timestamp: new Date().toISOString(),
-      sequenceId: sequence.id,
-      sequenceName: sequence.name,
-      totalExecutionTime: `${sequenceMetrics?.duration}ms`,
-      successRate: `${sequenceMetrics?.successRate.toFixed(2)}%`,
-      totalNodes: sequenceMetrics?.totalNodes,
-      completedNodes: sequenceMetrics?.completedNodes,
-      logFolder: logFolderPath,
-    };
-
-    fs.writeFileSync(
-      path.join(logFolderPath, 'execution-summary.json'),
-      JSON.stringify(summary, null, 2),
-      'utf8',
-    );
-
-    return {
-      success: true,
-      logFolderPath,
-      metrics: sequenceMetrics,
-    };
-  } catch (error) {
-    const errorReport = {
-      error: {
-        message: error.message,
-        stack: error.stack,
-      },
-      metrics: monitor.getSequenceMetrics(sequence.id),
-      timestamp: new Date().toISOString(),
-    };
-
-    fs.writeFileSync(
-      path.join(logFolderPath, 'error-with-metrics.json'),
-      JSON.stringify(errorReport, null, 2),
-      'utf8',
-    );
-
-    Logger.error('\nError during sequence execution:');
-    Logger.error(error);
-
-    return {
-      success: false,
-      logFolderPath,
-      error: error as Error,
-      metrics: monitor.getSequenceMetrics(sequence.id),
-    };
-  }
+  return {
+    success: true,
+    logFolderPath: '',
+  };
 }

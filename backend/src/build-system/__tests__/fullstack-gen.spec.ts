@@ -14,6 +14,7 @@ import { BackendCodeHandler } from '../handlers/backend/code-generate';
 import { BackendFileReviewHandler } from '../handlers/backend/file-review/file-review';
 import { UXDMDHandler } from '../handlers/ux/datamap';
 import { BuilderContext } from '../context';
+import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
 
 (isIntegrationTest ? describe : describe.skip)('Build Sequence Test', () => {
   it('should execute build sequence successfully', async () => {
@@ -85,6 +86,10 @@ import { BuilderContext } from '../context';
         {
           handler: BackendFileReviewHandler,
           name: 'Backend File Review Node',
+        },
+        {
+          handler: FrontendCodeHandler,
+          name: 'Frontend Code Generator Node',
         },
       ],
     };
