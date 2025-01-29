@@ -49,5 +49,7 @@ export const generateFileArchPrompt = (): string => {
 - Include all files in the output, even if they have no dependencies.
 
 ### Output
-Return only the JSON object wrapped in \`<GENERATE></GENERATE>\` tags.`;
+Return only the JSON object wrapped in \`<GENERATE></GENERATE>\` tags.
+Do not forget <GENERATE></GENERATE> tags.
+`;
 };
