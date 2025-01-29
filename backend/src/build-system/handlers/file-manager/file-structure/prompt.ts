@@ -15,49 +15,28 @@ export const prompts = {
 
   convertTreeToJsonPrompt: (): string => {
     return `You are a highly skilled developer. Your task is to convert the previous file and folder structure, currently represented in an ASCII tree format, into a JSON structure. The JSON structure must:
-    
-    - Represent directories and files in a hierarchical manner.
-    - Use objects with "type" and "name" keys.
-      - For directories: 
-        - "type": "directory"
-        - "name": "<directory name>"
-        - "children": [ ... ] (an array of files or directories)
-      - For files:
-        - "type": "file"
-        - "name": "<filename.ext>"
-    - Maintain the same nesting as the original ASCII tree.
-    
-    **Output Format:**
-    Return a JSON object of the form:
-    \`\`\`json
-    {
-      "type": "directory",
-      "name": "<root directory name>",
-      "children": [
-        {
-          "type": "directory",
-          "name": "subDirName",
-          "children": [
-            {
-              "type": "file",
-              "name": "fileName.ext"
-            }
-          ]
-        },
-        {
-          "type": "file",
-          "name": "anotherFile.ext"
-        }
-      ]
-    }
-    \`\`\`
-    
-    **Additional Rules:**
-    - Keep directory names and file names exactly as they appear (excluding trailing slashes).
-    - For directories that appear like "common/", in the JSON just use "common" as the name.
-    - Do not include comments or extra fields besides "type", "name", and "children".
-    - The root node should correspond to the top-level directory in the tree.
-    
+
+    Represent all file paths in a flat list under the "Paths" array.
+    Maintain the full paths for each file exactly as they appear in the ASCII tree.
+    Directories should not be included—only file paths.
+
+Output Format:
+Return a JSON object in the following format:
+
+{
+  "Paths": [
+    "/full/path/to/file1.ext",
+    "/full/path/to/file2.ext",
+    "/another/path/to/file3.ext"
+  ]
+}
+
+Additional Rules:
+
+    Maintain the original directory structure but only return files in the JSON output.
+    Keep file names and paths exactly as they appear in the ASCII tree.
+    The root node should correspond to the top-level directory in the tree.
+    Do not include comments or extra fields besides "Paths".
     Return only the JSON structure (no explanations, no additional comments). This JSON will be used directly in the application.
     `;
   },
@@ -93,12 +72,14 @@ export const prompts = {
             Asset folders (e.g., images, icons, fonts).
             Test folders or files.
             Service folders unrelated to API logic.
-            Dont need .css files.
+            .css files.
         `;
         fileNamingGuidelines = `
           File Naming Guidelines:
             Use meaningful and descriptive file names.
+            For components, include an index.tsx file in each folder to simplify imports.
             Each component should have its own folder named after the component (e.g., Button/).
+            Use index.tsx as the main file inside the component folder.
         `;
         break;
 
