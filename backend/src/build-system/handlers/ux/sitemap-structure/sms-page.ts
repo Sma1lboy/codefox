@@ -39,10 +39,10 @@ export class UXSMSPageByPageHandler implements BuildHandler<string> {
 
     if (sections.length === 0) {
       this.logger.error(
-        'No valid sections found in the UX Structure Document.',
+        `No valid sections found in the UX Structure Document, uxStructureDoc: ${uxStructureDoc}`,
       );
       throw new ResponseParsingError(
-        'No valid sections found in the UX Structure Document.',
+        'No valid sections found in the UX Structure Document',
       );
     }
 

@@ -81,6 +81,11 @@ export class UXSMSHandler implements BuildHandler<string> {
           Confirm any login or access restrictions, too.
         `,
       },
+      {
+        role: 'user',
+        content:
+          'Also, make sure all pages are beginning with  <page_view id="[id]"> and ending with </page_view> tags. You should follow the rule from system prompt',
+      },
     ];
 
     try {
