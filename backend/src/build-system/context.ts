@@ -15,7 +15,6 @@ import { BuildMonitor } from './monitor'; // Monitor to track the build process
 import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider'; // OpenAI model provider for LLM operations
 import { RetryHandler } from './retry-handler'; // Retry handler for retrying failed operations
 import { BuildHandlerManager } from './hanlder-manager'; // Manager for building handler classes
-import { sortBuildSequence } from './utils/build-utils';
 
 /**
  * Global data keys used throughout the build process.
@@ -283,7 +282,9 @@ export class BuilderContext {
     this.monitor.startSequenceExecution(this.sequence);
 
     try {
-      const nodes = sortBuildSequence(this.sequence);
+      // FIXME: fix sortBuildSequence function later
+      // const nodes = sortBuildSequence(this.sequence);
+      const nodes = this.sequence.nodes;
       let currentIndex = 0;
       const runningPromises = new Set<Promise<any>>();
 
