@@ -131,12 +131,11 @@ export function buildDependencyGraph(jsonData: {
     };
 
     details.dependsOn.forEach((dep) => {
-      const resolvedDep = resolveDependency(fileName, dep);
-      graph.push([resolvedDep, fileName]); // [dependency, dependent]
-      nodes.add(resolvedDep);
+      graph.push([dep, fileName]); // [dependency, dependent]
+      nodes.add(dep);
 
       // store dependsOn
-      fileInfos[fileName].dependsOn.push(resolvedDep);
+      fileInfos[fileName].dependsOn.push(dep);
     });
   });
 
@@ -186,11 +185,6 @@ export function resolveDependency(
   dependency: string,
 ): string {
   const currentDir = path.dirname(currentFile);
-  const hasExtension = path.extname(dependency).length > 0;
-
-  if (!hasExtension) {
-    dependency = path.join(dependency, 'index.ts');
-  }
 
   const resolvedPath = path.join(currentDir, dependency).replace(/\\/g, '/');
   logger.log(`Resolved dependency: ${resolvedPath}`);
@@ -207,7 +201,7 @@ export function validateAgainstVirtualDirectory(
   const invalidFiles: string[] = [];
 
   nodes.forEach((filePath) => {
-    if (!virtualDir.isValidFile(filePath)) {
+    if (!virtualDir.hasFile(filePath)) {
       invalidFiles.push(filePath);
     }
   });

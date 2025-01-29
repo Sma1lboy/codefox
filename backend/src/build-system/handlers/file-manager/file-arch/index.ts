@@ -14,13 +14,14 @@ import {
   ModelUnavailableError,
 } from 'src/build-system/errors';
 import { VirtualDirectory } from 'src/build-system/virtual-dir';
+
+import { FileStructureHandler } from '../file-structure';
+import { UXDMDHandler } from '../../ux/datamap';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import {
   buildDependencyGraph,
   validateAgainstVirtualDirectory,
 } from 'src/build-system/utils/file_generator_util';
-import { FileStructureHandler } from '../file-structure';
-import { UXDMDHandler } from '../../ux/datamap';
-import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
 @BuildNode()
 @BuildNodeRequire([FileStructureHandler, UXDMDHandler])
@@ -36,6 +37,7 @@ export class FileFAHandler implements BuildHandler<string> {
     const fileStructure = context.getNodeData(FileStructureHandler);
     const datamapDoc = context.getNodeData(UXDMDHandler);
 
+    this.logger.log('fileStructure:', fileStructure);
     if (!fileStructure || !datamapDoc) {
       throw new InvalidParameterError(
         'Missing required parameters: fileStructure or datamapDoc.',
@@ -57,7 +59,7 @@ export class FileFAHandler implements BuildHandler<string> {
 
           ${datamapDoc}
 
-          Next, I'll provide the **Directory Structure**.`,
+          Next, I will provide the **Directory Structure** to help you understand the full project architecture.`,
       },
       {
         role: 'user' as const,
@@ -67,13 +69,15 @@ export class FileFAHandler implements BuildHandler<string> {
 
           ${fileStructure}
 
-          Please generate the full File Architecture JSON object now, ensuring adherence to all the rules.`,
+          Based on this structure and the analysis provided earlier, please generate the File Architecture JSON object. Ensure the output adheres to all rules and guidelines specified in the system prompt.`,
       },
       {
         role: 'user' as const,
-        content: `**Final Check:**
-      - Ensure the JSON structure is correct.
-      - Ensure all files and dependencies are included.`,
+        content: `**Final Check**
+      Before returning the output, ensure the following:
+      - The JSON structure is correctly formatted and wrapped in <GENERATE></GENERATE> tags.
+      - File extensions and paths match those in the Directory Structure.
+      - All files and dependencies are included.`,
       },
     ];
 
@@ -108,11 +112,19 @@ export class FileFAHandler implements BuildHandler<string> {
       );
     }
 
-    console.log(jsonData);
     // validate with virutual dir
     const { graph, nodes, fileInfos } = buildDependencyGraph(jsonData);
-    if (!validateAgainstVirtualDirectory(nodes, this.virtualDir)) {
+
+    const invalidFiles = validateAgainstVirtualDirectory(
+      nodes,
+      this.virtualDir,
+    );
+
+    if (invalidFiles) {
       this.logger.error('Validate Against Virtual Directory Fail !!!');
+      this.logger.error(`Invalid files detected:\n${invalidFiles}`);
+      this.logger.error(`${fileArchContent}`);
+      this.logger.error(`${fileStructure}`);
       throw new ResponseParsingError(
         'Failed to validate against virtualDirectory.',
       );

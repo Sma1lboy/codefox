@@ -22,7 +22,9 @@ export const prompts = {
 
 Output Format:
 Return a JSON object in the following format:
+Surround the JSON object with <GENERATE> tags.
 
+<GENERATE>
 {
   "Paths": [
     "/full/path/to/file1.ext",
@@ -30,11 +32,13 @@ Return a JSON object in the following format:
     "/another/path/to/file3.ext"
   ]
 }
+</GENERATE>
 
 Additional Rules:
 
     Maintain the original directory structure but only return files in the JSON output.
     Keep file names and paths exactly as they appear in the ASCII tree.
+    Remeber to start with src/ as the root directory (src/...).
     The root node should correspond to the top-level directory in the tree.
     Do not include comments or extra fields besides "Paths".
     Return only the JSON structure (no explanations, no additional comments). This JSON will be used directly in the application.
@@ -58,14 +62,15 @@ Additional Rules:
         roleDescription = 'an expert frontend developer';
         includeSections = `
           Folder Structure:
-            components: Reusable UI elements grouped by category (e.g., common, layout, specific).
-            contexts: Global state management (e.g., auth, theme, player).
-            hooks: Custom hooks for data fetching and state management.
-            pages: Route-specific views (e.g., Home, Search, Playlist).
-            utils: Utility functions (e.g., constants, helpers, validators).
-            apis: Organized API logic (e.g., auth, music, user).
-            router.ts: Central routing configuration.
-            index.tsx: Application entry point.
+            src: Main source code folder.
+              components: Reusable UI elements grouped by category (e.g., common, layout, specific).
+              contexts: Global state management (e.g., auth, theme, player).
+              hooks: Custom hooks for data fetching and state management.
+              pages: Route-specific views (e.g., Home, Search, Playlist).
+              utils: Utility functions (e.g., constants, helpers, validators).
+              apis: Organized API logic (e.g., auth, music, user).
+              router.ts: Central routing configuration.
+              index.tsx: Application entry point.
         `;
         excludeSections = `
           Do Not Include:
