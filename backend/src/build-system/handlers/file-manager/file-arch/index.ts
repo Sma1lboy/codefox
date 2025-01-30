@@ -97,36 +97,43 @@ export class FileFAHandler implements BuildHandler<string> {
       throw new ModelUnavailableError('Model is unavailable:' + error);
     }
 
-    const tagContent = parseGenerateTag(fileArchContent);
-    const jsonData = extractJsonFromText(tagContent);
+    try {
+      const tagContent = parseGenerateTag(fileArchContent);
+      const jsonData = extractJsonFromText(tagContent);
 
-    if (!jsonData) {
-      this.logger.error('Failed to extract JSON from text');
-      throw new ResponseParsingError('Failed to extract JSON from text.');
-    }
+      if (!jsonData) {
+        this.logger.error('Failed to extract JSON from text');
+        throw new ResponseParsingError('Failed to extract JSON from text.');
+      }
 
-    if (!this.validateJsonData(jsonData)) {
-      this.logger.error('File architecture JSON validation failed.');
-      throw new ResponseParsingError(
-        'File architecture JSON validation failed.',
+      if (!this.validateJsonData(jsonData)) {
+        this.logger.error('File architecture JSON validation failed.');
+        throw new ResponseParsingError(
+          'File architecture JSON validation failed.',
+        );
+      }
+
+      // validate with virutual dir
+      const { graph, nodes, fileInfos } = buildDependencyGraph(jsonData);
+
+      const invalidFiles = validateAgainstVirtualDirectory(
+        nodes,
+        this.virtualDir,
       );
-    }
 
-    // validate with virutual dir
-    const { graph, nodes, fileInfos } = buildDependencyGraph(jsonData);
-
-    const invalidFiles = validateAgainstVirtualDirectory(
-      nodes,
-      this.virtualDir,
-    );
-
-    if (invalidFiles) {
-      this.logger.error('Validate Against Virtual Directory Fail !!!');
-      this.logger.error(`Invalid files detected:\n${invalidFiles}`);
-      this.logger.error(`${fileArchContent}`);
-      this.logger.error(`${fileStructure}`);
+      if (invalidFiles) {
+        this.logger.error('Validate Against Virtual Directory Fail !!!');
+        this.logger.error(`Invalid files detected:\n${invalidFiles}`);
+        this.logger.error(`${fileArchContent}`);
+        this.logger.error(`${fileStructure}`);
+        throw new ResponseParsingError(
+          'Failed to validate against virtualDirectory.',
+        );
+      }
+    } catch (error) {
+      this.logger.error('File architecture validation failed.');
       throw new ResponseParsingError(
-        'Failed to validate against virtualDirectory.',
+        `File architecture JSON validation failed. ${error.message}`,
       );
     }
 

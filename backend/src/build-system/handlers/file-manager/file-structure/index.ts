@@ -37,7 +37,7 @@ export class FileStructureHandler implements BuildHandler<string> {
     const sitemapDoc = context.getNodeData(UXSMDHandler);
     const datamapDoc = context.getNodeData(UXDMDHandler);
     // const projectPart = opts?.projectPart ?? 'frontend';
-    const projectPart = 'frontend';
+    const projectPart = opts?.projectPart ?? 'frontend';
     const framework = context.getGlobalContext('framework') ?? 'react';
 
     // Validate required arguments
@@ -90,6 +90,7 @@ export class FileStructureHandler implements BuildHandler<string> {
       },
     ];
 
+    // Get the generated file structure content
     let fileStructureContent: string;
     try {
       fileStructureContent = await chatSyncWithClocker(
@@ -108,11 +109,19 @@ export class FileStructureHandler implements BuildHandler<string> {
         );
       }
     } catch (error) {
-      return { success: false, error };
+      this.logger.error(
+        `Failed to generate file structure: ${error.message}`,
+        error.stack,
+      );
+      return {
+        success: false,
+        error: new ResponseParsingError(
+          `File structure generation failed. ${error.message}`,
+        ),
+      };
     }
 
-    this.logger.log('start parse');
-    // Build the virtual directory
+    // Parse the file structure content
     let fileStructureJsonContent = '';
     try {
       fileStructureJsonContent = parseGenerateTag(fileStructureContent);
@@ -120,12 +129,12 @@ export class FileStructureHandler implements BuildHandler<string> {
       return {
         success: false,
         error: new ResponseParsingError(
-          'Failed to parse file Structure Json Content.',
+          `Failed to parse file Structure Json Content. ${error.message}`,
         ),
       };
     }
-    this.logger.log('parse success: ' + fileStructureJsonContent);
 
+    // Build the virtual directory
     this.logger.log('start building');
     try {
       const successBuild = context.buildVirtualDirectory(
@@ -136,28 +145,21 @@ export class FileStructureHandler implements BuildHandler<string> {
           'Failed to build virtual directory.' + fileStructureJsonContent,
         );
         throw new ResponseParsingError('Failed to build virtual directory.');
-      } else {
-        this.logger.log('build success');
       }
     } catch (error) {
-      this.logger.error(
-        'Non-retryable error during virtual directory build:',
-        error,
-      );
       return {
         success: false,
-        error: new ResponseParsingError('Failed to build virtual directory.'),
+        error: new ResponseParsingError(
+          `Failed to build virtual directory. ${error.message}`,
+        ),
       };
     }
 
-    this.logger.log(
-      `File structure JSON content and virtual directory built successfully.
-    ${removeCodeBlockFences(fileStructureJsonContent)}`,
-    );
-
+    //debug script print all files
     context.virtualDirectory.getAllFiles().forEach((file) => {
       this.logger.log(file);
     });
+
     return {
       success: true,
       data: removeCodeBlockFences(fileStructureContent),
