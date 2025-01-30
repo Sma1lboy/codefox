@@ -138,9 +138,9 @@ export class FileGeneratorHandler implements BuildHandler<string> {
     const currentDir = path.dirname(currentFile);
     const hasExtension = path.extname(dependency).length > 0;
 
-    if (!hasExtension) {
-      dependency = path.join(dependency, 'index.ts');
-    }
+    // if (!hasExtension) {
+    //   dependency = path.join(dependency, 'index.ts');
+    // }
 
     const resolvedPath = path.join(currentDir, dependency).replace(/\\/g, '/');
     this.logger.log(`Resolved dependency: ${resolvedPath}`);
