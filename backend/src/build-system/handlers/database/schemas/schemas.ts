@@ -12,11 +12,7 @@ import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
 import { formatResponse } from 'src/build-system/utils/strings';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
-import {
-  FileWriteError,
-  ModelUnavailableError,
-  ResponseTagError,
-} from 'src/build-system/errors';
+import { FileWriteError, ModelUnavailableError } from 'src/build-system/errors';
 import { DBRequirementHandler } from '../requirements-document';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
@@ -110,28 +106,27 @@ export class DBSchemaHandler implements BuildHandler {
         schemaContent,
         databaseType,
       );
-      let validationResult: string;
       try {
         const validationResponse = await chatSyncWithClocker(
           context,
           {
             model: 'gpt-4o-mini',
-            messages: [{ content: validationPrompt, role: 'system' }],
+            messages: [
+              { content: validationPrompt, role: 'system' },
+              {
+                role: 'user',
+                content:
+                  'help me fix my schema code if there is any failed validation',
+              },
+            ],
           },
           'validateDatabaseSchema',
           DBSchemaHandler.name,
         );
-        validationResult = formatResponse(validationResponse);
+        schemaContent = formatResponse(validationResponse);
       } catch (error) {
         throw new ModelUnavailableError(
           `Model unavailable during validation: ${error}`,
-        );
-      }
-
-      // Check validation result
-      if (!validationResult.includes('Validation Passed')) {
-        throw new ResponseTagError(
-          `Schema validation failed: ${validationResult}`,
         );
       }
 

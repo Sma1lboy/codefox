@@ -38,7 +38,7 @@ export class FileFAHandler implements BuildHandler<string> {
 
     if (!fileStructure || !datamapDoc) {
       throw new InvalidParameterError(
-        'Missing required parameters: fileStructure or datamapDoc.',
+        `Missing required parameters: fileStructure or datamapDoc, current fileStructure: ${!!fileStructure}, datamapDoc: ${!!datamapDoc}`,
       );
     }
 

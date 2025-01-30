@@ -30,6 +30,13 @@ import { MessageInterface } from 'src/common/model-provider/types';
   BackendRequirementHandler,
   FileFAHandler,
 ])
+@BuildNode()
+@BuildNodeRequire([
+  UXSMSHandler,
+  UXDMDHandler,
+  BackendRequirementHandler,
+  FileFAHandler,
+])
 export class FrontendCodeHandler implements BuildHandler<string> {
   readonly logger: Logger = new Logger('FrontendCodeHandler');
   private virtualDir: VirtualDirectory;

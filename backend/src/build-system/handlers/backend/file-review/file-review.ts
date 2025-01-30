@@ -21,10 +21,13 @@ import { BackendCodeHandler } from '../code-generate';
 /**
  * Responsible for reviewing all related source root files and considering modifications
  * such as package.json, tsconfig.json, .env, etc., in JS/TS projects.
- * @requires [op:BACKEND:REQ] - BackendRequirementHandler
+ *
+ * Dependencies:
+ * - BackendCodeHandler: Provides the generated backend code and indirectly provides
+ *   access to backend requirements through its own dependency on BackendRequirementHandler
  */
 @BuildNode()
-@BuildNodeRequire([BackendRequirementHandler, BackendCodeHandler])
+@BuildNodeRequire([BackendCodeHandler, BackendRequirementHandler])
 export class BackendFileReviewHandler implements BuildHandler<string> {
   readonly logger: Logger = new Logger('BackendFileModificationHandler');
 

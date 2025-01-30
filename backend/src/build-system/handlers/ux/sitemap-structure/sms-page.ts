@@ -8,11 +8,10 @@ import {
   ResponseParsingError,
 } from 'src/build-system/errors';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
-import { UXSMDHandler } from '../sitemap-document';
 import { UXSMSHandler } from '.';
 
 @BuildNode()
-@BuildNodeRequire([UXSMDHandler, UXSMSHandler])
+@BuildNodeRequire([UXSMSHandler])
 export class UXSMSPageByPageHandler implements BuildHandler<string> {
   readonly logger = new Logger('UXSitemapStructurePagebyPageHandler');
 
@@ -40,10 +39,10 @@ export class UXSMSPageByPageHandler implements BuildHandler<string> {
 
     if (sections.length === 0) {
       this.logger.error(
-        'No valid sections found in the UX Structure Document.',
+        `No valid sections found in the UX Structure Document, uxStructureDoc: ${uxStructureDoc}`,
       );
       throw new ResponseParsingError(
-        'No valid sections found in the UX Structure Document.',
+        'No valid sections found in the UX Structure Document',
       );
     }
 
