@@ -131,9 +131,7 @@ Your reply must start with "<GENERATE>" and end with "</GENERATE>".`;
   ): string => {
     return `You are a Database Expert specializing in ${databaseType}. Your task is to analyze and fix any issues in the following database schema:
   
-  <GENERATE>
   ${schemaContent}
-  </GENERATE>
   
   As an expert database engineer, you should:
   1. Analyze the schema for any syntax errors, logical inconsistencies, or missing elements

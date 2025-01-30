@@ -116,7 +116,7 @@ export class DBSchemaHandler implements BuildHandler {
               {
                 role: 'user',
                 content:
-                  'help me fix my schema code if there is any failed validation',
+                  'help me fix my schema code if there is any failed validation, generate full validated version schemas for me, with <GENERATE></GENERATE> xml tag',
               },
             ],
           },
