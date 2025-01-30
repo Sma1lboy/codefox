@@ -193,8 +193,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
                 content: `Dependencies:
                 
                   ${dependenciesText}\n
-                  Now you can provide the code.
-                  `,
+                  Now you can provide the code, don't forget the <GENERATE></GENERATE> xml tags.
+,                  `,
               },
             ] as MessageInterface[];
 
