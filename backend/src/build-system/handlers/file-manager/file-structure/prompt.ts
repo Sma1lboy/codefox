@@ -80,8 +80,9 @@ Additional Rules:
             .css files.
         `;
         fileNamingGuidelines = `
-          File Naming Guidelines:
+          File and Folder Naming Guidelines:
             Use meaningful and descriptive file names.
+            Do NOT use page_view_* and global_view_* prefixes for folder or file names.
             For components, include an index.tsx file in each folder to simplify imports.
             Each component should have its own folder named after the component (e.g., Button/).
             Use index.tsx as the main file inside the component folder.
