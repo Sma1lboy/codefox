@@ -72,6 +72,7 @@ function CustomSidebar({
 
         <Button
           onClick={() => handleNewChat()}
+          size="setting"
           variant="ghost"
           className={`flex justify-between w-[90%] h-14 text-sm xl:text-lg font-normal items-center ml-[5%]`}
         >
