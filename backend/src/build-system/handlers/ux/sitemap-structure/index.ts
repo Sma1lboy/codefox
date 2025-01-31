@@ -30,6 +30,8 @@ export class UXSMSHandler implements BuildHandler<string> {
       context.getGlobalContext('projectName') || 'Default Project Name';
     const sitemapDoc = context.getNodeData(UXSMDHandler);
 
+    const platform = context.getGlobalContext('platform') || 'Default Platform';
+
     // Validate required parameters
     if (!projectName || typeof projectName !== 'string') {
       throw new MissingConfigurationError('Missing or invalid projectName.');
@@ -42,7 +44,7 @@ export class UXSMSHandler implements BuildHandler<string> {
 
     const prompt = prompts.generateUXSiteMapStructurePrompt(
       projectName,
-      'web', // TODO: Change platform dynamically if necessary
+      platform, // TODO: Change platform dynamically if necessary
     );
 
     const messages: MessageInterface[] = [

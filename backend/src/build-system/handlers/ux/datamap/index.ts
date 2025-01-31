@@ -25,6 +25,7 @@ export class UXDMDHandler implements BuildHandler<string> {
     // Extract relevant data from the context
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
+    const platform = context.getGlobalContext('platform') || 'Default Platform';
     const sitemapDoc = context.getNodeData(UXSMDHandler);
 
     // Validate required data
@@ -39,7 +40,7 @@ export class UXDMDHandler implements BuildHandler<string> {
     const prompt = prompts.generateUXDataMapPrompt(
       projectName,
       sitemapDoc,
-      'web', // TODO: change platform dynamically if needed
+      platform, // TODO: change platform dynamically if needed
     );
 
     try {
