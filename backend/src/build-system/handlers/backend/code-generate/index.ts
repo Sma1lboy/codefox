@@ -11,37 +11,41 @@ import {
   MissingConfigurationError,
   ResponseParsingError,
 } from 'src/build-system/errors';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
+import { UXSMDHandler } from '../../ux/sitemap-document';
+import { UXDMDHandler } from '../../ux/datamap';
+import { DBSchemaHandler } from '../../database/schemas/schemas';
+import { BackendRequirementHandler } from '../requirements-document';
 
 /**
  * BackendCodeHandler is responsible for generating the backend codebase
  * based on the provided sitemap and data mapping documents.
  */
-export class BackendCodeHandler implements BuildHandler<string> {
-  readonly id = 'op:BACKEND:CODE';
 
-  /**
-   * Executes the handler to generate backend code.
-   * @param context - The builder context containing configuration and utilities.
-   * @returns A BuildResult containing the generated code and related data.
-   */
+@BuildNode()
+@BuildNodeRequire([
+  UXSMDHandler,
+  UXDMDHandler,
+  DBSchemaHandler,
+  BackendRequirementHandler,
+])
+export class BackendCodeHandler implements BuildHandler<string> {
   async run(context: BuilderContext): Promise<BuildResult<string>> {
-    // Retrieve project name and database type from context
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
     const databaseType =
       context.getGlobalContext('databaseType') || 'Default database type';
-
     // Retrieve required documents
-    const sitemapDoc = context.getNodeData('op:UX:SMD');
-    const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
-    const databaseSchemas = context.getNodeData('op:DATABASE:SCHEMAS');
+    const sitemapDoc = context.getNodeData(UXSMDHandler);
+    const datamapDoc = context.getNodeData(UXDMDHandler);
+    const databaseSchemas = context.getNodeData(DBSchemaHandler);
     const backendRequirementDoc =
-      context.getNodeData('op:BACKEND:REQ')?.overview || '';
+      context.getNodeData(BackendRequirementHandler)?.overview || '';
 
     // Validate required data
     if (!sitemapDoc || !datamapDoc || !databaseSchemas) {
       throw new MissingConfigurationError(
-        'Missing required configuration: sitemapDoc, datamapDoc, or databaseSchemas.',
+        `Missing required configuration: sitemapDoc, datamapDoc, or databaseSchemas: siteMapDoc: ${!!sitemapDoc}, datamapDoc: ${!!datamapDoc}, databaseSchemas: ${!!databaseSchemas}`,
       );
     }
 
@@ -76,7 +80,7 @@ export class BackendCodeHandler implements BuildHandler<string> {
           messages: [{ content: backendCodePrompt, role: 'system' }],
         },
         'generateBackendCode',
-        this.id,
+        BackendCodeHandler.name,
       );
 
       generatedCode = formatResponse(modelResponse);

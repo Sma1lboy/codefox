@@ -8,6 +8,12 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/index.jsx"></script>
+    <script type="module">
+      try {
+        await import('/src/index.tsx');
+      } catch {
+        await import('/src/index.jsx');
+      }
+    </script>
   </body>
 </html>

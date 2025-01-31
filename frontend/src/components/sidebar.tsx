@@ -2,12 +2,24 @@
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { SquarePen } from 'lucide-react';
 import SidebarSkeleton from './sidebar-skeleton';
 import UserSettings from './user-settings';
 import { SideBarItem } from './sidebar-item';
 import { Chat } from '@/graphql/type';
+import { EventEnum } from './enum';
+import {
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
+  SidebarTrigger,
+  Sidebar,
+  SidebarRail,
+  SidebarFooter,
+} from './ui/sidebar';
+import { cn } from '@/lib/utils';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -21,10 +33,9 @@ interface SidebarProps {
   onRefetch: () => void;
 }
 
-function Sidebar({
+function CustomSidebar({
   isCollapsed,
   isMobile,
-  currentChatId,
   chatListUpdated,
   setChatListUpdated,
   chats,
@@ -32,11 +43,13 @@ function Sidebar({
   error,
   onRefetch,
 }: SidebarProps) {
-  const router = useRouter();
-
+  const [isSimple, setIsSimple] = useState(false);
+  const [currentChatid, setCurrentChatid] = useState('');
   const handleNewChat = useCallback(() => {
-    //force reload to reset the chat state
-    window.location.href = '/';
+    window.history.replaceState({}, '', '/');
+    setCurrentChatid('');
+    const event = new Event(EventEnum.NEW_CHAT);
+    window.dispatchEvent(event);
   }, []);
 
   if (loading) return <SidebarSkeleton />;
@@ -44,62 +57,87 @@ function Sidebar({
     console.error('Error loading chats:', error);
     return null;
   }
+  console.log(`${isCollapsed}, ${isMobile}, ${isSimple}`);
 
   return (
     <div
       data-collapsed={isCollapsed}
-      className="relative justify-between group lg:bg-accent/20 lg:dark:bg-card/35 flex flex-col h-full gap-4 p-2 data-[collapsed=true]:p-2"
+      className="relative justify-between group lg:bg-accent/0 lg:dark:bg-card/0 flex flex-col h-full"
     >
-      <div className="flex flex-col justify-between p-2 max-h-fit overflow-y-auto">
+      <Sidebar collapsible="icon" side="left">
+        <SidebarTrigger
+          className={`lg:flex items-center justify-center cursor-pointer p-2 ml-3.5 mt-2`}
+          onClick={() => setIsSimple(!isSimple)}
+        ></SidebarTrigger>
+
         <Button
-          onClick={handleNewChat}
+          onClick={() => handleNewChat()}
+          size="setting"
           variant="ghost"
-          className="flex justify-between w-full h-14 text-sm xl:text-lg font-normal items-center"
+          className={`flex justify-between w-[90%] h-14 text-sm xl:text-lg font-normal items-center ml-[5%]`}
         >
-          <div className="flex gap-3 items-center">
-            {!isCollapsed && !isMobile && (
-              <Image
-                src="/codefox.svg"
-                alt="AI"
-                width={28}
-                height={28}
-                className="dark:invert hidden 2xl:block"
-              />
-            )}
-            New chat
-          </div>
-          <SquarePen size={18} className="shrink-0 w-4 h-4" />
-        </Button>
-        <div className="flex flex-col pt-10 gap-2">
-          <p className="pl-4 text-xs text-muted-foreground">Your chats</p>
-          {chats.length > 0 && (
-            <div>
-              {chats.map((chat) => (
-                <SideBarItem
-                  key={chat.id}
-                  id={chat.id}
-                  title={chat.title}
-                  isSelected={currentChatId === chat.id}
-                  onSelect={() => router.push(`/${chat.id}`)}
-                  refetchChats={onRefetch}
+          <Image
+            src="/codefox.svg"
+            alt="AI"
+            width={48}
+            height={48}
+            className={`flex-shrink-0 dark:invert ${isSimple ? 'm-auto' : ''}`}
+          />
+          {!isSimple && (
+            <div
+              className={cn('flex items-center', {
+                'gap-7': !isMobile,
+                'gap-4': isMobile,
+              })}
+            >
+              New chat
+              {(!isCollapsed || isMobile) && (
+                <SquarePen
+                  className={cn('shrink-0', {
+                    'ml-[12.5%]': isSimple && !isMobile,
+                    'm-3': !isSimple,
+                  })}
                 />
-              ))}
+              )}
             </div>
           )}
-        </div>
-      </div>
-      <div className="justify-end px-2 py-2 w-full border-t">
-        <UserSettings />
-      </div>
+        </Button>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              {loading
+                ? 'Loading...'
+                : !isSimple &&
+                  chats.map((chat) => (
+                    <SideBarItem
+                      key={chat.id}
+                      id={chat.id}
+                      currentChatId={currentChatid}
+                      title={chat.title}
+                      onSelect={() => {
+                        window.history.replaceState({}, '', `/?id=${chat.id}`);
+                        setCurrentChatid(chat.id);
+                      }}
+                      refetchChats={onRefetch}
+                    />
+                  ))}
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter>
+          <UserSettings isSimple={isSimple} />
+        </SidebarFooter>
+
+        <SidebarRail setIsSimple={setIsSimple} isSimple={isSimple} />
+      </Sidebar>
     </div>
   );
 }
 
-export default memo(Sidebar, (prevProps, nextProps) => {
+export default memo(CustomSidebar, (prevProps, nextProps) => {
   return (
     prevProps.isCollapsed === nextProps.isCollapsed &&
     prevProps.isMobile === nextProps.isMobile &&
-    prevProps.currentChatId === nextProps.currentChatId &&
     prevProps.chatListUpdated === nextProps.chatListUpdated &&
     prevProps.loading === nextProps.loading &&
     prevProps.error === nextProps.error &&

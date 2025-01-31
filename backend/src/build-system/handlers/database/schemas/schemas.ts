@@ -12,16 +12,14 @@ import { saveGeneratedCode } from 'src/build-system/utils/files';
 import * as path from 'path';
 import { formatResponse } from 'src/build-system/utils/strings';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
-import {
-  FileWriteError,
-  ModelUnavailableError,
-  ResponseTagError,
-} from 'src/build-system/errors';
+import { FileWriteError, ModelUnavailableError } from 'src/build-system/errors';
+import { DBRequirementHandler } from '../requirements-document';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
+@BuildNode()
+@BuildNodeRequire([DBRequirementHandler])
 export class DBSchemaHandler implements BuildHandler {
-  readonly id = 'op:DATABASE:SCHEMAS';
   private readonly logger: Logger = new Logger('DBSchemaHandler');
-
   async run(context: BuilderContext): Promise<BuildResult> {
     this.logger.log('Generating Database Schemas...');
 
@@ -30,7 +28,7 @@ export class DBSchemaHandler implements BuildHandler {
       context.getGlobalContext('projectName') || 'Default Project Name';
     const databaseType =
       context.getGlobalContext('databaseType') || 'PostgreSQL';
-    const dbRequirements = context.getNodeData('op:DATABASE_REQ');
+    const dbRequirements = context.getNodeData(DBRequirementHandler);
     const uuid = context.getGlobalContext('projectUUID');
 
     // 2. Validate database type
@@ -68,7 +66,7 @@ export class DBSchemaHandler implements BuildHandler {
             messages: [{ content: analysisPrompt, role: 'system' }],
           },
           'analyzeDatabaseRequirements',
-          this.id,
+          DBSchemaHandler.name,
         );
         dbAnalysis = formatResponse(analysisResponse);
       } catch (error) {
@@ -93,7 +91,7 @@ export class DBSchemaHandler implements BuildHandler {
             messages: [{ content: schemaPrompt, role: 'system' }],
           },
           'generateDatabaseSchema',
-          this.id,
+          DBSchemaHandler.name,
         );
         schemaContent = formatResponse(schemaResponse);
       } catch (error) {
@@ -108,28 +106,27 @@ export class DBSchemaHandler implements BuildHandler {
         schemaContent,
         databaseType,
       );
-      let validationResult: string;
       try {
         const validationResponse = await chatSyncWithClocker(
           context,
           {
             model: 'gpt-4o-mini',
-            messages: [{ content: validationPrompt, role: 'system' }],
+            messages: [
+              { content: validationPrompt, role: 'system' },
+              {
+                role: 'user',
+                content:
+                  'help me fix my schema code if there is any failed validation, generate full validated version schemas for me, with <GENERATE></GENERATE> xml tag',
+              },
+            ],
           },
           'validateDatabaseSchema',
-          this.id,
+          DBSchemaHandler.name,
         );
-        validationResult = formatResponse(validationResponse);
+        schemaContent = formatResponse(validationResponse);
       } catch (error) {
         throw new ModelUnavailableError(
           `Model unavailable during validation: ${error}`,
-        );
-      }
-
-      // Check validation result
-      if (!validationResult.includes('Validation Passed')) {
-        throw new ResponseTagError(
-          `Schema validation failed: ${validationResult}`,
         );
       }
 

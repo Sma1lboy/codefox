@@ -81,8 +81,10 @@ export class ChatResolver {
   async getAvailableModelTags(
     @GetUserIdFromToken() userId: string,
   ): Promise<string[]> {
+    this.logger.log('Fetching model tags for user:', userId);
     try {
       const response = await this.chatProxyService.fetchModelTags();
+      this.logger.log('Loaded model tags:', response);
       return response;
     } catch (error) {
       throw new Error('Failed to fetch model tags');
@@ -92,6 +94,7 @@ export class ChatResolver {
   @Query(() => [Chat], { nullable: true })
   async getUserChats(@GetUserIdFromToken() userId: string): Promise<Chat[]> {
     const user = await this.userService.getUserChats(userId);
+
     return user ? user.chats : [];
   }
   // To do: message need a update resolver

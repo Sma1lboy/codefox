@@ -8,7 +8,7 @@ export class SystemBaseModel {
   createdAt: Date;
 
   @Field()
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'datetime' })
   updatedAt: Date;
 
   @Field()

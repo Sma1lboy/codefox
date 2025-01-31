@@ -24,9 +24,21 @@ export class Chat extends SystemBaseModel {
   @Column({ nullable: true })
   title: string;
 
-  // 修改这里
   @Field(() => [Message], { nullable: true })
-  @Column('simple-json', { nullable: true, default: '[]' })
+  @Column('simple-json', {
+    nullable: true,
+    default: '[]',
+    transformer: {
+      to: (messages: Message[]) => messages,
+      from: (value: any) => {
+        return value?.map((message: any) => ({
+          ...message,
+          createdAt: message.createdAt ? new Date(message.createdAt) : null,
+          updatedAt: message.updatedAt ? new Date(message.updatedAt) : null,
+        }));
+      },
+    },
+  })
   messages: Message[];
 
   @ManyToOne(() => User, (user) => user.chats)

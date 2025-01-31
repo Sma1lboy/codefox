@@ -3,6 +3,8 @@ import { BuildHandler, BuildResult } from '../types';
 import { Logger } from '@nestjs/common';
 import * as path from 'path';
 import { buildProjectPath, copyProjectTemplate } from '../utils/files';
+import { BuildNode } from '../hanlder-manager';
+@BuildNode()
 export class ProjectInitHandler implements BuildHandler {
   readonly id = 'op:PROJECT::STATE:SETUP';
   private readonly logger = new Logger('ProjectInitHandler');

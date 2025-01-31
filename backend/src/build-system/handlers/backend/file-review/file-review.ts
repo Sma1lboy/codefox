@@ -14,14 +14,21 @@ import {
   ResponseParsingError,
   ModelUnavailableError,
 } from 'src/build-system/errors';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
+import { BackendRequirementHandler } from '../requirements-document';
+import { BackendCodeHandler } from '../code-generate';
 
 /**
  * Responsible for reviewing all related source root files and considering modifications
  * such as package.json, tsconfig.json, .env, etc., in JS/TS projects.
- * @requires [op:BACKEND:REQ] - BackendRequirementHandler
+ *
+ * Dependencies:
+ * - BackendCodeHandler: Provides the generated backend code and indirectly provides
+ *   access to backend requirements through its own dependency on BackendRequirementHandler
  */
+@BuildNode()
+@BuildNodeRequire([BackendCodeHandler, BackendRequirementHandler])
 export class BackendFileReviewHandler implements BuildHandler<string> {
-  readonly id = 'op:BACKEND:FILE:REVIEW';
   readonly logger: Logger = new Logger('BackendFileModificationHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
@@ -37,8 +44,10 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
         project description: ${description},
       `;
 
-    const backendRequirement = context.getNodeData('op:BACKEND:REQ')?.overview;
-    const backendCode = [context.getNodeData('op:BACKEND:CODE')];
+    const backendRequirement = context.getNodeData(
+      BackendRequirementHandler,
+    )?.overview;
+    const backendCode = [context.getNodeData(BackendCodeHandler)];
 
     if (!backendRequirement) {
       throw new FileNotFoundError('Backend requirements are missing.');
@@ -75,7 +84,7 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
           messages,
         },
         'generateBackendCode',
-        this.id,
+        BackendFileReviewHandler.name,
       );
     } catch (error) {
       throw new ModelUnavailableError('Model Unavailable:' + error);
@@ -114,7 +123,7 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
             messages: [{ content: modificationPrompt, role: 'system' }],
           },
           'generateBackendFile',
-          this.id,
+          BackendFileReviewHandler.name,
         );
       } catch (error) {
         throw new ModelUnavailableError('Model Unavailable:' + error);

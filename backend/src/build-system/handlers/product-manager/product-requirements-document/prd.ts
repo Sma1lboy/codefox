@@ -10,12 +10,13 @@ import {
   ModelUnavailableError,
   ResponseParsingError,
 } from 'src/build-system/errors';
+import { BuildNode } from 'src/build-system/hanlder-manager';
 
-export class PRDHandler implements BuildHandler {
-  readonly id = 'op:PRD';
+@BuildNode()
+export class PRDHandler implements BuildHandler<string> {
   readonly logger: Logger = new Logger('PRDHandler');
 
-  async run(context: BuilderContext): Promise<BuildResult> {
+  async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Generating PRD...');
 
     // Extract project data from the context
@@ -72,7 +73,7 @@ export class PRDHandler implements BuildHandler {
         context,
         { messages, model: 'gpt-4o-mini' },
         'generatePRDFromLLM',
-        this.id,
+        PRDHandler.name,
       );
       if (!prdContent || prdContent.trim() === '') {
         throw new ModelUnavailableError(

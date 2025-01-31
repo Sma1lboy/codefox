@@ -1,38 +1,42 @@
-import {
-  BuildHandler,
-  BuildOpts,
-  BuildResult,
-  FileStructOutput,
-} from 'src/build-system/types';
+import { BuildHandler, BuildOpts, BuildResult } from 'src/build-system/types';
 import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
-import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import {
+  parseGenerateTag,
+  removeCodeBlockFences,
+} from 'src/build-system/utils/strings';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import {
   ResponseParsingError,
   MissingConfigurationError,
 } from 'src/build-system/errors';
+import { UXSMDHandler } from '../../ux/sitemap-document';
+import { UXDMDHandler } from '../../ux/datamap';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 
 /**
  * FileStructureHandler is responsible for generating the project's file and folder structure
  * based on the provided documentation.
  */
-export class FileStructureHandler implements BuildHandler<FileStructOutput> {
+@BuildNode()
+@BuildNodeRequire([UXSMDHandler, UXDMDHandler])
+export class FileStructureHandler implements BuildHandler<string> {
   readonly id = 'op:FILE:STRUCT';
   private readonly logger: Logger = new Logger('FileStructureHandler');
 
   async run(
     context: BuilderContext,
     opts?: BuildOpts,
-  ): Promise<BuildResult<FileStructOutput>> {
+  ): Promise<BuildResult<string>> {
     this.logger.log('Generating File Structure Document...');
 
     // Retrieve projectName from context
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
-    const sitemapDoc = context.getNodeData('op:UX:SMD');
-    const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
+    const sitemapDoc = context.getNodeData(UXSMDHandler);
+    const datamapDoc = context.getNodeData(UXDMDHandler);
+    // const projectPart = opts?.projectPart ?? 'frontend';
     const projectPart = opts?.projectPart ?? 'frontend';
     const framework = context.getGlobalContext('framework') ?? 'react';
 
@@ -48,13 +52,52 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
       projectPart,
     );
 
+    const convertToJsonPrompt = prompts.convertTreeToJsonPrompt();
+
+    const messages = [
+      {
+        role: 'system' as const,
+        content: prompt,
+      },
+      {
+        role: 'user' as const,
+        content: `
+          **Sitemap Documentation**
+          ${sitemapDoc}
+          `,
+      },
+      {
+        role: 'user' as const,
+        content: `
+          **Data map Analysis Documentation:**:
+          ${datamapDoc}
+
+          Now please generate tree folder structure.
+         `,
+      },
+      {
+        role: 'system' as const,
+        content: convertToJsonPrompt,
+      },
+      {
+        role: 'user' as const,
+        content: `**Final Check:**
+      **Final Check**
+        Before returning the output, ensure the following:
+      - The JSON structure is correctly formatted and wrapped in <GENERATE></GENERATE> tags.
+      - File extensions and paths match those in the Directory Structure.
+      - All files and dependencies are included, with relative paths used wherever possible.`,
+      },
+    ];
+
+    // Get the generated file structure content
     let fileStructureContent: string;
     try {
       fileStructureContent = await chatSyncWithClocker(
         context,
         {
           model: 'gpt-4o-mini',
-          messages: [{ content: prompt, role: 'system' }],
+          messages,
         },
         'generateCommonFileStructure',
         this.id,
@@ -66,63 +109,60 @@ export class FileStructureHandler implements BuildHandler<FileStructOutput> {
         );
       }
     } catch (error) {
-      return { success: false, error };
+      this.logger.error(
+        `Failed to generate file structure: ${error.message}`,
+        error.stack,
+      );
+      return {
+        success: false,
+        error: new ResponseParsingError(
+          `File structure generation failed. ${error.message}`,
+        ),
+      };
     }
 
-    // Convert the tree structure to JSON
-    const convertToJsonPrompt =
-      prompts.convertTreeToJsonPrompt(fileStructureContent);
-
-    let fileStructureJsonContent: string;
+    // Parse the file structure content
+    let fileStructureJsonContent = '';
     try {
-      fileStructureJsonContent = await chatSyncWithClocker(
-        context,
-        {
-          model: 'gpt-4o-mini',
-          messages: [{ content: convertToJsonPrompt, role: 'system' }],
-        },
-        'convertToJsonPrompt',
-        this.id,
-      );
-
-      if (!fileStructureJsonContent || fileStructureJsonContent.trim() === '') {
-        throw new ResponseParsingError(
-          `Generated content is empty during op:FILE:STRUCT 2.`,
-        );
-      }
+      fileStructureJsonContent = parseGenerateTag(fileStructureContent);
     } catch (error) {
-      return { success: false, error };
+      return {
+        success: false,
+        error: new ResponseParsingError(
+          `Failed to parse file Structure Json Content. ${error.message}`,
+        ),
+      };
     }
 
     // Build the virtual directory
+    this.logger.log('start building');
     try {
       const successBuild = context.buildVirtualDirectory(
         fileStructureJsonContent,
       );
       if (!successBuild) {
+        this.logger.error(
+          'Failed to build virtual directory.' + fileStructureJsonContent,
+        );
         throw new ResponseParsingError('Failed to build virtual directory.');
       }
     } catch (error) {
-      this.logger.error(
-        'Non-retryable error during virtual directory build:',
-        error,
-      );
       return {
         success: false,
-        error: new ResponseParsingError('Failed to build virtual directory.'),
+        error: new ResponseParsingError(
+          `Failed to build virtual directory. ${error.message}`,
+        ),
       };
     }
 
-    this.logger.log(
-      'File structure JSON content and virtual directory built successfully.',
-    );
+    //debug script print all files
+    context.virtualDirectory.getAllFiles().forEach((file) => {
+      this.logger.log(file);
+    });
 
     return {
       success: true,
-      data: {
-        fileStructure: removeCodeBlockFences(fileStructureContent),
-        jsonFileStructure: removeCodeBlockFences(fileStructureJsonContent),
-      },
+      data: removeCodeBlockFences(fileStructureContent),
     };
   }
 

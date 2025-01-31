@@ -13,29 +13,73 @@ import {
   InvalidParameterError,
   ModelUnavailableError,
 } from 'src/build-system/errors';
+import { VirtualDirectory } from 'src/build-system/virtual-dir';
 
-export class FileArchGenerateHandler implements BuildHandler<string> {
-  readonly id = 'op:FILE:ARCH';
+import { FileStructureHandler } from '../file-structure';
+import { UXDMDHandler } from '../../ux/datamap';
+import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
+import {
+  buildDependencyGraph,
+  validateAgainstVirtualDirectory,
+} from 'src/build-system/utils/file_generator_util';
+
+@BuildNode()
+@BuildNodeRequire([FileStructureHandler, UXDMDHandler])
+export class FileFAHandler implements BuildHandler<string> {
   private readonly logger: Logger = new Logger('FileArchGenerateHandler');
+  private virtualDir: VirtualDirectory;
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Generating File Architecture Document...');
 
-    const fileStructure = context.getNodeData('op:FILE:STRUCT');
-    const datamapDoc = context.getNodeData('op:UX:DATAMAP:DOC');
+    this.virtualDir = context.virtualDirectory;
 
+    const fileStructure = context.getNodeData(FileStructureHandler);
+    const datamapDoc = context.getNodeData(UXDMDHandler);
+
+    this.logger.log('fileStructure:', fileStructure);
     if (!fileStructure || !datamapDoc) {
-      Logger.error(fileStructure);
-      Logger.error(datamapDoc);
       throw new InvalidParameterError(
-        'Missing required parameters: fileStructure or datamapDoc.',
+        `Missing required parameters: fileStructure or datamapDoc, current fileStructure: ${!!fileStructure}, datamapDoc: ${!!datamapDoc}`,
       );
     }
 
-    const prompt = generateFileArchPrompt(
-      JSON.stringify(fileStructure.jsonFileStructure, null, 2),
-      JSON.stringify(datamapDoc, null, 2),
-    );
+    const prompt = generateFileArchPrompt();
+
+    const messages = [
+      {
+        role: 'system' as const,
+        content: prompt,
+      },
+      {
+        role: 'user' as const,
+        content: `
+          **Page-by-Page Analysis**
+          The following is a detailed analysis of each page. Use this information to understand specific roles, interactions, and dependencies.
+
+          ${datamapDoc}
+
+          Next, I will provide the **Directory Structure** to help you understand the full project architecture.`,
+      },
+      {
+        role: 'user' as const,
+        content: `
+          **Directory Structure**:
+          The following is the project's directory structure. Use this to identify files and folders.
+
+          ${fileStructure}
+
+          Based on this structure and the analysis provided earlier, please generate the File Architecture JSON object. Ensure the output adheres to all rules and guidelines specified in the system prompt.`,
+      },
+      {
+        role: 'user' as const,
+        content: `**Final Check**
+      Before returning the output, ensure the following:
+      - The JSON structure is correctly formatted and wrapped in <GENERATE></GENERATE> tags.
+      - File extensions and paths match those in the Directory Structure.
+      - All files and dependencies are included.`,
+      },
+    ];
 
     let fileArchContent: string;
     try {
@@ -43,28 +87,54 @@ export class FileArchGenerateHandler implements BuildHandler<string> {
         context,
         {
           model: 'gpt-4o-mini',
-          messages: [{ content: prompt, role: 'system' }],
+          messages,
         },
         'generateFileArch',
-        this.id,
+        FileFAHandler.name,
       );
     } catch (error) {
       this.logger.error('Model is unavailable:' + error);
       throw new ModelUnavailableError('Model is unavailable:' + error);
     }
 
-    const tagContent = parseGenerateTag(fileArchContent);
-    const jsonData = extractJsonFromText(tagContent);
+    // Validate the generated file architecture document
+    try {
+      const tagContent = parseGenerateTag(fileArchContent);
+      const jsonData = extractJsonFromText(tagContent);
 
-    if (!jsonData) {
-      this.logger.error('Failed to extract JSON from text');
-      throw new ResponseParsingError('Failed to extract JSON from text.');
-    }
+      if (!jsonData) {
+        this.logger.error('Failed to extract JSON from text');
+        throw new ResponseParsingError('Failed to extract JSON from text.');
+      }
 
-    if (!this.validateJsonData(jsonData)) {
-      this.logger.error('File architecture JSON validation failed.');
+      if (!this.validateJsonData(jsonData)) {
+        this.logger.error('File architecture JSON validation failed.');
+        throw new ResponseParsingError(
+          'File architecture JSON validation failed.',
+        );
+      }
+
+      // validate with virutual dir
+      const { graph, nodes, fileInfos } = buildDependencyGraph(jsonData);
+
+      const invalidFiles = validateAgainstVirtualDirectory(
+        nodes,
+        this.virtualDir,
+      );
+
+      if (invalidFiles) {
+        this.logger.error('Validate Against Virtual Directory Fail !!!');
+        this.logger.error(`Invalid files detected:\n${invalidFiles}`);
+        this.logger.error(`${fileArchContent}`);
+        this.logger.error(`${fileStructure}`);
+        throw new ResponseParsingError(
+          'Failed to validate against virtualDirectory.',
+        );
+      }
+    } catch (error) {
+      this.logger.error('File architecture validation failed.');
       throw new ResponseParsingError(
-        'File architecture JSON validation failed.',
+        `File architecture JSON validation failed. ${error.message}`,
       );
     }
 

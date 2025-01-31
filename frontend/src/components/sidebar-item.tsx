@@ -20,35 +20,54 @@ import { useMutation } from '@apollo/client';
 import { MoreHorizontal, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { EventEnum } from './enum';
 
 interface SideBarItemProps {
   id: string;
+  currentChatId: string;
   title: string;
-  isSelected: boolean;
   onSelect: (id: string) => void;
   refetchChats: () => void;
 }
 
 export function SideBarItem({
   id,
+  currentChatId,
   title,
-  isSelected,
   onSelect,
   refetchChats,
 }: SideBarItemProps) {
-  const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
+  const [variant, setVariant] = useState<
+    'ghost' | 'link' | 'secondary' | 'default' | 'destructive' | 'outline'
+  >('ghost');
+
+  useEffect(() => {
+    const selected = currentChatId === id;
+    setIsSelected(selected);
+    if (selected) {
+      setVariant('secondary'); // 类型安全
+    } else {
+      setVariant('ghost'); // 类型安全
+    }
+    refetchChats();
+    console.log(`update sidebar ${currentChatId}`);
+  }, [currentChatId]);
 
   const [deleteChat] = useMutation(DELETE_CHAT, {
     onCompleted: () => {
       toast.success('Chat deleted successfully');
-      refetchChats();
+      console.log(`${id} ${isSelected}`);
       if (isSelected) {
-        router.push('/');
+        window.history.replaceState({}, '', '/');
+        const event = new Event(EventEnum.NEW_CHAT);
+        window.dispatchEvent(event);
       }
+      refetchChats();
     },
     onError: (error) => {
       console.error('Error deleting chat:', error);
@@ -72,6 +91,9 @@ export function SideBarItem({
 
   const handleChatClick = (e: React.MouseEvent) => {
     if (!(e.target as HTMLElement).closest('.dropdown-trigger')) {
+      window.history.replaceState({}, '', `/?id=${id}`);
+      const event = new Event(EventEnum.CHAT);
+      window.dispatchEvent(event);
       onSelect(id);
     }
   };
@@ -80,27 +102,24 @@ export function SideBarItem({
     <div
       className={cn(
         buttonVariants({
-          variant: isSelected ? 'secondaryLink' : 'ghost',
+          variant,
         }),
         'flex justify-between w-full h-14 text-base font-normal items-center group'
       )}
+      onClick={handleChatClick}
     >
-      <Link
-        href={`/${id}`}
-        className="flex-1 flex gap-3 items-center truncate"
-        onClick={handleChatClick}
-      >
+      <div className="flex-1 flex gap-3 items-center truncate ml-2">
         <div className="flex flex-col">
           <span className="text-xs font-normal">{title || 'New Chat'}</span>
         </div>
-      </Link>
+      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="flex justify-end items-center dropdown-trigger"
+              className="flex justify-end items-center dropdown-trigger mr-2"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -119,7 +138,7 @@ export function SideBarItem({
             >
               <Button
                 variant="ghost"
-                className="w-full flex gap-2 hover:text-red-500 text-red-500 justify-start items-center"
+                className="w-full flex hover:text-red-500 text-red-500 justify-start items-center"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();

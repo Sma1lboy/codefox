@@ -34,7 +34,7 @@ export function parseGenerateTag(input: string): string {
   const generateTagRegex = /<GENERATE>([\s\S]*?)<\/GENERATE>/;
   const match = input.match(generateTagRegex);
   if (!match || match.length < 2) {
-    throw new Error(
+    throw new ResponseTagError(
       'Invalid format: <GENERATE> tags are missing or improperly formatted.',
     );
   }

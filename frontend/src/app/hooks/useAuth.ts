@@ -40,6 +40,11 @@ export const useAuth = () => {
   const { refetch: checkToken } = useQuery<{ checkToken: boolean }>(
     CHECK_TOKEN_QUERY,
     {
+      variables: {
+        input: {
+          token: '',
+        },
+      },
       skip: true,
     }
   );

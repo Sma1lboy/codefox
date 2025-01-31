@@ -1,100 +1,90 @@
 'use client';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Button } from './ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { GearIcon } from '@radix-ui/react-icons';
-import { useState, useMemo, memo } from 'react';
-import { Skeleton } from './ui/skeleton';
-import EditUsernameForm from './edit-username-form';
+
 import PullModel from './pull-model';
+import {
+  AvatarFallback,
+  AvatarImage,
+  SmallAvatar,
+} from '@/components/ui/avatar';
+import { GearIcon } from '@radix-ui/react-icons';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/app/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import exp from 'constants';
+import { useMemo, useState, memo } from 'react';
+import { EventEnum } from './enum';
 
-export const UserSettings = () => {
+interface UserSettingsProps {
+  isSimple: boolean;
+}
+
+export const UserSettings = ({ isSimple }: UserSettingsProps) => {
   const { user, isLoading, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
   const handleLogout = useMemo(() => {
     return () => {
-      router.push('/login');
       logout();
+      router.push('/login');
     };
-  }, [router, logout]);
+  }, [logout, router]);
 
   const avatarFallback = useMemo(() => {
-    if (!user?.username) return '';
+    if (!user?.username) return 'US';
     return user.username.substring(0, 2).toUpperCase();
   }, [user?.username]);
 
   const displayUsername = useMemo(() => {
-    if (isLoading) return null;
+    if (isLoading) return 'Loading...';
     return user?.username || 'Anonymous';
   }, [isLoading, user?.username]);
 
-  const avatarButton = useMemo(
-    () => (
+  const avatarButton = useMemo(() => {
+    return (
       <Button
+        size="setting"
         variant="ghost"
-        className="flex justify-start gap-3 w-full h-14 text-base font-normal items-center"
+        className={`flex justify-start ${
+          isSimple ? 'w-10 h-12 p-auto' : 'gap-2 w-full h-12 p-1'
+        }`}
       >
-        <Avatar className="flex justify-start items-center overflow-hidden">
-          <AvatarImage
-            src=""
-            alt="User"
-            width={4}
-            height={4}
-            className="object-contain"
-          />
+        <SmallAvatar className="flex items-center justify-center">
+          <AvatarImage src="" alt="User" />
           <AvatarFallback>{avatarFallback}</AvatarFallback>
-        </Avatar>
-        <div className="text-xs truncate">
-          {isLoading ? <Skeleton className="w-20 h-4" /> : displayUsername}
-        </div>
+        </SmallAvatar>
+        {!isSimple && <span className="truncate">{displayUsername}</span>}
       </Button>
-    ),
-    [avatarFallback, displayUsername, isLoading]
-  );
+    );
+  }, [avatarFallback, displayUsername, isSimple]);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{avatarButton}</DropdownMenuTrigger>
-      <DropdownMenuContent className="w-48 p-2">
+      <DropdownMenuContent className="w-48">
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-          <PullModel />
+          <div
+            className="flex w-full gap-2 p-1 items-center cursor-pointer"
+            onClick={() => {
+              window.history.replaceState({}, '', '/?id=setting');
+              const event = new Event(EventEnum.SETTING);
+              window.dispatchEvent(event);
+            }}
+          >
+            <GearIcon className="w-4 h-4" />
+            Settings
+          </div>
         </DropdownMenuItem>
-        <Dialog>
-          <DialogTrigger className="w-full">
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <div className="flex w-full gap-2 p-1 items-center cursor-pointer">
-                <GearIcon className="w-4 h-4" />
-                Settings
-              </div>
-            </DropdownMenuItem>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader className="space-y-4">
-              <DialogTitle>Settings</DialogTitle>
-              <EditUsernameForm setOpen={setOpen} />
-            </DialogHeader>
-          </DialogContent>
-        </Dialog>
+
         <DropdownMenuItem
-          className="text-red-500 hover:text-red-600"
           onSelect={handleLogout}
+          className="text-red-500 hover:text-red-600"
         >
           Logout
         </DropdownMenuItem>
@@ -102,4 +92,5 @@ export const UserSettings = () => {
     </DropdownMenu>
   );
 };
+
 export default memo(UserSettings);

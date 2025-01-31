@@ -3,7 +3,7 @@ import { useMutation, useSubscription } from '@apollo/client';
 import { CHAT_STREAM, CREATE_CHAT, TRIGGER_CHAT } from '@/graphql/request';
 import { Message } from '@/components/types';
 import { toast } from 'sonner';
-
+import { useRouter } from 'next/navigation';
 enum StreamStatus {
   IDLE = 'IDLE',
   STREAMING = 'STREAMING',
@@ -49,6 +49,12 @@ export function useChatStream({
     variables: null,
   });
 
+  const updateChatId = () => {
+    setCurrentChatId('');
+  };
+
+  window.addEventListener('newchat', updateChatId);
+
   const [triggerChat] = useMutation(TRIGGER_CHAT, {
     onCompleted: () => {
       setStreamStatus(StreamStatus.STREAMING);
@@ -62,9 +68,10 @@ export function useChatStream({
   const [createChat] = useMutation(CREATE_CHAT, {
     onCompleted: async (data) => {
       const newChatId = data.createChat.id;
-      window.history.replaceState({}, '', `/${newChatId}`);
       setCurrentChatId(newChatId);
       await startChatStream(newChatId, input);
+      window.history.pushState({}, '', `/?id=${newChatId}`);
+      console.log(`new chat: ${newChatId}`);
     },
     onError: () => {
       toast.error('Failed to create chat');
@@ -120,6 +127,7 @@ export function useChatStream({
       }
     },
     onError: (error) => {
+      console.log(error);
       toast.error('Connection error. Please try again.');
       setStreamStatus(StreamStatus.IDLE);
       finishChatResponse();
@@ -133,7 +141,9 @@ export function useChatStream({
         message,
         model: selectedModel,
       };
+      console.log(input);
 
+      setInput('');
       setStreamStatus(StreamStatus.STREAMING);
       setSubscription({
         enabled: true,
@@ -153,7 +163,6 @@ export function useChatStream({
     e.preventDefault();
 
     const content = input;
-    setInput('');
 
     if (!content.trim() || loadingSubmit) return;
 
