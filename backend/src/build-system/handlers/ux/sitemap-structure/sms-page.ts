@@ -16,7 +16,7 @@ export class UXSMSPageByPageHandler implements BuildHandler<string> {
   readonly logger = new Logger('UXSitemapStructurePagebyPageHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
-    this.logger.log('Generating Level 2 UX Sitemap Structure Document...');
+    this.logger.log('Generating Page By Page UX Sitemap Structure Document...');
 
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';

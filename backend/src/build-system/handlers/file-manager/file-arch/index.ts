@@ -97,6 +97,7 @@ export class FileFAHandler implements BuildHandler<string> {
       throw new ModelUnavailableError('Model is unavailable:' + error);
     }
 
+    // Validate the generated file architecture document
     try {
       const tagContent = parseGenerateTag(fileArchContent);
       const jsonData = extractJsonFromText(tagContent);
