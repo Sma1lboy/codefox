@@ -63,11 +63,11 @@ export default function MainLayout({
             maxSize={isMobile ? 10 : 16}
             onCollapse={() => {
               console.log(`setting collapse to T`);
-              setIsCollapsed(true);
+              // setIsCollapsed(true);
             }}
             onExpand={() => {
               console.log(`setting collapse to F`);
-              setIsCollapsed(false);
+              // setIsCollapsed(false);
             }}
             className={cn(
               'transition-all duration-300 ease-in-out',

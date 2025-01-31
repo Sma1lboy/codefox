@@ -3,7 +3,7 @@
 import React, { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage, SmallAvatar } from '../ui/avatar';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeDisplayBlock from '../code-display-block';
@@ -155,7 +155,7 @@ export default function ChatList({
                         </>
                       )}
                     </div>
-                    <Avatar className="flex justify-start items-center overflow-hidden">
+                    <SmallAvatar className="flex justify-start items-center overflow-hidden">
                       <AvatarImage
                         src="/"
                         alt="user"
@@ -164,17 +164,17 @@ export default function ChatList({
                       <AvatarFallback>
                         {user.username?.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
-                    </Avatar>
+                    </SmallAvatar>
                   </div>
                 ) : (
                   <div className="flex items-end gap-2">
-                    <Avatar className="flex justify-start items-center">
+                    <SmallAvatar className="flex justify-start items-center">
                       <AvatarImage
                         src="/codefox.svg"
                         alt="AI"
                         className="h-full w-full object-contain dark:invert"
                       />
-                    </Avatar>
+                    </SmallAvatar>
                     <span className="bg-accent p-3 rounded-md max-w-xs sm:max-w-2xl overflow-x-auto">
                       {renderMessageContent(message.content)}
                     </span>

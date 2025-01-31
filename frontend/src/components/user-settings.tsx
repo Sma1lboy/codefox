@@ -8,21 +8,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import PullModel from './pull-model';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  AvatarFallback,
+  AvatarImage,
+  SmallAvatar,
+} from '@/components/ui/avatar';
 import { GearIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/app/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, memo } from 'react';
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogTitle,
-} from '@radix-ui/react-dialog';
-import EditUsernameForm from './edit-username-form';
-import { DialogHeader } from './ui/dialog';
-import DetailSettings from './detail-settings';
+import { EventEnum } from './enum';
 
 interface UserSettingsProps {
   isSimple: boolean;
@@ -53,15 +49,16 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
   const avatarButton = useMemo(() => {
     return (
       <Button
+        size="setting"
         variant="ghost"
         className={`flex justify-start ${
           isSimple ? 'w-10 h-12 p-auto' : 'gap-2 w-full h-12 p-1'
         }`}
       >
-        <Avatar className="flex items-center justify-center">
+        <SmallAvatar className="flex items-center justify-center">
           <AvatarImage src="" alt="User" />
           <AvatarFallback>{avatarFallback}</AvatarFallback>
-        </Avatar>
+        </SmallAvatar>
         {!isSimple && <span className="truncate">{displayUsername}</span>}
       </Button>
     );
@@ -72,10 +69,17 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
       <DropdownMenuTrigger asChild>{avatarButton}</DropdownMenuTrigger>
       <DropdownMenuContent className="w-48">
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-          <PullModel />
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-          <DetailSettings />
+          <div
+            className="flex w-full gap-2 p-1 items-center cursor-pointer"
+            onClick={() => {
+              window.history.replaceState({}, '', '/?id=setting');
+              const event = new Event(EventEnum.SETTING);
+              window.dispatchEvent(event);
+            }}
+          >
+            <GearIcon className="w-4 h-4" />
+            Settings
+          </div>
         </DropdownMenuItem>
 
         <DropdownMenuItem
