@@ -107,7 +107,9 @@ export class BuilderContext {
     this.globalContext.set('databaseType', sequence.databaseType || 'SQLite');
     this.globalContext.set(
       'projectUUID',
-      new Date().toISOString().slice(0, 10).replace(/:/g, '-') + '-' + uuidv4(),
+      new Date().toISOString().slice(0, 18).replaceAll(/:/g, '-') +
+        '-' +
+        uuidv4(),
     );
 
     if (process.env.DEBUG) {
