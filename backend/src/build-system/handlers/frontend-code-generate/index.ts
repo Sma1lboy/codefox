@@ -3,7 +3,7 @@ import { BuilderContext } from 'src/build-system/context';
 import { Logger } from '@nestjs/common';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import { generateFilesDependencyWithLayers } from '../../utils/file_generator_util';
-import { readFileWithRetries, createFileWithRetries } from '../../utils/files';
+import { readFileWithRetries } from '../../utils/files';
 import { VirtualDirectory } from '../../virtual-dir';
 
 import { UXSMSHandler } from '../ux/sitemap-structure';
@@ -18,6 +18,9 @@ import { formatResponse } from 'src/build-system/utils/strings';
 import { writeFileSync } from 'fs';
 import { MessageInterface } from 'src/common/model-provider/types';
 
+import { CodeTaskQueue } from './CodeTaskQueue';
+import { FrontendQueueProcessor } from './FrontendQueueProcessor';
+import { FrontendCodeValidator } from './FrontendCodeValidator';
 /**
  * FrontendCodeHandler is responsible for generating the frontend codebase
  * based on the provided sitemap, data mapping documents, backend requirement documents,
@@ -79,6 +82,9 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     const { concurrencyLayers, fileInfos } =
       await generateFilesDependencyWithLayers(fileArchDoc, this.virtualDir);
 
+    const validator = new FrontendCodeValidator(frontendPath);
+    // validator.installDependencies();
+
     // 4. Process each "layer" in sequence; files in a layer in parallel
     for (const [layerIndex, layer] of concurrencyLayers.entries()) {
       this.logger.log(
@@ -86,6 +92,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
           ', ',
         )}]\n`,
       );
+
+      const queue = new CodeTaskQueue();
 
       const maxRetries = 3; // Maximum retry attempts per file
       const delayMs = 200; // Delay between retries for a file
@@ -215,13 +223,19 @@ export class FrontendCodeHandler implements BuildHandler<string> {
 
               generatedCode = formatResponse(modelResponse);
 
+              // 7. Add the file to the queue for writing
+              queue.enqueue({
+                filePath: currentFullFilePath, // relative path
+                fileContents: generatedCode,
+              });
+
               // 7. Write the file to the filesystem
-              await createFileWithRetries(
-                currentFullFilePath,
-                generatedCode,
-                maxRetries,
-                delayMs,
-              );
+              // await createFileWithRetries(
+              //   currentFullFilePath,
+              //   generatedCode,
+              //   maxRetries,
+              //   delayMs,
+              // );
             } catch (err) {
               this.logger.error(`Error generating code for ${file}:`, err);
               // FIXME: remove this later
@@ -235,10 +249,6 @@ export class FrontendCodeHandler implements BuildHandler<string> {
                 }),
               );
             }
-
-            this.logger.log(
-              `Layer #${layerIndex + 1}, completed generation for file: ${file}`,
-            );
           }),
         );
 
@@ -258,6 +268,15 @@ export class FrontendCodeHandler implements BuildHandler<string> {
           remainingFiles = []; // All files in this layer succeeded
         }
       }
+
+      // B) Now process the entire queue for this layer:
+      //    This writes each file, runs build, fixes if needed, etc.
+      const queueProcessor = new FrontendQueueProcessor(
+        validator,
+        queue,
+        context,
+      );
+      await queueProcessor.processAllTasks();
 
       this.logger.log(
         `\n==== Finished concurrency layer #${layerIndex + 1} ====\n`,
