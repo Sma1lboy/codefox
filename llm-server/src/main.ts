@@ -32,7 +32,16 @@ export class App {
 
   constructor(llmProvider: LLMProvider) {
     this.app = express();
-    this.app.use(express.json());
+    this.app.use(
+      express.json({
+        limit: '50mb',
+        verify: (req, res, buf) => {
+          if (buf?.length > 50 * 1024 * 1024) {
+            throw new Error('Request body exceeds 50MB limit');
+          }
+        },
+      }),
+    );
     this.PORT = parseInt(process.env.PORT || '8001', 10);
     this.llmProvider = llmProvider;
     this.logger.log(`App initialized with PORT: ${this.PORT}`);
