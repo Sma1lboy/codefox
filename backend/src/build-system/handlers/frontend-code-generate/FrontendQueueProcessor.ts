@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import { createFileWithRetries } from 'src/build-system/utils/files';
 import { BuilderContext } from 'src/build-system/context';
+import { formatResponse } from 'src/build-system/utils/strings';
 
 export class FrontendQueueProcessor {
   private logger = new Logger('FrontendQueueProcessor');
@@ -71,6 +72,8 @@ export class FrontendQueueProcessor {
     }
 
     // If we reached here, we failed all attempts
+
+    // if we want to end all generate
     // throw new Error(
     //   `Failed to fix build for file ${task.filePath} after ${maxFixAttempts} attempts.`,
     // );
@@ -79,52 +82,6 @@ export class FrontendQueueProcessor {
     this.logger.error(
       `Failed to fix build for file ${task.filePath} after ${maxFixAttempts} attempts.`,
     );
-  }
-
-  /**
-   * Attempt to fix a known file error using an LLM prompt that includes:
-   * - The existing code
-   * - The compiler error info
-   */
-  private async fixFileError(filePath: string, errDetail: any) {
-    this.logger.log(`Fixing error in file: ${filePath}`);
-    const originalContent = readFileSync(filePath, 'utf-8');
-
-    // Construct your "fix" prompt
-    const fixPrompt = `
-There's a TypeScript error in file: ${filePath}
-Line: ${errDetail.line}, Column: ${errDetail.column}
-Error code: ${errDetail.tsCode}
-Message: ${errDetail.message}
-
-Current file content:
-\`\`\`
-${originalContent}
-\`\`\`
-
-Please fix the code so that this error is resolved. Return only the updated code wrapped in <GENERATE> tags.
-`;
-
-    // Use your chat function to get a fix
-    const fixResponse = await chatSyncWithClocker(
-      /* context= */ null, // or pass your real context
-      {
-        model: 'gpt-4',
-        messages: [
-          { role: 'system', content: 'You fix TypeScript code errors.' },
-          { role: 'user', content: fixPrompt },
-        ],
-      },
-      'fix code',
-      'FrontendQueueProcessor',
-    );
-
-    // Extract the <GENERATE> code
-    const updatedCode = this.extractGenerateContent(fixResponse);
-
-    // Overwrite file
-    writeFileSync(filePath, updatedCode, 'utf-8');
-    this.logger.log(`File ${filePath} has been updated to address the error.`);
   }
 
   /**
@@ -148,9 +105,11 @@ ${originalContent}
 Please fix the code so it compiles successfully. Return only the updated code wrapped in <GENERATE> tags.
 `;
 
-    // Use your model for a fix
+    //this.logger.log(fixPrompt);
+
+    // Use model for a fix
     const fixResponse = await chatSyncWithClocker(
-      /* context= */ this.context,
+      this.context,
       {
         model: 'gpt-4o',
         messages: [
@@ -162,24 +121,9 @@ Please fix the code so it compiles successfully. Return only the updated code wr
       'FrontendQueueProcessor',
     );
 
-    this.logger.debug('Fix result' + fixResponse);
-    const updatedCode = this.extractGenerateContent(fixResponse);
+    // this.logger.debug('Fix result' + fixResponse);
+    const updatedCode = formatResponse(fixResponse);
     writeFileSync(filePath, updatedCode, 'utf-8');
     this.logger.log(`Generic fix applied to file: ${filePath}`);
-  }
-
-  /**
-   * Example helper to parse out <GENERATE> ... </GENERATE>.
-   * Or you might have your existing formatResponse() logic.
-   */
-  private extractGenerateContent(modelResponse: string): string {
-    // For example, a regex or a simple parse:
-    const regex = /<GENERATE>([\s\S]*?)<\/GENERATE>/;
-    const match = modelResponse.match(regex);
-    if (match && match[1]) {
-      return match[1].trim();
-    }
-    // If not found, fallback to the entire response
-    return modelResponse;
   }
 }
