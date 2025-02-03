@@ -1,6 +1,6 @@
 // app/api/project/route.ts
 import { NextResponse } from 'next/server';
-import { FileReader } from '@/utils/file_reader';
+import { FileReader } from '@/utils/file-reader';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);

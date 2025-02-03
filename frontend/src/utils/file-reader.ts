@@ -13,6 +13,7 @@ export class FileReader {
       baseDir = baseDir.replace(/\/\.next[^\/]*/, '');
     }
 
+    // TODO: don't use / directly
     if (baseDir.includes('/frontend/server/.codefox/')) {
       baseDir = baseDir.replace('/frontend/server/.codefox/', '/.codefox/');
     }

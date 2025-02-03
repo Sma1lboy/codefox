@@ -1,6 +1,6 @@
 // app/api/file/route.ts
 import { NextResponse } from 'next/server';
-import { FileReader } from '@/utils/file_reader';
+import { FileReader } from '@/utils/file-reader';
 import { promises as fs } from 'fs';
 import path from 'path';
 

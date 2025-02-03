@@ -4,7 +4,7 @@ import MainLayout from './MainLayout';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 import { getProjectPath, getProjectsDir, getRootDir } from 'codefox-common';
-import { FileReader } from '@/utils/file_reader';
+import { FileReader } from '@/utils/file-reader';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
