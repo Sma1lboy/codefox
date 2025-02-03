@@ -1,7 +1,5 @@
 // DTOs for Project APIs
 import { InputType, Field, ID } from '@nestjs/graphql';
-import { ProjectPackages } from '../project-packages.model';
-import { Optional } from '@nestjs/common';
 
 /**
  * @deprecated We don't need project upsert

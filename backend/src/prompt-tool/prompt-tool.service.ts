@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Message, MessageRole } from 'src/chat/message.model';
+import { MessageRole } from 'src/chat/message.model';
 import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 
 @Injectable()
