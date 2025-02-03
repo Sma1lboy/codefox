@@ -14,7 +14,7 @@ import { RegisterUserInput } from 'src/user/dto/register-user.input';
 import { User } from 'src/user/user.model';
 import { In, Repository } from 'typeorm';
 import { CheckTokenInput } from './dto/check-token.input';
-import { JwtCacheService } from 'src/auth/jwt-cache.service';
+import { JwtCacheService } from 'src/jwt-cache/jwt-cache.service';
 import { Menu } from './menu/menu.model';
 import { Role } from './role/role.model';
 

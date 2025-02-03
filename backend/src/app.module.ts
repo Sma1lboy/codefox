@@ -14,6 +14,7 @@ import { User } from './user/user.model';
 import { AppResolver } from './app.resolver';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from 'src/interceptor/LoggingInterceptor';
+import { PromptToolModule } from './prompt-tool/prompt-tool.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { LoggingInterceptor } from 'src/interceptor/LoggingInterceptor';
     ProjectModule,
     TokenModule,
     ChatModule,
+    PromptToolModule,
     TypeOrmModule.forFeature([User]),
   ],
   providers: [
