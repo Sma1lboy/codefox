@@ -5,8 +5,9 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToMany,
   JoinColumn,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import { User } from 'src/user/user.model';
 import { ProjectPackages } from './project-packages.model';
@@ -24,7 +25,7 @@ export class Project extends SystemBaseModel {
 
   @Field()
   @Column()
-  path: string;
+  projectPath: string;
 
   @Field(() => ID)
   @Column()
@@ -35,10 +36,20 @@ export class Project extends SystemBaseModel {
   user: User;
 
   @Field(() => [ProjectPackages], { nullable: true })
-  @OneToMany(
+  @ManyToMany(
     () => ProjectPackages,
-    (projectPackage) => projectPackage.project,
-    { cascade: true },
+    (projectPackage) => projectPackage.projects,
   )
+  @JoinTable({
+    name: 'project_packages_mapping',
+    joinColumn: {
+      name: 'project_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'package_id',
+      referencedColumnName: 'id',
+    },
+  })
   projectPackages: ProjectPackages[];
 }
