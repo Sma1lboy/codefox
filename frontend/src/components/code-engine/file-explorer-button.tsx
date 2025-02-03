@@ -22,7 +22,7 @@ const FileExplorerButton = ({
             <Button
               variant="outline"
               onClick={() => setIsExplorerCollapsed(!isExplorerCollapsed)}
-              className="ml-2 p-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 "
+              className="ml-2 mb-2 p-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 border-primary dark:border-white"
             >
               <svg
                 viewBox="0 0 24 24"
