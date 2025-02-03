@@ -31,7 +31,7 @@ export function CodeDisplayer() {
   const handleEditorMount = (editor) => {
     editorRef.current = editor;
 
-  editor.getDomNode().style.position = 'absolute';
+    editor.getDomNode().style.position = 'absolute';
   };
   useEffect(() => {
     async function getCode() {
@@ -100,38 +100,47 @@ export function CodeDisplayer() {
         <TabsTrigger value="password">Password</TabsTrigger>
       </TabsList>
       <TabsContent value="account" className="flex h-full">
-      <motion.div
-  animate={{ width: isCollapsed ? 0 : "25%", opacity: isCollapsed ? 0 : 1 }}
-  transition={{ duration: 0.3, ease: "easeInOut" }}
-  className="overflow-hidden"
->
-  <FileStructure isCollapsed={isCollapsed} />
-</motion.div>
+        <motion.div
+          animate={{
+            width: isCollapsed ? 0 : '25%',
+            opacity: isCollapsed ? 0 : 1,
+          }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          className="overflow-hidden"
+        >
+          <FileStructure isCollapsed={isCollapsed} />
+        </motion.div>
 
-<motion.div
-  animate={{ marginLeft: isCollapsed ? 0 : "1%" }}
-  transition={{ duration: 0.5, ease: "easeInOut" }}
-  className="flex-1 w-auto"
->
-  <Editor
-    height="100vh"
-    width="100%"
-    defaultLanguage="typescript"
-    value={newCode}
-    language={type}
-    loading={isLoading}
-    onChange={updateSavingStatus}
-    onMount={handleEditorMount}
-  />
-</motion.div>
-  <Button
-    className="fixed bottom-4 p-3 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition z-90"
-    onClick={() => setIsCollapsed(!isCollapsed)}
-  >
-    {isCollapsed ? '▶' : '◀'}
-  </Button>
-  {saving && <SaveChangesBar saving={saving} onSave={handleSave} onReset={handleReset} />}
-</TabsContent>
+        <motion.div
+          animate={{ marginLeft: isCollapsed ? 0 : '1%' }}
+          transition={{ duration: 0.5, ease: 'easeInOut' }}
+          className="flex-1 w-auto"
+        >
+          <Editor
+            height="100vh"
+            width="100%"
+            defaultLanguage="typescript"
+            value={newCode}
+            language={type}
+            loading={isLoading}
+            onChange={updateSavingStatus}
+            onMount={handleEditorMount}
+          />
+        </motion.div>
+        <Button
+          className="fixed bottom-4 p-3 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition z-90"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+        >
+          {isCollapsed ? '▶' : '◀'}
+        </Button>
+        {saving && (
+          <SaveChangesBar
+            saving={saving}
+            onSave={handleSave}
+            onReset={handleReset}
+          />
+        )}
+      </TabsContent>
 
       <TabsContent value="password">
         <Card>

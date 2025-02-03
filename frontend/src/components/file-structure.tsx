@@ -97,13 +97,13 @@ export default function FileStructure({
 
   return (
     <div className="relative">
-        <div className="p-4">
-          <h3 className="mb-2 font-bold">File Explorer</h3>
-          {filePath && <div className="mt-4 p-2 text-sm">{filePath}</div>}
-          {fileStructure.map((node) => (
-            <FileNode key={node.name} node={node} fullPath={node.name} />
-          ))}
-        </div>
+      <div className="p-4">
+        <h3 className="mb-2 font-bold">File Explorer</h3>
+        {filePath && <div className="mt-4 p-2 text-sm">{filePath}</div>}
+        {fileStructure.map((node) => (
+          <FileNode key={node.name} node={node} fullPath={node.name} />
+        ))}
+      </div>
     </div>
   );
 }
