@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google';
 import MainLayout from './MainLayout';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
+import { getProjectPath, getProjectsDir, getRootDir } from 'codefox-common';
+import { FileReader } from '@/utils/file_reader';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
@@ -17,10 +19,10 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-export default function Layout({
+export default async function Layout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return <MainLayout>{children}</MainLayout>;
 }

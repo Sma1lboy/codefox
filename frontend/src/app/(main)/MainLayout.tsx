@@ -2,11 +2,19 @@
 
 import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { usePathname } from 'next/navigation';
 import { useChatList } from '../hooks/useChatList';
-import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import CustomSidebar from '@/components/sidebar';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable';
+import ChatSiderBar from '@/components/sidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { CodeDisplayer } from '@/components/code-display';
+import { Project } from '@/graphql/type';
+import FileStructure from '@/components/file-structure';
+import { ProjectProvider } from '../context/projectContext';
+import FileSidebar from '@/components/file-structure';
 
 export default function MainLayout({
   children,
@@ -15,6 +23,7 @@ export default function MainLayout({
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const projectId = '2025-01-31-f9b3465a-1bd0-4a56-b042-46864953d870';
   const defaultLayout = [30, 160];
   const navCollapsedSize = 10;
   const {
@@ -29,6 +38,18 @@ export default function MainLayout({
   useEffect(() => {
     document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(isCollapsed)}; path=/; max-age=604800`;
   }, [isCollapsed]);
+
+  useEffect(() => {
+    async function fetchFiles() {
+      const response = await fetch(`/api/project?id=${projectId}`);
+      const data = await response.json();
+      if (data.files) {
+        setProjectFiles(data.files);
+      }
+    }
+
+    fetchFiles();
+  }, [projectId]);
 
   useEffect(() => {
     const checkScreenWidth = () => {
@@ -47,6 +68,7 @@ export default function MainLayout({
     <main className="flex h-[calc(100dvh)] flex-col items-center">
       <ResizablePanelGroup
         direction="horizontal"
+        data-panel-group-direction="horizontal"
         onLayout={(sizes: number[]) => {
           document.cookie = `react-resizable-panels:layout=${JSON.stringify(
             sizes
@@ -71,7 +93,7 @@ export default function MainLayout({
             }}
             className={cn(
               'transition-all duration-300 ease-in-out',
-              isCollapsed ? 'min-w-[50px] md:min-w-[70px]' : 'md:min-w-[200px]'
+              isCollapsed ? 'min-w-[50px] md:min-w-[70px]' : 'md:min-w-[20%]'
             )}
           >
             {loading ? (
@@ -81,7 +103,7 @@ export default function MainLayout({
                 Error: {error.message}
               </div>
             ) : (
-              <CustomSidebar
+              <ChatSiderBar
                 isCollapsed={isCollapsed}
                 isMobile={isMobile}
                 chatListUpdated={chatListUpdated}
@@ -96,12 +118,24 @@ export default function MainLayout({
 
           <ResizablePanel
             className="h-full w-full flex justify-center"
-            defaultSize={defaultLayout[1]}
+            defaultSize={160}
           >
             {children}
+          </ResizablePanel>
+          <ResizableHandle className={cn('hidden md:flex')} withHandle />
+          <ResizablePanel
+            className="h-full w-full flex justify-center"
+            defaultSize={defaultLayout[1]}
+          >
+            <ProjectProvider>
+              <CodeDisplayer />
+            </ProjectProvider>
           </ResizablePanel>
         </SidebarProvider>
       </ResizablePanelGroup>
     </main>
   );
+}
+function setProjectFiles(files: any) {
+  throw new Error('Function not implemented.');
 }
