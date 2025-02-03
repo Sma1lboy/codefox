@@ -16,6 +16,7 @@ export class OpenAIModelProvider implements IModelProvider {
   private readonly logger = new Logger('OpenAIModelProvider');
   private queues: Map<string, PQueue> = new Map();
   private configLoader: ConfigLoader;
+  private defaultModel: string;
 
   private constructor() {
     this.openai = new OpenAI({
@@ -35,6 +36,9 @@ export class OpenAIModelProvider implements IModelProvider {
     const chatModels = this.configLoader.getAllChatModelConfigs();
 
     for (const model of chatModels) {
+      if (model.default) {
+        this.defaultModel = model.model;
+      }
       if (!model.endpoint || !model.token) continue;
 
       const key = this.getQueueKey(model);
@@ -87,7 +91,7 @@ export class OpenAIModelProvider implements IModelProvider {
 
   async chatSync(input: ChatInput): Promise<string> {
     try {
-      const queue = this.getQueueForModel(input.model);
+      const queue = this.getQueueForModel(input.model ?? this.defaultModel);
       const completion = await queue.add(async () => {
         const result = await this.openai.chat.completions.create({
           messages: input.messages,
