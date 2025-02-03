@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import FileExplorerButton from './file-explorer-button';
 import { useTheme } from 'next-themes';
+import { TreeItemIndex, TreeItem } from 'react-complex-tree';
 
 export function CodeEngine() {
   const editorRef = useRef(null);
@@ -41,9 +42,9 @@ export function CodeEngine() {
   const [type, setType] = useState('javascript');
   const [isLoading, setIsLoading] = useState(false);
   const [isExplorerCollapsed, setIsExplorerCollapsed] = useState(false);
-  const [fileStructureData, setFileStructureData] = useState<FileNodeType[]>(
-    []
-  );
+  const [fileStructureData, setFileStructureData] = useState<
+    Record<TreeItemIndex, TreeItem<any>>
+  >({});
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState<'preview' | 'code' | 'console'>(
     'code'
@@ -81,7 +82,7 @@ export function CodeEngine() {
       try {
         const response = await fetch(`/api/project?id=${projectId}`);
         const data = await response.json();
-        setFileStructureData(data.res || []);
+        setFileStructureData(data.res || {});
       } catch (error) {
         console.error('Error fetching file structure:', error);
       }
