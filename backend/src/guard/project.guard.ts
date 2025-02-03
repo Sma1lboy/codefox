@@ -9,7 +9,6 @@ import { GqlExecutionContext } from '@nestjs/graphql';
 import { JwtService } from '@nestjs/jwt';
 
 import { ProjectService } from '../project/project.service';
-import { Reflector } from '@nestjs/core';
 
 @Injectable()
 export class ProjectGuard implements CanActivate {

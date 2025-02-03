@@ -2,11 +2,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { ProjectService } from './project.service';
 import { Project } from './project.model';
-import {
-  CreateProjectInput,
-  IsValidProjectInput,
-  UpsertProjectInput,
-} from './dto/project.input';
+import { CreateProjectInput, IsValidProjectInput } from './dto/project.input';
 import { UseGuards } from '@nestjs/common';
 import { ProjectGuard } from '../guard/project.guard';
 import { GetUserIdFromToken } from '../decorator/get-auth-token.decorator';
