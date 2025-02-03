@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import {
   FileIcon,
   ChevronDownIcon,
   ChevronRightIcon,
 } from '@radix-ui/react-icons';
-import { useProject } from '@/app/context/projectContext';
+import { ProjectContext } from './project-context';
 
-interface FileNodeType {
+export interface FileNodeType {
   name: string;
   type: 'file' | 'folder';
   children?: FileNodeType[];
@@ -22,7 +22,7 @@ const FileNode = ({
   fullPath: string;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { setFilePath, filePath } = useProject();
+  const { setFilePath, filePath } = useContext(ProjectContext);
 
   const toggleOpen = () => {
     if (node.type === 'folder') setIsOpen(!isOpen);
@@ -74,33 +74,19 @@ const FileNode = ({
 
 export default function FileStructure({
   isCollapsed,
+  filePath,
+  data,
 }: {
+  filePath: string;
   isCollapsed: boolean;
+  data: FileNodeType[];
 }) {
-  const { projectId, filePath } = useProject();
-  const [fileStructure, setStructure] = useState<FileNodeType[]>([]);
-
-  useEffect(() => {
-    async function fetchFiles() {
-      try {
-        const response = await fetch(`/api/project?id=${projectId}`);
-        const data = await response.json();
-        console.log('Fetched file structure:', data.res);
-        setStructure(data.res || []);
-      } catch (error) {
-        console.error('Error fetching file structure:', error);
-      }
-    }
-
-    fetchFiles();
-  }, [projectId]);
-
   return (
     <div className="relative">
       <div className="p-4">
         <h3 className="mb-2 font-bold">File Explorer</h3>
         {filePath && <div className="mt-4 p-2 text-sm">{filePath}</div>}
-        {fileStructure.map((node) => (
+        {data.map((node) => (
           <FileNode key={node.name} node={node} fullPath={node.name} />
         ))}
       </div>
