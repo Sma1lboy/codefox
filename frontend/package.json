@@ -15,12 +15,14 @@
     "generate:watch": "graphql-codegen --watch"
   },
   "dependencies": {
+    "codefox-common": "workspace:*",
     "@apollo/client": "^3.11.8",
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
     "@hookform/resolvers": "^3.9.0",
     "@langchain/community": "^0.3.1",
     "@langchain/core": "^0.3.3",
+    "@monaco-editor/react": "^4.6.0",
     "@nestjs/common": "^10.4.6",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-dialog": "^1.1.4",
@@ -32,6 +34,7 @@
     "@radix-ui/react-select": "^2.1.1",
     "@radix-ui/react-separator": "^1.1.1",
     "@radix-ui/react-slot": "^1.1.1",
+    "@radix-ui/react-tabs": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.6",
     "@types/dom-speech-recognition": "^0.0.4",
     "class-variance-authority": "^0.7.1",

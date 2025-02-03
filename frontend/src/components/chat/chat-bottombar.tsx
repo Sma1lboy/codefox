@@ -84,7 +84,7 @@ export default function ChatBottombar({
   }, []);
 
   return (
-    <div className="p-4 pb-7 flex justify-between w-full items-center gap-2">
+    <div className="p-4 pb-7 flex justify-between w-[full] items-center gap-2 m-[5%]">
       <AnimatePresence initial={false}>
         <div className="w-full items-center flex relative gap-2">
           <div className="flex flex-col relative w-full bg-accent dark:bg-card rounded-lg">

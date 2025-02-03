@@ -33,7 +33,7 @@ interface SidebarProps {
   onRefetch: () => void;
 }
 
-function CustomSidebar({
+function ChatsSiderBar({
   isCollapsed,
   isMobile,
   chatListUpdated,
@@ -134,7 +134,7 @@ function CustomSidebar({
   );
 }
 
-export default memo(CustomSidebar, (prevProps, nextProps) => {
+export default memo(ChatsSiderBar, (prevProps, nextProps) => {
   return (
     prevProps.isCollapsed === nextProps.isCollapsed &&
     prevProps.isMobile === nextProps.isMobile &&
