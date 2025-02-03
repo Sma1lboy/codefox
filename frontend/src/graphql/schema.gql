@@ -43,8 +43,20 @@ input CheckTokenInput {
   token: String!
 }
 
+input CreateProjectInput {
+  databaseType: String
+  description: String!
+  packages: [ProjectPackage!]!
+  projectName: String
+}
+
 """Date custom scalar type"""
 scalar Date
+
+input IsValidProjectInput {
+  projectId: ID!
+  projectPath: String
+}
 
 type LoginResponse {
   accessToken: String!
@@ -80,15 +92,13 @@ type Message {
 type Mutation {
   clearChatHistory(chatId: String!): Boolean!
   createChat(newChatInput: NewChatInput!): Chat!
+  createPorject(createProjectInput: CreateProjectInput!): Project!
   deleteChat(chatId: String!): Boolean!
   deleteProject(projectId: String!): Boolean!
   login(input: LoginUserInput!): LoginResponse!
   registerUser(input: RegisterUserInput!): User!
-  removePackageFromProject(packageId: String!, projectId: String!): Boolean!
   triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
-  updateProjectPath(newPath: String!, projectId: String!): Boolean!
-  upsertProject(upsertProjectInput: UpsertProjectInput!): Project!
 }
 
 input NewChatInput {
@@ -100,11 +110,16 @@ type Project {
   id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
-  path: String!
   projectName: String!
   projectPackages: [ProjectPackages!]
+  projectPath: String!
   updatedAt: Date!
   userId: ID!
+}
+
+input ProjectPackage {
+  name: String!
+  version: String!
 }
 
 type ProjectPackages {
@@ -113,8 +128,8 @@ type ProjectPackages {
   id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
-  project_id: ID!
   updatedAt: Date!
+  version: String!
 }
 
 type Query {
@@ -126,6 +141,7 @@ type Query {
   getProjectDetails(projectId: String!): Project!
   getUserChats: [Chat!]
   getUserProjects: [Project!]!
+  isValidateProject(isValidProject: IsValidProjectInput!): Boolean!
   logout: Boolean!
   me: User!
 }
@@ -154,12 +170,6 @@ type Subscription {
 input UpdateChatTitleInput {
   chatId: String!
   title: String
-}
-
-input UpsertProjectInput {
-  projectId: ID
-  projectName: String!
-  projectPackages: [String!]
 }
 
 type User {

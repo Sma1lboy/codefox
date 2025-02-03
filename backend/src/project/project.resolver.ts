@@ -2,7 +2,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { ProjectService } from './project.service';
 import { Project } from './project.model';
-import { UpsertProjectInput } from './dto/project.input';
+import { CreateProjectInput, IsValidProjectInput } from './dto/project.input';
 import { UseGuards } from '@nestjs/common';
 import { ProjectGuard } from '../guard/project.guard';
 import { GetUserIdFromToken } from '../decorator/get-auth-token.decorator';
@@ -28,11 +28,11 @@ export class ProjectsResolver {
   }
 
   @Mutation(() => Project)
-  async upsertProject(
+  async createPorject(
     @GetUserIdFromToken() userId: number,
-    @Args('upsertProjectInput') upsertProjectInput: UpsertProjectInput,
+    @Args('createProjectInput') createProjectInput: CreateProjectInput,
   ): Promise<Project> {
-    return this.projectsService.upsertProject(upsertProjectInput, userId);
+    return this.projectsService.createProject(createProjectInput, userId);
   }
 
   @Mutation(() => Boolean)
@@ -41,21 +41,11 @@ export class ProjectsResolver {
     return this.projectsService.deleteProject(projectId);
   }
 
-  @Mutation(() => Boolean)
-  @UseGuards(ProjectGuard)
-  async updateProjectPath(
-    @Args('projectId') projectId: string,
-    @Args('newPath') newPath: string,
+  @Query(() => Boolean)
+  async isValidateProject(
+    @GetUserIdFromToken() userId: number,
+    @Args('isValidProject') input: IsValidProjectInput,
   ): Promise<boolean> {
-    return this.projectsService.updateProjectPath(projectId, newPath);
-  }
-
-  @Mutation(() => Boolean)
-  @UseGuards(ProjectGuard)
-  async removePackageFromProject(
-    @Args('projectId') projectId: string,
-    @Args('packageId') packageId: string,
-  ): Promise<boolean> {
-    return this.projectsService.removePackageFromProject(projectId, packageId);
+    return this.projectsService.isValidProject(userId, input);
   }
 }
