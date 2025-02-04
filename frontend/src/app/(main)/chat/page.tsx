@@ -21,7 +21,7 @@ export default function Home() {
 
   const { models } = useModels();
   const [selectedModel, setSelectedModel] = useState<string>(
-    models[0] || 'gpt-4o'
+    'gpt-4o' 
   );
 
   const { refetchChats } = useChatList();
