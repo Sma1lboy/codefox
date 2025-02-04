@@ -33,13 +33,6 @@ import { FrontendCodeValidator } from './FrontendCodeValidator';
   BackendRequirementHandler,
   FileFAHandler,
 ])
-@BuildNode()
-@BuildNodeRequire([
-  UXSMSHandler,
-  UXDMDHandler,
-  BackendRequirementHandler,
-  FileFAHandler,
-])
 export class FrontendCodeHandler implements BuildHandler<string> {
   readonly logger: Logger = new Logger('FrontendCodeHandler');
   private virtualDir: VirtualDirectory;
@@ -119,6 +112,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
 
             // Gather direct dependencies
             const directDepsArray = fileInfos[file]?.dependsOn || [];
+
+            const directDepsPathString = directDepsArray.join(', ');
 
             // Read each dependency and append to dependenciesContext
             let dependenciesText = '';
@@ -227,6 +222,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
               queue.enqueue({
                 filePath: currentFullFilePath, // relative path
                 fileContents: generatedCode,
+                dependenciesPath: directDepsPathString,
               });
 
               // 7. Write the file to the filesystem

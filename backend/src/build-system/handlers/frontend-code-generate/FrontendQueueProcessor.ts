@@ -1,11 +1,14 @@
 import { Logger } from '@nestjs/common';
 import { FrontendCodeValidator } from './FrontendCodeValidator';
 import { CodeTaskQueue, FileTask } from './CodeTaskQueue';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import { createFileWithRetries } from 'src/build-system/utils/files';
 import { BuilderContext } from 'src/build-system/context';
-import { formatResponse } from 'src/build-system/utils/strings';
+import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { generateFileOperationPrompt } from './prompt';
+import { FileOperationManager } from './FileOperationManager';
+import { FixResponseParser } from './FixResponseParser';
 
 export class FrontendQueueProcessor {
   private logger = new Logger('FrontendQueueProcessor');
@@ -24,10 +27,13 @@ export class FrontendQueueProcessor {
       const task = this.queue.dequeue();
       if (!task) break;
 
+      // this.logger.debug('Task name: ' + task.filePath);
       await this.processSingleTask(task);
 
       this.logger.log(`Remaining tasks in queue: ${this.queue.size}`);
     }
+
+    // maybe need to requeue
 
     this.logger.log('All tasks processed successfully!');
   }
@@ -66,7 +72,17 @@ export class FrontendQueueProcessor {
       );
 
       // 3. Fix the file
-      await this.fixFileGeneric(task.filePath, validationResult.error ?? '');
+      try {
+        await this.fixFileGeneric(
+          task.filePath,
+          validationResult.error ?? '',
+          task.dependenciesPath,
+        );
+      } catch (error) {
+        this.logger.error(
+          'Fix File Generic failed, get error: ' + error.messages,
+        );
+      }
 
       // Now we loop back, re-run the build to see if it's fixed.
     }
@@ -87,23 +103,26 @@ export class FrontendQueueProcessor {
   /**
    * Fallback if you have no structured error details.
    */
-  private async fixFileGeneric(filePath: string, rawErrorText: string) {
+  private async fixFileGeneric(
+    filePath: string,
+    rawErrorText: string,
+    dependenciesPath: string,
+  ) {
     this.logger.log(`Generic fix attempt for file: ${filePath}`);
     const originalContent = readFileSync(filePath, 'utf-8');
 
-    const fixPrompt = `
-We have a TypeScript build failure. The raw error text is:
-\`\`\`
-${rawErrorText}
-\`\`\`
+    // const fixPrompt = generateFixPrompt(
+    //   filePath,
+    //   rawErrorText,
+    //   dependenciesPath,
+    //   originalContent,
+    // );
 
-The file content is:
-\`\`\`
-${originalContent}
-\`\`\`
+    const fixPrompt = generateFileOperationPrompt(filePath, dependenciesPath);
 
-Please fix the code so it compiles successfully. Return only the updated code wrapped in <GENERATE> tags.
-`;
+    const frontendPath = this.context.getGlobalContext('frontendPath');
+    const fileOperationManager = new FileOperationManager(frontendPath);
+    const parser = new FixResponseParser();
 
     //this.logger.log(fixPrompt);
 
@@ -113,17 +132,38 @@ Please fix the code so it compiles successfully. Return only the updated code wr
       {
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: 'You fix TypeScript code errors.' },
-          { role: 'user', content: fixPrompt },
+          { role: 'system', content: fixPrompt },
+          {
+            role: 'user',
+            content: ` Current file path that need to be fix: \n ${filePath}`,
+          },
+          { role: 'user', content: ` Error messages: \n ${rawErrorText}` },
+          {
+            role: 'user',
+            content: ` dependency file Paths: \n ${dependenciesPath}`,
+          },
+          {
+            role: 'user',
+            content: ` originalContent: \n ${originalContent}\n Now please start fix the problem and generate the result based on system prompt`,
+          },
         ],
       },
       'fix code (generic)',
       'FrontendQueueProcessor',
     );
 
+    this.logger.log('Fix Response: ' + fixResponse);
+    const parsed_fixResponse = removeCodeBlockFences(fixResponse);
+
+    // const { operations, generatedCode } = parser.parse(fixResponse);
+
+    // await fileOperationManager.executeOperations(operations);
+
     // this.logger.debug('Fix result' + fixResponse);
-    const updatedCode = formatResponse(fixResponse);
-    writeFileSync(filePath, updatedCode, 'utf-8');
+    // remeber to do a retry here
+    // const updatedCode = removeCodeBlockFences(fixResponse);
+
+    // writeFileSync(filePath, updatedCode, 'utf-8');
     this.logger.log(`Generic fix applied to file: ${filePath}`);
   }
 }

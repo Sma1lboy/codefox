@@ -1,6 +1,7 @@
 export interface FileTask {
   filePath: string; // e.g. "src/components/MyComponent.ts"
   fileContents: string; // the code you got from the LLM
+  dependenciesPath?: string;
 }
 
 export class CodeTaskQueue {

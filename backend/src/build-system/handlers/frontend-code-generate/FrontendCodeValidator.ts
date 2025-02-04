@@ -59,8 +59,7 @@ export class FrontendCodeValidator {
           //     `Build process exited with code ${code}. Error: ${errorMessage}`,
           //   );
 
-          this.logger.error(`Build process exited with code 0.`);
-          // this.logger.error(`Build process exited with code ${code}.`);
+          this.logger.error(`Build process exited with code ${code}.`);
           resolve({
             success: false,
             error: errorMessage,

@@ -90,3 +90,136 @@ export function generateCSSPrompt(
     </GENERATE>
   `;
 }
+
+export function generateFixPrompt(
+  filePath: string,
+  rawErrorText: string,
+  dependenciesPath: string,
+  originalContent: string,
+): string {
+  return `
+  You are an expert in React and TypeScript. Your goal is to automatically fix errors in a given TypeScript React file while ensuring correctness, maintainability, and best practices.
+**Instructions:**
+1. **Understand the error from \`rawErrorText\`** and determine what's wrong.
+2. **Analyze the dependencies** in \`dependenciesPath\` to ensure type compatibility.
+3. **Modify the original code** in \`originalCode\` while preserving its logic.
+4. **Ensure TypeScript type safety** and fix any possible runtime issues.
+5. **Return only the fixed code and a concise explanation of the changes.**
+
+**User Inputs:**
+- \`fileName\`: The file in which the error occurred.
+- \`rawErrorText\`: The error message received.
+- \`dependenciesPath\`: The full path to the dependencies directory.
+- \`originalCode\`: The actual code with the error.
+
+**Expected Output:**
+- Provide the **fixed code** without changing the structure unnecessarily.
+- Ensure the code is TypeScript-safe and follows React best practices.
+- Provide a **brief explanation** of the fixes and improvements.
+
+The file Name:
+
+  ${filePath}
+
+The raw Error Text:
+\`\`\`
+${rawErrorText}
+\`\`\`
+
+The dependency file path is:
+\`\`\`
+${dependenciesPath}
+\`\`\`
+
+The file content is:
+\`\`\`
+${originalContent}
+\`\`\`
+
+Please fix the code so it compiles successfully. Return only the updated code wrapped in <GENERATE></GENERATE>tags.
+  `;
+}
+
+export function generateFileOperationPrompt(
+  filePath: string,
+  dependenciesPath: string,
+): string {
+  return `
+  You are a senior developer fixing a TypeScript project. Analyze the error and choose appropriate file operations.
+
+Available Tools:
+1. WRITE - Modify/create files
+3. RENAME - RENAME the file
+
+**Instructions:**
+1. **Understand the error from \`error\`** and determine what's wrong.
+2. **Analyze the dependencies** in \`dependencies file path\` to ensure type compatibility.
+3. **Modify the original code** in \`Current file Code\` while preserving its logic.
+4. **Ensure TypeScript type safety** and fix any possible runtime issues.
+5. Error Analysis:
+   - Read the error message carefully
+   - Identify error type (compilation/runtime/naming)
+   - Check if error originates from current file or dependencies
+
+6. Dependency Check:
+   - Compare types/interfaces with dependencies in:
+   ${dependenciesPath}
+   - Ensure all imports match actual exports
+   - Verify type signatures align
+
+7. Modification Rules:
+   - Preserve original functionality
+   - Maintain TypeScript strict mode compliance
+   - Keep existing code style/conventions
+   - Add type guards where necessary
+   - Prefer generics over 'any'
+
+8. File Operations:
+   - Use RENAME only for extension issues (e.g., .js → .tsx)
+   - Use WRITE for code/content changes
+
+9. In <GENERATE> tag must include full code.
+
+**Some Common errors:**
+1. file name jsx problem should use index.tsx use RENAME Tool
+2. Typescript Type error should use WRITE Tool
+
+**safety check**
+1. Never delete files outside /src directory
+2. Keep original comments and JSDoc
+3. Maintain existing export patterns
+4. Verify all type references after changes
+
+**Expected Output format:**
+Respond format:
+
+<FIX>
+  <OPERATIONS>
+    <!-- List only 1 operation -->
+    <ACTION type="WRITE"/>
+    
+    <ACTION type="RENAME" path="src/new/path/here.tsx">
+      <ORIGINAL_PATH>"src/old/path/here.js"</ORIGINAL_PATH>
+    </ACTION>
+  </OPERATIONS>
+  <GENERATE>
+    <!-- Do not escape this code. It must be raw TypeScript -->
+  </GENERATE>
+</FIX>
+
+**Good Tool using Example:**
+Example Good WRITE Operation:
+<ACTION type="WRITE" />
+
+Example Good RENAME Operation:
+<ACTION type="RENAME" path="src/utils/helpers.tsx">
+  <ORIGINAL_PATH>src/utils/helpers.js</ORIGINAL_PATH>
+</ACTION>
+
+**Important Note**
+1.The output must be complete and strictly formatted.
+2.DO NOT EXPLAIN OUTSIDE THE <FIX> TAG.
+3.Ensure that TypeScript code inside <GENERATE> is NOT escaped.
+
+  `;
+}
