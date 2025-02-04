@@ -1,83 +1,99 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { Message } from '@/components/types';
-import { useModels } from '../hooks/useModels';
-import ChatContent from '@/components/chat/chat';
-import { useChatStream } from '../hooks/useChatStream';
-import { GET_CHAT_HISTORY } from '@/graphql/request';
-import { useQuery } from '@apollo/client';
-import { toast } from 'sonner';
-import { useChatList } from '../hooks/useChatList';
-import { EventEnum } from '@/components/enum';
+import { useState } from 'react';
+import { SendIcon, FileUp } from 'lucide-react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { SignUpModal } from '@/components/SignUpModal';
+import { SignInModal } from '@/components/SignInModal';
+import { AuthChoiceModal } from '@/components/AuthChoiceModal';
 
-export default function Home() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const [chatId, setChatId] = useState('');
-  // Core message states
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const formRef = useRef<HTMLFormElement>(null);
-
-  const { models } = useModels();
-  const [selectedModel, setSelectedModel] = useState<string>(
-    models[0] || 'gpt-4o'
-  );
-
-  const { refetchChats } = useChatList();
-
-  useEffect(() => {
-    setChatId(urlParams.get('id') || '');
-    refetchChats();
-    console.log(`update ${urlParams.get('id')}`);
-  }, [urlParams]);
-
-  useQuery(GET_CHAT_HISTORY, {
-    variables: { chatId },
-    onCompleted: (data) => {
-      if (data?.getChatHistory) {
-        setMessages(data.getChatHistory);
-      }
-    },
-    onError: (error) => {
-      toast.error('Failed to load chat history');
-    },
-  });
-
-  const updateChatId = () => {
-    setChatId('');
+export default function HomePage() {
+  const [message, setMessage] = useState('');
+  const [showSignUp, setShowSignUp] = useState(false);
+  const [showSignIn, setShowSignIn] = useState(false);
+  const [showAuthChoice, setShowAuthChoice] = useState(false);
+  const router = useRouter();
+  
+  const handleSignIn = (e: React.MouseEvent) => {
+    // router.push('/login');
+    e.preventDefault();
+    setShowSignIn(true);
   };
 
-  useEffect(() => {
-    window.addEventListener(EventEnum.NEW_CHAT, updateChatId);
+  const handleSignUp = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setShowSignUp(true);
+  };
 
-    return () => {
-      window.removeEventListener(EventEnum.NEW_CHAT, updateChatId);
-    };
-  }, []);
-
-  const { loadingSubmit, handleSubmit, handleInputChange, stop } =
-    useChatStream({
-      chatId,
-      input,
-      setInput,
-      setMessages,
-      selectedModel,
-    });
+  const handleMessageButtonClick = () => {
+    setShowAuthChoice(true);
+  };
 
   return (
-    <ChatContent
-      chatId={chatId}
-      setSelectedModel={setSelectedModel}
-      messages={messages}
-      input={input}
-      handleInputChange={handleInputChange}
-      handleSubmit={handleSubmit}
-      loadingSubmit={loadingSubmit}
-      stop={stop}
-      formRef={formRef}
-      setInput={setInput}
-      setMessages={setMessages}
-    />
+    <div className="flex flex-col items-center pt-20">
+      <div className="mb-6">
+        <Image
+          src="/codefox.svg"
+          alt="CodeFox Logo"
+          width={120}
+          height={120}
+          className="h-32 w-auto"
+        />
+      </div>
+
+      <div className="mb-16">
+        <p className="text-2xl font-medium text-indigo-600 dark:text-indigo-400">
+          CodeFox makes everything better
+        </p>
+      </div>
+
+      <div className="w-full max-w-3xl px-4">
+        <div className="relative">
+          <input
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Type your message..."
+            className="w-full py-24 px-6 pr-12 text-lg border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 align-top pt-6"
+          />
+          <button 
+            className="absolute right-3 bottom-3 p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors"
+            aria-label="Send message"
+            onClick={handleMessageButtonClick}
+          >
+            <SendIcon size={20} />
+          </button>
+          <button 
+            className="absolute left-3 bottom-3 flex items-center gap-2 text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
+            aria-label="Upload file"
+          >
+            <FileUp size={20} />
+            <span>Upload file</span>
+          </button>
+        </div>
+
+      </div>
+      <AuthChoiceModal 
+        isOpen={showAuthChoice}
+        onClose={() => setShowAuthChoice(false)}
+        onSignUpClick={() => {
+          setShowAuthChoice(false);
+          setShowSignUp(true);
+        }}
+        onSignInClick={() => {
+          setShowAuthChoice(false);
+          setShowSignIn(true);
+        }}
+      />
+      <SignUpModal 
+        isOpen={showSignUp}
+        onClose={() => setShowSignUp(false)}
+      />
+      <SignInModal 
+        isOpen={showSignIn}
+        onClose={() => setShowSignIn(false)}
+      />
+    </div>
   );
 }

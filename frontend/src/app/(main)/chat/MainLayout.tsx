@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
-import { useChatList } from '../hooks/useChatList';
+import { useChatList } from '../../hooks/useChatList';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import CustomSidebar from '@/components/sidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
