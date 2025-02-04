@@ -7,9 +7,12 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable';
+import { usePathname } from 'next/navigation';
+import CustomSidebar from '@/components/sidebar';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { ChatSideBar } from '@/components/sidebar';
-import { useChatList } from '../hooks/useChatList';
+
 import ProjectModal from '@/components/project-modal';
 import { GET_USER_PROJECTS } from '@/utils/requests';
 import { useQuery } from '@apollo/client';
@@ -17,6 +20,7 @@ import {
   ProjectContext,
   ProjectProvider,
 } from '@/components/code-engine/project-context';
+import { useChatList } from '@/app/hooks/useChatList';
 
 export default function MainLayout({
   children,

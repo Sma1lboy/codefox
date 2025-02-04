@@ -30,6 +30,8 @@ export class AuthService {
     private menuRepository: Repository<Menu>,
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
+    @InjectRepository(RefreshToken)
+    private refreshTokenRepository: Repository<RefreshToken>,
   ) {}
 
   async register(registerUserInput: RegisterUserInput): Promise<User> {
@@ -76,7 +78,18 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload);
     this.jwtCacheService.storeToken(accessToken);
 
-    return { accessToken };
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: '1d',
+    });
+
+    const refreshTokenEntity = this.refreshTokenRepository.create({
+      token: refreshToken,
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    });
+    await this.refreshTokenRepository.save(refreshTokenEntity);
+
+    return { accessToken, refreshToken };
   }
 
   async validateToken(params: CheckTokenInput): Promise<boolean> {
