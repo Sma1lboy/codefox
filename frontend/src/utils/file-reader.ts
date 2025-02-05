@@ -7,19 +7,8 @@ export class FileReader {
   private basePath: string;
 
   private constructor() {
-    let baseDir = getProjectsDir();
-
-    if (baseDir.includes('/.next/')) {
-      baseDir = baseDir.replace(/\/\.next[^\/]*/, '');
-    }
-
-    // TODO: don't use / directly
-    if (baseDir.includes('/frontend/server/.codefox/')) {
-      baseDir = baseDir.replace('/frontend/server/.codefox/', '/.codefox/');
-    }
-
+    const baseDir = getProjectsDir();
     this.basePath = path.resolve(baseDir);
-    console.log('FileReader initialized with basePath:', this.basePath);
   }
 
   public static getInstance(): FileReader {
@@ -40,7 +29,6 @@ export class FileReader {
 
   public async readFileContent(filePath: string): Promise<string> {
     const fullPath = path.join(this.basePath, filePath);
-    console.log('📄 Reading file:', fullPath);
 
     try {
       return await fs.readFile(fullPath, 'utf-8');
@@ -99,7 +87,6 @@ export class FileReader {
 
     try {
       const content = JSON.parse(newContent);
-      console.log(content);
       await fs.writeFile(fullPath, content, 'utf-8');
 
       console.log('[FileReader] File updated successfully');

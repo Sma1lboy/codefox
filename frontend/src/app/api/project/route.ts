@@ -12,7 +12,6 @@ export async function GET(req: Request) {
 
   try {
     const res = await fetchFileStructure(projectId);
-    console.log(res);
     return NextResponse.json({ res });
   } catch (error) {
     return NextResponse.json(
@@ -110,6 +109,5 @@ async function fetchFileStructure(projectId) {
     ...convertTreeToComplexTree(tree, 'root'),
   };
 
-  console.log('Final items:', JSON.stringify(items, null, 2));
   return items;
 }
