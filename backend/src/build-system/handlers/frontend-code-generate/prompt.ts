@@ -140,16 +140,13 @@ Please fix the code so it compiles successfully. Return only the updated code wr
   `;
 }
 
-export function generateFileOperationPrompt(
-  filePath: string,
-  dependenciesPath: string,
-): string {
+export function generateFileOperationPrompt(): string {
   return `
-  You are a senior developer fixing a TypeScript project. Analyze the error and choose appropriate file operations.
+  You are a senior developer fixing a TypeScript project. Analyze the error and choose appropriate file operations. Return a structured JSON object that contains the fix.
 
 Available Tools:
 1. WRITE - Modify/create files
-3. RENAME - RENAME the file
+2. RENAME - RENAME the file
 
 **Instructions:**
 1. **Understand the error from \`error\`** and determine what's wrong.
@@ -162,8 +159,7 @@ Available Tools:
    - Check if error originates from current file or dependencies
 
 6. Dependency Check:
-   - Compare types/interfaces with dependencies in:
-   ${dependenciesPath}
+   - Compare types/interfaces with dependencies file path provide by user.
    - Ensure all imports match actual exports
    - Verify type signatures align
 
@@ -178,48 +174,94 @@ Available Tools:
    - Use RENAME only for extension issues (e.g., .js → .tsx)
    - Use WRITE for code/content changes
 
-9. In <GENERATE> tag must include full code.
+9.generate must include full code.
 
-**Some Common errors:**
-1. file name jsx problem should use index.tsx use RENAME Tool
-2. Typescript Type error should use WRITE Tool
+
+**Common Errors & Fixes**
+    JSX file naming issue → Use the RENAME tool.
+    TypeScript type error → Use the WRITE tool.
 
 **safety check**
 1. Never delete files outside /src directory
-2. Keep original comments and JSDoc
 3. Maintain existing export patterns
 4. Verify all type references after changes
 
-**Expected Output format:**
-Respond format:
+**Output format:**
+Respond format in this json format:
 
-<FIX>
-  <OPERATIONS>
-    <!-- List only 1 operation -->
-    <ACTION type="WRITE"/>
-    
-    <ACTION type="RENAME" path="src/new/path/here.tsx">
-      <ORIGINAL_PATH>"src/old/path/here.js"</ORIGINAL_PATH>
-    </ACTION>
-  </OPERATIONS>
-  <GENERATE>
-    <!-- Do not escape this code. It must be raw TypeScript -->
-  </GENERATE>
-</FIX>
+{
+  "fix": {
+    "operations": [
+      {
+        "type": "WRITE"
+      },
+      {
+        "type": "RENAME",
+        "path": "src/new/path/here.tsx",
+        "original_path": "src/old/path/here.ts"
+      }
+    ],
+    "generate": " Code here "
+  }
+}
+
+
 
 **Good Tool using Example:**
 Example Good WRITE Operation:
-<ACTION type="WRITE" />
+{
+  "fix": {
+    "operations": [
+      {
+        "type": "WRITE"
+      }
+    ],
+    "generate": " Code here "
+  }
+}
 
 Example Good RENAME Operation:
-<ACTION type="RENAME" path="src/utils/helpers.tsx">
-  <ORIGINAL_PATH>src/utils/helpers.js</ORIGINAL_PATH>
-</ACTION>
+{
+  "fix": {
+    "operations": [
+      {
+        "type": "RENAME",
+        "path": "src/utils/helpers.tsx",
+        "original_path": "src/utils/helpers.js"
+      }
+    ],
+    "generate": ""
+  }
+}
 
 **Important Note**
 1.The output must be complete and strictly formatted.
-2.DO NOT EXPLAIN OUTSIDE THE <FIX> TAG.
-3.Ensure that TypeScript code inside <GENERATE> is NOT escaped.
+2.DO NOT EXPLAIN OUTSIDE JSON.
 
+  `;
+}
+
+export function generateCommonErrorPrompt(): string {
+  return `
+  1. JSX File Naming Issue → Use the RENAME Tool
+
+Error Example:
+  Cannot find namespace ''.ts
+  Operator '<' cannot be applied to types 'boolean' and 'RegExp'
+
+Fix:
+
+    Rename .ts to .tsx since JSX syntax requires TypeScript support.
+
+✅ Correct Fix Output:
+
+<FIX>
+  <OPERATIONS>
+    <ACTION type="RENAME" path="src/components/Button.tsx">
+      <ORIGINAL_PATH>src/components/Button.ts</ORIGINAL_PATH>
+    </ACTION>
+  </OPERATIONS>
+  <GENERATE></GENERATE>
+</FIX>
   `;
 }

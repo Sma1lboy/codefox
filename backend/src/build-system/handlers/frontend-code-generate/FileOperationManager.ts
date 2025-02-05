@@ -3,16 +3,9 @@ import { writeFile, rename } from 'fs/promises';
 import path from 'path';
 
 export interface FileOperation {
-  action: 'read' | 'write' | 'delete' | 'rename';
-  path: string;
-  originalPath: string;
-  content?: string;
-  purpose?: string;
-}
-
-export interface LLMFixResponse {
-  operations: FileOperation[];
-  reasoning: string;
+  action: 'write' | 'rename';
+  originalPath?: string;
+  renamePath?: string;
   code?: string;
 }
 
@@ -33,44 +26,47 @@ export class FileOperationManager {
     // }
 
     for (const op of operations) {
-      const resolvedPath = path.resolve(this.projectRoot, op.path);
-
       try {
         switch (op.action) {
           case 'write':
-            await this.handleWrite(resolvedPath, op);
+            await this.handleWrite(op);
             break;
           case 'rename':
-            await this.handleRename(resolvedPath, op);
+            await this.handleRename(op);
             break;
         }
       } catch (error) {
-        this.logger.error(`Failed to ${op.action} ${resolvedPath}: ${error}`);
+        this.logger.error(
+          `Failed to ${op.action} ${op.originalPath}: ${error}`,
+        );
         throw error;
       }
     }
   }
 
-  private async handleWrite(
-    filePath: string,
-    op: FileOperation,
-  ): Promise<void> {
-    this.safetyChecks(op);
-    await writeFile(filePath, op.content, 'utf-8');
+  private async handleWrite(op: FileOperation): Promise<void> {
+    const originalPath = path.resolve(this.projectRoot, op.originalPath);
+    this.safetyChecks(originalPath);
+
+    this.logger.debug('start update file to: ' + originalPath);
+    await writeFile(originalPath, op.code, 'utf-8');
   }
 
-  private async handleRename(
-    filePath: string,
-    op: FileOperation,
-  ): Promise<void> {
-    this.safetyChecks(op);
+  private async handleRename(op: FileOperation): Promise<void> {
+    const originalPath = path.resolve(this.projectRoot, op.originalPath);
+    const RenamePath = path.resolve(this.projectRoot, op.renamePath);
 
+    this.safetyChecks(originalPath);
+    this.safetyChecks(RenamePath);
+
+    this.logger.debug('start rename: ' + originalPath);
+    this.logger.debug('change to name: ' + RenamePath);
     // Perform the actual rename
-    await rename(op.originalPath, filePath);
+    await rename(originalPath, RenamePath);
   }
 
-  private safetyChecks(op: FileOperation) {
-    const targetPath = path.resolve(this.projectRoot, op.path); // Normalize path
+  private safetyChecks(filePath: string) {
+    const targetPath = path.resolve(this.projectRoot, filePath); // Normalize path
 
     // Prevent path traversal attacks
     if (!targetPath.startsWith(this.projectRoot)) {
@@ -78,7 +74,7 @@ export class FileOperationManager {
     }
 
     // Prevent package.json modifications
-    if (op.path.includes('package.json')) {
+    if (targetPath.includes('package.json')) {
       throw new Error('Modifying package.json requires special approval');
     }
 
@@ -87,13 +83,10 @@ export class FileOperationManager {
       throw new Error(`Attempted to access restricted path: ${targetPath}`);
     }
 
-    // Limit delete write operations
-    if (
-      (op.action === 'delete' || op.action === 'write') &&
-      !op.path.startsWith('src/')
-    ) {
-      throw new Error('Can only delete or write files in src/ directory');
-    }
+    // Limit write anddelete write operations
+    // if (path.startsWith('src/')) {
+    //   throw new Error('Can only delete or write files in src/ directory');
+    // }
   }
 
   private isPathAllowed(targetPath: string): boolean {

@@ -105,11 +105,6 @@ export class FrontendCodeHandler implements BuildHandler<string> {
               `Layer #${layerIndex + 1}, generating code for file: ${file}`,
             );
 
-            // Resolve the absolute path where this file should be generated
-            const currentFullFilePath = normalizePath(
-              path.resolve(frontendPath, file),
-            ); // src
-
             // Gather direct dependencies
             const directDepsArray = fileInfos[file]?.dependsOn || [];
 
@@ -220,18 +215,10 @@ export class FrontendCodeHandler implements BuildHandler<string> {
 
               // 7. Add the file to the queue for writing
               queue.enqueue({
-                filePath: currentFullFilePath, // relative path
+                filePath: file, // relative path
                 fileContents: generatedCode,
                 dependenciesPath: directDepsPathString,
               });
-
-              // 7. Write the file to the filesystem
-              // await createFileWithRetries(
-              //   currentFullFilePath,
-              //   generatedCode,
-              //   maxRetries,
-              //   delayMs,
-              // );
             } catch (err) {
               this.logger.error(`Error generating code for ${file}:`, err);
               // FIXME: remove this later
@@ -271,6 +258,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         validator,
         queue,
         context,
+        frontendPath,
       );
       await queueProcessor.processAllTasks();
 
