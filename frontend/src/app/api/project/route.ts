@@ -24,7 +24,6 @@ export async function GET(req: Request) {
 async function fetchFileStructure(projectId) {
   const reader = FileReader.getInstance();
   const res = await reader.getAllPaths(projectId);
-
   if (!res || res.length === 0) {
     return {
       root: {
@@ -42,7 +41,6 @@ async function fetchFileStructure(projectId) {
   const cleanedPaths = res.map((path) => path.replace(projectPrefix, ''));
 
   const fileRegex = /\.[a-z0-9]+$/i;
-
   function buildTree(paths) {
     const tree = {};
 
@@ -68,7 +66,6 @@ async function fetchFileStructure(projectId) {
 
     return tree;
   }
-
   function convertTreeToComplexTree(tree, parentId = 'root') {
     const items = {};
 

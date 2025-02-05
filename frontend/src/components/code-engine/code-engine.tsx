@@ -1,5 +1,4 @@
 'use client';
-
 import { Button } from '@/components/ui/button';
 import Editor from '@monaco-editor/react';
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
@@ -36,7 +35,6 @@ export function CodeEngine() {
   const [activeTab, setActiveTab] = useState<'preview' | 'code' | 'console'>(
     'code'
   );
-
   // Callback: Handle editor mount
   const handleEditorMount = (editorInstance) => {
     editorRef.current = editorInstance;
@@ -114,7 +112,6 @@ export function CodeEngine() {
     setCode(value);
     setSaving(true);
   };
-
   // Responsive toolbar component for header tabs and buttons
   const ResponsiveToolbar = () => {
     const containerRef = useRef(null);
@@ -306,7 +303,6 @@ export function CodeEngine() {
     </div>
   );
 }
-
 // SaveChangesBar component for showing unsaved changes status
 const SaveChangesBar = ({ saving, onSave, onReset }) => {
   return (

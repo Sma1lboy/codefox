@@ -107,11 +107,10 @@ export class BuilderContext {
     this.globalContext.set('databaseType', sequence.databaseType || 'SQLite');
 
     const projectUUIDPath =
-            new Date().toISOString().slice(0, 18).replaceAll(/:/g, '-') +
-        '-' +
-        uuidv4();
+      new Date().toISOString().slice(0, 18).replaceAll(/:/g, '-') +
+      '-' +
+      uuidv4();
     this.globalContext.set('projectUUID', projectUUIDPath);
-
 
     if (process.env.DEBUG) {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
