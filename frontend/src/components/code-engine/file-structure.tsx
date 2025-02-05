@@ -1,12 +1,12 @@
 'use client';
 
-import { useContext, useEffect, useState } from 'react';
+import { useContext } from 'react';
 import {
-  UncontrolledTreeEnvironment,
-  Tree,
   StaticTreeDataProvider,
+  Tree,
   TreeItem,
   TreeItemIndex,
+  UncontrolledTreeEnvironment,
 } from 'react-complex-tree';
 import 'react-complex-tree/lib/style-modern.css';
 import { ProjectContext } from './project-context';
@@ -16,41 +16,12 @@ export interface FileNodeType {
   type: 'file' | 'folder';
   children?: FileNodeType[];
 }
-
-const convertToTreeData = (
-  nodes: FileNodeType[],
-  parentId: string | null = null
-) => {
-  const treeItems: Record<string, any> = {};
-
-  nodes.forEach((node, index) => {
-    const nodeId = parentId ? `${parentId}/${node.name}` : node.name;
-
-    treeItems[nodeId] = {
-      index,
-      data: node,
-      isFolder: node.type === 'folder',
-      children: node.children
-        ? node.children.map((child) => `${nodeId}/${child.name}`)
-        : [],
-    };
-
-    if (node.children) {
-      Object.assign(treeItems, convertToTreeData(node.children, nodeId));
-    }
-  });
-
-  return treeItems;
-};
-
 export default function FileStructure({
-  isCollapsed,
   filePath,
   data,
 }: {
   filePath: string;
-  isCollapsed: boolean;
-  data: Record<TreeItemIndex, TreeItem<any>>;
+  data: Record<TreeItemIndex, TreeItem<string>>;
 }) {
   const { setFilePath } = useContext(ProjectContext);
 
@@ -69,7 +40,6 @@ export default function FileStructure({
         viewState={{}}
         onSelectItems={(items) => {
           setFilePath(items[0].toString().replace(/^root\//, ''));
-          console.log(items);
         }}
         renderItem={({ item, depth, children, title, context, arrow }) => {
           const InteractiveComponent = context.isRenaming ? 'div' : 'button';
