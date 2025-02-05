@@ -17,6 +17,13 @@ import { CheckTokenInput } from './dto/check-token.input';
 import { JwtCacheService } from 'src/auth/jwt-cache.service';
 import { Menu } from './menu/menu.model';
 import { Role } from './role/role.model';
+import { RefreshToken } from './refresh-token/refresh-token.model';
+import { randomUUID } from 'crypto';
+
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+}
 
 @Injectable()
 export class AuthService {
@@ -57,7 +64,7 @@ export class AuthService {
 
   async login(
     loginUserInput: LoginUserInput,
-  ): Promise<{ accessToken: string }> {
+  ): Promise<AuthResponse> {
     const { username, password } = loginUserInput;
 
     const user = await this.userRepository.findOne({
@@ -78,18 +85,22 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload);
     this.jwtCacheService.storeToken(accessToken);
 
-    const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '1d',
-    });
+    const refreshToken = await this.createRefreshToken(user);
 
-    const refreshTokenEntity = this.refreshTokenRepository.create({
-      token: refreshToken,
-      userId: user.id,
+    return { 
+      accessToken, 
+      refreshToken: refreshToken.token 
+    };
+  }
+
+  private async createRefreshToken(user: User): Promise<RefreshToken> {
+    const refreshToken = this.refreshTokenRepository.create({
+      user,
+      token: randomUUID(),
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     });
-    await this.refreshTokenRepository.save(refreshTokenEntity);
 
-    return { accessToken, refreshToken };
+    return this.refreshTokenRepository.save(refreshToken);
   }
 
   async validateToken(params: CheckTokenInput): Promise<boolean> {
