@@ -1,4 +1,3 @@
-
 // app/page.tsx or components/Home.tsx
 'use client';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
