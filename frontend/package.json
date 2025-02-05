@@ -36,6 +36,7 @@
     "@radix-ui/react-slot": "^1.1.1",
     "@radix-ui/react-tabs": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.6",
+    "@radix-ui/react-visually-hidden": "^1.1.1",
     "@types/dom-speech-recognition": "^0.0.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
