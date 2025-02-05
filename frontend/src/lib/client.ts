@@ -15,6 +15,7 @@ import { getMainDefinition } from '@apollo/client/utilities';
 
 // HTTP Link
 const httpLink = new HttpLink({
+
   uri: process.env.NEXT_PUBLIC_GRAPHQL_URL,
   headers: {
     'Access-Control-Allow-Credentials': 'true',
