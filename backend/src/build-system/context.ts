@@ -97,7 +97,7 @@ export class BuilderContext {
     this.handlerManager = BuildHandlerManager.getInstance();
     this.model = OpenAIModelProvider.getInstance();
     this.monitor = BuildMonitor.getInstance();
-    this.logger = new Logger(`builder-context-${id}`);
+    this.logger = new Logger(`builder-context-${id ?? sequence.id}`);
     this.virtualDirectory = new VirtualDirectory();
 
     // Initialize global context with default project values
@@ -105,10 +105,13 @@ export class BuilderContext {
     this.globalContext.set('description', sequence.description || '');
     this.globalContext.set('platform', 'web'); // Default platform is 'web'
     this.globalContext.set('databaseType', sequence.databaseType || 'SQLite');
-    this.globalContext.set(
-      'projectUUID',
-      new Date().toISOString().slice(0, 10).replace(/:/g, '-') + '-' + uuidv4(),
-    );
+
+    const projectUUIDPath =
+            new Date().toISOString().slice(0, 18).replaceAll(/:/g, '-') +
+        '-' +
+        uuidv4();
+    this.globalContext.set('projectUUID', projectUUIDPath);
+
 
     if (process.env.DEBUG) {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -311,7 +314,7 @@ export class BuilderContext {
    * @returns A promise that resolves when the entire build sequence is complete.
    */
 
-  async execute(): Promise<void> {
+  async execute(): Promise<string> {
     try {
       const nodes = this.sequence.nodes;
       let currentIndex = 0;
@@ -368,6 +371,7 @@ export class BuilderContext {
         await Promise.all(Array.from(runningPromises));
         await new Promise((resolve) => setTimeout(resolve, this.POLL_INTERVAL));
       }
+      return this.getGlobalContext('projectUUID');
     } catch (error) {
       this.writeLog('execution-error.json', {
         error: error.message,

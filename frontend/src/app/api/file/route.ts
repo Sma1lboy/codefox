@@ -49,7 +49,6 @@ export async function GET(req: Request) {
     const content = await reader.readFileContent(filePath);
     const fileType = getFileType(filePath);
     const res = NextResponse.json({ filePath, content, type: fileType });
-    console.log(res);
     return res;
   } catch (error) {
     return NextResponse.json({ error: 'Failed to read file' }, { status: 500 });

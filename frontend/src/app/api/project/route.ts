@@ -12,7 +12,6 @@ export async function GET(req: Request) {
 
   try {
     const res = await fetchFileStructure(projectId);
-    console.log(res);
     return NextResponse.json({ res });
   } catch (error) {
     return NextResponse.json(
@@ -25,11 +24,23 @@ export async function GET(req: Request) {
 async function fetchFileStructure(projectId) {
   const reader = FileReader.getInstance();
   const res = await reader.getAllPaths(projectId);
+  if (!res || res.length === 0) {
+    return {
+      root: {
+        index: 'root',
+        isFolder: true,
+        children: [],
+        data: 'Root',
+        canMove: true,
+        canRename: true,
+      },
+    };
+  }
 
   const projectPrefix = res[0].split('/')[0] + '/';
-
   const cleanedPaths = res.map((path) => path.replace(projectPrefix, ''));
 
+  const fileRegex = /\.[a-z0-9]+$/i;
   function buildTree(paths) {
     const tree = {};
 
@@ -38,32 +49,62 @@ async function fetchFileStructure(projectId) {
       let node = tree;
 
       parts.forEach((part, index) => {
+        const isFile = fileRegex.test(part);
+
         if (!node[part]) {
-          node[part] = index === parts.length - 1 ? null : {};
+          node[part] = {
+            __isFolder: !isFile,
+            children: !isFile ? {} : undefined,
+          };
         }
-        node = node[part];
+
+        if (!isFile) {
+          node = node[part].children;
+        }
       });
     });
 
     return tree;
   }
+  function convertTreeToComplexTree(tree, parentId = 'root') {
+    const items = {};
 
-  function convertTreeToList(tree) {
-    return Object.keys(tree).map((name) => {
-      if (tree[name]) {
-        return {
-          name,
-          type: 'folder',
-          children: convertTreeToList(tree[name]),
-        };
-      } else {
-        return { name, type: 'file' };
+    Object.keys(tree).forEach((name, index) => {
+      const id = `${parentId}/${name}`;
+      const isFolder = tree[name].__isFolder;
+
+      items[id] = {
+        index: id,
+        canMove: true,
+        isFolder,
+        children: isFolder
+          ? Object.keys(tree[name].children).map((child) => `${id}/${child}`)
+          : [],
+        data: name,
+        canRename: true,
+      };
+
+      if (isFolder) {
+        Object.assign(items, convertTreeToComplexTree(tree[name].children, id));
       }
     });
+
+    return items;
   }
 
   const tree = buildTree(cleanedPaths);
-  const fileStructure = convertTreeToList(tree);
 
-  return fileStructure;
+  const items = {
+    root: {
+      index: 'root',
+      isFolder: true,
+      canMove: true,
+      canRename: true,
+      children: Object.keys(tree).map((name) => `root/${name}`),
+      data: 'Root',
+    },
+    ...convertTreeToComplexTree(tree, 'root'),
+  };
+
+  return items;
 }

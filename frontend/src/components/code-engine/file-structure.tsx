@@ -1,11 +1,14 @@
 'use client';
 
-import { useContext, useEffect, useState } from 'react';
+import { useContext } from 'react';
 import {
-  FileIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-} from '@radix-ui/react-icons';
+  StaticTreeDataProvider,
+  Tree,
+  TreeItem,
+  TreeItemIndex,
+  UncontrolledTreeEnvironment,
+} from 'react-complex-tree';
+import 'react-complex-tree/lib/style-modern.css';
 import { ProjectContext } from './project-context';
 
 export interface FileNodeType {
@@ -13,83 +16,76 @@ export interface FileNodeType {
   type: 'file' | 'folder';
   children?: FileNodeType[];
 }
-
-const FileNode = ({
-  node,
-  fullPath,
-}: {
-  node: FileNodeType;
-  fullPath: string;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const { setFilePath, filePath } = useContext(ProjectContext);
-
-  const toggleOpen = () => {
-    if (node.type === 'folder') setIsOpen(!isOpen);
-  };
-
-  const handleChangeFile = () => {
-    if (node.type === 'file') setFilePath(fullPath);
-  };
-
-  return (
-    <div className="ml-4 overflow-hidden">
-      {node.type === 'folder' ? (
-        <div
-          className="cursor-pointer flex items-center min-h-[24px] hover:text-blue-500"
-          onClick={toggleOpen}
-        >
-          {isOpen ? (
-            <ChevronDownIcon className="mr-2 w-5 h-5" />
-          ) : (
-            <ChevronRightIcon className="mr-2 w-5 h-5" />
-          )}
-          {node.name}
-        </div>
-      ) : (
-        <div
-          className={`flex items-center cursor-pointer min-h-[24px] transition-colors duration-200 ${
-            filePath === fullPath ? 'text-blue-500 font-bold' : ''
-          }`}
-          onClick={handleChangeFile}
-        >
-          <FileIcon className="mr-2 w-4 h-4" /> {node.name}
-        </div>
-      )}
-
-      {isOpen && node.children && (
-        <div className="ml-4 border-l pl-2">
-          {node.children.map((child) => (
-            <FileNode
-              key={`${fullPath}/${child.name}`}
-              node={child}
-              fullPath={`${fullPath}/${child.name}`}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
 export default function FileStructure({
-  isCollapsed,
   filePath,
   data,
 }: {
   filePath: string;
-  isCollapsed: boolean;
-  data: FileNodeType[];
+  data: Record<TreeItemIndex, TreeItem<string>>;
 }) {
+  const { setFilePath } = useContext(ProjectContext);
+
+  const dataProvider = new StaticTreeDataProvider(data, (item, newName) => ({
+    ...item,
+    data: newName,
+  }));
   return (
-    <div className="relative">
-      <div className="p-4">
-        <h3 className="mb-2 font-bold">File Explorer</h3>
-        {filePath && <div className="mt-4 p-2 text-sm">{filePath}</div>}
-        {data.map((node) => (
-          <FileNode key={node.name} node={node} fullPath={node.name} />
-        ))}
-      </div>
+    <div className="relative p-4 prose dark:prose-invert">
+      <h3 className="mb-2 font-bold">File Explorer</h3>
+      {filePath && <div className="mt-4 p-2 text-sm">{filePath}</div>}
+
+      <UncontrolledTreeEnvironment
+        dataProvider={dataProvider}
+        getItemTitle={(item) => item.data}
+        viewState={{}}
+        onSelectItems={(items) => {
+          setFilePath(items[0].toString().replace(/^root\//, ''));
+        }}
+        renderItem={({ item, depth, children, title, context, arrow }) => {
+          const InteractiveComponent = context.isRenaming ? 'div' : 'button';
+          const type = context.isRenaming ? undefined : 'button';
+          return (
+            <li
+              {...(context.itemContainerWithChildrenProps as any)}
+              className="rct-tree-item-li"
+            >
+              <div
+                {...(context.itemContainerWithoutChildrenProps as any)}
+                style={{ paddingLeft: `${(depth + 1) * 4}px` }}
+                className={[
+                  'rct-tree-item-title-container group',
+                  item.isFolder && 'rct-tree-item-title-container-isFolder',
+                  context.isSelected &&
+                    'rct-tree-item-title-container-selected',
+                  context.isExpanded &&
+                    'rct-tree-item-title-container-expanded',
+                  context.isFocused && 'rct-tree-item-title-container-focused',
+                  context.isDraggingOver &&
+                    'rct-tree-item-title-container-dragging-over',
+                  context.isSearchMatching &&
+                    'rct-tree-item-title-container-search-match',
+                ].join(' ')}
+              >
+                {arrow}
+                <InteractiveComponent
+                  type={type}
+                  {...(context.interactiveElementProps as any)}
+                  className={[
+                    'rct-tree-item-button transition-colors duration-200',
+                    'dark:text-white dark:group-hover:text-black',
+                    context.isSelected && 'dark:!bg-gray-700 dark:!text-white',
+                  ].join(' ')}
+                >
+                  {title}
+                </InteractiveComponent>
+              </div>
+              {children}
+            </li>
+          );
+        }}
+      >
+        <Tree treeId="fileTree" rootItem="root" />
+      </UncontrolledTreeEnvironment>
     </div>
   );
 }

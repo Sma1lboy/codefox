@@ -1,38 +1,25 @@
 'use client';
-
-import { useContext, useRef, useEffect, useState } from 'react';
-import Editor from '@monaco-editor/react';
-import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import Editor from '@monaco-editor/react';
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
-import FileStructure, { FileNodeType } from './file-structure';
-import { ProjectContext } from './project-context';
-
-// Import icon components for header tabs and explorer toggle
+import { motion } from 'framer-motion';
 import {
-  Eye,
   Code as CodeIcon,
-  Terminal,
+  Copy,
+  Eye,
   GitFork,
   Share2,
-  Copy,
-  ChevronLeft,
-  ChevronRight,
+  Terminal,
 } from 'lucide-react';
-import FileExplorerButton from './file-explorer-button';
 import { useTheme } from 'next-themes';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { TreeItem, TreeItemIndex } from 'react-complex-tree';
+import FileExplorerButton from './file-explorer-button';
+import FileStructure from './file-structure';
+import { ProjectContext } from './project-context';
 
 export function CodeEngine() {
+  // Initialize state, refs, and context
   const editorRef = useRef(null);
   const { projectId, filePath } = useContext(ProjectContext);
   const [preCode, setPrecode] = useState('// some comment');
@@ -41,22 +28,21 @@ export function CodeEngine() {
   const [type, setType] = useState('javascript');
   const [isLoading, setIsLoading] = useState(false);
   const [isExplorerCollapsed, setIsExplorerCollapsed] = useState(false);
-  const [fileStructureData, setFileStructureData] = useState<FileNodeType[]>(
-    []
-  );
+  const [fileStructureData, setFileStructureData] = useState<
+    Record<TreeItemIndex, TreeItem<any>>
+  >({});
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState<'preview' | 'code' | 'console'>(
     'code'
   );
-
-  // Handle mounting of the editor.
+  // Callback: Handle editor mount
   const handleEditorMount = (editorInstance) => {
     editorRef.current = editorInstance;
-    // Set the editor DOM node's position for layout control.
+    // Set the editor DOM node's position for layout control
     editorInstance.getDomNode().style.position = 'absolute';
   };
 
-  // Fetch file content when filePath or projectId changes.
+  // Effect: Fetch file content when filePath or projectId changes
   useEffect(() => {
     async function getCode() {
       try {
@@ -75,13 +61,13 @@ export function CodeEngine() {
     getCode();
   }, [filePath, projectId]);
 
-  // Fetch file structure when projectId changes.
+  // Effect: Fetch file structure when projectId changes
   useEffect(() => {
     async function fetchFiles() {
       try {
         const response = await fetch(`/api/project?id=${projectId}`);
         const data = await response.json();
-        setFileStructureData(data.res || []);
+        setFileStructureData(data.res || {});
       } catch (error) {
         console.error('Error fetching file structure:', error);
       }
@@ -89,12 +75,14 @@ export function CodeEngine() {
     fetchFiles();
   }, [projectId]);
 
+  // Reset code to previous state and update editor
   const handleReset = () => {
     setCode(preCode);
     editorRef.current?.setValue(preCode);
     setSaving(false);
   };
 
+  // Update file content on the server
   const updateCode = async (value) => {
     try {
       const response = await fetch('/api/file', {
@@ -112,91 +100,142 @@ export function CodeEngine() {
     }
   };
 
+  // Save the new code and update the previous state
   const handleSave = () => {
     setSaving(false);
     setPrecode(newCode);
     updateCode(newCode);
   };
 
+  // Update code in state and mark as saving
   const updateSavingStatus = (value) => {
     setCode(value);
     setSaving(true);
   };
+  // Responsive toolbar component for header tabs and buttons
+  const ResponsiveToolbar = () => {
+    const containerRef = useRef(null);
+    const [containerWidth, setContainerWidth] = useState(700);
+    const [visibleTabs, setVisibleTabs] = useState(3);
+    const [compactIcons, setCompactIcons] = useState(false);
 
-  return (
-    <div className="flex flex-col h-full relative">
-      {/* Header Bar */}
-      <div className="flex items-center justify-between p-2 border-b">
-        {/* Left Section: Tab triggers and explorer toggle */}
+    // Observe container width changes
+    useEffect(() => {
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setContainerWidth(entry.contentRect.width);
+        }
+      });
+
+      if (containerRef.current) {
+        observer.observe(containerRef.current);
+      }
+      return () => observer.disconnect();
+    }, []);
+
+    // Adjust visible tabs and icon style based on container width
+    useEffect(() => {
+      if (containerWidth > 650) {
+        setVisibleTabs(3);
+        setCompactIcons(false);
+      } else if (containerWidth > 550) {
+        setVisibleTabs(2);
+        setCompactIcons(false);
+      } else if (containerWidth > 450) {
+        setVisibleTabs(1);
+        setCompactIcons(true);
+      } else {
+        setVisibleTabs(0);
+        setCompactIcons(true);
+      }
+    }, [containerWidth]);
+
+    return (
+      <div
+        ref={containerRef}
+        className="flex items-center justify-between p-2 border-b w-full"
+      >
         <div className="flex items-center space-x-2">
           <Button
             variant={activeTab === 'preview' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('preview')}
             className="text-sm"
+            onClick={() => setActiveTab('preview')}
           >
             <Eye className="w-4 h-4 mr-1" />
             Preview
           </Button>
-          <Button
-            variant={activeTab === 'code' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('code')}
-            className="text-sm"
-          >
-            <CodeIcon className="w-4 h-4 mr-1" />
-            Code
-          </Button>
-          <Button
-            variant={activeTab === 'console' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('console')}
-            className="text-sm"
-          >
-            <Terminal className="w-4 h-4 mr-1" />
-            Console
-          </Button>
-          {/* {activeTab === 'code' && (
+          {visibleTabs >= 2 && (
+            <Button
+              variant={activeTab === 'code' ? 'default' : 'outline'}
+              className="text-sm"
+              onClick={() => setActiveTab('code')}
+            >
+              <CodeIcon className="w-4 h-4 mr-1" />
+              Code
+            </Button>
+          )}
+          {visibleTabs >= 3 && (
+            <Button
+              variant={activeTab === 'console' ? 'default' : 'outline'}
+              className="text-sm"
+              onClick={() => setActiveTab('console')}
+            >
+              <Terminal className="w-4 h-4 mr-1" />
+              Console
+            </Button>
+          )}
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2">
             <Button
               variant="ghost"
-              onClick={() => setIsExplorerCollapsed(!isExplorerCollapsed)}
-              className="ml-2"
+              className={`p-0 ${compactIcons ? 'hidden' : 'block'}`}
             >
-              {isExplorerCollapsed ? (
-                <ChevronRight className="w-5 h-5" />
-              ) : (
-                <ChevronLeft className="w-5 h-5" />
-              )}
-            </Button>
-          )} */}
-        </div>
-        {/* Right Section: Icon buttons and text buttons */}
-        <div className="flex items-center space-x-4">
-          {/* Icon Buttons */}
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" className="p-0">
               <GitFork className="w-5 h-5" />
             </Button>
-            <Button variant="ghost" className="p-0">
+            <Button
+              variant="ghost"
+              className={`p-0 ${compactIcons ? 'hidden' : 'block'}`}
+            >
               <Share2 className="w-5 h-5" />
             </Button>
-            <Button variant="ghost" className="p-0">
+            <Button
+              variant="ghost"
+              className={`p-0 ${compactIcons ? 'hidden' : 'block'}`}
+            >
               <Copy className="w-5 h-5" />
             </Button>
           </div>
-          {/* Text Buttons */}
           <div className="flex items-center space-x-2">
-            <Button variant="outline" className="text-sm">
-              Supabase
-            </Button>
-            <Button variant="outline" className="text-sm">
-              Publish
-            </Button>
-            <Button variant="outline" className="text-sm">
-              Deploy
-            </Button>
+            {!compactIcons && (
+              <>
+                <Button variant="outline" className="text-sm">
+                  Supabase
+                </Button>
+                <Button variant="outline" className="text-sm">
+                  Publish
+                </Button>
+              </>
+            )}
+            {compactIcons && (
+              <Button variant="outline" className="p-2">
+                <Share2 className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
+    );
+  };
 
-      {/* Content Area */}
+  // Render the CodeEngine layout
+  return (
+    <div className="flex flex-col h-full relative">
+      {/* Header Bar */}
+      <ResponsiveToolbar />
+
+      {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
         {activeTab === 'code' ? (
           <>
@@ -209,11 +248,7 @@ export function CodeEngine() {
               transition={{ duration: 0.3, ease: 'easeInOut' }}
               className="overflow-y-auto border-r"
             >
-              <FileStructure
-                isCollapsed={isExplorerCollapsed}
-                data={fileStructureData}
-                filePath={filePath}
-              />
+              <FileStructure data={fileStructureData} filePath={filePath} />
             </motion.div>
             <div className="flex-1 relative">
               <Editor
@@ -227,9 +262,9 @@ export function CodeEngine() {
                 onMount={handleEditorMount}
                 options={{
                   fontSize: 14,
-                  minimap: {
-                    enabled: false,
-                  },
+                  minimap: { enabled: false },
+                  wordWrap: 'on',
+                  wrappingStrategy: 'advanced',
                   scrollbar: {
                     useShadows: false,
                     vertical: 'visible',
@@ -258,7 +293,7 @@ export function CodeEngine() {
         />
       )}
 
-      {/* close explored bar */}
+      {/* File Explorer Toggle Button */}
       {activeTab === 'code' && (
         <FileExplorerButton
           isExplorerCollapsed={isExplorerCollapsed}
@@ -268,7 +303,7 @@ export function CodeEngine() {
     </div>
   );
 }
-
+// SaveChangesBar component for showing unsaved changes status
 const SaveChangesBar = ({ saving, onSave, onReset }) => {
   return (
     saving && (
