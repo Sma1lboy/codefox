@@ -124,79 +124,124 @@ export function CodeEngine() {
     setSaving(true);
   };
 
-  return (
-    <div className="flex flex-col h-full relative">
-      {/* Header Bar */}
-      <div className="flex items-center justify-between p-2 border-b">
-        {/* Left Section: Tab triggers and explorer toggle */}
+  const ResponsiveToolbar = () => {
+    const containerRef = useRef(null);
+    const [containerWidth, setContainerWidth] = useState(700);
+    const [visibleTabs, setVisibleTabs] = useState(3);
+    const [compactIcons, setCompactIcons] = useState(false);
+
+    useEffect(() => {
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setContainerWidth(entry.contentRect.width);
+        }
+      });
+
+      if (containerRef.current) {
+        observer.observe(containerRef.current);
+      }
+
+      return () => observer.disconnect();
+    }, []);
+
+    useEffect(() => {
+      if (containerWidth > 650) {
+        setVisibleTabs(3);
+        setCompactIcons(false);
+      } else if (containerWidth > 550) {
+        setVisibleTabs(2);
+        setCompactIcons(false);
+      } else if (containerWidth > 450) {
+        setVisibleTabs(1);
+        setCompactIcons(true);
+      } else {
+        setVisibleTabs(0);
+        setCompactIcons(true);
+      }
+    }, [containerWidth]);
+
+    return (
+      <div
+        ref={containerRef}
+        className="flex items-center justify-between p-2 border-b w-full"
+      >
         <div className="flex items-center space-x-2">
           <Button
-            variant={activeTab === 'preview' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('preview')}
+            variant={activeTab === 'console' ? 'default' : 'outline'}
             className="text-sm"
           >
             <Eye className="w-4 h-4 mr-1" />
             Preview
           </Button>
-          <Button
-            variant={activeTab === 'code' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('code')}
-            className="text-sm"
-          >
-            <CodeIcon className="w-4 h-4 mr-1" />
-            Code
-          </Button>
-          <Button
-            variant={activeTab === 'console' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('console')}
-            className="text-sm"
-          >
-            <Terminal className="w-4 h-4 mr-1" />
-            Console
-          </Button>
-          {/* {activeTab === 'code' && (
+          {visibleTabs >= 2 && (
+            <Button
+              variant={activeTab === 'console' ? 'default' : 'outline'}
+              className="text-sm"
+            >
+              <CodeIcon className="w-4 h-4 mr-1" />
+              Code
+            </Button>
+          )}
+          {visibleTabs >= 3 && (
+            <Button
+              variant={activeTab === 'console' ? 'default' : 'outline'}
+              className="text-sm"
+            >
+              <Terminal className="w-4 h-4 mr-1" />
+              Console
+            </Button>
+          )}
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2">
             <Button
               variant="ghost"
-              onClick={() => setIsExplorerCollapsed(!isExplorerCollapsed)}
-              className="ml-2"
+              className={`p-0 ${compactIcons ? 'hidden' : 'block'}`}
             >
-              {isExplorerCollapsed ? (
-                <ChevronRight className="w-5 h-5" />
-              ) : (
-                <ChevronLeft className="w-5 h-5" />
-              )}
-            </Button>
-          )} */}
-        </div>
-        {/* Right Section: Icon buttons and text buttons */}
-        <div className="flex items-center space-x-4">
-          {/* Icon Buttons */}
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" className="p-0">
               <GitFork className="w-5 h-5" />
             </Button>
-            <Button variant="ghost" className="p-0">
+            <Button
+              variant="ghost"
+              className={`p-0 ${compactIcons ? 'hidden' : 'block'}`}
+            >
               <Share2 className="w-5 h-5" />
             </Button>
-            <Button variant="ghost" className="p-0">
+            <Button
+              variant="ghost"
+              className={`p-0 ${compactIcons ? 'hidden' : 'block'}`}
+            >
               <Copy className="w-5 h-5" />
             </Button>
           </div>
-          {/* Text Buttons */}
           <div className="flex items-center space-x-2">
-            <Button variant="outline" className="text-sm">
-              Supabase
-            </Button>
-            <Button variant="outline" className="text-sm">
-              Publish
-            </Button>
-            <Button variant="outline" className="text-sm">
-              Deploy
-            </Button>
+            {!compactIcons && (
+              <>
+                <Button variant="outline" className="text-sm">
+                  Supabase
+                </Button>
+                <Button variant="outline" className="text-sm">
+                  Publish
+                </Button>
+              </>
+            )}
+            {compactIcons && (
+              <Button variant="outline" className="p-2">
+                <Share2 className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
+    );
+  };
 
+  return isLoading ? (
+    <div>loading</div>
+  ) : (
+    <div className="flex flex-col h-full relative">
+      {/* Header Bar */}
+      <ResponsiveToolbar></ResponsiveToolbar>
       {/* Content Area */}
       <div className="flex flex-1 overflow-hidden">
         {activeTab === 'code' ? (
@@ -231,6 +276,8 @@ export function CodeEngine() {
                   minimap: {
                     enabled: false,
                   },
+                  wordWrap: 'on',
+                  wrappingStrategy: 'advanced',
                   scrollbar: {
                     useShadows: false,
                     vertical: 'visible',

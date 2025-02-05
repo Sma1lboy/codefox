@@ -79,10 +79,8 @@ export default function Home() {
       setMessages,
       selectedModel,
     });
-
-  const [projectId, setProjectId] = useState(
-    '2025-01-31-f9b3465a-1bd0-4a56-b042-46864953d870'
-  );
+  //TODO: adding project id from .codefox/projects
+  const [projectId, setProjectId] = useState('');
   const [filePath, setFilePath] = useState('frontend/vite.config.ts');
 
   if (chatId === EventEnum.SETTING) {
@@ -118,18 +116,22 @@ export default function Home() {
 
       <ResizableHandle withHandle className="hidden md:flex" />
 
-      <ResizablePanel
-        defaultSize={50}
-        minSize={20}
-        maxSize={80}
-        className="h-full"
-      >
-        <ProjectContext.Provider
-          value={{ projectId, setProjectId, filePath, setFilePath }}
+      {projectId ? (
+        <ResizablePanel
+          defaultSize={50}
+          minSize={20}
+          maxSize={80}
+          className="h-full overflow-auto"
         >
-          <CodeEngine />
-        </ProjectContext.Provider>
-      </ResizablePanel>
+          <ProjectContext.Provider
+            value={{ projectId, setProjectId, filePath, setFilePath }}
+          >
+            <CodeEngine />
+          </ProjectContext.Provider>
+        </ResizablePanel>
+      ) : (
+        <h1>forget to input project id</h1>
+      )}
     </ResizablePanelGroup>
   );
 }
