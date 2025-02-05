@@ -10,12 +10,13 @@ import {
 } from 'typeorm';
 import { User } from 'src/user/user.model';
 import { ProjectPackages } from './project-packages.model';
+import { Chat } from 'src/chat/chat.model';
 
 @Entity()
 @ObjectType()
 export class Project extends SystemBaseModel {
   @Field(() => ID)
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Field()
@@ -28,10 +29,14 @@ export class Project extends SystemBaseModel {
 
   @Field(() => ID)
   @Column()
-  userId: number;
+  userId: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, (user) => user.projects, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
   @JoinColumn({ name: 'user_id' })
+  @Field(() => User)
   user: User;
 
   @Field(() => [ProjectPackages], { nullable: true })
@@ -41,4 +46,11 @@ export class Project extends SystemBaseModel {
     { cascade: true },
   )
   projectPackages: ProjectPackages[];
+
+  @Field(() => [Chat], { nullable: true })
+  @OneToMany(() => Chat, (chat) => chat.project, {
+    cascade: true,
+    eager: false,
+  })
+  chats: Chat[];
 }
