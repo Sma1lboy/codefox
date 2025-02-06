@@ -20,10 +20,12 @@ export class FileOperationManager {
   }
 
   private operationCount = 0;
-  async executeOperations(operations: FileOperation[]): Promise<void> {
+  async executeOperations(operations: FileOperation[]): Promise<string | null> {
     // if (operations.length > 5) {
     //   throw new Error('Maximum 5 operations per fix');
     // }
+
+    let newFilePath: string | null = null;
 
     for (const op of operations) {
       try {
@@ -33,6 +35,7 @@ export class FileOperationManager {
             break;
           case 'rename':
             await this.handleRename(op);
+            newFilePath = op.renamePath || null;
             break;
         }
       } catch (error) {
@@ -42,6 +45,8 @@ export class FileOperationManager {
         throw error;
       }
     }
+
+    return newFilePath;
   }
 
   private async handleWrite(op: FileOperation): Promise<void> {

@@ -39,7 +39,7 @@ export class FixResponseParser {
       })
       .filter(Boolean);
 
-    this.logger.log('Extracted operations:', operations);
+    // this.logger.log('Extracted operations:', operations);
     return operations;
   }
 }

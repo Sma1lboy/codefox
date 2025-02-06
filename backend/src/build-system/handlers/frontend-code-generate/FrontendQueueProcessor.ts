@@ -21,8 +21,8 @@ export class FrontendQueueProcessor {
 
   constructor(
     private validator: FrontendCodeValidator, // Path to your frontend project
-    private queue: CodeTaskQueue,
-    private context: BuilderContext, // The queue of files to process
+    private queue: CodeTaskQueue, // The queue of files to process
+    private context: BuilderContext,
     private frontendPath: string,
   ) {}
 
@@ -53,7 +53,7 @@ export class FrontendQueueProcessor {
   private async processSingleTask(task: FileTask): Promise<void> {
     this.logger.log(`Processing file task: ${task.filePath}`);
 
-    const currentFullFilePath = normalizePath(
+    let currentFullFilePath = normalizePath(
       path.resolve(this.frontendPath, task.filePath),
     );
 
@@ -83,12 +83,24 @@ export class FrontendQueueProcessor {
 
       // 3. Fix the file
       try {
-        await this.fixFileGeneric(
+        const newFilePath = await this.fixFileGeneric(
           currentFullFilePath,
-          task.filePath,
+          task,
           validationResult.error ?? '',
-          task.dependenciesPath,
         );
+
+        if (newFilePath !== null) {
+          this.logger.log(
+            `File was renamed: ${task.filePath} → ${newFilePath}`,
+          );
+          task.filePath = newFilePath;
+          currentFullFilePath = normalizePath(
+            path.resolve(this.frontendPath, newFilePath),
+          );
+          this.logger.log(
+            `Updated currentFullFilePath: ${currentFullFilePath}`,
+          );
+        }
       } catch (error) {
         this.logger.error(
           'Fix File Generic failed, get error: ' + error.messages,
@@ -113,13 +125,14 @@ export class FrontendQueueProcessor {
    */
   private async fixFileGeneric(
     currentFullFilePath: string,
-    filePath: string,
+    task: FileTask,
     rawErrorText: string,
-    dependenciesPath: string,
-  ) {
+  ): Promise<string | null> {
     try {
       this.logger.log(`Generic fix attempt for file: ${currentFullFilePath}`);
       const originalContent = readFileSync(currentFullFilePath, 'utf-8');
+
+      this.logger.debug('raw error: ' + rawErrorText);
 
       const fixPrompt = generateFileOperationPrompt();
       const commonIssuePrompt = generateCommonErrorPrompt();
@@ -138,12 +151,12 @@ export class FrontendQueueProcessor {
             { role: 'system', content: fixPrompt },
             {
               role: 'user',
-              content: ` Current file path that need to be fix: \n ${filePath}`,
+              content: ` Current file path that need to be fix: \n ${task.filePath}`,
             },
             { role: 'user', content: ` Error messages: \n ${rawErrorText}` },
             {
               role: 'user',
-              content: ` dependency file Paths: \n ${dependenciesPath}`,
+              content: ` dependency file Paths: \n ${task.dependenciesPath}`,
             },
             {
               role: 'user',
@@ -163,14 +176,22 @@ export class FrontendQueueProcessor {
       );
 
       this.logger.debug('Fix Response: ' + fixResponse);
-      this.logger.debug('dependency file Paths ' + dependenciesPath);
+      this.logger.debug('dependency file Paths ' + task.dependenciesPath);
       const parsed_fixResponse = removeCodeBlockFences(fixResponse);
 
-      const operations = parser.parse(parsed_fixResponse, filePath);
+      const operations = parser.parse(parsed_fixResponse, task.filePath);
 
-      await fileOperationManager.executeOperations(operations);
+      const newFilePath =
+        await fileOperationManager.executeOperations(operations);
 
-      this.logger.log(`Generic fix applied to file: ${filePath}`);
+      this.logger.log(`Generic fix applied to file: ${task.filePath}`);
+
+      if (newFilePath) {
+        this.logger.log(`File was renamed: ${task.filePath} → ${newFilePath}`);
+        return newFilePath;
+      }
+
+      return null;
     } catch (error) {
       this.logger.error('Generic Fix file: ' + error.message);
     }
