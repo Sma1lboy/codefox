@@ -10,16 +10,26 @@ import {
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { ChatSideBar } from '@/components/sidebar';
 import { useChatList } from '../hooks/useChatList';
+import ProjectModal from '@/components/project-modal';
+import { GET_USER_PROJECTS } from '@/utils/requests';
+import { useQuery } from '@apollo/client';
+import {
+  ProjectContext,
+  ProjectProvider,
+} from '@/components/code-engine/project-context';
 
 export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const defaultLayout = [25, 75]; // [sidebar, main]
+  const { data, refetch } = useQuery(GET_USER_PROJECTS);
   const navCollapsedSize = 5;
+
   const {
     chats,
     loading,
@@ -63,26 +73,34 @@ export default function MainLayout({
         }}
         className="h-screen items-stretch w-full"
       >
-        <SidebarProvider>
-          <ChatSideBar
-            isCollapsed={isCollapsed}
-            setIsCollapsed={setIsCollapsed}
-            isMobile={isMobile}
-            chatListUpdated={chatListUpdated}
-            setChatListUpdated={setChatListUpdated}
-            chats={chats}
-            loading={loading}
-            error={error}
-            onRefetch={refetchChats}
-          />
+        <ProjectProvider>
+          <SidebarProvider>
+            <ProjectModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              refetchProjects={refetch}
+            ></ProjectModal>
+            <ChatSideBar
+              setIsModalOpen={setIsModalOpen}
+              isCollapsed={isCollapsed}
+              setIsCollapsed={setIsCollapsed}
+              isMobile={isMobile}
+              chatListUpdated={chatListUpdated}
+              setChatListUpdated={setChatListUpdated}
+              chats={chats}
+              loading={loading}
+              error={error}
+              onRefetch={refetchChats}
+            />
 
-          <ResizablePanel
-            className="h-full w-full flex justify-center"
-            defaultSize={defaultLayout[1]}
-          >
-            {children}
-          </ResizablePanel>
-        </SidebarProvider>
+            <ResizablePanel
+              className="h-full w-full flex justify-center"
+              defaultSize={defaultLayout[1]}
+            >
+              {children}
+            </ResizablePanel>
+          </SidebarProvider>
+        </ProjectProvider>
       </ResizablePanelGroup>
     </main>
   );

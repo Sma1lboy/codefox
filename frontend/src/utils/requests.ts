@@ -34,7 +34,28 @@ export type GetProjectDetailsQuery = { __typename?: 'Query' } & {
 export type GetProjectDetailsQueryVariables = {
   projectId: string;
 };
+export type CreateProjectMutation = {
+  __typename?: 'Mutation';
+  createProject: {
+    __typename?: 'Project';
+    id: string;
+    projectName: string;
+    path: string;
+    projectPackages?: Array<{
+      __typename?: 'ProjectPackages';
+      id: string;
+      content: string;
+    }> | null;
+  };
+};
 
+export type CreateProjectMutationVariables = {
+  createProjectInput: {
+    projectId?: string | null;
+    projectName: string;
+    projectPackages?: Array<string> | null;
+  };
+};
 export type UpsertProjectMutation = { __typename?: 'Mutation' } & {
   upsertProject: { __typename?: 'Project' } & {
     id: string;
@@ -74,12 +95,12 @@ export type RemovePackageFromProjectMutationVariables = {
   packageId: string;
 };
 
-export const GET_USER_PROJECTS: TypedDocumentNode<GetUserProjectsQuery> = gql`
+export const GET_USER_PROJECTS = gql`
   query GetUserProjects {
     getUserProjects {
       id
       projectName
-      path
+      projectPath
       projectPackages {
         id
         content
@@ -236,6 +257,54 @@ export const removePackageFromProject = async (
     return response.data.removePackageFromProject;
   } catch (error) {
     console.error('Error removing package from project:', error);
+    throw error;
+  }
+};
+
+export const CREATE_PROJECT: TypedDocumentNode<
+  CreateProjectMutation,
+  CreateProjectMutationVariables
+> = gql`
+  mutation CreateProject($createProjectInput: CreateProjectInput!) {
+    createProject(createProjectInput: $createProjectInput) {
+      id
+      projectName
+      path
+      projectPackages {
+        id
+        content
+      }
+    }
+  }
+`;
+export const createProject = async (
+  client: ApolloClient<unknown>,
+  projectId: string | null,
+  projectName: string,
+  projectPackages: string[] | null
+) => {
+  try {
+    const response = await client.mutate<
+      CreateProjectMutation,
+      CreateProjectMutationVariables
+    >({
+      mutation: CREATE_PROJECT,
+      variables: {
+        createProjectInput: {
+          projectId,
+          projectName,
+          projectPackages,
+        },
+      },
+    });
+
+    if (!response.data) {
+      throw new Error('No data returned from mutation');
+    }
+
+    return response.data.createProject;
+  } catch (error) {
+    console.error('Error creating project:', error);
     throw error;
   }
 };

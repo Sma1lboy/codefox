@@ -21,6 +21,8 @@ import {
 import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 import { MessageRole } from 'src/chat/message.model';
 import { BuilderContext } from 'src/build-system/context';
+import { ChatService } from 'src/chat/chat.service';
+import { Chat } from 'src/chat/chat.model';
 
 @Injectable()
 export class ProjectService {
@@ -30,11 +32,14 @@ export class ProjectService {
   constructor(
     @InjectRepository(Project)
     private projectsRepository: Repository<Project>,
+    @InjectRepository(Chat)
+    private chatRepository: Repository<Chat>,
     @InjectRepository(ProjectPackages)
     private projectPackagesRepository: Repository<ProjectPackages>,
+    private chatService: ChatService,
   ) {}
 
-  async getProjectsByUser(userId: number): Promise<Project[]> {
+  async getProjectsByUser(userId: string): Promise<Project[]> {
     const projects = await this.projectsRepository.find({
       where: { userId: userId, isDeleted: false },
       relations: ['projectPackages'],
@@ -70,58 +75,96 @@ export class ProjectService {
     return project;
   }
 
-  // staring build the project
+  // binding project and chats
+  async bindProjectAndChat(project: Project, chat: Chat): Promise<boolean> {
+    await this.projectsRepository.manager.connection.synchronize();
+    await this.chatRepository.manager.connection.synchronize();
+    if (!chat) {
+      this.logger.error('chat is undefined');
+      return false;
+    }
+    try {
+      chat.project = project;
+      if (!project.chats) {
+        project.chats = [];
+      }
+      const chatArray = await project.chats;
+      chatArray.push(chat);
+      console.log(chat);
+      console.log(project);
+      await this.projectsRepository.save(project);
+      await this.chatRepository.save(chat);
+
+      return true;
+    } catch (error) {
+      console.error('Error binding project and chat:', error);
+      return false;
+    }
+  }
+
   async createProject(
     input: CreateProjectInput,
-    userId: number,
-  ): Promise<Project> {
-    if (input.projectName === '') {
-      this.logger.debug(
-        'Project name not exist in input, generating project name',
-      );
-      const nameGenerationPrompt = await generateProjectNamePrompt(
-        input.description,
-      );
-      const response = await this.model.chatSync({
-        messages: [
-          {
-            role: MessageRole.System,
-            content:
-              'You are a specialized project name generator. Respond only with the generated name.',
-          },
-          {
-            role: MessageRole.User,
-            content: nameGenerationPrompt,
-          },
-        ],
-      });
-      input.projectName = response;
-      this.logger.debug(`Generated project name: ${input.projectName}`);
-    }
+    userId: string,
+  ): Promise<Chat> {
+    const defaultChatPromise = await this.chatService.createChat(userId, {
+      title: input.projectName || 'Default Project Chat',
+    });
 
-    // Build project sequence and get project path
-    const sequence = buildProjectSequenceByProject(input);
-    const context = new BuilderContext(sequence, sequence.id);
-    const projectPath = await context.execute();
+    const projectPromise = (async () => {
+      try {
+        const nameGenerationPrompt = await generateProjectNamePrompt(
+          input.description,
+        );
+        const response = await this.model.chatSync({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: MessageRole.System,
+              content:
+                'You are a specialized project name generator. Respond only with the generated name.',
+            },
+            {
+              role: MessageRole.User,
+              content: nameGenerationPrompt,
+            },
+          ],
+        });
 
-    // Create new project entity
-    const project = new Project();
-    project.projectName = input.projectName;
-    project.projectPath = projectPath;
-    project.userId = userId;
+        if (input.projectName === '') {
+          this.logger.debug(
+            'Project name not exist in input, generating project name',
+          );
+          input.projectName = response;
+          this.logger.debug(`Generated project name: ${input.projectName}`);
+        }
 
-    // Transform input packages to ProjectPackages entities
-    const projectPackages = await this.transformInputToProjectPackages(
-      input.packages,
-    );
-    project.projectPackages = projectPackages;
+        const sequence = buildProjectSequenceByProject(input);
+        const context = new BuilderContext(sequence, sequence.id);
+        const projectPath = await context.execute();
 
-    try {
-      return await this.projectsRepository.save(project);
-    } catch (error) {
-      this.logger.error('Error creating project:', error);
-      throw new InternalServerErrorException('Error creating the project.');
-    }
+        const project = new Project();
+        project.projectName = input.projectName;
+        project.projectPath = projectPath;
+        project.userId = userId;
+
+        project.projectPackages = await this.transformInputToProjectPackages(
+          input.packages,
+        );
+
+        const savedProject = await this.projectsRepository.save(project);
+
+        const defaultChat = await defaultChatPromise;
+        await this.bindProjectAndChat(savedProject, defaultChat);
+
+        console.log('Binded project and chats');
+        return savedProject;
+      } catch (error) {
+        this.logger.error('Error creating project:', error);
+        throw new InternalServerErrorException('Error creating the project.');
+      }
+    })();
+
+    return defaultChatPromise;
   }
 
   private async transformInputToProjectPackages(
@@ -166,9 +209,10 @@ export class ProjectService {
       return transformedPackages;
     } catch (error) {
       this.logger.error('Error transforming packages:', error);
-      throw new InternalServerErrorException(
-        'Error processing project packages.',
-      );
+      // throw new InternalServerErrorException(
+      //   'Error processing project packages.',
+      // );
+      return Promise.resolve([]);
     }
   }
 
@@ -203,7 +247,7 @@ export class ProjectService {
   }
 
   async isValidProject(
-    userId: number,
+    userId: string,
     input: IsValidProjectInput,
   ): Promise<boolean> {
     try {

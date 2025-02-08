@@ -1,14 +1,24 @@
 // app/page.tsx or components/Home.tsx
 'use client';
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useContext,
+} from 'react';
 import {
   ResizablePanelGroup,
   ResizablePanel,
   ResizableHandle,
 } from '@/components/ui/resizable';
 import { CodeEngine } from '@/components/code-engine/code-engine';
-import { GET_CHAT_HISTORY } from '@/graphql/request';
-import { useQuery } from '@apollo/client';
+import {
+  CREATE_CHAT,
+  CREATE_PROJECT,
+  GET_CHAT_HISTORY,
+} from '@/graphql/request';
+import { useMutation, useQuery } from '@apollo/client';
 import { toast } from 'sonner';
 import { EventEnum } from '@/components/enum';
 import { useModels } from '../hooks/useModels';
@@ -25,17 +35,11 @@ export default function Home() {
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
-
   const { models } = useModels();
   const [selectedModel, setSelectedModel] = useState(models[0] || 'gpt-4o');
+  const { projects, curProject, setCurProject } = useContext(ProjectContext);
 
   const { refetchChats } = useChatList();
-
-  //TODO: adding project id from .codefox/projects
-  const [projectId, setProjectId] = useState(
-    '2025-02-02-dfca4698-6e9b-4aab-9fcb-98e9526e5f21'
-  );
-  const [filePath, setFilePath] = useState('frontend/vite.config.ts');
 
   // Apollo query to fetch chat history
   useQuery(GET_CHAT_HISTORY, {
@@ -72,6 +76,7 @@ export default function Home() {
 
   // Callback to switch to the settings view
   const updateSetting = () => setChatId(EventEnum.SETTING);
+  const updateProject = () => setChatId(EventEnum.NEW_PROJECT);
 
   // Effect to initialize chat ID and refresh the chat list based on URL parameters
   useEffect(() => {
@@ -84,8 +89,10 @@ export default function Home() {
     window.addEventListener(EventEnum.CHAT, updateChatId);
     window.addEventListener(EventEnum.NEW_CHAT, cleanChatId);
     window.addEventListener(EventEnum.SETTING, updateSetting);
+    window.addEventListener(EventEnum.NEW_PROJECT, updateProject);
     return () => {
       window.removeEventListener(EventEnum.CHAT, updateChatId);
+      window.removeEventListener(EventEnum.NEW_PROJECT, updateProject);
       window.removeEventListener(EventEnum.NEW_CHAT, cleanChatId);
       window.removeEventListener(EventEnum.SETTING, updateSetting);
     };
@@ -126,21 +133,17 @@ export default function Home() {
 
       <ResizableHandle withHandle className="hidden md:flex" />
 
-      {projectId ? (
+      {curProject ? (
         <ResizablePanel
           defaultSize={50}
           minSize={20}
           maxSize={80}
           className="h-full overflow-auto"
         >
-          <ProjectContext.Provider
-            value={{ projectId, setProjectId, filePath, setFilePath }}
-          >
-            <CodeEngine />
-          </ProjectContext.Provider>
+          <CodeEngine chatId={chatId} />
         </ResizablePanel>
       ) : (
-        <h1>Forgot to input project id</h1>
+        <></>
       )}
     </ResizablePanelGroup>
   );

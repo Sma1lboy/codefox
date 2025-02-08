@@ -137,3 +137,33 @@ export const TRIGGER_CHAT = gql`
     triggerChatStream(input: $input)
   }
 `;
+
+
+export const CREATE_PROJECT = gql`
+  mutation CreateProject($createProjectInput: CreateProjectInput!) {
+    createProject(createProjectInput: $createProjectInput) {
+        id
+        title
+        createdAt
+        updatedAt
+    }
+  }
+`;
+
+export const GET_CHAT_DETAILS = gql`
+  query GetChatDetails($chatId: String!) {
+    getChatDetails(chatId: $chatId) {
+      id
+      messages {
+        id
+        content
+        role
+        createdAt
+      }
+      project {
+        id
+        projectPath
+      }
+    }
+  }
+`;

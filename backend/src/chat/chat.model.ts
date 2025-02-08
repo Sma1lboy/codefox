@@ -3,6 +3,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Message } from 'src/chat/message.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
 import { User } from 'src/user/user.model';
+import { Project } from 'src/project/project.model';
 
 export enum StreamStatus {
   STREAMING = 'streaming',
@@ -44,6 +45,10 @@ export class Chat extends SystemBaseModel {
   @ManyToOne(() => User, (user) => user.chats)
   @Field(() => User)
   user: User;
+
+  @ManyToOne(() => Project, (project) => project.chats)
+  @Field(() => Project, { nullable: true })
+  project: Project;
 }
 
 @ObjectType('ChatCompletionDeltaType')

@@ -8,9 +8,11 @@ import {
   JoinColumn,
   ManyToMany,
   JoinTable,
+  OneToMany,
 } from 'typeorm';
 import { User } from 'src/user/user.model';
 import { ProjectPackages } from './project-packages.model';
+import { Chat } from 'src/chat/chat.model';
 
 @Entity()
 @ObjectType()
@@ -29,7 +31,7 @@ export class Project extends SystemBaseModel {
 
   @Field(() => ID)
   @Column()
-  userId: number;
+  userId: string;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
@@ -52,4 +54,12 @@ export class Project extends SystemBaseModel {
     },
   })
   projectPackages: ProjectPackages[];
+
+  @Field(() => [Chat])
+  @OneToMany(() => Chat, (chat) => chat.project, {
+    cascade: true, // Automatically save related chats
+    lazy: true, // Load chats only when accessed
+    onDelete: 'CASCADE', // Delete chats when user is deleted
+  })
+  chats: Chat[];
 }

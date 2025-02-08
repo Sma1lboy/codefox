@@ -1,6 +1,6 @@
 'use client';
 
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import {
   StaticTreeDataProvider,
   Tree,
@@ -25,10 +25,21 @@ export default function FileStructure({
 }) {
   const { setFilePath } = useContext(ProjectContext);
 
-  const dataProvider = new StaticTreeDataProvider(data, (item, newName) => ({
-    ...item,
-    data: newName,
-  }));
+  const [dataProvider, setDataprovider] = useState(
+    new StaticTreeDataProvider(data, (item, newName) => ({
+      ...item,
+      data: newName,
+    }))
+  );
+  useEffect(() => {
+    setDataprovider(
+      new StaticTreeDataProvider(data, (item, newName) => ({
+        ...item,
+        data: newName,
+      }))
+    );
+  }, [data]);
+
   return (
     <div className="relative p-4 prose dark:prose-invert">
       <h3 className="mb-2 font-bold">File Explorer</h3>
