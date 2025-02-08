@@ -1,9 +1,9 @@
 import { Logger } from '@nestjs/common';
-import { writeFile, rename } from 'fs/promises';
+import { writeFile, rename, readFile } from 'fs/promises';
 import path from 'path';
 
 export interface FileOperation {
-  action: 'write' | 'rename';
+  action: 'write' | 'rename' | 'read';
   originalPath?: string;
   renamePath?: string;
   code?: string;
@@ -37,6 +37,10 @@ export class FileOperationManager {
             await this.handleRename(op);
             newFilePath = op.renamePath || null;
             break;
+          case 'read':
+            await this.handleRead(op);
+            newFilePath = op.renamePath || null;
+            break;
         }
       } catch (error) {
         this.logger.error(
@@ -55,6 +59,27 @@ export class FileOperationManager {
 
     this.logger.debug('start update file to: ' + originalPath);
     await writeFile(originalPath, op.code, 'utf-8');
+  }
+
+  private async handleRead(op: FileOperation): Promise<string | null> {
+    try {
+      const originalPath = path.resolve(this.projectRoot, op.originalPath);
+      this.safetyChecks(originalPath);
+
+      this.logger.debug(`Reading file: ${originalPath}`);
+
+      // Read the file content
+      const fileContent = await readFile(originalPath, 'utf-8');
+
+      this.logger.debug(`File read successfully: ${originalPath}`);
+
+      return fileContent;
+    } catch (error) {
+      this.logger.error(
+        `Failed to read file: ${op.originalPath}, Error: ${error.message}`,
+      );
+      return null; // Return null if the file cannot be read
+    }
   }
 
   private async handleRename(op: FileOperation): Promise<void> {

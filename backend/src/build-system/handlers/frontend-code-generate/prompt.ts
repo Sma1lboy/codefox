@@ -147,6 +147,7 @@ export function generateFileOperationPrompt(): string {
 Available Tools:
 1. WRITE - Modify/create files
 2. RENAME - RENAME the file
+3. READ - Read the file
 
 **Instructions:**
 1. **Understand the error from \`error\`** and determine what's wrong.
@@ -173,13 +174,17 @@ Available Tools:
 8. File Operations:
    - Use RENAME only for extension issues (e.g., .js → .tsx)
    - Use WRITE for code/content changes
+   - Use READ for not enough information so solve the issue
 
-9.generate must include full code.
+9. When User provide "Additional imported files" use this as to help you fix the error. Remeber only write other files code to current file when it is necessary
+
+10. generate must include full code.
 
 
 **Common Errors & Fixes**
     JSX file naming issue → Use the RENAME tool.
     TypeScript type error → Use the WRITE tool.
+    Not assignable to parameter of type → Use the READ tool if you dont have enough information to fix.
 
 **safety check**
 1. Never delete files outside /src directory
@@ -199,6 +204,10 @@ Respond format in this json format:
         "type": "RENAME",
         "path": "src/new/path/here.tsx",
         "original_path": "src/old/path/here.ts"
+      }
+      {
+        "type": "READ",
+        "original_path": "src/the/path/read.tsx"
       }
     ],
     "generate": " Code here "
@@ -234,6 +243,20 @@ Example Good RENAME Operation:
   }
 }
 
+Example Good READ Operation:
+{
+  "fix": {
+    "operations": [
+      {
+        "type": "READ",
+        "original_path": "src/utils/helpers.tsx",
+      }
+      ... You can ask to read more then one file.
+    ],
+    "generate": ""
+  }
+}
+
 **Important Note**
 1.The output must be complete and strictly formatted.
 2.DO NOT EXPLAIN OUTSIDE JSON.
@@ -263,5 +286,35 @@ Fix:
   </OPERATIONS>
   <GENERATE></GENERATE>
 </FIX>
+
+2. defined but never used Issue -> Use the WRITE Tool
+
+Error example:
+  'useEffect' is defined but never used.
+
+Fix:
+  Remove the defined but never used component from the import.
+
+✅ Correct Fix Output:
+    {                                                                                                                                                                                             
+      "fix": {
+        "operations": [
+          {
+            "type": "WRITE"
+          }
+        ],
+        "generate": "Do the fix for the import and other part stay the same and put Full code here!"
+      }
+    }
+
+
+3. Import error -> Use the WRITE Tool
+
+Error example:
+    Cannot find module './components/GlobalFooter' or its corresponding type declarations.
+
+Fix:
+    Read carefully about previous "dependency file Paths" use the path in the fix if applicable.
+
   `;
 }

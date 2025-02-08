@@ -34,6 +34,11 @@ export class FixResponseParser {
             renamePath: op.path,
             code: parsedData.fix.generate?.trim(),
           };
+        } else if (op.type === 'READ') {
+          return {
+            action: 'read',
+            originalPath: op.original_path,
+          };
         }
         return null;
       })

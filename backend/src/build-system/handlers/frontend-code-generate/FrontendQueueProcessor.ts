@@ -60,7 +60,7 @@ export class FrontendQueueProcessor {
     // 1. Write the file to disk
     createFileWithRetries(currentFullFilePath, task.fileContents);
 
-    const maxFixAttempts = 3;
+    const maxFixAttempts = 2;
 
     for (let attempt = 1; attempt <= maxFixAttempts; attempt++) {
       const validationResult = await this.validator.validate();
@@ -143,7 +143,7 @@ export class FrontendQueueProcessor {
       //this.logger.log(fixPrompt);
 
       // Use model for a fix
-      const fixResponse = await chatSyncWithClocker(
+      let fixResponse = await chatSyncWithClocker(
         this.context,
         {
           model: 'gpt-4o',
@@ -179,7 +179,76 @@ export class FrontendQueueProcessor {
       this.logger.debug('dependency file Paths ' + task.dependenciesPath);
       const parsed_fixResponse = removeCodeBlockFences(fixResponse);
 
-      const operations = parser.parse(parsed_fixResponse, task.filePath);
+      let operations = parser.parse(parsed_fixResponse, task.filePath);
+
+      // **If LLM requested additional files, read them**
+      if (operations.some((op) => op.action === 'read')) {
+        this.logger.log(
+          `LLM requested additional context. Reading dependencies...`,
+        );
+
+        for (const op of operations) {
+          if (op.action === 'read' && op.originalPath) {
+            try {
+              op.code = readFileSync(
+                path.resolve(this.frontendPath, op.originalPath),
+                'utf-8',
+              );
+              this.logger.log(`Read file: ${op.originalPath}`);
+            } catch (error) {
+              this.logger.warn(
+                `Failed to read file: ${op.originalPath}. Error: ${error.message}`,
+              );
+            }
+          }
+        }
+
+        // **Second Attempt: Retry fix with additional file content**
+        fixResponse = await chatSyncWithClocker(
+          this.context,
+          {
+            model: 'gpt-4o',
+            messages: [
+              { role: 'system', content: fixPrompt },
+              {
+                role: 'user',
+                content: `Current file path that needs fixing: \n ${task.filePath}`,
+              },
+              { role: 'user', content: `Error messages: \n ${rawErrorText}` },
+              {
+                role: 'user',
+                content: ` dependency file Paths: \n ${task.dependenciesPath}`,
+              },
+              {
+                role: 'user',
+                content: `Original content:\n ${originalContent}`,
+              },
+              {
+                role: 'user',
+                content: `Additional imported files:\n ${operations
+                  .filter((op) => op.action === 'read' && op.code)
+                  .map((op) => `File: ${op.originalPath}\nContent:\n${op.code}`)
+                  .join('\n\n')}`,
+              },
+              {
+                role: 'assistant',
+                content: `Do this really fix the provide code? 
+                This time I shouldn't use the read tool because previous context already use it.
+              Let me check some common issue to make sure my answer is correct ${commonIssuePrompt}. If not I should modify the result.
+              If i am using rename tool am i use the correct Current file path for it?
+              I must follow the output format.`,
+              },
+            ],
+          },
+          'fix code (generic)',
+          'FrontendQueueProcessor',
+        );
+        this.logger.debug(
+          'Updated Fix Response with extra context: ' + fixResponse,
+        );
+        const updated_fixResponse = removeCodeBlockFences(fixResponse);
+        operations = await parser.parse(updated_fixResponse, task.filePath);
+      }
 
       const newFilePath =
         await fileOperationManager.executeOperations(operations);
