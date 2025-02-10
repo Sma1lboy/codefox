@@ -133,7 +133,6 @@ export default function Home() {
 
       <ResizableHandle withHandle className="hidden md:flex" />
 
-      {curProject ? (
         <ResizablePanel
           defaultSize={50}
           minSize={20}
@@ -142,9 +141,6 @@ export default function Home() {
         >
           <CodeEngine chatId={chatId} />
         </ResizablePanel>
-      ) : (
-        <></>
-      )}
     </ResizablePanelGroup>
   );
 }

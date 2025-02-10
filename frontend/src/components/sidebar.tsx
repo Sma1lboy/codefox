@@ -153,10 +153,9 @@ export function ChatSideBar({
                       currentChatId={currentChatid}
                       title={chat.title}
                       onSelect={() => {
+                        setCurProject(null);
                         pollChatProject(chat.id).then((p) => {
-                          setCurProject((prev) =>
-                            prev?.id !== p?.id ? p : prev
-                          );
+                          setCurProject(p);
                         });
                         window.history.replaceState({}, '', `/?id=${chat.id}`);
                         setCurrentChatid(chat.id);

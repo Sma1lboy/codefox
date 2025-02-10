@@ -49,9 +49,10 @@ export function CodeEngine({ chatId }: { chatId: string }) {
   useEffect(() => {
     async function checkChatProject() {
       if (curProject?.id) {
+        setIsProjectFinished(false);
         const linkedProject = await pollChatProject(chatId);
         console.log(linkedProject);
-        setIsProjectFinished(!!linkedProject);
+        setIsProjectFinished(true);
         // setIsProjectFinished(false);
         // if (
         //   chatId == '6730a482-2935-47f0-ad7a-43e7f17dc121' ||
@@ -60,6 +61,8 @@ export function CodeEngine({ chatId }: { chatId: string }) {
         //   await new Promise((resolve) => setTimeout(resolve, 10000));
         // }
         // setIsProjectFinished(true);
+      } else {
+        setIsProjectFinished(false);
       }
     }
     checkChatProject();
@@ -266,10 +269,10 @@ export function CodeEngine({ chatId }: { chatId: string }) {
         {!isProjectFinished && (
           <motion.div
             key="loader"
-            initial={{ opacity: 0, scale: 0.9 }} // 初始状态：透明 & 缩小
-            animate={{ opacity: 1, scale: 1 }} // 进入动画：淡入 & 正常大小
-            exit={{ opacity: 0, scale: 0.9 }} // 退出动画：淡出 & 缩小
-            transition={{ duration: 0.3, ease: 'easeOut' }} // 动画时间：0.3s
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
             className="absolute inset-0 bg-black bg-opacity-40 backdrop-blur-md flex items-center justify-center z-50"
           >
             <Loader className="w-10 h-10 text-white animate-spin" />

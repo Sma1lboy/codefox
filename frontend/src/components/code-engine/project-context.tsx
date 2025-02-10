@@ -42,6 +42,11 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   });
 
   const [createProject] = useMutation(CREATE_PROJECT, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${validateToken}`,
+      },
+    },
     onCompleted: (data) => {
       setProjects((prev) =>
         prev.some((p) => p.id === data.createProject.id)
