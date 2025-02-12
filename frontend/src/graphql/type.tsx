@@ -103,7 +103,7 @@ export type LoginResponse = {
 
 export type LoginUserInput = {
   password: Scalars['String']['input'];
-  username: Scalars['String']['input'];
+  email: Scalars['String']['input'];
 };
 
 export type Menu = {

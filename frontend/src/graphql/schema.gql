@@ -2,6 +2,11 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type AuthResponse {
+  accessToken: String!
+  refreshToken: String!
+}
+
 type Chat {
   createdAt: Date!
   id: ID!
@@ -64,8 +69,8 @@ type LoginResponse {
 }
 
 input LoginUserInput {
+  email: String!
   password: String!
-  username: String!
 }
 
 type Menu {
@@ -91,12 +96,14 @@ type Message {
 }
 
 type Mutation {
+  assignRoles(roleIds: [ID!]!, userId: ID!): User!
   clearChatHistory(chatId: String!): Boolean!
   createChat(newChatInput: NewChatInput!): Chat!
   createProject(createProjectInput: CreateProjectInput!): Chat!
   deleteChat(chatId: String!): Boolean!
   deleteProject(projectId: String!): Boolean!
-  login(input: LoginUserInput!): LoginResponse!
+  login(input: LoginUserInput!): AuthResponse!
+  refreshToken(refreshToken: String!): AuthResponse!
   registerUser(input: RegisterUserInput!): User!
   triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
@@ -180,6 +187,7 @@ type User {
   chats: [Chat!]!
   createdAt: Date!
   email: String!
+  id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
   projects: [Project!]!
