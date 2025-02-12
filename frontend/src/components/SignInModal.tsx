@@ -1,11 +1,20 @@
-"use client"
-import { useState } from 'react'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { BackgroundGradient } from '@/components/ui/background-gradient'
-import { TextureCardHeader, TextureCardTitle, TextureCardContent, TextureSeparator } from '@/components/ui/texture-card'
+'use client';
+import { useState } from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { BackgroundGradient } from '@/components/ui/background-gradient';
+import {
+  TextureCardHeader,
+  TextureCardTitle,
+  TextureCardContent,
+  TextureSeparator,
+} from '@/components/ui/texture-card';
+import { useRouter } from 'next/navigation';
+import { useMutation } from '@apollo/client';
+import { LOGIN_USER } from '@/graphql/mutations/auth';
+import { toast } from 'sonner';
 
 export function SignInModal({
   isOpen,
@@ -14,20 +23,50 @@ export function SignInModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [loginUser, { loading }] = useMutation(LOGIN_USER, {
+    onCompleted: (data) => {
+      localStorage.setItem('accessToken', data.login.accessToken);
+      localStorage.setItem('refreshToken', data.login.refreshToken);
+      toast.success('Login successful!');
+      onClose();
+      router.push('/chat');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   const handleEmailSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setPassword('') // Clear password when moving to password step
-    setShowPassword(true)
-  }
+    e.preventDefault();
+    setPassword(''); // Clear password when moving to password step
+    setShowPassword(true);
+  };
 
   const handleBackToEmail = () => {
-    setPassword('') // Clear password when going back
-    setShowPassword(false)
-  }
+    setPassword(''); // Clear password when going back
+    setShowPassword(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await loginUser({
+        variables: {
+          input: {
+            email,
+            password,
+          },
+        },
+      });
+    } catch (error) {
+      console.error('Login failed:', error);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -37,7 +76,9 @@ export function SignInModal({
             <TextureCardHeader className="flex flex-col gap-1 items-center justify-center p-4">
               <TextureCardTitle>Welcome back</TextureCardTitle>
               <p className="text-center text-neutral-600 dark:text-neutral-400">
-                {showPassword ? 'Enter your password' : 'Sign in to your account'}
+                {showPassword
+                  ? 'Enter your password'
+                  : 'Sign in to your account'}
               </p>
             </TextureCardHeader>
             <TextureSeparator />
@@ -47,7 +88,7 @@ export function SignInModal({
                   <form onSubmit={handleEmailSubmit} className="space-y-4">
                     <div>
                       <Label htmlFor="email">Email</Label>
-                      <Input 
+                      <Input
                         id="email"
                         type="email"
                         value={email}
@@ -56,7 +97,9 @@ export function SignInModal({
                         className="w-full px-4 py-2 rounded-md border"
                       />
                     </div>
-                    <Button type="submit" className="w-full">Continue</Button>
+                    <Button type="submit" className="w-full">
+                      Continue
+                    </Button>
                   </form>
 
                   <div className="mt-6">
@@ -72,22 +115,36 @@ export function SignInModal({
                     </div>
 
                     <div className="mt-4 flex flex-col gap-4">
-                      <Button variant="outline" className="flex items-center gap-2 w-full">
-                        <img src="/images/google.png" alt="Google" className="w-5 h-5" />
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2 w-full"
+                      >
+                        <img
+                          src="/images/google.png"
+                          alt="Google"
+                          className="w-5 h-5"
+                        />
                         <span>Google</span>
                       </Button>
-                      <Button variant="outline" className="flex items-center gap-2 w-full">
-                        <img src="/images/github.png" alt="GitHub" className="w-5 h-5" />
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2 w-full"
+                      >
+                        <img
+                          src="/images/github.png"
+                          alt="GitHub"
+                          className="w-5 h-5"
+                        />
                         <span>GitHub</span>
                       </Button>
                     </div>
                   </div>
                 </>
               ) : (
-                <form className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <Label htmlFor="password">Password</Label>
-                    <Input 
+                    <Input
                       id="password"
                       type="password"
                       value={password}
@@ -96,10 +153,12 @@ export function SignInModal({
                       className="w-full px-4 py-2 rounded-md border"
                     />
                   </div>
-                  <Button type="submit" className="w-full">Sign in</Button>
-                  <Button 
-                    type="button" 
-                    variant="link" 
+                  <Button type="submit" className="w-full">
+                    Sign in
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="link"
                     onClick={handleBackToEmail}
                     className="w-full"
                   >
@@ -112,5 +171,5 @@ export function SignInModal({
         </BackgroundGradient>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

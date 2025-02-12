@@ -19,6 +19,7 @@ import { Menu } from './menu/menu.model';
 import { Role } from './role/role.model';
 import { RefreshToken } from './refresh-token/refresh-token.model';
 import { randomUUID } from 'crypto';
+import * as bcrypt from 'bcrypt';
 
 interface AuthResponse {
   accessToken: string;
@@ -52,7 +53,7 @@ export class AuthService {
       throw new ConflictException('Username or email already exists');
     }
 
-    const hashedPassword = await hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = this.userRepository.create({
       username,
       email,
@@ -65,42 +66,46 @@ export class AuthService {
   async login(
     loginUserInput: LoginUserInput,
   ): Promise<AuthResponse> {
-    const { username, password } = loginUserInput;
+    const { email, password } = loginUserInput;
 
     const user = await this.userRepository.findOne({
-      where: [{ username: username }],
+      where: { email },
     });
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { userId: user.id, username: user.username };
-    const accessToken = this.jwtService.sign(payload);
-    this.jwtCacheService.storeToken(accessToken);
+    const accessToken = this.jwtService.sign(
+      { sub: user.id, email: user.email },
+      { expiresIn: '15m' }
+    );
 
-    const refreshToken = await this.createRefreshToken(user);
+    const refreshTokenEntity = await this.createRefreshToken(user);
 
-    return { 
-      accessToken, 
-      refreshToken: refreshToken.token 
+    return {
+      accessToken,
+      refreshToken: refreshTokenEntity.token,
     };
   }
 
   private async createRefreshToken(user: User): Promise<RefreshToken> {
+    const token = randomUUID();
+    
     const refreshToken = this.refreshTokenRepository.create({
       user,
-      token: randomUUID(),
+      token,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     });
 
-    return this.refreshTokenRepository.save(refreshToken);
+    await this.refreshTokenRepository.save(refreshToken);
+    return refreshToken;
   }
 
   async validateToken(params: CheckTokenInput): Promise<boolean> {
@@ -362,6 +367,36 @@ export class AuthService {
 
     return {
       menus: userMenus,
+    };
+  }
+
+  async refreshToken(refreshToken: string): Promise<AuthResponse> {
+    const existingToken = await this.refreshTokenRepository.findOne({
+      where: { token: refreshToken },
+      relations: ['user'],
+    });
+
+    if (!existingToken || existingToken.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const accessToken = this.jwtService.sign(
+      { 
+        sub: existingToken.user.id, 
+        email: existingToken.user.email 
+      },
+      { expiresIn: '15m' }
+    );
+
+    // Generate new refresh token
+    const newRefreshToken = await this.createRefreshToken(existingToken.user);
+
+    // Revoke old refresh token
+    await this.refreshTokenRepository.remove(existingToken);
+
+    return {
+      accessToken,
+      refreshToken: newRefreshToken.token,
     };
   }
 }

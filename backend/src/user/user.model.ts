@@ -1,4 +1,4 @@
-import { ObjectType, Field } from '@nestjs/graphql';
+import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { IsEmail } from 'class-validator';
 import { Role } from 'src/auth/role/role.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
@@ -15,20 +15,21 @@ import {
 @Entity()
 @ObjectType()
 export class User extends SystemBaseModel {
-  @PrimaryGeneratedColumn()
+  @Field(() => ID)
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Field()
-  @Column({ unique: true })
-  username: string;
-
   @Column()
-  password: string;
+  username: string; // Removed unique constraint
 
-  @Field()
+  @Field()  
   @Column({ unique: true })
   @IsEmail()
   email: string;
+
+  @Column()
+  password: string;
 
   @Field(() => [Chat])
   @OneToMany(() => Chat, (chat) => chat.user, {
