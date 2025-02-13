@@ -17,10 +17,6 @@ import { getMainDefinition } from '@apollo/client/utilities';
 const httpLink = new HttpLink({
 
   uri: process.env.NEXT_PUBLIC_GRAPHQL_URL,
-  headers: {
-    'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Allow-Origin': '*',
-  },
 });
 
 let wsLink;
@@ -28,14 +24,13 @@ if (typeof window !== 'undefined') {
   // WebSocket Link
   wsLink = new GraphQLWsLink(
     createClient({
-      url: process.env.NEXT_PUBLIC_GRAPHQL_URL,
+      url: process.env.NEXT_PUBLIC_GRAPHQL_URL?.replace('http', 'ws'),
       connectionParams: () => {
         return {};
       },
     })
   );
 }
-
 // Logging Middleware
 const requestLoggingMiddleware = new ApolloLink((operation, forward) => {
   console.log('GraphQL Request:', {
