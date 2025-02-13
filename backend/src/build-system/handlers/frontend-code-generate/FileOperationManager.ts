@@ -14,7 +14,10 @@ export class FileOperationManager {
   private readonly allowedPaths: string[];
   private logger = new Logger('FileOperationManager');
 
-  constructor(projectRoot: string) {
+  constructor(
+    projectRoot: string,
+    private renameMap: Map<string, string>,
+  ) {
     this.projectRoot = path.normalize(projectRoot);
     this.allowedPaths = [this.projectRoot];
   }
@@ -36,6 +39,16 @@ export class FileOperationManager {
           case 'rename':
             await this.handleRename(op);
             newFilePath = op.renamePath || null;
+
+            // add new file path
+            if (op.originalPath && op.renamePath) {
+              // **Check if originalPath was previously renamed**
+              const latestPath =
+                this.renameMap.get(op.originalPath) || op.originalPath;
+
+              // **Update mapping for the latest renamed file**
+              this.renameMap.set(latestPath, op.renamePath);
+            }
             break;
           case 'read':
             await this.handleRead(op);

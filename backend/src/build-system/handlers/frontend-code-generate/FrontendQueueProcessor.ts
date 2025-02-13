@@ -24,6 +24,7 @@ export class FrontendQueueProcessor {
     private queue: CodeTaskQueue, // The queue of files to process
     private context: BuilderContext,
     private frontendPath: string,
+    private renameMap: Map<string, string>,
   ) {}
 
   /**
@@ -137,7 +138,10 @@ export class FrontendQueueProcessor {
       const fixPrompt = generateFileOperationPrompt();
       const commonIssuePrompt = generateCommonErrorPrompt();
 
-      const fileOperationManager = new FileOperationManager(this.frontendPath);
+      const fileOperationManager = new FileOperationManager(
+        this.frontendPath,
+        this.renameMap,
+      );
       const parser = new FixResponseParser();
 
       //this.logger.log(fixPrompt);
@@ -151,23 +155,29 @@ export class FrontendQueueProcessor {
             { role: 'system', content: fixPrompt },
             {
               role: 'user',
-              content: ` Current file path that need to be fix: \n ${task.filePath}`,
-            },
-            { role: 'user', content: ` Error messages: \n ${rawErrorText}` },
-            {
-              role: 'user',
-              content: ` dependency file Paths: \n ${task.dependenciesPath}`,
+              content: ` ## Current file: \n ${task.filePath} ## Current Code \n ${originalContent}\n `,
             },
             {
               role: 'user',
-              content: ` originalContent: \n ${originalContent}\n Now please start fix the problem and generate the result based on system prompt`,
+              content: ` ##  Error Messages: \n ${rawErrorText}`,
             },
             {
               role: 'assistant',
-              content: `Do this really fix the provide code? 
-            Let me check some common issue to make sure my answer is correct ${commonIssuePrompt}. If not I should modify the result.
-            If i am using rename tool am i use the correct Current file path for it?
-            I must follow the output format.`,
+              content:
+                "Good, now provider your dependencies, it's okay dependencies are empty, which means you don't have any dependencies",
+            },
+            {
+              role: 'user',
+              content: `## Overview of The Dependencies file you may need: \n ${task.dependenciesPath}`,
+            },
+            {
+              role: 'assistant',
+              content: `Let me analysis the current file. Why error message occour?
+            Let me check some common issue to make sure my thinking is correct ${commonIssuePrompt}.`,
+            },
+            {
+              role: 'user',
+              content: `Now you should start fix the current code error.`,
             },
           ],
         },
@@ -212,31 +222,34 @@ export class FrontendQueueProcessor {
               { role: 'system', content: fixPrompt },
               {
                 role: 'user',
-                content: `Current file path that needs fixing: \n ${task.filePath}`,
-              },
-              { role: 'user', content: `Error messages: \n ${rawErrorText}` },
-              {
-                role: 'user',
-                content: ` dependency file Paths: \n ${task.dependenciesPath}`,
+                content: ` ## Current file: \n ${task.filePath} ## Current Code \n ${originalContent}\n `,
               },
               {
                 role: 'user',
-                content: `Original content:\n ${originalContent}`,
+                content: `## Error messages: \n ${rawErrorText}`,
+              },
+              {
+                role: 'assistant',
+                content:
+                  "Good, now provider your dependencies, it's okay dependencies are empty, which means you don't have any dependencies",
               },
               {
                 role: 'user',
-                content: `Additional imported files:\n ${operations
+                content: `## Overview of The Dependencies files: \n ${task.dependenciesPath}\n
+                # Additional imported files:\n ${operations
                   .filter((op) => op.action === 'read' && op.code)
                   .map((op) => `File: ${op.originalPath}\nContent:\n${op.code}`)
                   .join('\n\n')}`,
               },
               {
                 role: 'assistant',
-                content: `Do this really fix the provide code? 
-                This time I shouldn't use the read tool because previous context already use it.
-              Let me check some common issue to make sure my answer is correct ${commonIssuePrompt}. If not I should modify the result.
-              If i am using rename tool am i use the correct Current file path for it?
-              I must follow the output format.`,
+                content: `Let me analysis the current file. Why error message occour
+              This time I shouldn't use the read tool because previous context already use it.
+              Let me check some common issue to make sure my thinking is correct ${commonIssuePrompt}.`,
+              },
+              {
+                role: 'user',
+                content: `Now you should start fix the current code error.`,
               },
             ],
           },
@@ -263,6 +276,7 @@ export class FrontendQueueProcessor {
       return null;
     } catch (error) {
       this.logger.error('Generic Fix file: ' + error.message);
+      return null;
     }
   }
 }
