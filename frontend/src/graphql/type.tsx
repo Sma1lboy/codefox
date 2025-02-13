@@ -13,7 +13,7 @@ export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
   [SubKey in K]?: Maybe<T[SubKey]>;
 };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
-  [SubKey in K]: Maybe<T[SubKey]>;
+  [SubKey in K]?: Maybe<T[SubKey]>;
 };
 export type MakeEmpty<
   T extends { [key: string]: unknown },
@@ -84,13 +84,35 @@ export type CheckTokenInput = {
 };
 
 export type LoginResponse = {
-  __typename: 'LoginResponse';
-  accessToken: Scalars['String']['output'];
+  __typename?: 'LoginResponse';
+  accessToken: string;
+  refreshToken: string; // Added refreshToken
 };
 
 export type LoginUserInput = {
-  password: Scalars['String']['input'];
-  email: Scalars['String']['input'];
+  email: string;
+  password: string;
+};
+
+export type RegisterUserInput = {
+  email: string;
+  password: string;
+  username: string;
+};
+
+export type AuthUser = {
+  __typename?: 'User';
+  id: string;
+  email: string;
+  username: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TokenResponse = {
+  accessToken: string;
+  refreshToken: string;
 };
 
 export type Menu = {
@@ -234,12 +256,6 @@ export type QueryGetChatHistoryArgs = {
 
 export type QueryGetProjectDetailsArgs = {
   projectId: Scalars['String']['input'];
-};
-
-export type RegisterUserInput = {
-  email: Scalars['String']['input'];
-  password: Scalars['String']['input'];
-  username: Scalars['String']['input'];
 };
 
 export type Role = 'Assistant' | 'System' | 'User';

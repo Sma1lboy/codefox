@@ -1,3 +1,5 @@
+'use client';
+
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import {
@@ -15,6 +17,7 @@ import { useState } from 'react';
 import { useMutation } from '@apollo/client';
 import { REGISTER_USER } from '@/graphql/mutations/auth';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 export function SignUpModal({
   isOpen,
@@ -23,15 +26,12 @@ export function SignUpModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const [registerUser, { loading }] = useMutation(REGISTER_USER, {
-    onCompleted: () => {
-      toast.success('Registration successful!');
-      onClose();
-    },
     onError: (error) => {
       toast.error(error.message);
     },
