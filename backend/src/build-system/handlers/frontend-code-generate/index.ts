@@ -77,6 +77,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       throw new Error('Missing required parameters.');
     }
 
+    const renameMap = new Map<string, string>();
+
     // 3. Prepare for Dependency
     const { concurrencyLayers, fileInfos } =
       await generateFilesDependencyWithLayers(fileArchDoc, this.virtualDir);
@@ -116,7 +118,15 @@ export class FrontendCodeHandler implements BuildHandler<string> {
             );
 
             // Gather direct dependencies
-            const directDepsArray = fileInfos[file]?.dependsOn || [];
+            let directDepsArray = fileInfos[file]?.dependsOn || [];
+
+            // Replace old file names in dependencies with new ones
+            directDepsArray = directDepsArray.map(
+              (dep) => renameMap.get(dep) || dep,
+            );
+
+            // **Ensure the fileInfos structure is also updated**
+            fileInfos[file].dependsOn = directDepsArray;
 
             const directDepsPathString = directDepsArray.join('\n');
 
@@ -180,6 +190,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         queue,
         context,
         frontendPath,
+        renameMap,
       );
       await queueProcessor.processAllTasks();
 
@@ -235,6 +246,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     let messages = [];
     try {
       const fileExtension = path.extname(file);
+
       let frontendCodePrompt = '';
       if (fileExtension === '.css') {
         frontendCodePrompt = generateCSSPrompt(file, directDepsPathString);
@@ -256,7 +268,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         },
         {
           role: 'user' as const,
-          content: `**Sitemap Structure**
+          content: `## Sitemap Structure
               ${sitemapStruct}
               `,
         },
@@ -282,12 +294,23 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         },
         {
           role: 'user' as const,
-          content: `Dependencies:
-                
-                  ${dependenciesText}\n
-                  Now you can provide the code, don't forget the <GENERATE></GENERATE> xml tags.
-,                  `,
+          content: `
+
+          ## Overview of The Dependencies file you may need
+            ${directDepsPathString}
+          
+          ## Detail about each Dependencies:
+            ${dependenciesText}\n
+                  `,
         },
+        {
+          role: 'user',
+          content: `Now you can provide the code, don't forget the <GENERATE></GENERATE> tags.`,
+        },
+        // {
+        //   role: 'assistant',
+        //   content: codeReviewPrompt,
+        // },
       ] as MessageInterface[];
 
       // 6. Call your Chat Model
