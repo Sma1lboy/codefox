@@ -30,11 +30,20 @@ export function SignInModal({
 
   const [loginUser, { loading }] = useMutation(LOGIN_USER, {
     onCompleted: (data) => {
-      localStorage.setItem('accessToken', data.login.accessToken);
-      localStorage.setItem('refreshToken', data.login.refreshToken);
-      toast.success('Login successful!');
-      onClose();
-      router.push('/chat');
+      if (data?.login) {
+        // Store tokens
+        localStorage.setItem('accessToken', data.login.accessToken);
+        localStorage.setItem('refreshToken', data.login.refreshToken);
+
+        // Show success message
+        toast.success('Login successful!');
+
+        // Close the modal
+        onClose();
+
+        
+        router.push('/main/chat');
+      }
     },
     onError: (error) => {
       toast.error(error.message);

@@ -19,6 +19,7 @@ export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
+  // Update query to include proper types
   const { data: userData, refetch: refetchUser } = useQuery<{ me: User }>(
     GET_USER_INFO,
     {
@@ -26,41 +27,22 @@ export const useAuth = () => {
       onCompleted: (data) => {
         if (data?.me) {
           setUser(data.me);
-          // Store user info in localStorage
           localStorage.setItem('user', JSON.stringify(data.me));
         }
       },
     }
   );
 
-  const [login, { loading: loginLoading }] = useMutation<{
-    login: LoginResponse;
-  }>(LOGIN_MUTATION);
+  const [login] = useMutation<{ login: LoginResponse }>(LOGIN_MUTATION);
+  const [register] = useMutation<{ registerUser: User }>(REGISTER_MUTATION);
 
+  // Fix token validation query
   const { refetch: checkToken } = useQuery<{ checkToken: boolean }>(
     CHECK_TOKEN_QUERY,
     {
-      variables: {
-        input: {
-          token: '',
-        },
-      },
-      skip: true,
+      skip: true, // Skip initial query
     }
   );
-
-  const [register, { loading: registerLoading }] = useMutation<{
-    registerUser: User;
-  }>(REGISTER_MUTATION);
-
-  useEffect(() => {
-    validateToken();
-    // Try to load user from localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
 
   const validateToken = async () => {
     const token = localStorage.getItem(LocalStore.accessToken);
@@ -72,17 +54,19 @@ export const useAuth = () => {
 
     try {
       const { data } = await checkToken({
-        input: { token },
+        variables: {
+          input: { token },
+        },
       });
+
       if (data?.checkToken) {
         setIsAuthenticated(true);
-        // Fetch user info after successful token validation
         await refetchUser();
         return { success: true };
-      } else {
-        handleLogout();
-        return { success: false, error: 'Session expired' };
       }
+      
+      handleLogout();
+      return { success: false, error: 'Session expired' };
     } catch (error) {
       handleLogout();
       return {
@@ -99,6 +83,7 @@ export const useAuth = () => {
           input: credentials,
         },
       });
+
       if (data?.login.accessToken) {
         localStorage.setItem(LocalStore.accessToken, data.login.accessToken);
         setIsAuthenticated(true);
@@ -106,13 +91,36 @@ export const useAuth = () => {
         toast.success('Login successful');
         return { success: true };
       }
+
       return { success: false };
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Login failed');
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Login failed',
-      };
+      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      toast.error(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  const handleRegister = async (credentials: RegisterUserInput) => {
+    try {
+      const { data } = await register({
+        variables: {
+          input: credentials,
+        },
+      });
+
+      if (data?.registerUser) {
+        toast.success('Registration successful');
+        return handleLogin({
+          email: credentials.email,
+          password: credentials.password,
+        });
+      }
+
+      return { success: false };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      toast.error(errorMessage);
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -125,35 +133,16 @@ export const useAuth = () => {
     return { success: true };
   };
 
-  const handleRegister = async (credentials: RegisterUserInput) => {
-    try {
-      const { data } = await register({
-        variables: {
-          input: credentials,
-        },
-      });
-      if (data?.registerUser) {
-        toast.success('Registration successful');
-        return await handleLogin({
-          username: credentials.username,
-          password: credentials.password,
-        });
-      }
-      return { success: false };
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Registration failed'
-      );
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Registration failed',
-      };
+  useEffect(() => {
+    validateToken();
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
     }
-  };
+  }, []);
 
   return {
     isAuthenticated,
-    isLoading: loginLoading || registerLoading,
     user,
     login: handleLogin,
     register: handleRegister,

@@ -45,12 +45,13 @@ export class AuthService {
   async register(registerUserInput: RegisterUserInput): Promise<User> {
     const { username, email, password } = registerUserInput;
 
+    // Check for existing email
     const existingUser = await this.userRepository.findOne({
-      where: [{ username }, { email }],
+      where: { email },
     });
 
     if (existingUser) {
-      throw new ConflictException('Username or email already exists');
+      throw new ConflictException('Email already exists');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
