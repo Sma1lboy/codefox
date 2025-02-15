@@ -19,6 +19,7 @@ import { TreeItem, TreeItemIndex } from 'react-complex-tree';
 import FileExplorerButton from './file-explorer-button';
 import FileStructure from './file-structure';
 import { ProjectContext } from './project-context';
+import WebPreview from './web-view';
 
 export function CodeEngine({ chatId }: { chatId: string }) {
   // Initialize state, refs, and context
@@ -325,7 +326,7 @@ export function CodeEngine({ chatId }: { chatId: string }) {
             </div>
           </>
         ) : activeTab === 'preview' ? (
-          <div className="flex-1 p-4 text-sm">Preview Content (Mock)</div>
+          <WebPreview></WebPreview>
         ) : activeTab === 'console' ? (
           <div className="flex-1 p-4 text-sm">Console Content (Mock)</div>
         ) : null}

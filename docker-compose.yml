@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: 'traefik:v2.10'
+    container_name: 'traefik'
+    restart: always
+    command:
+      - '--providers.docker=true' # 监听 Docker 事件
+      - '--providers.docker.exposedbydefault=false' # 默认不代理所有容器
+      - '--entrypoints.web.address=:80' # 监听 80 端口，代理 HTTP 请求
+    ports:
+      - '80:80' # 访问所有服务时都用 80 端口
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock' # 监听 Docker 容器变化
+    networks:
+      - traefik_network
+
+networks:
+  traefik_network:
+    external: true
