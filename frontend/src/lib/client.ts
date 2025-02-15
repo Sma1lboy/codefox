@@ -15,7 +15,6 @@ import { getMainDefinition } from '@apollo/client/utilities';
 
 // HTTP Link
 const httpLink = new HttpLink({
-
   uri: process.env.NEXT_PUBLIC_GRAPHQL_URL,
 });
 
@@ -78,7 +77,7 @@ const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
 const splitLink = split(
   ({ query }) => {
     if (!query) {
-      throw new Error("Query is undefined");
+      throw new Error('Query is undefined');
     }
     const definition = getMainDefinition(query);
     return (
