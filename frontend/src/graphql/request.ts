@@ -138,14 +138,13 @@ export const TRIGGER_CHAT = gql`
   }
 `;
 
-
 export const CREATE_PROJECT = gql`
   mutation CreateProject($createProjectInput: CreateProjectInput!) {
     createProject(createProjectInput: $createProjectInput) {
-        id
-        title
-        createdAt
-        updatedAt
+      id
+      title
+      createdAt
+      updatedAt
     }
   }
 `;

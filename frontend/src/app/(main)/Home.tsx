@@ -132,14 +132,14 @@ export default function Home() {
 
       <ResizableHandle withHandle className="hidden md:flex" />
 
-        <ResizablePanel
-          defaultSize={50}
-          minSize={20}
-          maxSize={80}
-          className="h-full overflow-auto"
-        >
-          <CodeEngine chatId={chatId} />
-        </ResizablePanel>
+      <ResizablePanel
+        defaultSize={50}
+        minSize={20}
+        maxSize={80}
+        className="h-full overflow-auto"
+      >
+        <CodeEngine chatId={chatId} />
+      </ResizablePanel>
     </ResizablePanelGroup>
   );
 }
