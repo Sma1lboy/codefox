@@ -38,7 +38,6 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
       router.push('/');
       // router.push('/login');
       logout();
-      
     };
   }, [logout, router]);
 

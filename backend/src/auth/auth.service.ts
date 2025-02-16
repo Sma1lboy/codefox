@@ -8,7 +8,6 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { compare, hash } from 'bcrypt';
 import { LoginUserInput } from 'src/user/dto/login-user.input';
 import { RegisterUserInput } from 'src/user/dto/register-user.input';
 import { User } from 'src/user/user.model';
@@ -64,9 +63,7 @@ export class AuthService {
     return this.userRepository.save(newUser);
   }
 
-  async login(
-    loginUserInput: LoginUserInput,
-  ): Promise<AuthResponse> {
+  async login(loginUserInput: LoginUserInput): Promise<AuthResponse> {
     const { email, password } = loginUserInput;
 
     const user = await this.userRepository.findOne({
@@ -85,7 +82,7 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(
       { sub: user.id, email: user.email },
-      { expiresIn: '15m' }
+      { expiresIn: '15m' },
     );
 
     const refreshTokenEntity = await this.createRefreshToken(user);
@@ -98,7 +95,7 @@ export class AuthService {
 
   private async createRefreshToken(user: User): Promise<RefreshToken> {
     const token = randomUUID();
-    
+
     const refreshToken = this.refreshTokenRepository.create({
       user,
       token,
@@ -382,11 +379,11 @@ export class AuthService {
     }
 
     const accessToken = this.jwtService.sign(
-      { 
-        sub: existingToken.user.id, 
-        email: existingToken.user.email 
+      {
+        sub: existingToken.user.id,
+        email: existingToken.user.email,
       },
-      { expiresIn: '15m' }
+      { expiresIn: '15m' },
     );
 
     // Generate new refresh token

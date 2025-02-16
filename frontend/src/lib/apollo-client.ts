@@ -1,4 +1,9 @@
-import { ApolloClient, InMemoryCache, createHttpLink, from } from '@apollo/client';
+import {
+  ApolloClient,
+  InMemoryCache,
+  createHttpLink,
+  from,
+} from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
 import { REFRESH_TOKEN } from '@/graphql/mutations/auth';
@@ -21,38 +26,42 @@ const authLink = setContext((_, { headers }) => {
 });
 
 const errorLink = onError(({ graphQLErrors, operation, forward }) => {
-  if (graphQLErrors?.some(err => err.message.includes('Unauthorized'))) {
+  if (graphQLErrors?.some((err) => err.message.includes('Unauthorized'))) {
     const refreshToken = localStorage.getItem('refreshToken');
-    
+
     if (refreshToken) {
       return new Promise((resolve, reject) => {
-        client.mutate({
-          mutation: REFRESH_TOKEN,
-          variables: { refreshToken }
-        })
-        .then(({ data }) => {
-          // Store new tokens
-          localStorage.setItem('accessToken', data.refreshToken.accessToken);
-          localStorage.setItem('refreshToken', data.refreshToken.refreshToken);
-          
-          // Update authorization header
-          operation.setContext(({ headers = {} }) => ({
-            headers: {
-              ...headers,
-              authorization: `Bearer ${data.refreshToken.accessToken}`,
-            }
-          }));
-          
-          // Retry original operation
-          resolve(forward(operation));
-        })
-        .catch(error => {
-          // Token refresh failed, redirect to login
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          window.location.href = '/login';
-          reject(error);
-        });
+        client
+          .mutate({
+            mutation: REFRESH_TOKEN,
+            variables: { refreshToken },
+          })
+          .then(({ data }) => {
+            // Store new tokens
+            localStorage.setItem('accessToken', data.refreshToken.accessToken);
+            localStorage.setItem(
+              'refreshToken',
+              data.refreshToken.refreshToken
+            );
+
+            // Update authorization header
+            operation.setContext(({ headers = {} }) => ({
+              headers: {
+                ...headers,
+                authorization: `Bearer ${data.refreshToken.accessToken}`,
+              },
+            }));
+
+            // Retry original operation
+            resolve(forward(operation));
+          })
+          .catch((error) => {
+            // Token refresh failed, redirect to login
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            window.location.href = '/login';
+            reject(error);
+          });
       });
     }
   }

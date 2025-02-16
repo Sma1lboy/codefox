@@ -41,7 +41,6 @@ export function SignInModal({
         // Close the modal
         onClose();
 
-        
         router.push('/main/chat');
       }
     },

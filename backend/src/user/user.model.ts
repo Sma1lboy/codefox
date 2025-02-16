@@ -23,7 +23,7 @@ export class User extends SystemBaseModel {
   @Column()
   username: string; // Removed unique constraint
 
-  @Field()  
+  @Field()
   @Column({ unique: true })
   @IsEmail()
   email: string;

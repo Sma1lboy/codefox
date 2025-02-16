@@ -18,7 +18,6 @@ export function AuthChoiceModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] fixed top-[50%] left-[50%] transform -translate-x-[50%] -translate-y-[50%]">
-
         <BackgroundGradient className="rounded-[22px] p-4 bg-white dark:bg-zinc-900">
           <div className="w-full p-6 space-y-6">
             <h2 className="text-2xl font-semibold text-center dark:text-white">

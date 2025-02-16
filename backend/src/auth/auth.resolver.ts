@@ -24,13 +24,15 @@ export class AuthResolver {
 
   @Mutation(() => AuthResponse)
   async refreshToken(
-    @Args('refreshToken') refreshToken: string
+    @Args('refreshToken') refreshToken: string,
   ): Promise<AuthResponse> {
     return this.authService.refreshToken(refreshToken);
   }
 
   @Mutation(() => AuthResponse)
-  async login(@Args('input') loginUserInput: LoginUserInput): Promise<AuthResponse> {
+  async login(
+    @Args('input') loginUserInput: LoginUserInput,
+  ): Promise<AuthResponse> {
     return this.authService.login(loginUserInput);
   }
 }
