@@ -63,6 +63,7 @@ Additional Rules:
         includeSections = `
           Folder Structure example:
             src: Main source code folder.
+              contexts: Global state management.
               pages: Route-specific views. For Example: Home, Search, Playlist.
               router.tsx: Central routing configuration.
               index.tsx: Application entry point.

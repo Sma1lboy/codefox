@@ -1,12 +1,14 @@
 import { Logger } from '@nestjs/common';
 import { writeFile, rename, readFile } from 'fs/promises';
 import path from 'path';
+import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 
 export interface FileOperation {
   action: 'write' | 'rename' | 'read';
   originalPath?: string;
   renamePath?: string;
   code?: string;
+  paths?: string[];
 }
 
 export class FileOperationManager {
@@ -51,8 +53,7 @@ export class FileOperationManager {
             }
             break;
           case 'read':
-            await this.handleRead(op);
-            newFilePath = op.renamePath || null;
+            // await this.handleRead(op);
             break;
         }
       } catch (error) {
@@ -71,7 +72,8 @@ export class FileOperationManager {
     this.safetyChecks(originalPath);
 
     this.logger.debug('start update file to: ' + originalPath);
-    await writeFile(originalPath, op.code, 'utf-8');
+    const parseCode = removeCodeBlockFences(op.code);
+    await writeFile(originalPath, parseCode, 'utf-8');
   }
 
   private async handleRead(op: FileOperation): Promise<string | null> {

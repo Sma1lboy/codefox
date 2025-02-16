@@ -135,7 +135,7 @@ export class FrontendQueueProcessor {
 
       this.logger.debug('raw error: ' + rawErrorText);
 
-      const fixPrompt = generateFileOperationPrompt();
+      const fixPrompt = generateFileOperationPrompt(task.filePath);
       const commonIssuePrompt = generateCommonErrorPrompt();
 
       const fileOperationManager = new FileOperationManager(
@@ -168,16 +168,21 @@ export class FrontendQueueProcessor {
             },
             {
               role: 'user',
-              content: `## Overview of The Dependencies file you may need: \n ${task.dependenciesPath}`,
+              content: `## Overview of The Internal Dependencies file you may need: \n ${task.dependenciesPath}`,
             },
             {
               role: 'assistant',
               content: `Let me analysis the current file. Why error message occour?
-            Let me check some common issue to make sure my thinking is correct ${commonIssuePrompt}.`,
+            Let me check some common issue to make sure my thinking is correct ${commonIssuePrompt}.
+            I must follow the output format`,
             },
             {
               role: 'user',
               content: `Now you should start fix the current code error.`,
+            },
+            {
+              role: 'assistant',
+              content: `Let me check my result and I must follow the output format`,
             },
           ],
         },
@@ -222,7 +227,7 @@ export class FrontendQueueProcessor {
               { role: 'system', content: fixPrompt },
               {
                 role: 'user',
-                content: ` ## Current file: \n ${task.filePath} ## Current Code \n ${originalContent}\n `,
+                content: `## Current Code \n ${originalContent}\n `,
               },
               {
                 role: 'user',
@@ -231,12 +236,12 @@ export class FrontendQueueProcessor {
               {
                 role: 'assistant',
                 content:
-                  "Good, now provider your dependencies, it's okay dependencies are empty, which means you don't have any dependencies",
+                  "Good, now provider your Internal dependencies, it's okay dependencies are empty, which means you don't have any dependencies",
               },
               {
                 role: 'user',
-                content: `## Overview of The Dependencies files: \n ${task.dependenciesPath}\n
-                # Additional imported files:\n ${operations
+                content: `## Overview of Internal Dependencies files: \n ${task.dependenciesPath}\n
+                ## Internal Dependencies files content:\n ${operations
                   .filter((op) => op.action === 'read' && op.code)
                   .map((op) => `File: ${op.originalPath}\nContent:\n${op.code}`)
                   .join('\n\n')}`,
@@ -245,11 +250,16 @@ export class FrontendQueueProcessor {
                 role: 'assistant',
                 content: `Let me analysis the current file. Why error message occour
               This time I shouldn't use the read tool because previous context already use it.
-              Let me check some common issue to make sure my thinking is correct ${commonIssuePrompt}.`,
+              Let me check some common issue to make sure my thinking is correct ${commonIssuePrompt}.
+              I must follow the output format`,
               },
               {
                 role: 'user',
                 content: `Now you should start fix the current code error.`,
+              },
+              {
+                role: 'assistant',
+                content: `Let me check my result and I must follow the output format`,
               },
             ],
           },

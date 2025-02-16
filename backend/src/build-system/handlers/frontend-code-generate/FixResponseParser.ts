@@ -15,34 +15,33 @@ export class FixResponseParser {
       throw new Error('Invalid JSON format');
     }
 
-    if (!parsedData.fix || !parsedData.fix.operations) {
+    if (!parsedData.fix || !parsedData.fix.operation) {
       throw new Error("Invalid JSON structure: Missing 'fix.operations'");
     }
 
-    const operations: FileOperation[] = parsedData.fix.operations
-      .map((op: any) => {
-        if (op.type === 'WRITE') {
-          return {
-            action: 'write',
-            originalPath: filePath,
-            code: parsedData.fix.generate?.trim(),
-          };
-        } else if (op.type === 'RENAME') {
-          return {
-            action: 'rename',
-            originalPath: op.original_path,
-            renamePath: op.path,
-            code: parsedData.fix.generate?.trim(),
-          };
-        } else if (op.type === 'READ') {
-          return {
-            action: 'read',
-            originalPath: op.original_path,
-          };
-        }
-        return null;
-      })
-      .filter(Boolean);
+    const op = parsedData.fix.operation;
+    const operations: FileOperation[] = [];
+
+    if (op.type === 'WRITE') {
+      operations.push({
+        action: 'write',
+        originalPath: filePath,
+        code: op.content?.trim(),
+      });
+    } else if (op.type === 'RENAME') {
+      operations.push({
+        action: 'rename',
+        originalPath: op.original_path,
+        renamePath: op.path,
+      });
+    } else if (op.type === 'READ' && Array.isArray(op.paths)) {
+      for (const path of op.paths) {
+        operations.push({
+          action: 'read',
+          originalPath: path,
+        });
+      }
+    }
 
     // this.logger.log('Extracted operations:', operations);
     return operations;

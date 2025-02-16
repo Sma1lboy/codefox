@@ -2,61 +2,37 @@ export const generateFrontEndCodePrompt = (
   currentFile: string,
   dependencyFilePath: string,
 ): string => {
-  return `You are an expert frontend developer specializing in building scalable, maintainable, and production-ready React applications using TypeScript. 
-  Your task: Generate complete and functional React frontend code based on the provided inputs. The output must include all essential files, folders, and logic for UI components, API integration, routing, and state management.
+  return `Role: You are an expert frontend developer specializing in building scalable, maintainable, and production-ready React applications using TypeScript. 
+  Task: Generate complete, type-safe, and maintainable React code.
   Current File: ${currentFile}.
 
-    ### Instructions and Rules:
-      File Requirements:
-        Implement all specifications defined in the sitemap and UX datamap documents.
-        Ensure that the code includes necessary imports, state management, interactions, and API integrations without placeholders.
-        Incorporate hooks, APIs, or context based on dependencies provide
-        Use inline Tailwind CSS classes in TSX for all styling requirements. Avoid external .css files unless explicitly required by third-party libraries.
-        For src/index.tsx, ensure it imports index.css for global styles or third-party integrations.
+    # Instructions and Rules:
+      1. Implement Only One file: Implement only the given file.
+      2. COMPLETE CODE: Your code will be part of the entire project, so please implement complete, reliable, reusable code snippets.
+      3. Type Safe: Follow typscript standard. 
+      4. Follow design: DONT CHANGE ANY DESIGN IN Document.
+      5. CAREFULLY CHECK:
+        Before importing a file, verify its existence.
+        THAT YOU DONT MISSED ANY Internal Dependencies import.
+        If missing, suggest an alternative or define mock data.
+      6. Before using a external variable/module, make sure you import it first.
+      7. Error Handling: Implement proper error handling in API calls and interactions with external modules.    
+      8. Code Standards: Adhere to styling guidelines (e.g., Tailwind CSS, CSS Modules), and Use only Tailwind UI for styling, applying all styles via inline class names (className).
+      9. Mock the response: if the API returns an empty or undefined value.
+      10. Write EVERY CODE DETAIL, DON'T LEAVE TODO.
 
-      Code Standards:
-        Use React functional components and modern hooks (e.g., useState, useEffect, useContext).
-        Adhere to styling guidelines (e.g., Tailwind CSS, CSS Modules) as described in dependency files.
-        Use descriptive and meaningful names for all variables, functions, and components.
-        Follow accessibility best practices, including proper aria attributes.
-        When need to import from dependency file, use the user provide dependency file path.
-        Do not include any unnecessary or redundant code.
-        Do not assume any specific backend or API implementation.
-        Do not asume any import or dependencies.
-        Use only the dependencies provided below for imports. Ensure these imports are included correctly in the generated code wherever applicable.
-
-      ### Dependencies:
-      Below are the required dependency files to be included in the generated code.
-
-      <dependency>
-      File path: (dependency file code path)
-
-      \`\`\`typescript
-      dependency file content
-      \`\`\`
-      </dependency>
+      ## Library:
+        "react-router": "^6",
+        "react": "^18",
+        "@tailwindcss/vite": "^4.0.0"
 
 
-      Comments:
-        Add comments for each major code block or function, describing its purpose and logic.
-        Mark placeholders or sections where additional future integrations might be needed.
-
-      Error Handling:
-        Handle edge cases such as loading states, error states, and empty data gracefully.
-        Include fallback UI components or error boundaries where applicable.
-
-      Output Completeness:
-          The generated file must be production-ready and include all necessary imports and dependencies.
-          This final result must be 100% complete. Will be directly use in the production
-
-      ### Output Format:       
-        DO NOT include any code fences (no \`\`\`).
+      ## Output Format:       
         Output your final code wrapped in <GENERATE> tags ONLY, like:
 
           <GENERATE>
           ...full code...
           </GENERATE>
-
   `;
 };
 
@@ -140,45 +116,41 @@ Please fix the code so it compiles successfully. Return only the updated code wr
   `;
 }
 
-export function generateFileOperationPrompt(): string {
+export function generateFileOperationPrompt(currentFile: string): string {
   return `
-  You are a senior developer fixing a TypeScript project. Analyze the error and choose appropriate file operations. Return a structured JSON object that contains the fix.
+  Role: You are a code-fixing assistant expert at typescript.
+  Task: Based on the given error, generate the appropriate fix operation.
+  Current File: ${currentFile}.
 
-Available Tools:
+Available operations:
 1. WRITE - Modify/create files
 2. RENAME - RENAME the file
 3. READ - Read the file
 
-**Instructions:**
-1. **Understand the error from \`error\`** and determine what's wrong.
-2. **Analyze the dependencies** in \`dependencies file path\` to ensure type compatibility.
-3. **Modify the original code** in \`Current file Code\` while preserving its logic.
-4. **Ensure TypeScript type safety** and fix any possible runtime issues.
-5. Error Analysis:
-   - Read the error message carefully
-   - Identify error type (compilation/runtime/naming)
-   - Check if error originates from current file or dependencies
-
-6. Dependency Check:
+## Instructions:
+1. Use only one operation.
+2. Fix Only One file: Fix only the given file.
+3. Fix every error: Try Fix every error in the given file.
+4. Ask your self:
+  why the errors occur?
+  which lines of code are causing errors?
+5. Internal Dependency Check:
    - Compare types/interfaces with dependencies file path provide by user.
    - Ensure all imports match actual exports
    - Verify type signatures align
-
-7. Modification Rules:
+6. Modification Rules:
    - Preserve original functionality
    - Maintain TypeScript strict mode compliance
    - Keep existing code style/conventions
    - Add type guards where necessary
    - Prefer generics over 'any'
 
-8. File Operations:
-   - Use RENAME only for extension issues (e.g., .js → .tsx)
+7. File Operations:
+   - Use RENAME only for extension issues (e.g., .ts → .tsx)
    - Use WRITE for code/content changes
    - Use READ for not enough information so solve the issue
 
-9. When User provide "Additional imported files" use this as to help you fix the error. Remeber only write other files code to current file when it is necessary
-
-10. generate must include full code.
+8. Content must include full code.
 
 
 **Common Errors & Fixes**
@@ -186,81 +158,42 @@ Available Tools:
     TypeScript type error → Use the WRITE tool.
     Not assignable to parameter of type → Use the READ tool if you dont have enough information to fix.
 
-**safety check**
-1. Never delete files outside /src directory
-3. Maintain existing export patterns
-4. Verify all type references after changes
-
 **Output format:**
-Respond format in this json format:
+To keep the structure consistent, other operations remain single-action:
 
+1. Read File
+If you need to inspect the file before fixing it:
 {
   "fix": {
-    "operations": [
-      {
-        "type": "WRITE"
-      },
-      {
-        "type": "RENAME",
-        "path": "src/new/path/here.tsx",
-        "original_path": "src/old/path/here.ts"
-      }
-      {
-        "type": "READ",
-        "original_path": "src/the/path/read.tsx"
-      }
-    ],
-    "generate": " Code here "
+    "operation": {
+      "type": "READ",
+      "paths": ["src/path/to/file1.tsx", "src/path/to/file2.ts"]
+    }
   }
 }
 
-
-
-**Good Tool using Example:**
-Example Good WRITE Operation:
+2. Writing a Single File
+If you found an issue and are generating a fix:
 {
   "fix": {
-    "operations": [
-      {
-        "type": "WRITE"
-      }
-    ],
-    "generate": " Code here "
+    "operation": {
+      "type": "WRITE",
+      "content": "Fixed code here"
+    }
   }
 }
 
-Example Good RENAME Operation:
+Renaming a Single File:
+If a file needs to be renamed:
 {
   "fix": {
-    "operations": [
-      {
-        "type": "RENAME",
-        "path": "src/utils/helpers.tsx",
-        "original_path": "src/utils/helpers.js"
-      }
-    ],
-    "generate": ""
+    "operation": {
+      "type": "RENAME",
+      "path": "src/new/path/here.tsx",
+      "original_path": "src/old/path/here.ts"
+    }
   }
 }
-
-Example Good READ Operation:
-{
-  "fix": {
-    "operations": [
-      {
-        "type": "READ",
-        "original_path": "src/utils/helpers.tsx",
-      }
-      ... You can ask to read more then one file.
-    ],
-    "generate": ""
-  }
-}
-
-**Important Note**
-1.The output must be complete and strictly formatted.
-2.DO NOT EXPLAIN OUTSIDE JSON.
-
   `;
 }
 
@@ -276,17 +209,6 @@ Fix:
 
     Rename .ts to .tsx since JSX syntax requires TypeScript support.
 
-✅ Correct Fix Output:
-
-<FIX>
-  <OPERATIONS>
-    <ACTION type="RENAME" path="src/components/Button.tsx">
-      <ORIGINAL_PATH>src/components/Button.ts</ORIGINAL_PATH>
-    </ACTION>
-  </OPERATIONS>
-  <GENERATE></GENERATE>
-</FIX>
-
 2. defined but never used Issue -> Use the WRITE Tool
 
 Error example:
@@ -295,26 +217,15 @@ Error example:
 Fix:
   Remove the defined but never used component from the import.
 
-✅ Correct Fix Output:
-    {                                                                                                                                                                                             
-      "fix": {
-        "operations": [
-          {
-            "type": "WRITE"
-          }
-        ],
-        "generate": "Do the fix for the import and other part stay the same and put Full code here!"
-      }
-    }
-
 
 3. Import error -> Use the WRITE Tool
 
 Error example:
-    Cannot find module './components/GlobalFooter' or its corresponding type declarations.
+    Cannot find module 'react-hook-form' or its corresponding type declarations.
 
 Fix:
-    Read carefully about previous "dependency file Paths" use the path in the fix if applicable.
+    1. Read carefully about previous "Internal dependency file Paths" use the path in the fix if applicable.
+    2. if Internal dependency file didnt mention this then remove the import.
 
   `;
 }

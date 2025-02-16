@@ -117,6 +117,14 @@ export class FrontendCodeHandler implements BuildHandler<string> {
               path.resolve(frontendPath, file),
             );
 
+            // Ensure fileInfos[file] exists before modifying
+            if (!fileInfos[file]) {
+              fileInfos[file] = {
+                filePath: file, // Assuming `file` is the correct path
+                dependsOn: [],
+              };
+            }
+
             // Gather direct dependencies
             let directDepsArray = fileInfos[file]?.dependsOn || [];
 
@@ -296,10 +304,10 @@ export class FrontendCodeHandler implements BuildHandler<string> {
           role: 'user' as const,
           content: `
 
-          ## Overview of The Dependencies file you may need
+          ## Overview of The Internal Dependencies filess you may need
             ${directDepsPathString}
           
-          ## Detail about each Dependencies:
+          ## Detail about each Internal Dependencies:
             ${dependenciesText}\n
                   `,
         },
