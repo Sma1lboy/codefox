@@ -21,8 +21,9 @@ import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
     const sequence: BuildSequence = {
       id: 'test-backend-sequence',
       version: '1.0.0',
-      name: 'Spotify-like Music Web',
-      description: 'Users can play music',
+      name: 'Wrtie a Cool personal website',
+      description:
+        'A personal blog website. I am a cybersecurity engineer so i want it to show i am a really cool hacker',
       databaseType: 'SQLite',
       nodes: [
         {
