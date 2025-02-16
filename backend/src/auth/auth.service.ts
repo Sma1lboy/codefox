@@ -116,18 +116,18 @@ export class AuthService {
     }
   }
   async logout(token: string): Promise<boolean> {
-    Logger.log('logout token', token);
     try {
       await this.jwtService.verifyAsync(token);
+      const refreshToken = await this.refreshTokenRepository.findOne({ where: { token } });
+  
+      if (refreshToken) {
+        await this.refreshTokenRepository.remove(refreshToken);
+      }
+  
+      return true;
     } catch (error) {
       return false;
     }
-
-    if (!(await this.jwtCacheService.isTokenStored(token))) {
-      return false;
-    }
-    this.jwtCacheService.removeToken(token);
-    return true;
   }
 
   async assignMenusToRole(roleId: string, menuIds: string[]): Promise<Role> {
