@@ -106,7 +106,6 @@ export default function Home() {
       </div>
     );
   }
-
   // Render the main layout
   return (
     <ResizablePanelGroup direction="horizontal" className="h-full w-full">

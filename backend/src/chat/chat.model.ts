@@ -1,5 +1,11 @@
 import { Field, ObjectType, ID, registerEnumType } from '@nestjs/graphql';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Message } from 'src/chat/message.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
 import { User } from 'src/user/user.model';
@@ -42,7 +48,23 @@ export class Chat extends SystemBaseModel {
   })
   messages: Message[];
 
-  @ManyToOne(() => User, (user) => user.chats)
+  @Field(() => ID)
+  @Column()
+  projectId: string;
+
+  @ManyToOne(() => Project, (project) => project.chats, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
+  @JoinColumn({ name: 'project_id' })
+  @Field(() => Project)
+  project: Project;
+
+  @ManyToOne(() => User, (user) => user.chats, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
+  @JoinColumn({ name: 'user_id' })
   @Field(() => User)
   user: User;
 
