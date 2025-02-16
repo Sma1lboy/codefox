@@ -103,10 +103,12 @@ export function SignInModal({
                     className="w-full px-4 py-2 rounded-md border"
                   />
                 </div>
-                
+
                 {/* ✅ Show error message if login fails */}
                 {errorMessage && (
-                  <div className="text-red-500 text-sm text-center">{errorMessage}</div>
+                  <div className="text-red-500 text-sm text-center">
+                    {errorMessage}
+                  </div>
                 )}
 
                 <Button type="submit" className="w-full" disabled={loading}>

@@ -1,5 +1,10 @@
-"use client";
-import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink } from '@apollo/client';
+'use client';
+import {
+  ApolloClient,
+  InMemoryCache,
+  ApolloProvider,
+  createHttpLink,
+} from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext'; // ✅ Import AuthContext
@@ -8,7 +13,11 @@ const httpLink = createHttpLink({
   uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:4000/graphql',
 });
 
-export default function ApolloWrapper({ children }: { children: React.ReactNode }) {
+export default function ApolloWrapper({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { token, refreshAccessToken } = useAuth(); // ✅ Access AuthContext
   const [client, setClient] = useState<ApolloClient<any> | null>(null);
 
@@ -22,7 +31,7 @@ export default function ApolloWrapper({ children }: { children: React.ReactNode 
     return {
       headers: {
         ...headers,
-        Authorization: currentToken ? `Bearer ${currentToken}` : "",
+        Authorization: currentToken ? `Bearer ${currentToken}` : '',
       },
     };
   });
