@@ -30,13 +30,6 @@ import { MessageInterface } from 'src/common/model-provider/types';
   BackendRequirementHandler,
   FileFAHandler,
 ])
-@BuildNode()
-@BuildNodeRequire([
-  UXSMSHandler,
-  UXDMDHandler,
-  BackendRequirementHandler,
-  FileFAHandler,
-])
 export class FrontendCodeHandler implements BuildHandler<string> {
   readonly logger: Logger = new Logger('FrontendCodeHandler');
   private virtualDir: VirtualDirectory;
@@ -169,7 +162,6 @@ export class FrontendCodeHandler implements BuildHandler<string> {
               ${sitemapStruct}
               `,
               },
-              // To DO need to dynamically add the UX Datamap Documentation and Backend Requirement Documentation based on the file generate
               // {
               //   role: 'user' as const,
               //   content: `This is the UX Datamap Documentation:
@@ -194,8 +186,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
                 content: `Dependencies:
                 
                   ${dependenciesText}\n
-                  Now you can provide the code, don't forget the <GENERATE></GENERATE> xml tags.
-,                  `,
+                  Now you can provide the code.
+                  `,
               },
             ] as MessageInterface[];
 

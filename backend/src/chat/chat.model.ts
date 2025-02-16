@@ -1,15 +1,8 @@
 import { Field, ObjectType, ID, registerEnumType } from '@nestjs/graphql';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Message } from 'src/chat/message.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
 import { User } from 'src/user/user.model';
-import { Project } from 'src/project/project.model';
 
 export enum StreamStatus {
   STREAMING = 'streaming',
@@ -38,7 +31,7 @@ export class Chat extends SystemBaseModel {
     transformer: {
       to: (messages: Message[]) => messages,
       from: (value: any) => {
-        return value?.map((message: any) => ({
+        return value.map((message: any) => ({
           ...message,
           createdAt: message.createdAt ? new Date(message.createdAt) : null,
           updatedAt: message.updatedAt ? new Date(message.updatedAt) : null,
@@ -48,23 +41,7 @@ export class Chat extends SystemBaseModel {
   })
   messages: Message[];
 
-  @Field(() => ID)
-  @Column()
-  projectId: string;
-
-  @ManyToOne(() => Project, (project) => project.chats, {
-    onDelete: 'CASCADE',
-    nullable: false,
-  })
-  @JoinColumn({ name: 'project_id' })
-  @Field(() => Project)
-  project: Project;
-
-  @ManyToOne(() => User, (user) => user.chats, {
-    onDelete: 'CASCADE',
-    nullable: false,
-  })
-  @JoinColumn({ name: 'user_id' })
+  @ManyToOne(() => User, (user) => user.chats)
   @Field(() => User)
   user: User;
 }

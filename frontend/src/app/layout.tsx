@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { BaseProviders } from './providers/BaseProvider';
+import { ThemeProvider } from './providers/ThemeProvider';
+import ApolloWrapper from './providers/ApolloProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -25,7 +27,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <BaseProviders>{children}</BaseProviders>
+        <ApolloWrapper>
+          <ThemeProvider>{children}</ThemeProvider>
+        </ApolloWrapper>
       </body>
     </html>
   );

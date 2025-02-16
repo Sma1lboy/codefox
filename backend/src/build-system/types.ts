@@ -30,11 +30,6 @@ export interface BuildSequence {
   description?: string;
   databaseType?: string;
   nodes: BuildNode[];
-  packages: BuildProjectPackage[];
-}
-export interface BuildProjectPackage {
-  name: string;
-  version: string;
 }
 
 /**

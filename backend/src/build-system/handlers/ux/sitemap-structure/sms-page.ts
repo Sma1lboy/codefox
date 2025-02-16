@@ -8,15 +8,16 @@ import {
   ResponseParsingError,
 } from 'src/build-system/errors';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
+import { UXSMDHandler } from '../sitemap-document';
 import { UXSMSHandler } from '.';
 
 @BuildNode()
-@BuildNodeRequire([UXSMSHandler])
+@BuildNodeRequire([UXSMDHandler, UXSMSHandler])
 export class UXSMSPageByPageHandler implements BuildHandler<string> {
   readonly logger = new Logger('UXSitemapStructurePagebyPageHandler');
 
   async run(context: BuilderContext): Promise<BuildResult<string>> {
-    this.logger.log('Generating Page By Page UX Sitemap Structure Document...');
+    this.logger.log('Generating Level 2 UX Sitemap Structure Document...');
 
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
@@ -39,10 +40,10 @@ export class UXSMSPageByPageHandler implements BuildHandler<string> {
 
     if (sections.length === 0) {
       this.logger.error(
-        `No valid sections found in the UX Structure Document, uxStructureDoc: ${uxStructureDoc}`,
+        'No valid sections found in the UX Structure Document.',
       );
       throw new ResponseParsingError(
-        'No valid sections found in the UX Structure Document',
+        'No valid sections found in the UX Structure Document.',
       );
     }
 

@@ -85,8 +85,8 @@ export class MockBuilderContext extends BuilderContext {
     return this.virtualDirectory.parseJsonStructure(jsonContent);
   }
 
-  execute(): Promise<string> {
-    return Promise.resolve(''); // Mock a resolved promise for execution
+  execute(): Promise<void> {
+    return Promise.resolve(); // Mock a resolved promise for execution
   }
 
   getNodeData(handler: any): any {

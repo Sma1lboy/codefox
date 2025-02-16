@@ -1,5 +1,7 @@
 import { isIntegrationTest } from 'src/common/utils';
 import { BuildSequence } from '../types';
+import { executeBuildSequence } from './utils';
+import { Logger } from '@nestjs/common';
 import { ProjectInitHandler } from '../handlers/project-init';
 import { PRDHandler } from '../handlers/product-manager/product-requirements-document/prd';
 import { UXSMDHandler } from '../handlers/ux/sitemap-document';
@@ -12,9 +14,6 @@ import { FileFAHandler } from '../handlers/file-manager/file-arch';
 import { BackendRequirementHandler } from '../handlers/backend/requirements-document';
 import { BackendCodeHandler } from '../handlers/backend/code-generate';
 import { BackendFileReviewHandler } from '../handlers/backend/file-review/file-review';
-import { UXDMDHandler } from '../handlers/ux/datamap';
-import { BuilderContext } from '../context';
-import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
 
 (isIntegrationTest ? describe : describe.skip)('Build Sequence Test', () => {
   it('should execute build sequence successfully', async () => {
@@ -43,8 +42,22 @@ import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
           // requires: ['op:UX:SMD'],
         },
         {
-          handler: UXDMDHandler,
-          name: 'UX DataMap Document Node',
+          handler: DBRequirementHandler,
+          name: 'Database Requirements Node',
+          // requires: ['op:UX:DATAMAP:DOC'],
+        },
+        {
+          handler: FileStructureHandler,
+          name: 'File Structure Generation',
+          // requires: ['op:UX:SMD', 'op:UX:DATAMAP:DOC'],
+          options: {
+            projectPart: 'frontend',
+          },
+        },
+        {
+          handler: UXSMSPageByPageHandler,
+          name: 'Level 2 UX Sitemap Structure Node details',
+          // requires: ['op:UX:SMS'],
         },
         {
           handler: DBRequirementHandler,
@@ -82,18 +95,30 @@ import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
         {
           handler: BackendCodeHandler,
           name: 'Backend Code Generator Node',
+          // requires: [
+          //   'op:DATABASE:SCHEMAS',
+          //   'op:UX:DATAMAP:DOC',
+          //   'op:BACKEND:REQ',
+          // ],
         },
+        // {
+        //   handler:FrontendCodeHandler,
+        //   id: 'op:FRONTEND:CODE',
+        //   name: 'Frontend Code Generator Node',
+        // },
         {
           handler: BackendFileReviewHandler,
           name: 'Backend File Review Node',
-        },
-        {
-          handler: FrontendCodeHandler,
-          name: 'Frontend Code Generator Node',
+          // requires: ['op:BACKEND:CODE', 'op:BACKEND:REQ'],
         },
       ],
     };
-    const context = new BuilderContext(sequence, 'fullstack-code-gen');
-    await context.execute();
-  }, 300000);
+
+    const result = await executeBuildSequence('fullstack-code-gen', sequence);
+
+    // Assertion: ensure the build sequence runs successfully
+    expect(result.success).toBe(true);
+    expect(result.metrics).toBeDefined();
+    Logger.log(`Logs saved to: ${result.logFolderPath}`);
+  }, 300000); // Set timeout to 5 minutes
 });

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 import {
   BuildExecutionState,
   BuildResult,
@@ -16,8 +15,8 @@ import { BuildMonitor } from './monitor'; // Monitor to track the build process
 import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider'; // OpenAI model provider for LLM operations
 import { RetryHandler } from './retry-handler'; // Retry handler for retrying failed operations
 import { BuildHandlerManager } from './hanlder-manager'; // Manager for building handler classes
-import path from 'path';
-import * as fs from 'fs';
+import { sortBuildSequence } from './utils/build-utils';
+
 /**
  * Global data keys used throughout the build process.
  * These keys represent different project-related data that can be accessed globally within the build context.
@@ -79,8 +78,6 @@ export class BuilderContext {
   // Polling interval for checking dependencies or waiting for node execution
   private readonly POLL_INTERVAL = 500;
 
-  private logFolder: string | null = null;
-
   /**
    * Constructor to initialize the BuilderContext.
    * Sets up the handler manager, retry handler, model provider, logger, and virtual directory.
@@ -97,7 +94,7 @@ export class BuilderContext {
     this.handlerManager = BuildHandlerManager.getInstance();
     this.model = OpenAIModelProvider.getInstance();
     this.monitor = BuildMonitor.getInstance();
-    this.logger = new Logger(`builder-context-${id ?? sequence.id}`);
+    this.logger = new Logger(`builder-context-${id}`);
     this.virtualDirectory = new VirtualDirectory();
 
     // Initialize global context with default project values
@@ -105,38 +102,10 @@ export class BuilderContext {
     this.globalContext.set('description', sequence.description || '');
     this.globalContext.set('platform', 'web'); // Default platform is 'web'
     this.globalContext.set('databaseType', sequence.databaseType || 'SQLite');
-
-    const projectUUIDPath =
-      new Date().toISOString().slice(0, 18).replaceAll(/:/g, '-') +
-      '-' +
-      uuidv4();
-    this.globalContext.set('projectUUID', projectUUIDPath);
-
-    if (process.env.DEBUG) {
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      this.logFolder = path.join(
-        process.cwd(),
-        'logs',
-        `${id}-${timestamp}-${uuidv4().slice(0, 8)}`,
-      );
-      fs.mkdirSync(this.logFolder, { recursive: true });
-    }
-  }
-
-  // publig write log method to help all handler to write log
-  public writeLog(filename: string, content: any): void {
-    if (!this.logFolder) return;
-
-    try {
-      const filePath = path.join(this.logFolder, filename);
-      const contentStr =
-        typeof content === 'string'
-          ? content
-          : JSON.stringify(content, null, 2);
-      fs.writeFileSync(filePath, contentStr, 'utf8');
-    } catch (error) {
-      this.logger.error(`Failed to write log file: ${filename}`, error);
-    }
+    this.globalContext.set(
+      'projectUUID',
+      new Date().toISOString().slice(0, 10).replace(/:/g, '-') + '-' + uuidv4(),
+    );
   }
 
   /**
@@ -147,6 +116,7 @@ export class BuilderContext {
   private canExecute(node: BuildNode): boolean {
     const handlerName = node.handler.name;
 
+    // Node cannot execute if it's already completed or pending execution
     if (
       this.executionState.completed.has(handlerName) ||
       this.executionState.pending.has(handlerName)
@@ -154,8 +124,8 @@ export class BuilderContext {
       return false;
     }
 
-    const canExecute = this.checkNodeDependencies(node);
-    return canExecute;
+    // Check if the node's dependencies are satisfied
+    return this.checkNodeDependencies(node);
   }
 
   /**
@@ -166,22 +136,16 @@ export class BuilderContext {
    */
   private async invokeNodeHandler<T>(node: BuildNode): Promise<BuildResult<T>> {
     const handlerClass = node.handler;
-    const handlerName = handlerClass.name;
-
+    this.logger.log(`[Handler Start] ${handlerClass.name}`);
     try {
+      // Get the handler instance and execute it
       const handler = this.handlerManager.getHandler(handlerClass);
-      const result = await handler.run(this);
-
-      this.writeLog(`${handlerName}.md`, result.data);
-
+      const result = await handler.run(this); // Invoke handler's run method
+      this.logger.log(`[Handler Success] ${handlerClass.name}`);
       return result;
     } catch (e) {
-      this.writeLog(`${handlerName}-error.json`, {
-        error: e.message,
-        stack: e.stack,
-        timestamp: new Date().toISOString(),
-      });
-
+      // If handler fails, retry the operation
+      this.logger.error(`[Handler Retry] ${handlerClass.name}`);
       const result = await this.retryHandler.retryMethod(
         e,
         (node) => this.invokeNodeHandler(node),
@@ -193,6 +157,7 @@ export class BuilderContext {
       return result as BuildResult<T>;
     }
   }
+
   // Context management methods for global and node-specific data
 
   /**
@@ -288,8 +253,10 @@ export class BuilderContext {
         // Mark the node as completed and update the state
         this.executionState.completed.add(handlerName);
         this.executionState.pending.delete(handlerName);
+
         // Store the result of the node execution
         this.setNodeData(node.handler, result.data);
+        this.logger.log(`[Node Completed] ${handlerName}`);
         return result;
       })
       .catch((error) => {
@@ -312,74 +279,122 @@ export class BuilderContext {
    * - The method waits for all nodes to finish before completing.
    * @returns A promise that resolves when the entire build sequence is complete.
    */
+  async execute(): Promise<void> {
+    this.logger.log(`[Sequence Start] ${this.sequence.id}`);
+    this.logger.debug(`Total nodes to execute: ${this.sequence.nodes.length}`);
+    this.monitor.startSequenceExecution(this.sequence);
 
-  async execute(): Promise<string> {
     try {
-      const nodes = this.sequence.nodes;
+      const nodes = sortBuildSequence(this.sequence);
       let currentIndex = 0;
       const runningPromises = new Set<Promise<any>>();
 
+      // Loop over all nodes and execute them one by one
       while (currentIndex < nodes.length) {
+        this.logger.debug(
+          `[Execution Status] Current index: ${currentIndex}, Running nodes: ${runningPromises.size}`,
+        );
+
         const currentNode = nodes[currentIndex];
         if (!currentNode?.handler) {
+          this.logger.error(
+            `Invalid node at index ${currentIndex}, all node length: ${nodes.length}`,
+          );
           throw new Error(`Invalid node at index ${currentIndex}`);
         }
 
         const handlerName = currentNode.handler.name;
+        this.logger.debug(
+          `[Node Execution] ${handlerName}, and this can execute: ${this.canExecute(currentNode)}`,
+        );
 
+        // If the node cannot be executed yet, wait for dependencies to resolve
         if (!this.canExecute(currentNode)) {
-          this.writeLog('execution-state.json', {
-            timestamp: new Date().toISOString(),
-            waiting: handlerName,
-            state: {
-              completed: Array.from(this.executionState.completed),
-              pending: Array.from(this.executionState.pending),
-              failed: Array.from(this.executionState.failed),
-            },
-          });
+          this.logger.debug(
+            `[Waiting Dependencies] Paused at node ${handlerName}, will check again in ${this.POLL_INTERVAL}ms`,
+          );
           await new Promise((resolve) =>
             setTimeout(resolve, this.POLL_INTERVAL),
           );
           continue;
         }
 
-        const nodePromise = this.startNodeExecution(currentNode)
-          .then((result) => {
-            this.writeLog(`${handlerName}-complete.json`, {
-              timestamp: new Date().toISOString(),
-              status: 'complete',
+        try {
+          // Start the execution of the node and track its progress
+          this.monitor.startNodeExecution(handlerName, this.sequence.id);
+          const nodePromise = this.startNodeExecution(currentNode)
+            .then((result) => {
+              this.monitor.endNodeExecution(
+                handlerName,
+                this.sequence.id,
+                true, // Mark the node execution as successful
+              );
+              runningPromises.delete(nodePromise); // Remove the node from the running list
+              return result;
+            })
+            .catch((error) => {
+              this.monitor.endNodeExecution(
+                handlerName,
+                this.sequence.id,
+                false, // Mark the node execution as failed
+                error instanceof Error ? error : new Error(String(error)),
+              );
+              runningPromises.delete(nodePromise); // Remove the node from the running list
+              throw error;
             });
-            runningPromises.delete(nodePromise);
-            return result;
-          })
-          .catch((error) => {
-            this.writeLog(`${handlerName}-error.json`, {
-              timestamp: new Date().toISOString(),
-              error: error.message,
-              stack: error.stack,
-            });
-            runningPromises.delete(nodePromise);
-            throw error;
-          });
 
-        runningPromises.add(nodePromise);
-        currentIndex++;
+          // Add the node promise to the running promises set
+          runningPromises.add(nodePromise);
+          this.logger.debug(
+            `[Node Started] ${handlerName}, Total running: ${runningPromises.size}`,
+          );
+          // Only increase the index if the node has been successfully started
+          currentIndex++;
+        } catch (error) {
+          this.logger.error(`Failed to start node ${handlerName}:`, error);
+          throw error;
+        }
       }
 
+      // Wait for all running nodes to finish
       while (runningPromises.size > 0) {
+        this.logger.debug(
+          `[Waiting] Remaining running nodes: ${runningPromises.size}`,
+        );
         await Promise.all(Array.from(runningPromises));
+        // Give other promises a chance to resolve
         await new Promise((resolve) => setTimeout(resolve, this.POLL_INTERVAL));
       }
-      return this.getGlobalContext('projectUUID');
-    } catch (error) {
-      this.writeLog('execution-error.json', {
-        error: error.message,
-        stack: error.stack,
-        timestamp: new Date().toISOString(),
-      });
-      throw error;
+
+      // Wait for any remaining LLM (Large Language Model) requests to complete
+      const finalActivePromises = this.model.getAllActivePromises();
+      if (finalActivePromises.length > 0) {
+        this.logger.debug(
+          `[Final Wait] Waiting for ${finalActivePromises.length} remaining LLM requests`,
+        );
+        await Promise.all(finalActivePromises);
+
+        // Recheck if there are new LLM requests after the first wait
+        const remainingPromises = this.model.getAllActivePromises();
+        if (remainingPromises.length > 0) {
+          this.logger.debug(
+            `[Final Check] Waiting for ${remainingPromises.length} additional LLM requests`,
+          );
+          await Promise.all(remainingPromises);
+        }
+      }
+
+      this.logger.log(`[Sequence Complete] ${this.sequence.id}`);
+      this.logger.debug('Final execution state:', this.executionState);
+    } finally {
+      // End the monitoring of the sequence once all nodes are executed
+      this.monitor.endSequenceExecution(
+        this.sequence.id,
+        this.globalContext.get('projectUUID'),
+      );
     }
   }
+
   /**
    * Checks if a node's dependencies have been satisfied.
    * Each handler may have a set of dependencies that must be completed before the node can run.
@@ -387,36 +402,27 @@ export class BuilderContext {
    * @returns True if all dependencies are met, otherwise false.
    */
   private checkNodeDependencies(node: BuildNode): boolean {
+    this.logger.debug(`Checking dependencies for ${node.handler.name}`);
     const handlerClass = this.handlerManager.getHandler(node.handler);
-    const handlerName = handlerClass.name;
 
+    // If the node has no dependencies, it's ready to execute
     if (!handlerClass.dependencies?.length) {
-      this.writeLog('dependencies.json', {
-        handler: handlerName,
-        dependencies: [],
-        message: 'No dependencies',
-        timestamp: new Date().toISOString(),
-      });
+      this.logger.debug(`No dependencies for ${node.handler.name}`);
       return true;
     }
 
-    const dependencies = handlerClass.dependencies;
-    const dependencyStatus = dependencies.map((dep) => ({
-      dependency: dep.name,
-      isCompleted: this.executionState.completed.has(dep.name),
-    }));
+    // Check each dependency for the node
+    for (const dep of handlerClass.dependencies) {
+      if (!this.executionState.completed.has(dep.name)) {
+        this.logger.debug(
+          `Dependency ${dep.name} not met for ${node.handler.name}`,
+        );
+        return false;
+      }
+    }
 
-    const allDependenciesMet = dependencies.every((dep) =>
-      this.executionState.completed.has(dep.name),
-    );
-
-    this.writeLog('dependencies.json', {
-      handler: handlerName,
-      dependencies: dependencyStatus,
-      allDependenciesMet,
-      timestamp: new Date().toISOString(),
-    });
-
-    return allDependenciesMet;
+    // All dependencies are met, so the node can execute
+    this.logger.debug(`All dependencies met for ${node.handler.name}`);
+    return true;
   }
 }

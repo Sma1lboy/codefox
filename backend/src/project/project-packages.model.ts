@@ -1,6 +1,12 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Project } from './project.model';
 
 @Entity()
@@ -10,14 +16,15 @@ export class ProjectPackages extends SystemBaseModel {
   @PrimaryGeneratedColumn()
   id: string;
 
+  @Field(() => ID)
+  @Column()
+  project_id: string;
+
   @Field()
   @Column('text')
   content: string;
 
-  @Field()
-  @Column()
-  version: string;
-
-  @ManyToMany(() => Project, (project) => project.projectPackages)
-  projects: Project[];
+  @ManyToOne(() => Project, (project) => project.projectPackages)
+  @JoinColumn({ name: 'project_id' })
+  project: Project;
 }

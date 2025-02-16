@@ -1,14 +1,13 @@
 import * as path from 'path';
 
 import fsExtra from 'fs-extra';
-import { cwd } from 'process';
 const { existsSync, mkdirSync, promises, writeFileSync } = fsExtra;
 
 // Constants for base directories
 const APP_NAME = 'codefox';
 // TODO: hack way to get the root directory of the workspace
 
-const WORKSPACE_ROOT = path.resolve(cwd(), '..');
+const WORKSPACE_ROOT = path.resolve(path.join(__dirname, '..', '..', '..'));
 
 const ROOT_DIR = path.join(WORKSPACE_ROOT, `.${APP_NAME}`);
 

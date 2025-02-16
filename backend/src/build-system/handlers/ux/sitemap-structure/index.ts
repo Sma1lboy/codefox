@@ -30,8 +30,6 @@ export class UXSMSHandler implements BuildHandler<string> {
       context.getGlobalContext('projectName') || 'Default Project Name';
     const sitemapDoc = context.getNodeData(UXSMDHandler);
 
-    const platform = context.getGlobalContext('platform') || 'Default Platform';
-
     // Validate required parameters
     if (!projectName || typeof projectName !== 'string') {
       throw new MissingConfigurationError('Missing or invalid projectName.');
@@ -44,7 +42,7 @@ export class UXSMSHandler implements BuildHandler<string> {
 
     const prompt = prompts.generateUXSiteMapStructurePrompt(
       projectName,
-      platform, // TODO: Change platform dynamically if necessary
+      'web', // TODO: Change platform dynamically if necessary
     );
 
     const messages: MessageInterface[] = [
@@ -82,11 +80,6 @@ export class UXSMSHandler implements BuildHandler<string> {
           If the SMD mentions additional flows, add them here. 
           Confirm any login or access restrictions, too.
         `,
-      },
-      {
-        role: 'user',
-        content:
-          'Also, make sure all pages are beginning with  <page_view id="[id]"> and ending with </page_view> tags. You should follow the rule from system prompt',
       },
     ];
 

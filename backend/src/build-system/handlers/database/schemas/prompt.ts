@@ -129,41 +129,19 @@ Your reply must start with "<GENERATE>" and end with "</GENERATE>".`;
     schemaContent: string,
     databaseType: string = 'PostgreSQL',
   ): string => {
-    return `You are a Database Expert specializing in ${databaseType}. Your task is to analyze and fix any issues in the following database schema:
+    return `You are a Database Expert specializing in ${databaseType}. Validate the following database schema for correctness, syntax, and logical consistency:
   
-  ${schemaContent}
+<GENERATE>
+${schemaContent}
+</GENERATE>
   
-  As an expert database engineer, you should:
-  1. Analyze the schema for any syntax errors, logical inconsistencies, or missing elements
-  2. Fix any issues including:
-     - Incorrect syntax or invalid ${databaseType} statements
-     - Missing or incorrect dependencies
-     - Improper foreign key relationships
-     - Missing indexes for commonly queried fields
-     - Non-idempotent operations
-     - Incorrect data type usage
-     - Missing constraints that should exist
-     - Schema objects created in incorrect order
+Rules for validation:
+1. Ensure the schema syntax is valid for ${databaseType}.
+2. Check that all necessary tables, fields, indexes, and constraints are present based on standard best practices.
+3. Verify that dependencies (e.g., foreign keys) are properly handled and in the correct order.
+4. Confirm that all schema operations are idempotent and will not cause issues if executed multiple times.
+5. Return 'Validation Passed' if everything is correct. If there are issues, return 'Validation Failed' followed by a detailed explanation of errors.
   
-  You must provide your response in exactly this format:
-  1. First, explain all issues found and fixes applied OUTSIDE of any GENERATE tags
-  2. Then provide the complete fixed schema inside GENERATE tags
-  3. The GENERATE tags must contain ONLY valid ${databaseType} schema code, no comments or explanations
-  
-  For example:
-  
-  Found and fixed the following issues:
-  1. Added missing IF NOT EXISTS to table creation
-  2. Fixed incorrect foreign key reference
-  3. Added missing index on commonly queried field
-  
-  <GENERATE>
-  CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR(255) NOT NULL
-  );
-  
-  CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-  </GENERATE>`;
+Your reply must start with "<GENERATE>" and end with "</GENERATE>".`;
   },
 };

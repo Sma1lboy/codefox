@@ -33,7 +33,7 @@ export default function DetailSettings() {
       <DialogContent>
         <DialogHeader className="space-y-4">
           <DialogTitle>Settings</DialogTitle>
-          <EditUsernameForm />
+          <EditUsernameForm setOpen={setIsOpen} />
         </DialogHeader>
       </DialogContent>
     </Dialog>

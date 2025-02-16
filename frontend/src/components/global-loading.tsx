@@ -1,4 +1,5 @@
 "use client";
+'use client';
 import { Loader2 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 

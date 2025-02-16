@@ -3,7 +3,6 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
-  Logger,
 } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { JwtService } from '@nestjs/jwt';
@@ -12,8 +11,6 @@ import { ProjectService } from '../project/project.service';
 
 @Injectable()
 export class ProjectGuard implements CanActivate {
-  private readonly logger = new Logger('ProjectGuard');
-
   constructor(
     private readonly projectsService: ProjectService,
     private readonly jwtService: JwtService,
@@ -22,78 +19,38 @@ export class ProjectGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const gqlContext = GqlExecutionContext.create(context);
     const request = gqlContext.getContext().req;
-    const args = gqlContext.getArgs();
 
-    // Verify and decode JWT token
-    const user = await this.validateToken(request);
-
-    // Extract project identifier from arguments
-    const projectIdentifier = this.extractProjectIdentifier(args);
-
-    if (!projectIdentifier) {
-      this.logger.debug('No project identifier found in request');
-      return true; // Skip check if no project identifier is found
-    }
-
-    // Validate project ownership
-    await this.validateProjectOwnership(projectIdentifier, user.userId);
-
-    // Store user in request context for later use
-    request.user = user;
-    return true;
-  }
-
-  private async validateToken(request: any): Promise<any> {
+    // Extract the authorization header
     const authHeader = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       throw new UnauthorizedException('Authorization token is missing');
     }
 
+    // Decode the token to get user information
     const token = authHeader.split(' ')[1];
+    let user: any;
     try {
-      return this.jwtService.verify(token);
+      user = this.jwtService.verify(token);
     } catch (error) {
-      this.logger.error(`Token validation failed: ${error.message}`);
       throw new UnauthorizedException('Invalid token');
     }
-  }
 
-  private extractProjectIdentifier(args: any): string | undefined {
-    // Handle different input formats
-    if (args.projectId) return args.projectId;
-    if (args.input?.projectId) return args.input.projectId;
-    if (args.isValidProject?.projectId) return args.isValidProject.projectId;
-    if (args.projectPath) return args.projectPath;
-    if (args.input?.projectPath) return args.input.projectPath;
-    if (args.isValidProject?.projectPath)
-      return args.isValidProject.projectPath;
+    // Extract projectId from the request arguments
+    const args = gqlContext.getArgs();
+    const { projectId } = args;
 
-    return undefined;
-  }
-
-  private async validateProjectOwnership(
-    projectIdentifier: string,
-    userId: number,
-  ): Promise<void> {
-    let project;
-    try {
-      project = await this.projectsService.getProjectById(projectIdentifier);
-    } catch (error) {
-      this.logger.error(`Failed to fetch project: ${error.message}`);
-      throw new UnauthorizedException('Project not found');
-    }
-
+    // Fetch the project and check if the userId matches the project's userId
+    const project = await this.projectsService.getProjectById(projectId);
     if (!project) {
       throw new UnauthorizedException('Project not found');
     }
 
-    if (project.userId !== userId) {
-      this.logger.warn(
-        `Unauthorized access attempt: User ${userId} tried to access project ${projectIdentifier}`,
-      );
-      throw new UnauthorizedException(
-        'User is not authorized to access this project',
-      );
+    //To do: In the feature when we need allow teams add check here
+
+    if (project.userId !== user.userId) {
+      throw new UnauthorizedException('User is not the owner of the project');
     }
+
+    return true;
   }
 }

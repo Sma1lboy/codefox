@@ -91,9 +91,6 @@ export function SideBarItem({
 
   const handleChatClick = (e: React.MouseEvent) => {
     if (!(e.target as HTMLElement).closest('.dropdown-trigger')) {
-      window.history.replaceState({}, '', `/?id=${id}`);
-      const event = new Event(EventEnum.CHAT);
-      window.dispatchEvent(event);
       onSelect(id);
     }
   };
@@ -106,13 +103,16 @@ export function SideBarItem({
         }),
         'flex justify-between w-full h-14 text-base font-normal items-center group'
       )}
-      onClick={handleChatClick}
     >
-      <div className="flex-1 flex gap-3 items-center truncate ml-2">
+      <Link
+        href={`/?id=${id}`}
+        className="flex-1 flex gap-3 items-center truncate ml-2"
+        onClick={handleChatClick}
+      >
         <div className="flex flex-col">
           <span className="text-xs font-normal">{title || 'New Chat'}</span>
         </div>
-      </div>
+      </Link>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>

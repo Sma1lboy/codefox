@@ -6,7 +6,6 @@ import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import { PRDHandler } from '../../product-manager/product-requirements-document/prd';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
-import { ResponseParsingError } from 'src/build-system/errors';
 
 @BuildNode()
 @BuildNodeRequire([PRDHandler])
@@ -20,7 +19,7 @@ export class UXSMDHandler implements BuildHandler<string> {
       context.getGlobalContext('projectName') || 'Default Project Name';
     const platform = context.getGlobalContext('platform') || 'Default Platform';
     const prdContent = context.getNodeData(PRDHandler);
-    this.logger.debug('prd in uxsmd', prdContent);
+    this.logger.log('prd in uxsmd', prdContent);
 
     // Generate the prompt dynamically
     const prompt = prompts.generateUxsmdPrompt(projectName, platform);
@@ -31,13 +30,6 @@ export class UXSMDHandler implements BuildHandler<string> {
       prompt,
       prdContent,
     );
-
-    if (!uxsmdContent || uxsmdContent === '') {
-      return {
-        success: false,
-        error: new ResponseParsingError('Failed to generate UXSMD'),
-      };
-    }
 
     // Store the generated document in the context
     context.setGlobalContext('uxsmdDocument', uxsmdContent);

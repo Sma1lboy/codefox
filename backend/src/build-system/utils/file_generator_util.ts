@@ -22,10 +22,6 @@ interface GenerateFilesDependencyLayerResult {
 
 const logger = new Logger('FileGeneratorUtil');
 
-/**
- * Generate Files Dependency With Layers.
- * This function is mainly use for files generate.
- */
 export async function generateFilesDependencyWithLayers(
   jsonString: string,
   virtualDirectory: VirtualDirectory,
@@ -41,6 +37,9 @@ export async function generateFilesDependencyWithLayers(
 
   // 4. Build concurrency layers with Kahn’s Algorithm
   const concurrencyLayers = buildConcurrencyLayers(nodes, fileInfos);
+
+  // Optionally check for cycles (if you didn’t do it inside buildConcurrencyLayers)
+  // detectCycles(...) or similar
 
   logger.log('All files dependency layers generated successfully.');
 
@@ -70,12 +69,38 @@ function buildDependencyLayerGraph(jsonData: {
 
     // In the JSON, "dependsOn" is an array of file paths
     details.dependsOn.forEach((dep) => {
-      nodes.add(dep);
-      fileInfos[fileName].dependsOn.push(dep);
+      const resolvedDep = resolveDependency(fileName, dep);
+      nodes.add(resolvedDep);
+
+      fileInfos[fileName].dependsOn.push(resolvedDep);
     });
   });
 
   return { fileInfos, nodes };
+}
+
+/**
+ * Generates files based on JSON extracted from a Markdown document.
+ * Ensures dependency order is maintained during file creation.
+ */
+export async function generateFilesDependency(
+  markdownContent: string,
+  virtualDirectory: VirtualDirectory,
+): Promise<GenerateFilesDependencyResult> {
+  const jsonData = extractJsonFromMarkdown(markdownContent);
+
+  const { graph, nodes, fileInfos } = buildDependencyGraph(jsonData);
+  detectCycles(graph);
+  validateAgainstVirtualDirectory(nodes, virtualDirectory);
+
+  const sortedFiles = getSortedFiles(graph, nodes);
+
+  logger.log('All files dependency generated successfully.');
+
+  return {
+    sortedFiles,
+    fileInfos,
+  };
 }
 
 /**
@@ -106,39 +131,16 @@ export function buildDependencyGraph(jsonData: {
     };
 
     details.dependsOn.forEach((dep) => {
-      graph.push([dep, fileName]); // [dependency, dependent]
-      nodes.add(dep);
+      const resolvedDep = resolveDependency(fileName, dep);
+      graph.push([resolvedDep, fileName]); // [dependency, dependent]
+      nodes.add(resolvedDep);
 
       // store dependsOn
-      fileInfos[fileName].dependsOn.push(dep);
+      fileInfos[fileName].dependsOn.push(resolvedDep);
     });
   });
 
   return { graph, nodes, fileInfos };
-}
-
-/**
- * Generates files based on JSON extracted from a Markdown document.
- * Ensures dependency order is maintained during file creation.
- */
-export async function generateFilesDependency(
-  markdownContent: string,
-  virtualDirectory: VirtualDirectory,
-): Promise<GenerateFilesDependencyResult> {
-  const jsonData = extractJsonFromMarkdown(markdownContent);
-
-  const { graph, nodes, fileInfos } = buildDependencyGraph(jsonData);
-  detectCycles(graph);
-  validateAgainstVirtualDirectory(nodes, virtualDirectory);
-
-  const sortedFiles = getSortedFiles(graph, nodes);
-
-  logger.log('All files dependency generated successfully.');
-
-  return {
-    sortedFiles,
-    fileInfos,
-  };
 }
 
 /**
@@ -184,6 +186,11 @@ export function resolveDependency(
   dependency: string,
 ): string {
   const currentDir = path.dirname(currentFile);
+  const hasExtension = path.extname(dependency).length > 0;
+
+  if (!hasExtension) {
+    dependency = path.join(dependency, 'index.ts');
+  }
 
   const resolvedPath = path.join(currentDir, dependency).replace(/\\/g, '/');
   logger.log(`Resolved dependency: ${resolvedPath}`);
@@ -200,7 +207,7 @@ export function validateAgainstVirtualDirectory(
   const invalidFiles: string[] = [];
 
   nodes.forEach((filePath) => {
-    if (!virtualDir.hasFile(filePath)) {
+    if (!virtualDir.isValidFile(filePath)) {
       invalidFiles.push(filePath);
     }
   });

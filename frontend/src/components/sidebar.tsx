@@ -1,7 +1,8 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { memo, useCallback, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { SquarePen } from 'lucide-react';
 import SidebarSkeleton from './sidebar-skeleton';
 import UserSettings from './user-settings';
@@ -11,6 +12,7 @@ import { EventEnum } from './enum';
 import {
   SidebarContent,
   SidebarGroup,
+  SidebarGroupLabel,
   SidebarGroupContent,
   SidebarTrigger,
   Sidebar,
@@ -21,7 +23,6 @@ import { cn } from '@/lib/utils';
 
 interface SidebarProps {
   isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void; // Parent setter to update collapse state
   isMobile: boolean;
   currentChatId?: string;
   chatListUpdated: boolean;
@@ -32,9 +33,8 @@ interface SidebarProps {
   onRefetch: () => void;
 }
 
-export function ChatSideBar({
+function CustomSidebar({
   isCollapsed,
-  setIsCollapsed,
   isMobile,
   chatListUpdated,
   setChatListUpdated,
@@ -43,10 +43,8 @@ export function ChatSideBar({
   error,
   onRefetch,
 }: SidebarProps) {
-  // Use a local state only for the currently selected chat.
+  const [isSimple, setIsSimple] = useState(false);
   const [currentChatid, setCurrentChatid] = useState('');
-
-  // Handler for starting a new chat.
   const handleNewChat = useCallback(() => {
     window.history.replaceState({}, '', '/');
     setCurrentChatid('');
@@ -59,13 +57,7 @@ export function ChatSideBar({
     console.error('Error loading chats:', error);
     return null;
   }
-
-  console.log(
-    'ChatSideBar state: isCollapsed:',
-    isCollapsed,
-    'currentChatid:',
-    currentChatid
-  );
+  console.log(`${isCollapsed}, ${isMobile}, ${isSimple}`);
 
   return (
     <div
@@ -73,27 +65,24 @@ export function ChatSideBar({
       className="relative justify-between group lg:bg-accent/0 lg:dark:bg-card/0 flex flex-col h-full"
     >
       <Sidebar collapsible="icon" side="left">
-        {/* Toggle button: Clicking this will toggle the collapse state */}
         <SidebarTrigger
-          className="lg:flex items-center justify-center cursor-pointer p-2 ml-3.5 mt-2"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-        />
+          className={`lg:flex items-center justify-center cursor-pointer p-2 ml-3.5 mt-2`}
+          onClick={() => setIsSimple(!isSimple)}
+        ></SidebarTrigger>
 
         <Button
-          onClick={handleNewChat}
-          size="setting"
+          onClick={() => handleNewChat()}
           variant="ghost"
-          className="flex justify-between w-[90%] h-14 text-sm xl:text-lg font-normal items-center ml-[5%]"
+          className={`flex justify-between w-[90%] h-14 text-sm xl:text-lg font-normal items-center ml-[5%]`}
         >
           <Image
             src="/codefox.svg"
             alt="AI"
             width={48}
             height={48}
-            className="flex-shrink-0 dark:invert"
+            className={`flex-shrink-0 dark:invert ${isSimple ? 'm-auto' : ''}`}
           />
-          {/* Only show extra text/icons when the sidebar is expanded */}
-          {!isCollapsed && (
+          {!isSimple && (
             <div
               className={cn('flex items-center', {
                 'gap-7': !isMobile,
@@ -102,18 +91,22 @@ export function ChatSideBar({
             >
               New chat
               {(!isCollapsed || isMobile) && (
-                <SquarePen className="shrink-0 m-3" />
+                <SquarePen
+                  className={cn('shrink-0', {
+                    'ml-[12.5%]': isSimple && !isMobile,
+                    'm-3': !isSimple,
+                  })}
+                />
               )}
             </div>
           )}
         </Button>
-
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupContent>
               {loading
                 ? 'Loading...'
-                : !isCollapsed &&
+                : !isSimple &&
                   chats.map((chat) => (
                     <SideBarItem
                       key={chat.id}
@@ -130,22 +123,17 @@ export function ChatSideBar({
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
-
         <SidebarFooter>
-          <UserSettings isSimple={false} />
+          <UserSettings isSimple={isSimple} />
         </SidebarFooter>
 
-        <SidebarRail
-          // Optional: Provide a secondary trigger if needed.
-          setIsSimple={() => setIsCollapsed(!isCollapsed)}
-          isSimple={false}
-        />
+        <SidebarRail setIsSimple={setIsSimple} isSimple={isSimple} />
       </Sidebar>
     </div>
   );
 }
 
-export default memo(ChatSideBar, (prevProps, nextProps) => {
+export default memo(CustomSidebar, (prevProps, nextProps) => {
   return (
     prevProps.isCollapsed === nextProps.isCollapsed &&
     prevProps.isMobile === nextProps.isMobile &&

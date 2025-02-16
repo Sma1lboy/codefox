@@ -20,8 +20,7 @@ export interface MessageInterface {
 }
 
 export interface ChatInput {
-  // if model not provided, default model will be used
-  model?: string;
+  model: string;
   messages: MessageInterface[];
 }
 

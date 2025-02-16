@@ -23,12 +23,7 @@ import { BackendRequirementHandler } from '../requirements-document';
  */
 
 @BuildNode()
-@BuildNodeRequire([
-  UXSMDHandler,
-  UXDMDHandler,
-  DBSchemaHandler,
-  BackendRequirementHandler,
-])
+@BuildNodeRequire([UXSMDHandler, UXDMDHandler, DBSchemaHandler])
 export class BackendCodeHandler implements BuildHandler<string> {
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     const projectName =
@@ -45,7 +40,7 @@ export class BackendCodeHandler implements BuildHandler<string> {
     // Validate required data
     if (!sitemapDoc || !datamapDoc || !databaseSchemas) {
       throw new MissingConfigurationError(
-        `Missing required configuration: sitemapDoc, datamapDoc, or databaseSchemas: siteMapDoc: ${!!sitemapDoc}, datamapDoc: ${!!datamapDoc}, databaseSchemas: ${!!databaseSchemas}`,
+        'Missing required configuration: sitemapDoc, datamapDoc, or databaseSchemas.',
       );
     }
 

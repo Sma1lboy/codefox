@@ -18,7 +18,7 @@ export function ModeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="justify-start rounded-[10px]">
+        <Button variant="outline" className="justify-start">
           {theme === 'light' && (
             <div className="flex justify-between w-full scale-100 dark:scale-0">
               <p>Light mode</p>

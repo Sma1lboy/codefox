@@ -137,7 +137,7 @@ Deliver a single XML-like document that strictly follows the structure above. St
   `;
   },
   generatePagebyPageSiteMapStructrePrompt: (): string => {
-    const guidelines = prompts.HTML_Guidelines_Page_view_Prompt();
+    const guidelines = prompts.HTML_Guidelines_global_component_prompt();
 
     return `
     You are an expert front-end developer and UX designer. We have two important inputs:
