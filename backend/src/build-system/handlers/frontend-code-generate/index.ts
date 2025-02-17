@@ -19,10 +19,7 @@ import { writeFileSync } from 'fs';
 import { MessageInterface } from 'src/common/model-provider/types';
 
 import { FrontendCodeValidator } from './CodeValidator';
-import {
-  FrontendQueueProcessor,
-  CodeTaskQueue,
-} from './FrontendQueueProcessor';
+import { FrontendQueueProcessor, CodeTaskQueue } from './CodeReview';
 
 interface FileInfos {
   [fileName: string]: {
