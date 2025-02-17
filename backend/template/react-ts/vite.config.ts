@@ -10,4 +10,10 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  esbuild: {
+    target: 'esnext', // Allow top-level await
+  },
+  build: {
+    target: 'esnext', // Ensure Vite compiles for a modern target
+  },
 });

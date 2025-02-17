@@ -61,15 +61,11 @@ Additional Rules:
       case 'frontend':
         roleDescription = 'an expert frontend developer';
         includeSections = `
-          Folder Structure:
+          Folder Structure example:
             src: Main source code folder.
-              components: Reusable UI elements grouped by category (e.g., common, layout, specific).
-              contexts: Global state management (e.g., auth, theme, player).
-              hooks: Custom hooks for data fetching and state management.
-              pages: Route-specific views (e.g., Home, Search, Playlist).
-              utils: Utility functions (e.g., constants, helpers, validators).
-              apis: Organized API logic (e.g., auth, music, user).
-              router.ts: Central routing configuration.
+              contexts: Global state management.
+              pages: Route-specific views. For Example: Home, Search, Playlist.
+              router.tsx: Central routing configuration.
               index.tsx: Application entry point.
         `;
         excludeSections = `
@@ -81,6 +77,7 @@ Additional Rules:
         `;
         fileNamingGuidelines = `
           File and Folder Naming Guidelines:
+            Must use .tsx extension for all files.
             Use meaningful and descriptive file names.
             Do NOT use page_view_* and global_view_* prefixes for folder or file names.
             For components, include an index.tsx file in each folder to simplify imports.
