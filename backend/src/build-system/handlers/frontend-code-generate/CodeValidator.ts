@@ -42,24 +42,22 @@ export class FrontendCodeValidator {
       npmProcess.stdout.on('data', (data: Buffer) => {
         const output = data.toString();
         stdoutBuffer += output;
-        // this.logger.log(output);
       });
 
       npmProcess.stderr.on('data', (data: Buffer) => {
         const output = data.toString();
         stderrBuffer += output;
-        // this.logger.log(output);
       });
 
       npmProcess.on('close', (code: number) => {
         if (code !== 0) {
           // Build failed – use stderr if available, else fallback to stdout.
           const errorMessage = stderrBuffer || stdoutBuffer;
-          //   this.logger.error(
-          //     `Build process exited with code ${code}. Error: ${errorMessage}`,
-          //   );
+          this.logger.verbose(
+            `Build process exited with code ${code}. Error: ${errorMessage}`,
+          );
 
-          this.logger.error(`Build process exited with code ${code}.`);
+          // this.logger.error(`Build process exited with code ${code}.`);
           resolve({
             success: false,
             error: errorMessage,
@@ -74,7 +72,6 @@ export class FrontendCodeValidator {
       });
 
       npmProcess.on('error', (err: Error) => {
-        this.logger.error('Failed to run npm build command:', err);
         reject(err);
       });
     });

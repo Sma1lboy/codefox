@@ -1,3 +1,15 @@
+/**
+ * FileOperationManager.ts
+ *
+ * This file defines:
+ * 1) An interface `FileOperation` to describe
+ *    how a file operation request should look.
+ * 2) A class `FileOperationManager` that implements
+ *    the logic for performing write, rename, and
+ *    read operations on files, with safety checks
+ *    to prevent unauthorized or dangerous file access.
+ */
+
 import { Logger } from '@nestjs/common';
 import { writeFile, rename, readFile } from 'fs/promises';
 import path from 'path';
@@ -11,6 +23,11 @@ export interface FileOperation {
   paths?: string[];
 }
 
+/**
+ * Manages file operations such as 'write', 'rename', and 'read'.
+ * parses JSON input to extract operations.
+ * Also enforces safety checks to prevent unauthorized access or edits.
+ */
 export class FileOperationManager {
   private readonly projectRoot: string;
   private readonly allowedPaths: string[];
@@ -24,12 +41,13 @@ export class FileOperationManager {
     this.allowedPaths = [this.projectRoot];
   }
 
-  private operationCount = 0;
+  /**
+   * Executes an array of file operations sequentially.
+   *
+   * @param operations - An array of operations to perform.
+   * @returns The final "renamePath" if any file was renamed, or null otherwise.
+   */
   async executeOperations(operations: FileOperation[]): Promise<string | null> {
-    // if (operations.length > 5) {
-    //   throw new Error('Maximum 5 operations per fix');
-    // }
-
     let newFilePath: string | null = null;
 
     for (const op of operations) {
@@ -53,6 +71,7 @@ export class FileOperationManager {
             }
             break;
           case 'read':
+            // We could implement a read action here if needed.
             // await this.handleRead(op);
             break;
         }
@@ -67,6 +86,11 @@ export class FileOperationManager {
     return newFilePath;
   }
 
+  /**
+   * Handles the 'write' action: writes the given code string to the file.
+   *
+   * @param op - A FileOperation containing `originalPath` and `code`.
+   */
   private async handleWrite(op: FileOperation): Promise<void> {
     const originalPath = path.resolve(this.projectRoot, op.originalPath);
     this.safetyChecks(originalPath);
@@ -76,6 +100,12 @@ export class FileOperationManager {
     await writeFile(originalPath, parseCode, 'utf-8');
   }
 
+  /**
+   * Handles the 'read' action: reads a file from disk.
+   *
+   * @param op - A FileOperation containing `originalPath`.
+   * @returns The file content as a string, or null if it fails to read.
+   */
   private async handleRead(op: FileOperation): Promise<string | null> {
     try {
       const originalPath = path.resolve(this.projectRoot, op.originalPath);
@@ -97,6 +127,11 @@ export class FileOperationManager {
     }
   }
 
+  /**
+   * Handles the 'rename' action: moves or renames a file.
+   *
+   * @param op - A FileOperation containing `originalPath` and `renamePath`.
+   */
   private async handleRename(op: FileOperation): Promise<void> {
     const originalPath = path.resolve(this.projectRoot, op.originalPath);
     const RenamePath = path.resolve(this.projectRoot, op.renamePath);
@@ -110,6 +145,75 @@ export class FileOperationManager {
     await rename(originalPath, RenamePath);
   }
 
+  /**
+   * Parses JSON output (e.g., from an LLM) to build an array of FileOperations.
+   * This is often used when GPT provides structured instructions to
+   * read/write/rename files.
+   *
+   * input example:
+   *  {
+   *    "fix": {
+   *      "operation": {
+   *         "type": "READ",
+   *        "paths": ["src/path/to/file1.tsx", "src/path/to/file2.ts"]
+   *     }
+   *  }
+   *  }
+   *
+   * @param json     - The JSON string containing the fix/operation details.
+   * @param filePath - The path of the file we’re primarily fixing (if any).
+   * @returns An array of FileOperation objects.
+   */
+  parse(json: string, filePath: string): FileOperation[] {
+    this.logger.log('Parsing JSON:', json);
+
+    let parsedData;
+    try {
+      parsedData = JSON.parse(json);
+    } catch (error) {
+      this.logger.error('Error parsing JSON:', error);
+      throw new Error('Invalid JSON format');
+    }
+
+    if (!parsedData.fix || !parsedData.fix.operation) {
+      throw new Error("Invalid JSON structure: Missing 'fix.operations'");
+    }
+
+    const op = parsedData.fix.operation;
+    const operations: FileOperation[] = [];
+
+    if (op.type === 'WRITE') {
+      operations.push({
+        action: 'write',
+        originalPath: filePath,
+        code: op.content?.trim(),
+      });
+    } else if (op.type === 'RENAME') {
+      operations.push({
+        action: 'rename',
+        originalPath: op.original_path,
+        renamePath: op.path,
+      });
+    } else if (op.type === 'READ' && Array.isArray(op.paths)) {
+      for (const path of op.paths) {
+        operations.push({
+          action: 'read',
+          originalPath: path,
+        });
+      }
+    }
+
+    // this.logger.log('Extracted operations:', operations);
+    return operations;
+  }
+
+  /**
+   * Performs security checks on a given file path to ensure it is within
+   * the allowed project scope and doesn’t target restricted files.
+   *
+   * @param filePath - The path to be checked.
+   * @throws If the path is outside the project root or is otherwise disallowed.
+   */
   private safetyChecks(filePath: string) {
     const targetPath = path.resolve(this.projectRoot, filePath); // Normalize path
 
@@ -134,6 +238,13 @@ export class FileOperationManager {
     // }
   }
 
+  /**
+   * Checks if the targetPath is within one of the allowed paths
+   * and not in node_modules or environment files.
+   *
+   * @param targetPath - The path to check.
+   * @returns True if allowed, false otherwise.
+   */
   private isPathAllowed(targetPath: string): boolean {
     return this.allowedPaths.some(
       (allowedPath) =>

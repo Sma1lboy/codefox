@@ -18,9 +18,11 @@ import { formatResponse } from 'src/build-system/utils/strings';
 import { writeFileSync } from 'fs';
 import { MessageInterface } from 'src/common/model-provider/types';
 
-import { CodeTaskQueue } from './CodeTaskQueue';
-import { FrontendCodeValidator } from './FrontendCodeValidator';
-import { FrontendQueueProcessor } from './FrontendQueueProcessor';
+import { FrontendCodeValidator } from './CodeValidator';
+import {
+  FrontendQueueProcessor,
+  CodeTaskQueue,
+} from './FrontendQueueProcessor';
 
 interface FileInfos {
   [fileName: string]: {
