@@ -14,6 +14,7 @@ import { UseGuards } from '@nestjs/common';
 import { ProjectGuard } from '../guard/project.guard';
 import { GetUserIdFromToken } from '../decorator/get-auth-token.decorator';
 import { Chat } from 'src/chat/chat.model';
+import { User } from 'src/user/user.model';
 
 @Resolver(() => Project)
 export class ProjectsResolver {
