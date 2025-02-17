@@ -107,7 +107,7 @@ export class ProjectService {
 
       return true;
     } catch (error) {
-      console.error('Error binding project and chat:', error);
+      this.logger.error('Error binding project and chat:', error);
       return false;
     }
   }
@@ -218,9 +218,6 @@ export class ProjectService {
       return transformedPackages;
     } catch (error) {
       this.logger.error('Error transforming packages:', error);
-      // throw new InternalServerErrorException(
-      //   'Error processing project packages.',
-      // );
       return Promise.resolve([]);
     }
   }
