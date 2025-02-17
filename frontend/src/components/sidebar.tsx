@@ -1,7 +1,7 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useContext, useState } from 'react';
 import { SquarePen } from 'lucide-react';
 import SidebarSkeleton from './sidebar-skeleton';
 import UserSettings from './user-settings';
@@ -18,8 +18,10 @@ import {
   SidebarFooter,
 } from './ui/sidebar';
 import { cn } from '@/lib/utils';
+import { ProjectContext } from './code-engine/project-context';
 
 interface SidebarProps {
+  setIsModalOpen: (value: boolean) => void; // Parent setter to update collapse state
   isCollapsed: boolean;
   setIsCollapsed: (value: boolean) => void; // Parent setter to update collapse state
   isMobile: boolean;
@@ -33,6 +35,7 @@ interface SidebarProps {
 }
 
 export function ChatSideBar({
+  setIsModalOpen,
   isCollapsed,
   setIsCollapsed,
   isMobile,
@@ -45,7 +48,7 @@ export function ChatSideBar({
 }: SidebarProps) {
   // Use a local state only for the currently selected chat.
   const [currentChatid, setCurrentChatid] = useState('');
-
+  const { setCurProject, pollChatProject } = useContext(ProjectContext);
   // Handler for starting a new chat.
   const handleNewChat = useCallback(() => {
     window.history.replaceState({}, '', '/');
@@ -108,6 +111,35 @@ export function ChatSideBar({
           )}
         </Button>
 
+        <Button
+          onClick={() => setIsModalOpen(true)}
+          size="setting"
+          variant="ghost"
+          className="flex justify-between w-[90%] h-14 text-sm xl:text-lg font-normal items-center ml-[5%]"
+        >
+          <Image
+            src="/codefox.svg"
+            alt="AI"
+            width={48}
+            height={48}
+            className="flex-shrink-0 dark:invert"
+          />
+          {/* Only show extra text/icons when the sidebar is expanded */}
+          {!isCollapsed && (
+            <div
+              className={cn('flex items-center', {
+                'gap-7': !isMobile,
+                'gap-4': isMobile,
+              })}
+            >
+              New Project
+              {(!isCollapsed || isMobile) && (
+                <SquarePen className="shrink-0 m-3" />
+              )}
+            </div>
+          )}
+        </Button>
+
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupContent>
@@ -121,6 +153,10 @@ export function ChatSideBar({
                       currentChatId={currentChatid}
                       title={chat.title}
                       onSelect={() => {
+                        setCurProject(null);
+                        pollChatProject(chat.id).then((p) => {
+                          setCurProject(p);
+                        });
                         window.history.replaceState({}, '', `/?id=${chat.id}`);
                         setCurrentChatid(chat.id);
                       }}

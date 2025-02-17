@@ -11,6 +11,10 @@ export class ProjectPackages extends SystemBaseModel {
   id: string;
 
   @Field()
+  @Column({ nullable: false })
+  name: string;
+
+  @Field()
   @Column('text')
   content: string;
 
@@ -18,6 +22,8 @@ export class ProjectPackages extends SystemBaseModel {
   @Column()
   version: string;
 
-  @ManyToMany(() => Project, (project) => project.projectPackages)
+  @ManyToMany(() => Project, (project) => project.projectPackages, {
+    nullable: true,
+  })
   projects: Project[];
 }

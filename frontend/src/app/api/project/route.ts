@@ -4,7 +4,7 @@ import { FileReader } from '@/utils/file-reader';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const projectId = searchParams.get('id');
+  const projectId = searchParams.get('path');
 
   if (!projectId) {
     return NextResponse.json({ error: 'Missing projectId' }, { status: 400 });

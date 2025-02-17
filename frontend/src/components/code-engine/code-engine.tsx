@@ -2,12 +2,13 @@
 import { Button } from '@/components/ui/button';
 import Editor from '@monaco-editor/react';
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Code as CodeIcon,
   Copy,
   Eye,
   GitFork,
+  Loader,
   Share2,
   Terminal,
 } from 'lucide-react';
@@ -18,10 +19,10 @@ import FileExplorerButton from './file-explorer-button';
 import FileStructure from './file-structure';
 import { ProjectContext } from './project-context';
 
-export function CodeEngine() {
+export function CodeEngine({ chatId }: { chatId: string }) {
   // Initialize state, refs, and context
   const editorRef = useRef(null);
-  const { projectId, filePath } = useContext(ProjectContext);
+  const { curProject, filePath, pollChatProject } = useContext(ProjectContext);
   const [preCode, setPrecode] = useState('// some comment');
   const [newCode, setCode] = useState('// some comment');
   const [saving, setSaving] = useState(false);
@@ -32,6 +33,8 @@ export function CodeEngine() {
     Record<TreeItemIndex, TreeItem<any>>
   >({});
   const theme = useTheme();
+
+  const [isProjectFinished, setIsProjectFinished] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'preview' | 'code' | 'console'>(
     'code'
   );
@@ -41,14 +44,31 @@ export function CodeEngine() {
     // Set the editor DOM node's position for layout control
     editorInstance.getDomNode().style.position = 'absolute';
   };
+  useEffect(() => {
+    async function checkChatProject() {
+      if (curProject?.id) {
+        setIsProjectFinished(false);
+        const linkedProject = await pollChatProject(chatId);
+        console.log(linkedProject);
+        setIsProjectFinished(true);
+      } else {
+        setIsProjectFinished(false);
+      }
+    }
+    checkChatProject();
+  }, [curProject, pollChatProject]);
 
   // Effect: Fetch file content when filePath or projectId changes
   useEffect(() => {
     async function getCode() {
+      const file_node = fileStructureData[`root/${filePath}`];
+      if (filePath == '' || !file_node) return;
+      const isFolder = file_node.isFolder;
+      if (isFolder) return;
       try {
         setIsLoading(true);
         const res = await fetch(
-          `/api/file?path=${encodeURIComponent(`${projectId}/${filePath}`)}`
+          `/api/file?path=${encodeURIComponent(`${curProject.projectPath}/${filePath}`)}`
         ).then((res) => res.json());
         setCode(res.content);
         setPrecode(res.content);
@@ -59,13 +79,15 @@ export function CodeEngine() {
       }
     }
     getCode();
-  }, [filePath, projectId]);
+  }, [filePath, curProject]);
 
   // Effect: Fetch file structure when projectId changes
   useEffect(() => {
     async function fetchFiles() {
       try {
-        const response = await fetch(`/api/project?id=${projectId}`);
+        const response = await fetch(
+          `/api/project?path=${curProject.projectPath}`
+        );
         const data = await response.json();
         setFileStructureData(data.res || {});
       } catch (error) {
@@ -73,7 +95,7 @@ export function CodeEngine() {
       }
     }
     fetchFiles();
-  }, [projectId]);
+  }, [curProject]);
 
   // Reset code to previous state and update editor
   const handleReset = () => {
@@ -90,7 +112,7 @@ export function CodeEngine() {
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          filePath: `${projectId}/${filePath}`,
+          filePath: `${curProject.projectPath}/${filePath}`,
           newContent: JSON.stringify(value),
         }),
       });
@@ -232,6 +254,20 @@ export function CodeEngine() {
   // Render the CodeEngine layout
   return (
     <div className="flex flex-col h-full relative">
+      <AnimatePresence>
+        {!isProjectFinished && (
+          <motion.div
+            key="loader"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="absolute inset-0 bg-black bg-opacity-40 backdrop-blur-md flex items-center justify-center z-50"
+          >
+            <Loader className="w-10 h-10 text-white animate-spin" />
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Header Bar */}
       <ResponsiveToolbar />
 

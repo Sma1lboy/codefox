@@ -52,14 +52,6 @@ export class Chat extends SystemBaseModel {
   @Column()
   projectId: string;
 
-  @ManyToOne(() => Project, (project) => project.chats, {
-    onDelete: 'CASCADE',
-    nullable: false,
-  })
-  @JoinColumn({ name: 'project_id' })
-  @Field(() => Project)
-  project: Project;
-
   @ManyToOne(() => User, (user) => user.chats, {
     onDelete: 'CASCADE',
     nullable: false,
@@ -67,6 +59,10 @@ export class Chat extends SystemBaseModel {
   @JoinColumn({ name: 'user_id' })
   @Field(() => User)
   user: User;
+
+  @ManyToOne(() => Project, (project) => project.chats)
+  @Field(() => Project, { nullable: true })
+  project: Project;
 }
 
 @ObjectType('ChatCompletionDeltaType')

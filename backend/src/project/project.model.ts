@@ -8,6 +8,7 @@ import {
   JoinColumn,
   ManyToMany,
   JoinTable,
+  OneToMany,
 } from 'typeorm';
 import { User } from 'src/user/user.model';
 import { ProjectPackages } from './project-packages.model';
@@ -58,10 +59,11 @@ export class Project extends SystemBaseModel {
   })
   projectPackages: ProjectPackages[];
 
-  @Field(() => [Chat], { nullable: true })
+  @Field(() => [Chat])
   @OneToMany(() => Chat, (chat) => chat.project, {
-    cascade: true,
-    eager: false,
+    cascade: true, // Automatically save related chats
+    lazy: true, // Load chats only when accessed
+    onDelete: 'CASCADE', // Delete chats when user is deleted
   })
   chats: Chat[];
 }

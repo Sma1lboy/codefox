@@ -8,6 +8,7 @@ type Chat {
   isActive: Boolean!
   isDeleted: Boolean!
   messages: [Message!]
+  project: Project
   title: String
   updatedAt: Date!
   user: User!
@@ -92,7 +93,7 @@ type Message {
 type Mutation {
   clearChatHistory(chatId: String!): Boolean!
   createChat(newChatInput: NewChatInput!): Chat!
-  createPorject(createProjectInput: CreateProjectInput!): Project!
+  createProject(createProjectInput: CreateProjectInput!): Chat!
   deleteChat(chatId: String!): Boolean!
   deleteProject(projectId: String!): Boolean!
   login(input: LoginUserInput!): LoginResponse!
@@ -106,6 +107,7 @@ input NewChatInput {
 }
 
 type Project {
+  chats: [Chat!]!
   createdAt: Date!
   id: ID!
   isActive: Boolean!
@@ -128,6 +130,7 @@ type ProjectPackages {
   id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
+  name: String!
   updatedAt: Date!
   version: String!
 }
