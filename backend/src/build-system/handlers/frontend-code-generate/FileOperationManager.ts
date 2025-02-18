@@ -215,21 +215,19 @@ export class FileOperationManager {
    * @throws If the path is outside the project root or is otherwise disallowed.
    */
   private safetyChecks(filePath: string) {
-    const targetPath = path.resolve(this.projectRoot, filePath); // Normalize path
-
     // Prevent path traversal attacks
-    if (!targetPath.startsWith(this.projectRoot)) {
+    if (!filePath.startsWith(this.projectRoot)) {
       throw new Error('Unauthorized file access detected');
     }
 
     // Prevent package.json modifications
-    if (targetPath.includes('package.json')) {
+    if (filePath.includes('package.json')) {
       throw new Error('Modifying package.json requires special approval');
     }
 
     // Security check
-    if (!this.isPathAllowed(targetPath)) {
-      throw new Error(`Attempted to access restricted path: ${targetPath}`);
+    if (!this.isPathAllowed(filePath)) {
+      throw new Error(`Attempted to access restricted path: ${filePath}`);
     }
 
     // Limit write anddelete write operations
