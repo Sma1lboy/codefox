@@ -18,7 +18,7 @@ import { Chat } from 'src/chat/chat.model';
 @ObjectType()
 export class Project extends SystemBaseModel {
   @Field(() => ID)
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Field()
@@ -33,8 +33,12 @@ export class Project extends SystemBaseModel {
   @Column()
   userId: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, (user) => user.projects, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
   @JoinColumn({ name: 'user_id' })
+  @Field(() => User)
   user: User;
 
   @Field(() => [ProjectPackages], { nullable: true })

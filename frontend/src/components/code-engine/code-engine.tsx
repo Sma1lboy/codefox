@@ -1,5 +1,4 @@
 'use client';
-
 import { Button } from '@/components/ui/button';
 import Editor from '@monaco-editor/react';
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
@@ -40,7 +39,6 @@ export function CodeEngine({ chatId }: { chatId: string }) {
   const [activeTab, setActiveTab] = useState<'preview' | 'code' | 'console'>(
     'code'
   );
-
   // Callback: Handle editor mount
   const handleEditorMount = (editorInstance) => {
     editorRef.current = editorInstance;
@@ -54,14 +52,6 @@ export function CodeEngine({ chatId }: { chatId: string }) {
         const linkedProject = await pollChatProject(chatId);
         console.log(linkedProject);
         setIsProjectFinished(true);
-        // setIsProjectFinished(false);
-        // if (
-        //   chatId == '6730a482-2935-47f0-ad7a-43e7f17dc121' ||
-        //   chatId == '806b1498-65e0-4e4f-8724-42a8177610e0'
-        // ) {
-        //   await new Promise((resolve) => setTimeout(resolve, 10000));
-        // }
-        // setIsProjectFinished(true);
       } else {
         setIsProjectFinished(false);
       }
@@ -145,7 +135,6 @@ export function CodeEngine({ chatId }: { chatId: string }) {
     setCode(value);
     setSaving(true);
   };
-
   // Responsive toolbar component for header tabs and buttons
   const ResponsiveToolbar = () => {
     const containerRef = useRef(null);
@@ -351,7 +340,6 @@ export function CodeEngine({ chatId }: { chatId: string }) {
     </div>
   );
 }
-
 // SaveChangesBar component for showing unsaved changes status
 const SaveChangesBar = ({ saving, onSave, onReset }) => {
   return (

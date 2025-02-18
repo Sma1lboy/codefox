@@ -41,19 +41,25 @@ export class ProjectService {
 
   async getProjectsByUser(userId: string): Promise<Project[]> {
     const projects = await this.projectsRepository.find({
-      where: { userId: userId, isDeleted: false },
-      relations: ['projectPackages'],
+      where: { userId, isDeleted: false },
+      relations: ['projectPackages', 'chats'],
     });
+
     if (projects && projects.length > 0) {
       projects.forEach((project) => {
+        // Filter deleted packages
         project.projectPackages = project.projectPackages.filter(
           (pkg) => !pkg.isDeleted,
         );
+        // Filter deleted chats
+        if (project.chats) {
+          project.chats = project.chats.filter((chat) => !chat.isDeleted);
+        }
       });
     }
 
     if (!projects || projects.length === 0) {
-      throw new NotFoundException(`User with ID ${userId} have no project.`);
+      throw new NotFoundException(`User with ID ${userId} has no projects.`);
     }
     return projects;
   }
@@ -61,12 +67,16 @@ export class ProjectService {
   async getProjectById(projectId: string): Promise<Project> {
     const project = await this.projectsRepository.findOne({
       where: { id: projectId, isDeleted: false },
-      relations: ['projectPackages'],
+      relations: ['projectPackages', 'chats', 'user'],
     });
+
     if (project) {
       project.projectPackages = project.projectPackages.filter(
         (pkg) => !pkg.isDeleted,
       );
+      if (project.chats) {
+        project.chats = project.chats.filter((chat) => !chat.isDeleted);
+      }
     }
 
     if (!project) {
@@ -97,7 +107,7 @@ export class ProjectService {
 
       return true;
     } catch (error) {
-      console.error('Error binding project and chat:', error);
+      this.logger.error('Error binding project and chat:', error);
       return false;
     }
   }
@@ -163,10 +173,8 @@ export class ProjectService {
         throw new InternalServerErrorException('Error creating the project.');
       }
     })();
-
     return defaultChatPromise;
   }
-
   private async transformInputToProjectPackages(
     inputPackages: ProjectPackage[],
   ): Promise<ProjectPackages[]> {
@@ -209,9 +217,6 @@ export class ProjectService {
       return transformedPackages;
     } catch (error) {
       this.logger.error('Error transforming packages:', error);
-      // throw new InternalServerErrorException(
-      //   'Error processing project packages.',
-      // );
       return Promise.resolve([]);
     }
   }
@@ -219,26 +224,29 @@ export class ProjectService {
   async deleteProject(projectId: string): Promise<boolean> {
     const project = await this.projectsRepository.findOne({
       where: { id: projectId },
+      relations: ['projectPackages', 'chats'],
     });
+
     if (!project) {
       throw new NotFoundException(`Project with ID ${projectId} not found.`);
     }
 
     try {
-      // Perform a soft delete by updating is_active and is_deleted fields
+      // Soft delete the project
       project.isActive = false;
       project.isDeleted = true;
       await this.projectsRepository.save(project);
 
-      // Perform a soft delete for related project packages
-      const projectPackages = project.projectPackages;
-      if (projectPackages && projectPackages.length > 0) {
-        for (const pkg of projectPackages) {
+      // Soft delete related project packages
+      if (project.projectPackages?.length > 0) {
+        for (const pkg of project.projectPackages) {
           pkg.isActive = false;
           pkg.isDeleted = true;
           await this.projectPackagesRepository.save(pkg);
         }
       }
+
+      // Note: Related chats will be automatically handled by the CASCADE setting
 
       return true;
     } catch (error) {

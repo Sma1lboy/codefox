@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { VirtualDirectory } from '../virtual-dir';
 import { extractJsonFromMarkdown } from 'src/build-system/utils/strings';
 import toposort from 'toposort';
+import { RetryableError } from '../errors';
 
 interface FileDependencyInfo {
   filePath: string;
@@ -295,7 +296,7 @@ function buildConcurrencyLayers(
   // 4. If there are any files left with in-degree > 0, there's a cycle
   const unprocessed = Object.entries(inDegree).filter(([_, deg]) => deg > 0);
   if (unprocessed.length > 0) {
-    throw new Error(
+    throw new RetryableError(
       `Cycle or leftover dependencies detected for: ${unprocessed
         .map(([f]) => f)
         .join(', ')}`,
