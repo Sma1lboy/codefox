@@ -92,6 +92,7 @@ import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
           name: 'Frontend Code Generator Node',
         },
       ],
+      packages: [],
     };
     const context = new BuilderContext(sequence, 'fullstack-code-gen');
     await context.execute();
