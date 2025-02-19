@@ -34,6 +34,7 @@ export function CodeEngine({ chatId }: { chatId: string }) {
     Record<TreeItemIndex, TreeItem<any>>
   >({});
   const theme = useTheme();
+  console.log('codeengine current chatId: ', chatId);
 
   const [isProjectFinished, setIsProjectFinished] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'preview' | 'code' | 'console'>(
@@ -59,7 +60,7 @@ export function CodeEngine({ chatId }: { chatId: string }) {
       }
     }
     checkChatProject();
-  }, [curProject, pollChatProject]);
+  }, [chatId, curProject, pollChatProject]);
 
   // Effect: Fetch file content when filePath or projectId changes
   useEffect(() => {
@@ -87,6 +88,8 @@ export function CodeEngine({ chatId }: { chatId: string }) {
   // Effect: Fetch file structure when projectId changes
   useEffect(() => {
     async function fetchFiles() {
+      if (!curProject?.projectPath) return;
+
       try {
         const response = await fetch(
           `/api/project?path=${curProject.projectPath}`
@@ -98,7 +101,7 @@ export function CodeEngine({ chatId }: { chatId: string }) {
       }
     }
     fetchFiles();
-  }, [curProject]);
+  }, [curProject?.projectPath]);
 
   // Reset code to previous state and update editor
   const handleReset = () => {

@@ -102,6 +102,11 @@ async function buildAndRunDocker(
 
         exec(runCommand, (runErr, runStdout, runStderr) => {
           if (runErr) {
+            // Check if error is due to container already existing
+            if (runStderr.includes('Conflict. The container name')) {
+              resolve({ domain, containerId: containerName });
+              return;
+            }
             console.error(`Error during Docker run: ${runStderr}`);
             return reject(runErr);
           }
@@ -135,15 +140,22 @@ export async function GET(req: Request) {
     );
   }
 
+  // First check if container is already running
+  const existingContainer = runningContainers.get(projectPath);
+  if (existingContainer) {
+    return NextResponse.json({
+      message: 'Docker container already running',
+      domain: existingContainer.domain,
+      containerId: existingContainer.containerId,
+    });
+  }
+
+  // If already processing this project, don't start another build
   if (processingRequests.has(projectPath)) {
-    const existingContainer = runningContainers.get(projectPath);
-    if (existingContainer) {
-      return NextResponse.json({
-        message: 'Docker container already running',
-        domain: existingContainer.domain,
-        containerId: existingContainer.containerId,
-      });
-    }
+    return NextResponse.json({
+      message: 'Build in progress',
+      status: 'pending',
+    });
   }
 
   processingRequests.add(projectPath);
