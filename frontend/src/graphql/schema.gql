@@ -116,6 +116,7 @@ type Project {
   projectPackages: [ProjectPackages!]
   projectPath: String!
   updatedAt: Date!
+  user: User!
   userId: ID!
 }
 
@@ -141,7 +142,7 @@ type Query {
   getChatDetails(chatId: String!): Chat
   getChatHistory(chatId: String!): [Message!]!
   getHello: String!
-  getProjectDetails(projectId: String!): Project!
+  getProject(projectId: String!): Project!
   getUserChats: [Chat!]
   getUserProjects: [Project!]!
   isValidateProject(isValidProject: IsValidProjectInput!): Boolean!
@@ -181,6 +182,7 @@ type User {
   email: String!
   isActive: Boolean!
   isDeleted: Boolean!
+  projects: [Project!]!
   updatedAt: Date!
   username: String!
 }

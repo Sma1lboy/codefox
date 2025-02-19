@@ -53,7 +53,7 @@ async function buildAndRunDocker(
   }
   const traefikDomain = process.env.TRAEFIK_DOMAIN || 'docker.localhost';
   const directory = path.join(getProjectPath(projectPath), 'frontend');
-  const imageName = path.basename(directory).toLowerCase();
+  const imageName = projectPath.toLowerCase();
   const containerId = crypto.randomUUID();
   const containerName = `container-${containerId}`;
 

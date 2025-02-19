@@ -1,16 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { ProjectContext } from './project-context';
 
 export default function WebPreview() {
-  const [url, setUrl] = useState(
-    'https://kzmgu6xz4h7tgnj3yzwq.lite.vusercontent.net/'
-  );
+  const { curProject } = useContext(ProjectContext);
+  const [url, setUrl] = useState('');
   const iframeRef = useRef(null);
 
   useEffect(() => {
     const getWebUrl = async () => {
-      // TODO: using dynamic loading project by useContext
-      const projectPath =
-        '2025-02-10T02-09-3-fc331808-0edf-44fb-9f34-9310b890ba71';
+      const projectPath = curProject.projectPath;
       try {
         const response = await fetch(
           `http://localhost:3000/api/runProject?projectPath=${encodeURIComponent(projectPath)}`,
@@ -31,7 +29,7 @@ export default function WebPreview() {
     };
 
     getWebUrl();
-  }, []);
+  }, [curProject]);
 
   useEffect(() => {
     if (iframeRef.current) {
@@ -74,11 +72,11 @@ export default function WebPreview() {
         </button>
       </div>
 
-      <div className="w-full max-w-5xl border rounded-lg overflow-hidden">
+      <div className="w-full h-full max-w-5xl border rounded-lg overflow-hidden">
         <iframe
           ref={iframeRef}
           src={url}
-          className="w-full h-[600px] border-none"
+          className="w-full h-full border-none"
         />
       </div>
     </div>

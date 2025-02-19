@@ -34,7 +34,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [chatProjectCache, setChatProjectCache] = useState<
     Map<string, Project | null>
   >(new Map());
-  const MAX_RETRIES = 20;
+  const MAX_RETRIES = 2000;
 
   useQuery(GET_USER_PROJECTS, {
     onCompleted: (data) => setProjects(data.getUserProjects),
