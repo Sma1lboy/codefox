@@ -173,6 +173,7 @@ export class ProjectService {
         throw new InternalServerErrorException('Error creating the project.');
       }
     })();
+
     return defaultChatPromise;
   }
   private async transformInputToProjectPackages(
