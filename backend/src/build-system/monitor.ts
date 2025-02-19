@@ -67,8 +67,8 @@ export class BuildMonitor {
   private static instance: BuildMonitor;
   private logger: Logger;
   private sequenceMetrics: Map<string, SequenceMetrics> = new Map();
-  private static timeRecorders: Map<string, any[]> = new Map();
-  private static model = OpenAIModelProvider.getInstance();
+  private timeRecorders: Map<string, any[]> = new Map();
+  private model = OpenAIModelProvider.getInstance();
 
   private constructor() {
     this.logger = new Logger('BuildMonitor');
@@ -81,7 +81,7 @@ export class BuildMonitor {
     return BuildMonitor.instance;
   }
 
-  public static async timeRecorder(
+  public async timeRecorder(
     generateDuration: number,
     name: string,
     step: string,
@@ -252,7 +252,7 @@ export class BuildMonitor {
     // Clean up sequence metrics and time recorders after logging
     this.sequenceMetrics.delete(sequenceId);
     metrics.nodesOrder.forEach((nodeId) => {
-      BuildMonitor.timeRecorders.delete(nodeId);
+      this.timeRecorders.delete(nodeId);
     });
   }
 
@@ -283,7 +283,7 @@ export class BuildMonitor {
         const nodeMetric = metrics.nodeMetrics.get(nodeId);
         if (!nodeMetric) return null;
 
-        const values = BuildMonitor.timeRecorders.get(nodeId);
+        const values = this.timeRecorders.get(nodeId);
         return {
           id: nodeId,
           name: nodeId,
@@ -309,7 +309,7 @@ export class BuildMonitor {
         duration: metrics.duration,
       },
       summary: {
-        spendTime: Array.from(BuildMonitor.timeRecorders.entries()).map(
+        spendTime: Array.from(this.timeRecorders.entries()).map(
           ([id, time]) => `Node ${id} duration is ${time} ms`,
         ),
         totalNodes: metrics.totalNodes,
@@ -343,7 +343,7 @@ export class BuildMonitor {
       report += `  Duration: ${nodeMetric.duration}ms\n`;
       report += `  Retries: ${nodeMetric.retryCount}\n`;
 
-      const values = BuildMonitor.timeRecorders.get(nodeId);
+      const values = this.timeRecorders.get(nodeId);
       if (values) {
         report += `  Clock:\n`;
         values.forEach((value) => {

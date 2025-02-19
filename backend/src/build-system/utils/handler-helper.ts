@@ -14,7 +14,13 @@ export async function chatSyncWithClocker(
   const duration = endTime.getTime() - startTime.getTime();
 
   const inputContent = input.messages.map((m) => m.content).join('');
-  BuildMonitor.timeRecorder(duration, name, step, inputContent, modelResponse);
+  BuildMonitor.getInstance().timeRecorder(
+    duration,
+    name,
+    step,
+    inputContent,
+    modelResponse,
+  );
   return modelResponse;
 }
 
@@ -32,7 +38,7 @@ export async function batchChatSyncWithClock(
   const inputContent = inputs
     .map((input) => input.messages.map((m) => m.content).join(''))
     .join('');
-  BuildMonitor.timeRecorder(
+  BuildMonitor.getInstance().timeRecorder(
     duration,
     id,
     step,
