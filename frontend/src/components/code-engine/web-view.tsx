@@ -11,7 +11,7 @@ export default function WebPreview() {
       const projectPath = curProject.projectPath;
       try {
         const response = await fetch(
-          `http://localhost:3000/api/runProject?projectPath=${encodeURIComponent(projectPath)}`,
+          `/api/runProject?projectPath=${encodeURIComponent(projectPath)}`,
           {
             method: 'GET',
             headers: {

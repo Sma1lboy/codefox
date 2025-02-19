@@ -34,7 +34,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [chatProjectCache, setChatProjectCache] = useState<
     Map<string, Project | null>
   >(new Map());
-  const MAX_RETRIES = 2000;
+  const MAX_RETRIES = 100;
 
   useQuery(GET_USER_PROJECTS, {
     onCompleted: (data) => setProjects(data.getUserProjects),
@@ -106,7 +106,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           console.error('Error polling chat:', error);
         }
 
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+        await new Promise((resolve) => setTimeout(resolve, 6000));
         retries++;
       }
 
