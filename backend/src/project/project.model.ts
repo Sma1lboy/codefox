@@ -9,6 +9,7 @@ import {
   ManyToMany,
   JoinTable,
   OneToMany,
+  RelationId,
 } from 'typeorm';
 import { User } from 'src/user/user.model';
 import { ProjectPackages } from './project-packages.model';
@@ -30,7 +31,8 @@ export class Project extends SystemBaseModel {
   projectPath: string;
 
   @Field(() => ID)
-  @Column()
+  @RelationId((project: Project) => project.user)
+  @Column({ name: 'user_id' })
   userId: string;
 
   @ManyToOne(() => User, (user) => user.projects, {

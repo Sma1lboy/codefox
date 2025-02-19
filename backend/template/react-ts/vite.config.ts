@@ -15,5 +15,19 @@ export default defineConfig({
   },
   build: {
     target: 'esnext', // Ensure Vite compiles for a modern target
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined, // avoid sending code by chunk
+      },
+    },
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+    strictPort: true,
+    watch: {
+      usePolling: true,
+    },
   },
 });
