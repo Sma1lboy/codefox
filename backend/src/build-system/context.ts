@@ -282,6 +282,9 @@ export class BuilderContext {
     // Mark the node as pending execution
     this.executionState.pending.add(handlerName);
 
+    // Start monitoring node execution
+    this.monitor.startNodeExecution(handlerName, this.sequence.id);
+
     // Execute the node handler and update the execution state accordingly
     const executionPromise = this.invokeNodeHandler<ExtractHandlerType<T>>(node)
       .then((result) => {
@@ -290,6 +293,8 @@ export class BuilderContext {
         this.executionState.pending.delete(handlerName);
         // Store the result of the node execution
         this.setNodeData(node.handler, result.data);
+        // End monitoring for successful execution
+        this.monitor.endNodeExecution(handlerName, this.sequence.id, true);
         return result;
       })
       .catch((error) => {
@@ -297,6 +302,13 @@ export class BuilderContext {
         this.executionState.failed.add(handlerName);
         this.executionState.pending.delete(handlerName);
         this.logger.error(`[Node Failed] ${handlerName}:`, error);
+        // End monitoring for failed execution
+        this.monitor.endNodeExecution(
+          handlerName,
+          this.sequence.id,
+          false,
+          error,
+        );
         throw error;
       });
 
@@ -370,7 +382,16 @@ export class BuilderContext {
         await Promise.all(Array.from(runningPromises));
         await new Promise((resolve) => setTimeout(resolve, this.POLL_INTERVAL));
       }
-      return this.getGlobalContext('projectUUID');
+
+      // Write monitor report at the end of sequence execution
+      const projectUUID = this.getGlobalContext('projectUUID');
+      await this.monitor.endSequenceExecution(this.sequence.id, projectUUID);
+
+      this.writeLog(
+        'summery-matrix.json',
+        this.monitor.generateTextReport(this.sequence.id),
+      );
+      return projectUUID;
     } catch (error) {
       this.writeLog('execution-error.json', {
         error: error.message,

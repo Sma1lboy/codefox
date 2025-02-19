@@ -67,8 +67,8 @@ export class BuildMonitor {
   private static instance: BuildMonitor;
   private logger: Logger;
   private sequenceMetrics: Map<string, SequenceMetrics> = new Map();
-  private static timeRecorders: Map<string, any[]> = new Map();
-  private static model = OpenAIModelProvider.getInstance();
+  private timeRecorders: Map<string, any[]> = new Map();
+  private model = OpenAIModelProvider.getInstance();
 
   private constructor() {
     this.logger = new Logger('BuildMonitor');
@@ -81,7 +81,7 @@ export class BuildMonitor {
     return BuildMonitor.instance;
   }
 
-  public static async timeRecorder(
+  public async timeRecorder(
     generateDuration: number,
     name: string,
     step: string,
@@ -103,13 +103,45 @@ export class BuildMonitor {
 
   // Node-level monitoring
   startNodeExecution(nodeId: string, sequenceId: string): void {
-    const metrics = this.getOrCreateNodeMetrics(nodeId, sequenceId);
-    metrics.startTime = Date.now();
-    metrics.status = 'pending';
+    let sequenceMetrics = this.sequenceMetrics.get(sequenceId);
+
+    // Create sequence metrics if not exists
+    if (!sequenceMetrics) {
+      sequenceMetrics = {
+        sequenceId,
+        startTime: Date.now(),
+        endTime: 0,
+        duration: 0,
+        nodeMetrics: new Map(),
+        nodesOrder: [],
+        totalNodes: 0, // Will be updated when we know the total
+        completedNodes: 0,
+        failedNodes: 0,
+        successRate: 0,
+      };
+      this.sequenceMetrics.set(sequenceId, sequenceMetrics);
+    }
+
+    // Create or get node metrics
+    if (!sequenceMetrics.nodeMetrics.has(nodeId)) {
+      sequenceMetrics.nodeMetrics.set(nodeId, {
+        nodeId,
+        startTime: Date.now(),
+        endTime: 0,
+        duration: 0,
+        status: 'pending',
+        retryCount: 0,
+      });
+      // Update total nodes count
+      sequenceMetrics.totalNodes++;
+    }
+
+    const nodeMetrics = sequenceMetrics.nodeMetrics.get(nodeId)!;
+    nodeMetrics.startTime = Date.now();
+    nodeMetrics.status = 'pending';
 
     // Add node to execution order if not already present
-    const sequenceMetrics = this.sequenceMetrics.get(sequenceId);
-    if (sequenceMetrics && !sequenceMetrics.nodesOrder.includes(nodeId)) {
+    if (!sequenceMetrics.nodesOrder.includes(nodeId)) {
       sequenceMetrics.nodesOrder.push(nodeId);
     }
   }
@@ -120,12 +152,37 @@ export class BuildMonitor {
     success: boolean,
     error?: Error,
   ): void {
-    const metrics = this.getOrCreateNodeMetrics(nodeId, sequenceId);
-    metrics.endTime = Date.now();
-    metrics.duration = metrics.endTime - metrics.startTime;
-    metrics.status = success ? 'completed' : 'failed';
-    if (error) {
-      metrics.error = error;
+    let sequenceMetrics = this.sequenceMetrics.get(sequenceId);
+
+    // Create sequence metrics if not exists
+    if (!sequenceMetrics) {
+      this.startNodeExecution(nodeId, sequenceId);
+      sequenceMetrics = this.sequenceMetrics.get(sequenceId)!;
+    }
+
+    const nodeMetrics = sequenceMetrics.nodeMetrics.get(nodeId);
+    if (!nodeMetrics) {
+      // Create node metrics if not exists
+      sequenceMetrics.nodeMetrics.set(nodeId, {
+        nodeId,
+        startTime: Date.now() - 1, // Set a minimal duration
+        endTime: Date.now(),
+        duration: 1,
+        status: success ? 'completed' : 'failed',
+        retryCount: 0,
+        error: error,
+      });
+      sequenceMetrics.totalNodes++;
+      if (!sequenceMetrics.nodesOrder.includes(nodeId)) {
+        sequenceMetrics.nodesOrder.push(nodeId);
+      }
+    } else {
+      nodeMetrics.endTime = Date.now();
+      nodeMetrics.duration = nodeMetrics.endTime - nodeMetrics.startTime;
+      nodeMetrics.status = success ? 'completed' : 'failed';
+      if (error) {
+        nodeMetrics.error = error;
+      }
     }
 
     // Update sequence metrics
@@ -133,8 +190,22 @@ export class BuildMonitor {
   }
 
   incrementNodeRetry(nodeId: string, sequenceId: string): void {
-    const metrics = this.getOrCreateNodeMetrics(nodeId, sequenceId);
-    metrics.retryCount++;
+    let sequenceMetrics = this.sequenceMetrics.get(sequenceId);
+
+    // Create sequence metrics if not exists
+    if (!sequenceMetrics) {
+      this.startNodeExecution(nodeId, sequenceId);
+      sequenceMetrics = this.sequenceMetrics.get(sequenceId)!;
+    }
+
+    let nodeMetrics = sequenceMetrics.nodeMetrics.get(nodeId);
+    if (!nodeMetrics) {
+      // Create node metrics if not exists
+      this.startNodeExecution(nodeId, sequenceId);
+      nodeMetrics = sequenceMetrics.nodeMetrics.get(nodeId)!;
+    }
+
+    nodeMetrics.retryCount++;
   }
 
   // Sequence-level monitoring
@@ -159,24 +230,30 @@ export class BuildMonitor {
     projectUUID: string,
   ): Promise<void> {
     const metrics = this.sequenceMetrics.get(sequenceId);
-    if (metrics) {
-      metrics.endTime = Date.now();
-      metrics.duration = metrics.endTime - metrics.startTime;
-
-      this.updateSequenceMetrics(sequenceId);
-
-      const report = await this.generateStructuredReport(
-        sequenceId,
-        projectUUID,
-      );
-      await ProjectEventLogger.getInstance().logEvent({
-        timestamp: report.metadata.timestamp,
-        projectId: report.metadata.projectId,
-        eventId: `build-${report.metadata.sequenceId}`,
-        type: 'BUILD_METRICS',
-        data: report,
-      });
+    if (!metrics) {
+      throw new Error(`No metrics found for sequence ${sequenceId}`);
     }
+
+    metrics.endTime = Date.now();
+    metrics.duration = metrics.endTime - metrics.startTime;
+
+    this.updateSequenceMetrics(sequenceId);
+
+    // Generate and log the report
+    const report = await this.generateStructuredReport(sequenceId, projectUUID);
+    await ProjectEventLogger.getInstance().logEvent({
+      timestamp: report.metadata.timestamp,
+      projectId: report.metadata.projectId,
+      eventId: `build-${report.metadata.sequenceId}`,
+      type: 'BUILD_METRICS',
+      data: report,
+    });
+
+    // Clean up sequence metrics and time recorders after logging
+    this.sequenceMetrics.delete(sequenceId);
+    metrics.nodesOrder.forEach((nodeId) => {
+      this.timeRecorders.delete(nodeId);
+    });
   }
 
   private updateSequenceMetrics(sequenceId: string): void {
@@ -190,28 +267,6 @@ export class BuildMonitor {
       ).length;
       metrics.successRate = (metrics.completedNodes / metrics.totalNodes) * 100;
     }
-  }
-
-  private getOrCreateNodeMetrics(
-    nodeId: string,
-    sequenceId: string,
-  ): NodeMetrics {
-    const sequenceMetrics = this.sequenceMetrics.get(sequenceId);
-    if (!sequenceMetrics) {
-      throw new Error(`No metrics found for sequence ${sequenceId}`);
-    }
-
-    if (!sequenceMetrics.nodeMetrics.has(nodeId)) {
-      sequenceMetrics.nodeMetrics.set(nodeId, {
-        nodeId,
-        startTime: 0,
-        endTime: 0,
-        duration: 0,
-        status: 'pending',
-        retryCount: 0,
-      });
-    }
-    return sequenceMetrics.nodeMetrics.get(nodeId)!;
   }
 
   async generateStructuredReport(
@@ -228,7 +283,7 @@ export class BuildMonitor {
         const nodeMetric = metrics.nodeMetrics.get(nodeId);
         if (!nodeMetric) return null;
 
-        const values = BuildMonitor.timeRecorders.get(nodeId);
+        const values = this.timeRecorders.get(nodeId);
         return {
           id: nodeId,
           name: nodeId,
@@ -254,7 +309,7 @@ export class BuildMonitor {
         duration: metrics.duration,
       },
       summary: {
-        spendTime: Array.from(BuildMonitor.timeRecorders.entries()).map(
+        spendTime: Array.from(this.timeRecorders.entries()).map(
           ([id, time]) => `Node ${id} duration is ${time} ms`,
         ),
         totalNodes: metrics.totalNodes,
@@ -288,7 +343,7 @@ export class BuildMonitor {
       report += `  Duration: ${nodeMetric.duration}ms\n`;
       report += `  Retries: ${nodeMetric.retryCount}\n`;
 
-      const values = BuildMonitor.timeRecorders.get(nodeId);
+      const values = this.timeRecorders.get(nodeId);
       if (values) {
         report += `  Clock:\n`;
         values.forEach((value) => {
