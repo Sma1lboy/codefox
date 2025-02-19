@@ -48,10 +48,6 @@ export class Chat extends SystemBaseModel {
   })
   messages: Message[];
 
-  @Field(() => ID)
-  @Column()
-  projectId: string;
-
   @ManyToOne(() => User, (user) => user.chats, {
     onDelete: 'CASCADE',
     nullable: false,
