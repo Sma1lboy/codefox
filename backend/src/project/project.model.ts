@@ -67,5 +67,5 @@ export class Project extends SystemBaseModel {
     lazy: true, // Load chats only when accessed
     onDelete: 'CASCADE', // Delete chats when user is deleted
   })
-  chats: Chat[];
+  chats: Promise<Chat[]>;
 }
