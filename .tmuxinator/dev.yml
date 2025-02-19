@@ -26,3 +26,9 @@ windows:
         - llm:
             - echo "LLM Server (Ctrl+a 3 to focus, Ctrl+a r to restart)"
             - pnpm dev
+  - docker:
+      root: <%= ENV["PWD"] %>
+      panes:
+        - docker:
+            - echo "Docker Services (Ctrl+a 4 to focus)"
+            - docker compose up
