@@ -43,21 +43,43 @@ function findAvailablePort(
   });
 }
 
+async function checkExistingContainer(
+  projectPath: string
+): Promise<string | null> {
+  return new Promise((resolve) => {
+    const subdomain = projectPath.replace(/[^\w-]/g, '').toLowerCase();
+    exec(
+      `docker ps --filter "label=traefik.http.routers.${subdomain}.rule" --format "{{.ID}}"`,
+      (error, stdout) => {
+        if (error || !stdout.trim()) {
+          resolve(null);
+        } else {
+          resolve(stdout.trim());
+        }
+      }
+    );
+  });
+}
+
 async function buildAndRunDocker(
   projectPath: string
 ): Promise<{ domain: string; containerId: string }> {
-  console.log(runningContainers);
-  if (runningContainers.has(projectPath)) {
-    console.log(`Container for project ${projectPath} is already running.`);
-    return runningContainers.get(projectPath)!;
-  }
   const traefikDomain = process.env.TRAEFIK_DOMAIN || 'docker.localhost';
-  const directory = path.join(getProjectPath(projectPath), 'frontend');
-  const imageName = projectPath.toLowerCase();
-  const containerId = crypto.randomUUID();
-  const containerName = `container-${containerId}`;
 
+  const existingContainerId = await checkExistingContainer(projectPath);
+  if (existingContainerId) {
+    const subdomain = projectPath.replace(/[^\w-]/g, '').toLowerCase();
+    const domain = `${subdomain}.${traefikDomain}`;
+    runningContainers.set(projectPath, {
+      domain,
+      containerId: existingContainerId,
+    });
+    return { domain, containerId: existingContainerId };
+  }
+  const directory = path.join(getProjectPath(projectPath), 'frontend');
   const subdomain = projectPath.replace(/[^\w-]/g, '').toLowerCase();
+  const imageName = subdomain;
+  const containerName = `container-${subdomain}`;
   const domain = `${subdomain}.${traefikDomain}`;
   const exposedPort = await findAvailablePort();
   return new Promise((resolve, reject) => {
@@ -100,6 +122,8 @@ async function buildAndRunDocker(
     );
   });
 }
+const processingRequests = new Set<string>();
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const projectPath = searchParams.get('projectPath');
@@ -110,6 +134,19 @@ export async function GET(req: Request) {
       { status: 400 }
     );
   }
+
+  if (processingRequests.has(projectPath)) {
+    const existingContainer = runningContainers.get(projectPath);
+    if (existingContainer) {
+      return NextResponse.json({
+        message: 'Docker container already running',
+        domain: existingContainer.domain,
+        containerId: existingContainer.containerId,
+      });
+    }
+  }
+
+  processingRequests.add(projectPath);
 
   try {
     const { domain, containerId } = await buildAndRunDocker(projectPath);
@@ -123,5 +160,7 @@ export async function GET(req: Request) {
       { error: error.message || 'Failed to start Docker container' },
       { status: 500 }
     );
+  } finally {
+    processingRequests.delete(projectPath);
   }
 }
