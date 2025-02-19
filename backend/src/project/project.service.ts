@@ -46,22 +46,26 @@ export class ProjectService {
     });
 
     if (projects && projects.length > 0) {
-      projects.forEach((project) => {
-        // Filter deleted packages
-        project.projectPackages = project.projectPackages.filter(
-          (pkg) => !pkg.isDeleted,
-        );
-        // Filter deleted chats
-        if (project.chats) {
-          project.chats = project.chats.filter((chat) => !chat.isDeleted);
-        }
-      });
+      await Promise.all(
+        projects.map(async (project) => {
+          // Filter deleted packages
+          project.projectPackages = project.projectPackages.filter(
+            (pkg) => !pkg.isDeleted,
+          );
+          // Filter deleted chats
+          if (project.chats) {
+            const chats = await project.chats;
+            this.logger.log('Project chats:', chats);
+            // Create a new Promise that resolves to filtered chats
+            project.chats = Promise.resolve(
+              chats.filter((chat) => !chat.isDeleted),
+            );
+          }
+        }),
+      );
     }
 
-    if (!projects || projects.length === 0) {
-      throw new NotFoundException(`User with ID ${userId} has no projects.`);
-    }
-    return projects;
+    return projects.length > 0 ? projects : [];
   }
 
   async getProjectById(projectId: string): Promise<Project> {
@@ -70,18 +74,20 @@ export class ProjectService {
       relations: ['projectPackages', 'chats', 'user'],
     });
 
-    if (project) {
-      project.projectPackages = project.projectPackages.filter(
-        (pkg) => !pkg.isDeleted,
-      );
-      if (project.chats) {
-        project.chats = project.chats.filter((chat) => !chat.isDeleted);
-      }
-    }
-
     if (!project) {
       throw new NotFoundException(`Project with ID ${projectId} not found.`);
     }
+
+    project.projectPackages = project.projectPackages.filter(
+      (pkg) => !pkg.isDeleted,
+    );
+
+    if (project.chats) {
+      const chats = await project.chats;
+      this.logger.log('Project chats:', chats);
+      project.chats = Promise.resolve(chats.filter((chat) => !chat.isDeleted));
+    }
+
     return project;
   }
 
@@ -95,13 +101,12 @@ export class ProjectService {
     }
     try {
       chat.project = project;
-      if (!project.chats) {
-        project.chats = [];
-      }
-      const chatArray = await project.chats;
-      chatArray.push(chat);
-      console.log(chat);
-      console.log(project);
+
+      // Get current chats and add new chat
+      const currentChats = await project.chats;
+      project.chats = Promise.resolve([...currentChats, chat]);
+
+      // Save both entities
       await this.projectsRepository.save(project);
       await this.chatRepository.save(chat);
 

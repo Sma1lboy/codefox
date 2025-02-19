@@ -68,6 +68,6 @@ export class ProjectsResolver {
   @ResolveField('chats', () => [Chat])
   async getChats(@Parent() project: Project): Promise<Chat[]> {
     const { chats } = await this.projectsService.getProjectById(project.id);
-    return chats?.filter((chat) => !chat.isDeleted) || [];
+    return (await chats)?.filter((chat) => !chat.isDeleted) || [];
   }
 }

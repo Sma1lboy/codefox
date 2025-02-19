@@ -34,17 +34,20 @@ export function CodeEngine({ chatId }: { chatId: string }) {
     Record<TreeItemIndex, TreeItem<any>>
   >({});
   const theme = useTheme();
+  console.log('codeengine current chatId: ', chatId);
 
   const [isProjectFinished, setIsProjectFinished] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'preview' | 'code' | 'console'>(
     'code'
   );
+
   // Callback: Handle editor mount
   const handleEditorMount = (editorInstance) => {
     editorRef.current = editorInstance;
     // Set the editor DOM node's position for layout control
     editorInstance.getDomNode().style.position = 'absolute';
   };
+
   useEffect(() => {
     async function checkChatProject() {
       if (curProject?.id) {
@@ -57,7 +60,7 @@ export function CodeEngine({ chatId }: { chatId: string }) {
       }
     }
     checkChatProject();
-  }, [curProject, pollChatProject]);
+  }, [chatId, curProject, pollChatProject]);
 
   // Effect: Fetch file content when filePath or projectId changes
   useEffect(() => {
@@ -85,6 +88,8 @@ export function CodeEngine({ chatId }: { chatId: string }) {
   // Effect: Fetch file structure when projectId changes
   useEffect(() => {
     async function fetchFiles() {
+      if (!curProject?.projectPath) return;
+
       try {
         const response = await fetch(
           `/api/project?path=${curProject.projectPath}`
@@ -96,7 +101,7 @@ export function CodeEngine({ chatId }: { chatId: string }) {
       }
     }
     fetchFiles();
-  }, [curProject]);
+  }, [curProject?.projectPath]);
 
   // Reset code to previous state and update editor
   const handleReset = () => {
@@ -135,8 +140,9 @@ export function CodeEngine({ chatId }: { chatId: string }) {
     setCode(value);
     setSaving(true);
   };
+
   // Responsive toolbar component for header tabs and buttons
-  const ResponsiveToolbar = () => {
+  const ResponsiveToolbar = ({ isLoading }: { isLoading: boolean }) => {
     const containerRef = useRef(null);
     const [containerWidth, setContainerWidth] = useState(700);
     const [visibleTabs, setVisibleTabs] = useState(3);
@@ -176,13 +182,14 @@ export function CodeEngine({ chatId }: { chatId: string }) {
     return (
       <div
         ref={containerRef}
-        className="flex items-center justify-between p-2 border-b w-full"
+        className="flex items-center justify-between p-4 border-b w-full bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60"
       >
         <div className="flex items-center space-x-2">
           <Button
             variant={activeTab === 'preview' ? 'default' : 'outline'}
             className="text-sm"
             onClick={() => setActiveTab('preview')}
+            disabled={isLoading}
           >
             <Eye className="w-4 h-4 mr-1" />
             Preview
@@ -192,6 +199,7 @@ export function CodeEngine({ chatId }: { chatId: string }) {
               variant={activeTab === 'code' ? 'default' : 'outline'}
               className="text-sm"
               onClick={() => setActiveTab('code')}
+              disabled={isLoading}
             >
               <CodeIcon className="w-4 h-4 mr-1" />
               Code
@@ -202,6 +210,7 @@ export function CodeEngine({ chatId }: { chatId: string }) {
               variant={activeTab === 'console' ? 'default' : 'outline'}
               className="text-sm"
               onClick={() => setActiveTab('console')}
+              disabled={isLoading}
             >
               <Terminal className="w-4 h-4 mr-1" />
               Console
@@ -214,18 +223,21 @@ export function CodeEngine({ chatId }: { chatId: string }) {
             <Button
               variant="ghost"
               className={`p-0 ${compactIcons ? 'hidden' : 'block'}`}
+              disabled={isLoading}
             >
               <GitFork className="w-5 h-5" />
             </Button>
             <Button
               variant="ghost"
               className={`p-0 ${compactIcons ? 'hidden' : 'block'}`}
+              disabled={isLoading}
             >
               <Share2 className="w-5 h-5" />
             </Button>
             <Button
               variant="ghost"
               className={`p-0 ${compactIcons ? 'hidden' : 'block'}`}
+              disabled={isLoading}
             >
               <Copy className="w-5 h-5" />
             </Button>
@@ -233,16 +245,24 @@ export function CodeEngine({ chatId }: { chatId: string }) {
           <div className="flex items-center space-x-2">
             {!compactIcons && (
               <>
-                <Button variant="outline" className="text-sm">
+                <Button
+                  variant="outline"
+                  className="text-sm"
+                  disabled={isLoading}
+                >
                   Supabase
                 </Button>
-                <Button variant="outline" className="text-sm">
+                <Button
+                  variant="outline"
+                  className="text-sm"
+                  disabled={isLoading}
+                >
                   Publish
                 </Button>
               </>
             )}
             {compactIcons && (
-              <Button variant="outline" className="p-2">
+              <Button variant="outline" className="p-2" disabled={isLoading}>
                 <Share2 className="w-4 h-4" />
               </Button>
             )}
@@ -254,92 +274,100 @@ export function CodeEngine({ chatId }: { chatId: string }) {
 
   // Render the CodeEngine layout
   return (
-    <div className="flex flex-col h-full relative">
-      <AnimatePresence>
-        {!isProjectFinished && (
-          <motion.div
-            key="loader"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="absolute inset-0 bg-black bg-opacity-40 backdrop-blur-md flex items-center justify-center z-50"
-          >
-            <Loader className="w-10 h-10 text-white animate-spin" />
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="rounded-lg border shadow-sm overflow-hidden">
       {/* Header Bar */}
-      <ResponsiveToolbar />
+      <ResponsiveToolbar isLoading={!isProjectFinished} />
 
-      {/* Main Content Area */}
-      <div className="flex flex-1 overflow-hidden">
-        {activeTab === 'code' ? (
-          <>
-            {/* File Explorer Panel (collapsible) */}
+      {/* Main Content Area with Loading */}
+      <div className="relative h-[calc(100vh-48px)]">
+        <AnimatePresence>
+          {!isProjectFinished && (
             <motion.div
-              animate={{
-                width: isExplorerCollapsed ? '0px' : '300px',
-                opacity: isExplorerCollapsed ? 0 : 1,
-              }}
-              transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className="overflow-y-auto border-r"
+              key="loader"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 z-30"
             >
-              <FileStructure data={fileStructureData} filePath={filePath} />
+              <Loader className="w-8 h-8 text-primary animate-spin" />
+              <p className="text-sm text-muted-foreground">
+                Initializing project...
+              </p>
             </motion.div>
-            <div className="flex-1 relative">
-              <Editor
-                height="100vh"
-                width="100%"
-                defaultLanguage="typescript"
-                value={newCode}
-                language={type}
-                loading={isLoading}
-                onChange={updateSavingStatus}
-                onMount={handleEditorMount}
-                options={{
-                  fontSize: 14,
-                  minimap: { enabled: false },
-                  wordWrap: 'on',
-                  wrappingStrategy: 'advanced',
-                  scrollbar: {
-                    useShadows: false,
-                    vertical: 'visible',
-                    horizontal: 'visible',
-                    verticalScrollbarSize: 10,
-                    horizontalScrollbarSize: 10,
-                  },
+          )}
+        </AnimatePresence>
+
+        <div className="flex h-full">
+          {activeTab === 'code' ? (
+            <>
+              {/* File Explorer Panel (collapsible) */}
+              <motion.div
+                animate={{
+                  width: isExplorerCollapsed ? '0px' : '300px',
+                  opacity: isExplorerCollapsed ? 0 : 1,
                 }}
-                theme={theme.theme === 'dark' ? 'vs-dark' : 'vs'}
-              />
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className="overflow-y-auto border-r"
+              >
+                <FileStructure data={fileStructureData} filePath={filePath} />
+              </motion.div>
+              <div className="flex-1 relative">
+                <Editor
+                  height="100%"
+                  width="100%"
+                  defaultLanguage="typescript"
+                  value={newCode}
+                  language={type}
+                  loading={isLoading}
+                  onChange={updateSavingStatus}
+                  onMount={handleEditorMount}
+                  options={{
+                    fontSize: 14,
+                    minimap: { enabled: false },
+                    wordWrap: 'on',
+                    wrappingStrategy: 'advanced',
+                    scrollbar: {
+                      useShadows: false,
+                      vertical: 'visible',
+                      horizontal: 'visible',
+                      verticalScrollbarSize: 10,
+                      horizontalScrollbarSize: 10,
+                    },
+                  }}
+                  theme={theme.theme === 'dark' ? 'vs-dark' : 'vs'}
+                />
+              </div>
+            </>
+          ) : activeTab === 'preview' ? (
+            <div className="w-full h-full">
+              <WebPreview />
             </div>
-          </>
-        ) : activeTab === 'preview' ? (
-          <WebPreview></WebPreview>
-        ) : activeTab === 'console' ? (
-          <div className="flex-1 p-4 text-sm">Console Content (Mock)</div>
-        ) : null}
+          ) : activeTab === 'console' ? (
+            <div className="flex-1 p-4 text-sm">Console Content (Mock)</div>
+          ) : null}
+        </div>
+
+        {/* Save Changes Bar */}
+        {saving && (
+          <SaveChangesBar
+            saving={saving}
+            onSave={handleSave}
+            onReset={handleReset}
+          />
+        )}
+
+        {/* File Explorer Toggle Button */}
+        {activeTab === 'code' && (
+          <FileExplorerButton
+            isExplorerCollapsed={isExplorerCollapsed}
+            setIsExplorerCollapsed={setIsExplorerCollapsed}
+          />
+        )}
       </div>
-
-      {/* Save Changes Bar */}
-      {saving && (
-        <SaveChangesBar
-          saving={saving}
-          onSave={handleSave}
-          onReset={handleReset}
-        />
-      )}
-
-      {/* File Explorer Toggle Button */}
-      {activeTab === 'code' && (
-        <FileExplorerButton
-          isExplorerCollapsed={isExplorerCollapsed}
-          setIsExplorerCollapsed={setIsExplorerCollapsed}
-        />
-      )}
     </div>
   );
 }
+
 // SaveChangesBar component for showing unsaved changes status
 const SaveChangesBar = ({ saving, onSave, onReset }) => {
   return (
