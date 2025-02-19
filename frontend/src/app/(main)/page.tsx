@@ -1,3 +1,4 @@
+'use client';
 import Home from './chat/Home';
 
 import { useState } from 'react';
@@ -14,7 +15,7 @@ export default function HomePage() {
   const [showSignIn, setShowSignIn] = useState(false);
   const [showAuthChoice, setShowAuthChoice] = useState(false);
   const router = useRouter();
-  
+
   const handleSignIn = (e: React.MouseEvent) => {
     // router.push('/login');
     e.preventDefault();
@@ -57,14 +58,14 @@ export default function HomePage() {
             placeholder="Type your message..."
             className="w-full py-24 px-6 pr-12 text-lg border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 align-top pt-6"
           />
-          <button 
+          <button
             className="absolute right-3 bottom-3 p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors"
             aria-label="Send message"
             onClick={handleMessageButtonClick}
           >
             <SendIcon size={20} />
           </button>
-          <button 
+          <button
             className="absolute left-3 bottom-3 flex items-center gap-2 text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
             aria-label="Upload file"
           >
@@ -72,9 +73,8 @@ export default function HomePage() {
             <span>Upload file</span>
           </button>
         </div>
-
       </div>
-      <AuthChoiceModal 
+      <AuthChoiceModal
         isOpen={showAuthChoice}
         onClose={() => setShowAuthChoice(false)}
         onSignUpClick={() => {
@@ -86,14 +86,8 @@ export default function HomePage() {
           setShowSignIn(true);
         }}
       />
-      <SignUpModal 
-        isOpen={showSignUp}
-        onClose={() => setShowSignUp(false)}
-      />
-      <SignInModal 
-        isOpen={showSignIn}
-        onClose={() => setShowSignIn(false)}
-      />
+      <SignUpModal isOpen={showSignUp} onClose={() => setShowSignUp(false)} />
+      <SignInModal isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
     </div>
   );
 }
