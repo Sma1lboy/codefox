@@ -1,6 +1,7 @@
 'use client';
+
 import { useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation } from '@apollo/client';
 import { LOGIN_USER } from '@/graphql/mutations/auth';
 import { toast } from 'sonner';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 export function SignInModal({
   isOpen,
@@ -26,7 +28,7 @@ export function SignInModal({
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null); // ✅ State for error message
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [loginUser, { loading }] = useMutation(LOGIN_USER, {
     onCompleted: (data) => {
@@ -34,19 +36,19 @@ export function SignInModal({
         localStorage.setItem('accessToken', data.login.accessToken);
         localStorage.setItem('refreshToken', data.login.refreshToken);
         toast.success('Login successful!');
-        setErrorMessage(null); // ✅ Clear error on success
+        setErrorMessage(null); // Clear error on success
         onClose();
-        router.push('/x');
+        router.push('/main');
       }
     },
-    onError: (error) => {
-      setErrorMessage('Incorrect email or password. Please try again.'); // ✅ Show error message
+    onError: () => {
+      setErrorMessage('Incorrect email or password. Please try again.');
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage(null); // ✅ Clear error when attempting login again
+    setErrorMessage(null); // Clear error when attempting login again
     try {
       await loginUser({
         variables: {
@@ -64,6 +66,11 @@ export function SignInModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] fixed top-[50%] left-[50%] transform -translate-x-[50%] -translate-y-[50%]">
+        {/* Invisible but accessible DialogTitle */}
+        <VisuallyHidden>
+          <DialogTitle>Sign In</DialogTitle>
+        </VisuallyHidden>
+
         <BackgroundGradient className="rounded-[22px] p-4 bg-white dark:bg-zinc-900">
           <div className="w-full">
             <TextureCardHeader className="flex flex-col gap-1 items-center justify-center p-4">
@@ -83,7 +90,7 @@ export function SignInModal({
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
-                      setErrorMessage(null); // ✅ Clear error when user types
+                      setErrorMessage(null); // Clear error when user types
                     }}
                     required
                     className="w-full px-4 py-2 rounded-md border"
@@ -97,14 +104,14 @@ export function SignInModal({
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
-                      setErrorMessage(null); // ✅ Clear error when user types
+                      setErrorMessage(null); // Clear error when user types
                     }}
                     required
                     className="w-full px-4 py-2 rounded-md border"
                   />
                 </div>
-                
-                {/* ✅ Show error message if login fails */}
+
+                {/* Show error message if login fails */}
                 {errorMessage && (
                   <div className="text-red-500 text-sm text-center">{errorMessage}</div>
                 )}
@@ -132,7 +139,7 @@ export function SignInModal({
                     className="flex items-center gap-2 w-full"
                   >
                     <img
-                      src="/images/google.png"
+                      src="/images/google.svg"
                       alt="Google"
                       className="w-5 h-5"
                     />
@@ -143,7 +150,7 @@ export function SignInModal({
                     className="flex items-center gap-2 w-full"
                   >
                     <img
-                      src="/images/github.png"
+                      src="/images/github.svg"
                       alt="GitHub"
                       className="w-5 h-5"
                     />
@@ -157,4 +164,5 @@ export function SignInModal({
       </DialogContent>
     </Dialog>
   );
+  
 }

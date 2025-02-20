@@ -1,6 +1,9 @@
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+'use client';
+
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { BackgroundGradient } from '@/components/ui/background-gradient';
 import { Button } from '@/components/ui/button';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface AuthChoiceModalProps {
   isOpen: boolean;
@@ -18,6 +21,11 @@ export function AuthChoiceModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] fixed top-[50%] left-[50%] transform -translate-x-[50%] -translate-y-[50%]">
+        
+        {/* Invisible but accessible DialogTitle */}
+        <VisuallyHidden>
+          <DialogTitle>Choose Authentication Method</DialogTitle>
+        </VisuallyHidden>
 
         <BackgroundGradient className="rounded-[22px] p-4 bg-white dark:bg-zinc-900">
           <div className="w-full p-6 space-y-6">

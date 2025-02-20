@@ -1,20 +1,20 @@
 'use client';
-
-import { useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { BackgroundGradient } from '@/components/ui/background-gradient';
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { BackgroundGradient } from "@/components/ui/background-gradient";
 import {
   TextureCardHeader,
   TextureCardTitle,
   TextureCardContent,
   TextureSeparator,
-} from '@/components/ui/texture-card';
-import { useMutation } from '@apollo/client';
-import { REGISTER_USER } from '@/graphql/mutations/auth';
-import { useRouter } from 'next/navigation';
+} from "@/components/ui/texture-card";
+import { useMutation } from "@apollo/client";
+import { REGISTER_USER } from "@/graphql/mutations/auth";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export function SignUpModal({
   isOpen,
@@ -24,23 +24,22 @@ export function SignUpModal({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [registerUser, { loading }] = useMutation(REGISTER_USER, {
     onError: (error) => {
-      console.error('Registration failed:', error.message);
-      if (error.message.includes('already exists')) {
-        setErrorMessage('This email is already in use. Please try another.');
+      if (error.message.includes("already exists")) {
+        setErrorMessage("This email is already in use. Please try another.");
       } else {
         setErrorMessage(error.message);
       }
     },
     onCompleted: () => {
-      onClose(); // ✅ Close modal on success
-      router.push('/login'); // ✅ Redirect to login page
+      onClose(); // Close modal on success
+      router.push("/login"); // Redirect to login page
     },
   });
 
@@ -49,7 +48,7 @@ export function SignUpModal({
     setErrorMessage(null); // Clear previous errors
 
     if (!name || !email || !password) {
-      setErrorMessage('All fields are required.');
+      setErrorMessage("All fields are required.");
       return;
     }
 
@@ -64,13 +63,18 @@ export function SignUpModal({
         },
       });
     } catch (error) {
-      console.error('Registration failed:', error);
+      console.error("Registration failed:", error);
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] fixed top-[50%] left-[50%] transform -translate-x-[50%] -translate-y-[50%]">
+        {/* Invisible but accessible DialogTitle */}
+        <VisuallyHidden>
+          <DialogTitle>Sign Up</DialogTitle>
+        </VisuallyHidden>
+
         <BackgroundGradient className="rounded-[22px] p-4 bg-white dark:bg-zinc-900">
           <div className="w-full">
             <TextureCardHeader className="flex flex-col gap-1 items-center justify-center p-4">
@@ -103,7 +107,7 @@ export function SignUpModal({
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
-                      setErrorMessage(null); // ✅ Clear error when user types
+                      setErrorMessage(null); // Clear error when user types
                     }}
                     required
                     className="w-full px-4 py-2 rounded-md border"
@@ -129,7 +133,7 @@ export function SignUpModal({
                   className="w-full bg-red-500 text-white py-2 rounded-md"
                   disabled={loading}
                 >
-                  {loading ? 'Signing up...' : 'Sign up'}
+                  {loading ? "Signing up..." : "Sign up"}
                 </Button>
               </form>
             </TextureCardContent>
@@ -139,3 +143,4 @@ export function SignUpModal({
     </Dialog>
   );
 }
+

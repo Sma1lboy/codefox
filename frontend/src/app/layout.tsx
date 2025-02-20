@@ -2,9 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { BaseProviders } from "./providers/BaseProvider";
-import { ThemeProvider } from "./providers/ThemeProvider";
+import { ThemeProvider } from "../providers/theme-provider";
 import ApolloWrapper from "./providers/ApolloProvider";
-import { AuthProvider } from "@/contexts/AuthContext"; // ✅ Import AuthProvider
+import { AuthProvider } from "@/contexts/AuthContext"; 
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,9 +28,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ApolloWrapper> {/* ✅ Ensure Apollo is ready first */}
-          <AuthProvider> {/* ✅ Then wrap AuthProvider inside */}
-            <ThemeProvider>{children}</ThemeProvider>
+        <ApolloWrapper> 
+          <AuthProvider> 
+            <ThemeProvider attribute="class">{children}</ThemeProvider>
           </AuthProvider>
         </ApolloWrapper>
       </body>

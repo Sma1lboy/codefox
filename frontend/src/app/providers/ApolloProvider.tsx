@@ -2,21 +2,21 @@
 import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext'; // ✅ Import AuthContext
+import { useAuth } from '@/contexts/AuthContext'; 
 
 const httpLink = createHttpLink({
   uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:4000/graphql',
 });
 
 export default function ApolloWrapper({ children }: { children: React.ReactNode }) {
-  const { token, refreshAccessToken } = useAuth(); // ✅ Access AuthContext
+  const { token, refreshAccessToken } = useAuth(); 
   const [client, setClient] = useState<ApolloClient<any> | null>(null);
 
   const authLink = setContext(async (_, { headers }) => {
     let currentToken = localStorage.getItem('accessToken');
 
     if (!currentToken) {
-      currentToken = await refreshAccessToken(); // ✅ Refresh token if missing
+      currentToken = await refreshAccessToken(); //  Refresh token if missing
     }
 
     return {
@@ -33,7 +33,7 @@ export default function ApolloWrapper({ children }: { children: React.ReactNode 
       cache: new InMemoryCache(),
     });
     setClient(client);
-  }, [token]); // ✅ Rebuild client when token updates
+  }, [token]); 
 
   if (!client) return null;
 

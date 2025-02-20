@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Moon, Sun } from 'lucide-react';
-import { useTheme } from '../providers/ThemeProvider';
+import { useTheme } from 'next-themes'; 
 import { SignInModal } from '@/components/SignInModal';
 import { SignUpModal } from '@/components/SignUpModal';
 
@@ -13,12 +13,12 @@ export default function HomeLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme(); 
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
 
   return (
-    <div className="min-h-screen w-full bg-white dark:bg-gray-900 transition-colors">
+    <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900 transition-colors">
       <nav className="w-full p-4 bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <Link href="/" className="flex items-center space-x-2">
@@ -36,7 +36,7 @@ export default function HomeLayout({
 
           <div className="flex items-center space-x-4">
             <button
-              onClick={toggleTheme}
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
               aria-label="Toggle theme"
             >

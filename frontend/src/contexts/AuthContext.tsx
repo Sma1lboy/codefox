@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (data?.refreshToken) {
         setToken(data.refreshToken.accessToken);
         localStorage.setItem("accessToken", data.refreshToken.accessToken);
-        return data.refreshToken.accessToken; // ✅ Return new token for Apollo
+        return data.refreshToken.accessToken; 
       } else {
         logout();
       }

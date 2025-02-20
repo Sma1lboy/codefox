@@ -85,7 +85,7 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(
       { sub: user.id, email: user.email },
-      { expiresIn: '15m' }
+      { expiresIn: '30m' }
     );
 
     const refreshTokenEntity = await this.createRefreshToken(user);
@@ -98,11 +98,12 @@ export class AuthService {
 
   private async createRefreshToken(user: User): Promise<RefreshToken> {
     const token = randomUUID();
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
     
     const refreshToken = this.refreshTokenRepository.create({
       user,
       token,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      expiresAt: new Date(Date.now() + sevenDays), // 7 days
     });
 
     await this.refreshTokenRepository.save(refreshToken);
@@ -386,7 +387,7 @@ export class AuthService {
         sub: existingToken.user.id, 
         email: existingToken.user.email 
       },
-      { expiresIn: '15m' }
+      { expiresIn: '30m' }
     );
 
     // Generate new refresh token
