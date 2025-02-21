@@ -22,15 +22,15 @@ export class User extends SystemBaseModel {
 
   @Field()
   @Column()
-  username: string; // Removed unique constraint
+  username: string; 
+  @Column()
+  password: string;
+
 
   @Field()  
   @Column({ unique: true })
   @IsEmail()
   email: string;
-
-  @Column()
-  password: string;
 
   @Field(() => [Chat])
   @OneToMany(() => Chat, (chat) => chat.user, {

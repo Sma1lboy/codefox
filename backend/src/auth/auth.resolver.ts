@@ -14,13 +14,13 @@ export class AuthResolver {
     return this.authService.validateToken(params);
   }
 
-  @Mutation(() => User)
-  async assignRoles(
-    @Args('userId', { type: () => ID }) userId: string,
-    @Args('roleIds', { type: () => [ID] }) roleIds: string[],
-  ): Promise<User> {
-    return this.authService.assignRoles(userId, roleIds);
-  }
+  // @Mutation(() => User)
+  // async assignRoles(
+  //   @Args('userId', { type: () => ID }) userId: string,
+  //   @Args('roleIds', { type: () => [ID] }) roleIds: string[],
+  // ): Promise<User> {
+  //   return this.authService.assignRoles(userId, roleIds);
+  // }
 
   @Mutation(() => AuthResponse)
   async refreshToken(
