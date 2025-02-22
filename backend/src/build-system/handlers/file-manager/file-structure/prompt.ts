@@ -130,7 +130,8 @@ Additional Rules:
      - Data Analysis Doc: (provide by user)
     
     ### Instructions and Rules:
-    
+    The final file structure must only have at most 20 files.
+
     Include:
     ${includeSections}
     

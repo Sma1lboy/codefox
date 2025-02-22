@@ -113,7 +113,7 @@ export async function readFileWithRetries(
   }
 
   // If we exhausted all retries, re-throw the last error
-  throw lastError;
+  return null;
 }
 
 /**
@@ -156,5 +156,5 @@ export async function createFileWithRetries(
   }
 
   // If all retries fail, rethrow the last error
-  throw lastError;
+  return null;
 }

@@ -82,6 +82,15 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     const { concurrencyLayers, fileInfos } =
       await generateFilesDependencyWithLayers(fileArchDoc, this.virtualDir);
 
+    // concurrencyLayers.forEach((layer, index) => {
+    //   console.log(`Layer #${index + 1} has ${layer.length} file(s):`, layer);
+    // });
+
+    // Object.entries(fileInfos).forEach(([filePath, info]) => {
+    //   this.logger.debug(`File: ${filePath}`);
+    //   this.logger.debug(`Depends On: ${info.dependsOn.join(', ')}`);
+    // });
+
     const validator = new FrontendCodeValidator(frontendPath);
     // validator.installDependencies();
 
@@ -224,7 +233,19 @@ export class FrontendCodeHandler implements BuildHandler<string> {
 
     for (const dep of directDepsArray) {
       try {
-        const resolvedDepPath = normalizePath(path.resolve(frontendPath, dep));
+        let resolvedDepPath = dep;
+
+        // Resolve alias-based paths (assuming `@/` maps to `frontendPath/src/`)
+        if (dep.startsWith('@/')) {
+          resolvedDepPath = path.join(
+            frontendPath,
+            'src',
+            dep.replace(/^@\//, ''),
+          );
+        } else {
+          resolvedDepPath = normalizePath(path.resolve(frontendPath, dep));
+        }
+
         const depContent = await readFileWithRetries(resolvedDepPath, 3, 200);
         dependenciesText += `\n\n<dependency>  File path: ${dep}\n\`\`\`typescript\n${depContent}\n\`\`\`\n</dependency>`;
       } catch (err) {
@@ -324,7 +345,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       modelResponse = await chatSyncWithClocker(
         context,
         {
-          model: 'gpt-4o',
+          model: 'gpt-4o-mini',
           messages,
         },
         'generate frontend code',

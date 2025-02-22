@@ -13,19 +13,20 @@ export const generateFrontEndCodePrompt = (
       4. Follow design: DONT CHANGE ANY DESIGN IN Document.
       5. CAREFULLY CHECK:
         Before importing a file, verify its existence.
-        THAT YOU DONT MISSED ANY Internal Dependencies import.
-        If missing, suggest an alternative or define mock data.
       6. Before using a external variable/module, make sure you import it first.
       7. Error Handling: Implement proper error handling in API calls and interactions with external modules.    
-      8. Code Standards: Adhere to styling guidelines (e.g., Tailwind CSS, CSS Modules), and Use only Tailwind UI for styling, applying all styles via inline class names (className).
-      9. Mock the response: if the API returns an empty or undefined value.
-      10. Write EVERY CODE DETAIL, DON'T LEAVE TODO.
+      8. Code Standards: Must build good Css. Must use Tailwind UI for styling, applying all styles via inline class names (className).
+      9. Mock Data (Where Applicable):
+      - If the component or page needs to display a list of items, create a small realistic example.
+      - Provide enough mock data to display the UI meaningfully .
+      - If no data is present (empty array), show a simple fallback (e.g. No data found.).
+      10. Mock the response: if the API returns an empty or undefined value.
+      11. Write EVERY CODE DETAIL, DON'T LEAVE TODO.
 
       ## Library:
         "react-router": "^6",
         "react": "^18",
         "@tailwindcss/vite": "^4.0.0"
-
 
       ## Output Format:       
         Output your final code wrapped in <GENERATE> tags ONLY, like:
@@ -35,6 +36,51 @@ export const generateFrontEndCodePrompt = (
           </GENERATE>
   `;
 };
+
+// export const generateFrontEndCodePrompt = (
+//   currentFile: string,
+//   dependencyFilePath: string,
+// ): string => {
+//   return `Role: You are an expert frontend developer specializing in building scalable, maintainable, and production-ready React applications using TypeScript.
+//   Task: Generate complete, type-safe, and maintainable React code.
+//   Current File: ${currentFile}.
+
+//     # Instructions and Rules:
+//       1. Implement Only One file: Implement only the given file.
+//       2. COMPLETE CODE: Your code will be part of the entire project, so please implement complete, reliable, reusable code snippets.
+//       3. Type Safe: Follow typscript standard.
+//       4. Follow design: DONT CHANGE ANY DESIGN IN Document.
+//       5. CAREFULLY CHECK:
+//         Before importing a file, verify its existence.
+//         THAT YOU DONT MISSED ANY Internal Dependencies import.
+//         If missing, suggest an alternative or define mock data.
+//       6. Before using a external variable/module, make sure you import it first.
+//       7. Error Handling: Implement proper error handling in API calls and interactions with external modules.
+//       8. Code and Styling Standards:
+//         Use Shadcn UI components ONLY.
+//         Use '@/components/ui/*' for Shadcn.
+//         ONLY use @/components/ui/* for Shadcn UI components Do Not Use things like @/api.
+//         DO NOT use \`@tanstack/react-query\`, \`use-debounce\`, \`react-toastify\`
+//       9. Mock the response: if the API returns an empty or undefined value.
+//       10. Write EVERY CODE DETAIL, DON'T LEAVE TODO.
+
+//       ## Library:
+//         "react-router": "^6",
+//         "react": "^18",
+//         @radix-ui/react-select": "^2",
+//         ........
+
+//       ## Shadcn UI Components:
+//       accordion, alert, alert-dialog, aspect-ratio, avatar, badge, breadcrumb, button, calendar, card, carousel, chart, checkbox, collapsible, command, context-menu, dialog, drawer, dropdown-menu, form, hover-card, input, input-otp, label, menubar, navigation-menu, pagination, popover, progress, radio-group, resizable, scroll-area, select, separator, sheet, sidebar, skeleton, slider, sonner, switch, table, tabs, textarea, toast, toggle, toggle-group, tooltip
+
+//       ## Output Format:
+//         Output your final code wrapped in <GENERATE> tags ONLY, like:
+
+//           <GENERATE>
+//           ...full code...
+//           </GENERATE>
+//   `;
+// };
 
 export function generateCSSPrompt(
   fileName: string,
@@ -159,6 +205,7 @@ Available operations:
     Not assignable to parameter of type → Use the READ tool if you dont have enough information to fix.
 
 **Output format:**
+Return only the JSON object wrapped in \`<GENERATE></GENERATE>\` tags.
 To keep the structure consistent, other operations remain single-action:
 
 1. Read File
@@ -194,6 +241,8 @@ If a file needs to be renamed:
     }
   }
 }
+
+Do not forget <GENERATE></GENERATE> tags.
   `;
 }
 

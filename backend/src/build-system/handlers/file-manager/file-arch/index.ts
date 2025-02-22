@@ -22,6 +22,7 @@ import {
   buildDependencyGraph,
   validateAgainstVirtualDirectory,
 } from 'src/build-system/utils/file_generator_util';
+import { UXSMSHandler } from '../../ux/sitemap-structure';
 
 @BuildNode()
 @BuildNodeRequire([FileStructureHandler, UXDMDHandler])
@@ -36,6 +37,7 @@ export class FileFAHandler implements BuildHandler<string> {
 
     const fileStructure = context.getNodeData(FileStructureHandler);
     const datamapDoc = context.getNodeData(UXDMDHandler);
+    const sitemapStructure = context.getNodeData(UXSMSHandler);
 
     this.logger.log('fileStructure:', fileStructure);
     if (!fileStructure || !datamapDoc) {
@@ -57,7 +59,7 @@ export class FileFAHandler implements BuildHandler<string> {
           **Page-by-Page Analysis**
           The following is a detailed analysis of each page. Use this information to understand specific roles, interactions, and dependencies.
 
-          ${datamapDoc}
+          ${sitemapStructure}
 
           Next, I will provide the **Directory Structure** to help you understand the full project architecture.`,
       },
@@ -77,6 +79,7 @@ export class FileFAHandler implements BuildHandler<string> {
       Before returning the output, ensure the following:
       - The JSON structure is correctly formatted and wrapped in <GENERATE></GENERATE> tags.
       - File extensions and paths match those in the Directory Structure.
+      - Check if you use ShadCN UI components in "dependsOn" field.
       - All files and dependencies are included.`,
       },
     ];
@@ -155,6 +158,11 @@ export class FileFAHandler implements BuildHandler<string> {
   }): boolean {
     const validPathRegex = /^[a-zA-Z0-9_\-/.]+$/;
 
+    const shouldIgnore = (filePath: string) => {
+      // this.logger.log(`Checking if should ignore: ${filePath}`);
+      return filePath.startsWith('@/components/ui/');
+    };
+
     for (const [file, details] of Object.entries(jsonData.files)) {
       if (!validPathRegex.test(file)) {
         this.logger.error(`Invalid file path: ${file}`);
@@ -162,6 +170,10 @@ export class FileFAHandler implements BuildHandler<string> {
       }
 
       for (const dependency of details.dependsOn) {
+        if (shouldIgnore(dependency)) {
+          continue;
+        }
+
         if (!validPathRegex.test(dependency)) {
           this.logger.error(
             `Invalid dependency path "${dependency}" in file "${file}".`,

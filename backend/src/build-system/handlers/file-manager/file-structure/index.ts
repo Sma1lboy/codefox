@@ -3,6 +3,7 @@ import { BuilderContext } from 'src/build-system/context';
 import { prompts } from './prompt';
 import { Logger } from '@nestjs/common';
 import {
+  mergePaths,
   parseGenerateTag,
   removeCodeBlockFences,
 } from 'src/build-system/utils/strings';
@@ -155,6 +156,22 @@ export class FileStructureHandler implements BuildHandler<string> {
       };
     }
 
+    let added_structure = '';
+    try {
+      added_structure = mergePaths(fileStructureJsonContent);
+      if (!added_structure) {
+        this.logger.error('Failed to add directory.' + added_structure);
+        throw new ResponseParsingError('Failed to add directory.');
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: new ResponseParsingError(
+          `Failed to add directory. ${error.message}`,
+        ),
+      };
+    }
+
     //debug script print all files
     context.virtualDirectory.getAllFiles().forEach((file) => {
       this.logger.log(file);
@@ -162,7 +179,7 @@ export class FileStructureHandler implements BuildHandler<string> {
 
     return {
       success: true,
-      data: removeCodeBlockFences(fileStructureContent),
+      data: removeCodeBlockFences(added_structure),
     };
   }
 
