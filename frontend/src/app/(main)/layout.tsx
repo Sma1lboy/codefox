@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Moon, Sun } from 'lucide-react';
-import { useTheme } from 'next-themes'; 
+import { useTheme } from 'next-themes';
 import { SignInModal } from '@/components/SignInModal';
 import { SignUpModal } from '@/components/SignUpModal';
 
@@ -13,7 +13,7 @@ export default function HomeLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { theme, setTheme } = useTheme(); 
+  const { theme, setTheme } = useTheme();
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
 

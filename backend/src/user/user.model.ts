@@ -22,12 +22,11 @@ export class User extends SystemBaseModel {
 
   @Field()
   @Column()
-  username: string; 
+  username: string;
   @Column()
   password: string;
 
-
-  @Field()  
+  @Field()
   @Column({ unique: true })
   @IsEmail()
   email: string;

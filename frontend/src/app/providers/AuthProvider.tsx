@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useRef } from "react";
-import { useLazyQuery } from "@apollo/client";
-import { CHECK_TOKEN_QUERY } from "@/graphql/request";
-import { LocalStore } from "@/lib/storage";
-import { LoadingPage } from "@/components/global-loading";
+import { useState, useEffect, useRef } from 'react';
+import { useLazyQuery } from '@apollo/client';
+import { CHECK_TOKEN_QUERY } from '@/graphql/request';
+import { LocalStore } from '@/lib/storage';
+import { LoadingPage } from '@/components/global-loading';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Timeout if the query hangs
       timeoutRef.current = setTimeout(() => {
         if (isMounted) {
-          console.error("Token validation timeout");
+          console.error('Token validation timeout');
           localStorage.removeItem(LocalStore.accessToken);
           setIsAuthorized(false);
           setIsChecking(false);
@@ -55,13 +55,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             setIsAuthorized(false);
             setShowSignInModal(true);
           } else {
-            console.log("Token valid");
+            console.log('Token valid');
             setIsAuthorized(true);
           }
         }
       } catch (error) {
         if (isMounted) {
-          console.error("Token validation error:", error);
+          console.error('Token validation error:', error);
           localStorage.removeItem(LocalStore.accessToken);
           setIsAuthorized(false);
           setShowSignInModal(true);
