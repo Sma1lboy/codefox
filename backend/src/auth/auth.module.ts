@@ -8,11 +8,12 @@ import { AuthService } from './auth.service';
 import { User } from 'src/user/user.model';
 import { AuthResolver } from './auth.resolver';
 import { JwtCacheService } from 'src/auth/jwt-cache.service';
+import { RefreshToken } from './refresh-token/refresh-token.model';
 
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([Role, Menu, User]),
+    TypeOrmModule.forFeature([Role, Menu, User, RefreshToken]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

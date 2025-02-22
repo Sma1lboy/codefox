@@ -6,7 +6,7 @@ import { Toaster } from 'sonner';
 import { AuthProvider } from './AuthProvider';
 
 const DynamicApolloProvider = dynamic(() => import('./DynamicApolloProvider'), {
-  ssr: false,
+  ssr: false, // disables SSR for the ApolloProvider
 });
 
 interface ProvidersProps {
