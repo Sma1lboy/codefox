@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import dynamic from 'next/dynamic';
-import { ThemeProvider } from 'next-themes';
-import { Toaster } from 'sonner';
-import { AuthProvider } from './AuthProvider';
+import dynamic from "next/dynamic";
+import { ThemeProvider } from "next-themes";
+import { Toaster } from "sonner";
+import { AuthProvider } from "./AuthProvider";
 
-const DynamicApolloProvider = dynamic(() => import('./DynamicApolloProvider'), {
-  ssr: false,
+const DynamicApolloProvider = dynamic(() => import("./DynamicApolloProvider"), {
+  ssr: false, // disables SSR for the ApolloProvider
 });
 
 interface ProvidersProps {

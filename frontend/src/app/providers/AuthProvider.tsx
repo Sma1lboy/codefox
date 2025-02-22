@@ -1,96 +1,70 @@
-import { usePathname, useRouter } from 'next/navigation';
-import { useLazyQuery, useQuery } from '@apollo/client';
-import { CHECK_TOKEN_QUERY } from '@/graphql/request';
-import { LocalStore } from '@/lib/storage';
-import { useEffect, useState, useRef } from 'react';
-import { LoadingPage } from '@/components/global-loading';
+"use client";
 
-const VALIDATION_TIMEOUT = 5000;
+import { useState, useEffect, useRef } from "react";
+import { useLazyQuery } from "@apollo/client";
+import { CHECK_TOKEN_QUERY } from "@/graphql/request";
+import { LocalStore } from "@/lib/storage";
+import { LoadingPage } from "@/components/global-loading";
 
 interface AuthProviderProps {
   children: React.ReactNode;
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
-  const publicRoutes = ['/login', '/register'];
-  const isRedirectingRef = useRef(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const [showSignInModal, setShowSignInModal] = useState(false);
 
   const [checkToken] = useLazyQuery(CHECK_TOKEN_QUERY);
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     let isMounted = true;
 
-    const validateToken = async () => {
-      if (isRedirectingRef.current) {
-        return;
-      }
-
-      if (publicRoutes.includes(pathname)) {
-        if (isMounted) {
-          setIsAuthorized(true);
-          setIsChecking(false);
-        }
-        return;
-      }
-
-      if (isMounted) {
-        setIsChecking(true);
-      }
+    async function validateToken() {
+      setIsChecking(true);
 
       const token = localStorage.getItem(LocalStore.accessToken);
-
-      console.log(token);
       if (!token) {
-        isRedirectingRef.current = true;
-        router.replace('/login');
+        // No token => not authorized, but don't block the page
         if (isMounted) {
+          setIsAuthorized(false);
           setIsChecking(false);
+          // Optionally show sign-in modal:
+          setShowSignInModal(true);
         }
         return;
       }
 
+      // Timeout if the query hangs
       timeoutRef.current = setTimeout(() => {
-        if (isMounted && !isRedirectingRef.current) {
-          console.error('Token validation timeout');
+        if (isMounted) {
+          console.error("Token validation timeout");
           localStorage.removeItem(LocalStore.accessToken);
-          isRedirectingRef.current = true;
-          router.replace('/login');
+          setIsAuthorized(false);
           setIsChecking(false);
+          setShowSignInModal(true);
         }
-      }, VALIDATION_TIMEOUT);
+      }, 5000);
 
       try {
-        const { data } = await checkToken({
-          variables: {
-            input: {
-              token,
-            },
-          },
-        });
-
+        const { data } = await checkToken({ variables: { input: { token } } });
         if (isMounted) {
           if (!data?.checkToken) {
             localStorage.removeItem(LocalStore.accessToken);
-            isRedirectingRef.current = true;
-            router.replace('/login');
             setIsAuthorized(false);
+            setShowSignInModal(true);
           } else {
-            console.log('token checked');
+            console.log("Token valid");
             setIsAuthorized(true);
           }
         }
       } catch (error) {
-        if (isMounted && !isRedirectingRef.current) {
-          console.error('Token validation error:', error);
+        if (isMounted) {
+          console.error("Token validation error:", error);
           localStorage.removeItem(LocalStore.accessToken);
-          isRedirectingRef.current = true;
-          router.replace('/login');
           setIsAuthorized(false);
+          setShowSignInModal(true);
         }
       } finally {
         if (timeoutRef.current) {
@@ -100,7 +74,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setIsChecking(false);
         }
       }
-    };
+    }
 
     validateToken();
 
@@ -110,21 +84,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [pathname]);
-
-  useEffect(() => {
-    if (publicRoutes.includes(pathname)) {
-      isRedirectingRef.current = false;
-    }
-  }, [pathname]);
-
-  if (publicRoutes.includes(pathname)) {
-    return children;
-  }
+  }, [checkToken]);
 
   if (isChecking) {
     return <LoadingPage />;
   }
 
-  return isAuthorized ? children : <LoadingPage />;
+  // Always render main page, authorized or not
+  return (
+    <>
+      {children}
+      {/* Show sign-in modal if unauthorized */}
+      {/* <SignInModal isOpen={showSignInModal} onClose={() => setShowSignInModal(false)} /> */}
+    </>
+  );
 };

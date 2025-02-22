@@ -39,7 +39,7 @@ export function SignUpModal({
     },
     onCompleted: () => {
       onClose(); // Close modal on success
-      router.push("/login"); // Redirect to login page
+      // router.push("/login"); // Redirect to login page
     },
   });
 

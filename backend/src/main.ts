@@ -18,6 +18,7 @@ async function bootstrap() {
       'Authorization',
       'Access-Control-Allow-Origin',
       'Access-Control-Allow-Credentials',
+      'x-refresh-token',
     ],
   });
 
