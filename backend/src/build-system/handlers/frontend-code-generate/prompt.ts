@@ -1,40 +1,45 @@
-export const generateFrontEndCodePrompt = (
+export function generateFrontEndCodePrompt(
   currentFile: string,
   dependencyFilePath: string,
-): string => {
+  theme: string,
+): string {
   return `Role: You are an expert frontend developer specializing in building scalable, maintainable, and production-ready React applications using TypeScript. 
-  Task: Generate complete, type-safe, and maintainable React code.
-  Current File: ${currentFile}.
+Task: Generate complete, type-safe, and maintainable React code.
+Current File: ${currentFile}.
 
-    # Instructions and Rules:
-      1. Implement Only One file: Implement only the given file.
-      2. COMPLETE CODE: Your code will be part of the entire project, so please implement complete, reliable, reusable code snippets.
-      3. Type Safe: Follow typscript standard. 
-      4. Follow design: DONT CHANGE ANY DESIGN IN Document.
-      5. CAREFULLY CHECK:
-        Before importing a file, verify its existence.
-        THAT YOU DONT MISSED ANY Internal Dependencies import.
-        If missing, suggest an alternative or define mock data.
-      6. Before using a external variable/module, make sure you import it first.
-      7. Error Handling: Implement proper error handling in API calls and interactions with external modules.    
-      8. Code Standards: Adhere to styling guidelines (e.g., Tailwind CSS, CSS Modules), and Use only Tailwind UI for styling, applying all styles via inline class names (className).
-      9. Mock the response: if the API returns an empty or undefined value.
-      10. Write EVERY CODE DETAIL, DON'T LEAVE TODO.
+## Theme Information:
+${theme}
 
-      ## Library:
-        "react-router": "^6",
-        "react": "^18",
-        "@tailwindcss/vite": "^4.0.0"
+# Instructions and Rules:
+  1. Implement Only One file: Implement only the given file.
+  2. COMPLETE CODE: Your code will be part of the entire project, so please implement complete, reliable, reusable code snippets.
+  3. Type Safe: Follow TypeScript standards. DO NOT create custom type definitions for React, React.FC, or any other React-related types - these are already provided by @types/react.
+  4. Follow design: DON'T CHANGE ANY DESIGN in the Document.
+  5. Import Types: Always import React types from the 'react' package, never create your own React type definitions.
+  6. CAREFULLY CHECK:
+     - Before importing a file, verify its existence.
+     - Ensure that you haven't missed any internal dependencies import.
+     - If missing, suggest an alternative or define mock data.
+  7. Before using an external variable/module, make sure you import it first.
+  8. Error Handling: Implement proper error handling in API calls and interactions with external modules.
+  9. Code Standards: Adhere to styling guidelines (e.g., Tailwind CSS, CSS Modules), and use only Tailwind UI for styling by applying all styles via inline class names (className).
+  10. Mock the response if the API returns an empty or undefined value, and you don't need to explicitly show that it is mock data.
+  11. Write EVERY CODE DETAIL, DON'T LEAVE TODO.
+  12. Image Assets: If your implementation requires any images except some button logo, you can use placeholder image URLs from https://picsum.photos/<width>/<height>. Note that the width and height values (e.g., 500/300) are adjustable as needed.
 
+## Library:
+  "react-router": "^6",
+  "react": "^18",
+  "@tailwindcss/vite": "^4.0.0"
 
-      ## Output Format:       
-        Output your final code wrapped in <GENERATE> tags ONLY, like:
+## Output Format:       
+  Output your final code wrapped in <GENERATE> tags ONLY, like:
 
-          <GENERATE>
-          ...full code...
-          </GENERATE>
-  `;
-};
+    <GENERATE>
+    ...full code...
+    </GENERATE>
+`;
+}
 
 export function generateCSSPrompt(
   fileName: string,
@@ -91,6 +96,8 @@ export function generateFixPrompt(
 **Expected Output:**
 - Provide the **fixed code** without changing the structure unnecessarily.
 - Ensure the code is TypeScript-safe and follows React best practices.
+- DO NOT create custom React type definitions - use types from '@types/react'.
+- Always import React types from 'react' package, never create your own.
 - Provide a **brief explanation** of the fixes and improvements.
 
 The file Name:
@@ -144,6 +151,9 @@ Available operations:
    - Keep existing code style/conventions
    - Add type guards where necessary
    - Prefer generics over 'any'
+   - DO NOT create custom React type definitions
+   - Always import React types from '@types/react'
+   - Never create your own React-related types
 
 7. File Operations:
    - Use RENAME only for extension issues (e.g., .ts → .tsx)

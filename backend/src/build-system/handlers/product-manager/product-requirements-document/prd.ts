@@ -71,7 +71,7 @@ export class PRDHandler implements BuildHandler<string> {
       ];
       const prdContent = await chatSyncWithClocker(
         context,
-        { messages, model: 'gpt-4o-mini' },
+        { messages, model: context.defaultModel || 'gpt-4o-mini' },
         'generatePRDFromLLM',
         PRDHandler.name,
       );

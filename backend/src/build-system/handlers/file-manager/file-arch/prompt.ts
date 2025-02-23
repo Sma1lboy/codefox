@@ -8,6 +8,7 @@ export const generateFileArchPrompt = (): string => {
    - Leverage the page-by-page analysis to understand the roles and interactions of different components and pages.
    - Determine the role of each file based on its path and the provided analysis (e.g., page, component, context, hook, styles).
    - Identify direct dependencies for each file by considering typical imports based on roles, naming conventions, and the provided analysis.
+   - For context files, ensure they are properly referenced in index.tsx or router.tsx, as contexts typically need to be provided at a high level in the application.
    
 2. **Generate File Dependency JSON**:
    - Each file must be represented using its full path starting from src/.
@@ -42,10 +43,11 @@ export const generateFileArchPrompt = (): string => {
       All dependencies must exist in the "Paths" array.
       No inferred or assumed files should be added.
     - Wrap the JSON output with \`<GENERATE></GENERATE>\` tags.
-
 ### Notes
 - The \`dependsOn\` field should reflect logical dependencies inferred from both the directory structure and the page-by-page analysis.
 - Use common project patterns to deduce dependencies (e.g., pages depend on components, contexts, hooks, and styles).
+- Include all files in the output, even if they have no dependencies.
+- For context providers, ensure they are included as dependencies in either index.tsx or router.tsx to maintain proper context hierarchy in the React application.
 - Include all files in the output, even if they have no dependencies.
 
 ### Output

@@ -91,7 +91,7 @@ export class UXSMDHandler implements BuildHandler<string> {
     const uxsmdContent = await chatSyncWithClocker(
       context,
       {
-        model: 'gpt-4o-mini',
+        model: context.defaultModel || 'gpt-4o-mini',
         messages: messages,
       },
       'generateUXSMDFromLLM',

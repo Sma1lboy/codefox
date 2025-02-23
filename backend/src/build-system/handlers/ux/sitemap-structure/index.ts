@@ -94,12 +94,15 @@ export class UXSMSHandler implements BuildHandler<string> {
       const uxStructureContent = await chatSyncWithClocker(
         context,
         {
-          model: 'gpt-4o-mini',
+          model: context.defaultModel || 'gpt-4o-mini',
           messages,
         },
         'generateUXSiteMapStructre',
         UXSMSHandler.name,
       );
+
+      const themeString = extractThemeString(uxStructureContent);
+      context.setGlobalContext('theme', themeString);
 
       if (!uxStructureContent || uxStructureContent.trim() === '') {
         this.logger.error('Generated UX Sitemap Structure content is empty.');
@@ -117,4 +120,11 @@ export class UXSMSHandler implements BuildHandler<string> {
       throw new ModelUnavailableError('Model is unavailable: ' + error);
     }
   }
+}
+function extractThemeString(content: string): string {
+  const match = content.match(/<theme_view>([\s\S]*?)<\/theme_view>/);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+  return 'none theme using regular theme';
 }
