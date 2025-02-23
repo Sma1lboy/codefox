@@ -106,14 +106,18 @@ export class BuilderContext {
     this.globalContext.set('platform', 'web'); // Default platform is 'web'
     this.globalContext.set('databaseType', sequence.databaseType || 'SQLite');
 
+    const now = new Date();
     const projectUUIDPath =
-      new Date().toISOString().slice(0, 18).replaceAll(/:/g, '-') +
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}` +
+      `-${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}-${String(now.getMilliseconds()).padStart(3, '0')}` +
       '-' +
       uuidv4();
     this.globalContext.set('projectUUID', projectUUIDPath);
 
     if (process.env.DEBUG) {
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const timestamp =
+        `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}` +
+        `-${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}-${String(now.getMilliseconds()).padStart(3, '0')}`;
       this.logFolder = path.join(
         process.cwd(),
         'logs',

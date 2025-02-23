@@ -109,7 +109,7 @@ export class FrontendQueueProcessor {
     );
 
     // 1. Write the file to disk
-    createFileWithRetries(currentFullFilePath, task.fileContents);
+    await createFileWithRetries(currentFullFilePath, task.fileContents);
 
     const maxFixAttempts = 2;
 
