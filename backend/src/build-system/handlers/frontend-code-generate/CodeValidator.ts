@@ -27,6 +27,7 @@ export class FrontendCodeValidator {
    * @returns A promise that resolves with the ValidationResult.
    */
   public async validate(): Promise<ValidationResult> {
+    await this.installDependencies();
     return new Promise<ValidationResult>((resolve, reject) => {
       this.logger.log('Starting frontend code validation...');
       // Spawn the npm build process in the provided frontend project path.

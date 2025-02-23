@@ -17,19 +17,48 @@ export const prompts = {
       UX Sitemap Structure:
         The sitemap should be structured as follows:
           <UXSitemap>
-            <!-- Global Shared UI Views -->
-            <global_view>
-                <global_component id="[id]">
-                    G#. [Component Name]
-                    Authentication Conditions: [Rules for visibility based on user authentication]
-                    Elements:
-                        - [List all UI elements in this component]
-                          1. **Type** (Layout, Interactive, Display, Input, etc.)
-                          2. **Purpose** (What does it do for the user or the interface?)
-                          3. **States** (Possible UI states: Default, Hover, Clicked, Expanded, Loading, etc.)
-                          4. **Interactions** (User actions or system responses: clicking, hovering, dragging, scrolling, etc.)
-                </global_component>
-            </global_view>
+                  <!-- Theme Definition -->
+              <theme_view>
+                  Theme Name: [Theme name]
+                  Description: [Brief description of the overall visual theme]
+                  Design Style Note: If the sitemap documentation or user's description indicates a specific design style (e.g., minimalist, modern, etc.), explicitly include that style here.
+                  Color Palette:
+                      - Primary: [Primary color with hex code]
+                      - Secondary: [Secondary color with hex code]
+                      - Accent: [Accent color with hex code]
+                      - Background: [Background color with hex code]
+                      - Text: [Text color with hex code]
+                  Typography:
+                      - Headings: [Font family for headings]
+                      - Body: [Font family for body text]
+                      - Size Scale: [Font size scale for different text elements]
+                  Component Styling:
+                      - Button Style: [Default button styling]
+                      - Input Style: [Default input field styling]
+                      - Card Style: [Default card/container styling]
+                      - Shadow Style: [Default shadow effects]
+                  Spacing:
+                      - Layout Grid: [Grid system specifications]
+                      - Margins: [Default margin sizes]
+                      - Padding: [Default padding sizes]
+                  Animations:
+                      - Transitions: [Default transition effects]
+                      - Hover Effects: [Default hover animations]
+              </theme_view>
+                  <!-- Global Shared UI Views -->
+                  <global_view>
+                      <global_component id="[id]">
+                          G#. [Component Name]
+                          Authentication Conditions: [Rules for visibility based on user authentication]
+                          Elements:
+                              - [List all UI elements in this component]
+                                1. **Type** (Layout, Interactive, Display, Input, etc.)
+                                2. **Purpose** (What does it do for the user or the interface?)
+                                3. **States** (Possible UI states: Default, Hover, Clicked, Expanded, Loading, etc.)
+                                4. **Interactions** (User actions or system responses: clicking, hovering, dragging, scrolling, etc.)
+                                5. **Theme Application**: [How this component uses the defined theme]
+                      </global_component>
+                  </global_view>
 
             <!-- Unique UI Pages -->
             <page_view id="[id]">

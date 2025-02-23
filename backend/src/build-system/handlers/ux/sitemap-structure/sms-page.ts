@@ -57,7 +57,7 @@ export class UXSMSPageByPageHandler implements BuildHandler<string> {
     this.logger.log('Processing each Global Component...');
 
     const requests = globalSections.map((globalSection) => ({
-      model: 'gpt-4o',
+      model: context.defaultModel || 'gpt-4o',
       messages: [
         {
           role: 'system' as const,

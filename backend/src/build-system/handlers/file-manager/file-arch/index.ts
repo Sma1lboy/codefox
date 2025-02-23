@@ -86,7 +86,7 @@ export class FileFAHandler implements BuildHandler<string> {
       fileArchContent = await chatSyncWithClocker(
         context,
         {
-          model: 'gpt-4o-mini',
+          model: context.defaultModel || 'gpt-4o-mini',
           messages,
         },
         'generateFileArch',

@@ -21,10 +21,11 @@ import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
     const sequence: BuildSequence = {
       id: 'test-backend-sequence',
       version: '1.0.0',
-      name: 'Wrtie a Cool personal website',
+      name: 'Write a music website',
       description:
-        'A personal blog website. I am a cybersecurity engineer so i want it to show i am a really cool hacker',
+        'A Website i can share the music i like to others, it should be able to show musics, and play music',
       databaseType: 'SQLite',
+      model: 'o3-mini-high',
       nodes: [
         {
           handler: ProjectInitHandler,
@@ -97,5 +98,5 @@ import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
     };
     const context = new BuilderContext(sequence, 'fullstack-code-gen');
     await context.execute();
-  }, 300000);
+  }, 1200000);
 });

@@ -1,5 +1,3 @@
-// Define and export the system prompts object
-
 export const prompts = {
   generatePRDPrompt: (
     projectName: string,
@@ -14,18 +12,19 @@ export const prompts = {
  Follow these guidelines to ensure clarity, thoroughness, and usability in the PRD, which will be directly utilized in development.
  ### Instructions and Rules:
   
- 1, Your need to analysis the requirement for the project and covered all the things you can think about.
- 2, You should focus on core features for the project
- 3, ask yourself:
- - what are all expect features require for a {project name} and {Description}?
- - what are the user stories for the feature?
- - what are the details description for those features?
- - Am I cover all expect features ? if not then add new feature.
- - Are those covered all user expected features ? if not then add new feature.
- - what are the target audience for the project? Is all the features meet their expectation? if not then add new feature.
- - Ask your self what are the function requirement and none functional requirement for those features?
- - Are all features could be agree by others in the team? including product manager, developer....
-
+ 1. Analyze the project requirements in detail, covering all aspects you can think of.
+ 2. Focus on core features for the project.
+ 3. Ask yourself:
+   - What are all the expected features required for ${projectName} and the given description?
+   - What are the user stories for each feature?
+   - What are the detailed descriptions for those features?
+   - Am I covering all the expected features? If not, add new features.
+   - Are all user-expected features covered? If not, add new features.
+   - Who is the target audience for the project? Do all features meet their expectations? If not, add new features.
+   - What are the functional and non-functional requirements for these features?
+   - Are all features acceptable to all team members, including product managers and developers?
+   - Additionally, analyze the design theme implied in the description and note any potential design directions, without overloading the document with excessive theme details.
+   
  ### PRD Structure:
 
  Start with the following structure. Do not include sections for Milestones, Deliverables, or Technical Requirements.
@@ -53,7 +52,7 @@ export const prompts = {
 
 #### 5. Features
   - Outline each feature required for the project.
-  - Write the requirement for the feature
+  - Write the requirement for the feature.
 
 #### 6. Functional Requirements
   - Specify the functional requirements for each feature and sub-feature.

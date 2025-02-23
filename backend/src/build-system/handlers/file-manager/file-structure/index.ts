@@ -96,7 +96,7 @@ export class FileStructureHandler implements BuildHandler<string> {
       fileStructureContent = await chatSyncWithClocker(
         context,
         {
-          model: 'gpt-4o-mini',
+          model: context.defaultModel || 'gpt-4o-mini',
           messages,
         },
         'generateCommonFileStructure',
@@ -160,6 +160,7 @@ export class FileStructureHandler implements BuildHandler<string> {
       this.logger.log(file);
     });
 
+    this.logger.log('fileStructureContent', fileStructureContent);
     return {
       success: true,
       data: removeCodeBlockFences(fileStructureContent),

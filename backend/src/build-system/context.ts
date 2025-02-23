@@ -81,6 +81,7 @@ export class BuilderContext {
 
   private logFolder: string | null = null;
 
+  public defaultModel: string;
   /**
    * Constructor to initialize the BuilderContext.
    * Sets up the handler manager, retry handler, model provider, logger, and virtual directory.
@@ -99,6 +100,7 @@ export class BuilderContext {
     this.monitor = BuildMonitor.getInstance();
     this.logger = new Logger(`builder-context-${id ?? sequence.id}`);
     this.virtualDirectory = new VirtualDirectory();
+    this.defaultModel = this.sequence.model;
 
     // Initialize global context with default project values
     this.globalContext.set('projectName', sequence.name);

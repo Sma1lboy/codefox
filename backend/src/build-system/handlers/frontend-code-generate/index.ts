@@ -158,18 +158,16 @@ export class FrontendCodeHandler implements BuildHandler<string> {
             );
 
             // 7. Add the file to the queue for writing
+            // Ensure the file path is relative by removing any leading slash
+            this.logger.log('filepath: ' + file);
+            const relativePath = file.startsWith('/')
+              ? file.substring(1)
+              : file;
             queue.enqueue({
-              filePath: file, // relative path
+              filePath: relativePath,
               fileContents: generatedCode,
               dependenciesPath: directDepsPathString,
             });
-
-            // await createFileWithRetries(
-            //   currentFullFilePath,
-            //   generatedCode,
-            //   maxRetries,
-            //   delayMs,
-            // );
           }),
         );
 
@@ -189,7 +187,6 @@ export class FrontendCodeHandler implements BuildHandler<string> {
           remainingFiles = []; // All files in this layer succeeded
         }
       }
-
       // Now process the entire queue for this layer:
       // This writes each file, runs build, fixes if needed, etc.
       const queueProcessor = new FrontendQueueProcessor(
@@ -200,7 +197,6 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         renameMap,
       );
       await queueProcessor.processAllTasks();
-
       this.logger.log(
         `\n==== Finished concurrency layer #${layerIndex + 1} ====\n`,
       );
@@ -258,10 +254,12 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       if (fileExtension === '.css') {
         frontendCodePrompt = generateCSSPrompt(file, directDepsPathString);
       } else {
+        const theme = context.getGlobalContext('theme');
         // default: treat as e.g. .ts, .js, .vue, .jsx, etc.
         frontendCodePrompt = generateFrontEndCodePrompt(
           file,
           directDepsPathString,
+          theme,
         );
       }
       // this.logger.log(
@@ -324,13 +322,14 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       modelResponse = await chatSyncWithClocker(
         context,
         {
-          model: 'gpt-4o',
+          model: context.defaultModel || 'gpt-4o',
           messages,
         },
         'generate frontend code',
         FrontendCodeHandler.name,
       );
 
+      this.logger.debug('generated code: ', modelResponse);
       generatedCode = formatResponse(modelResponse);
 
       return generatedCode;

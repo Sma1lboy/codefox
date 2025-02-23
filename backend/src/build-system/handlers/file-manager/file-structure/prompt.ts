@@ -15,34 +15,33 @@ export const prompts = {
 
   convertTreeToJsonPrompt: (): string => {
     return `You are a highly skilled developer. Your task is to convert the previous file and folder structure, currently represented in an ASCII tree format, into a JSON structure. The JSON structure must:
-
-    Represent all file paths in a flat list under the "Paths" array.
-    Maintain the full paths for each file exactly as they appear in the ASCII tree.
-    Directories should not be included—only file paths.
-
-Output Format:
-Return a JSON object in the following format:
-Surround the JSON object with <GENERATE> tags.
-
-<GENERATE>
-{
-  "Paths": [
-    "/full/path/to/file1.ext",
-    "/full/path/to/file2.ext",
-    "/another/path/to/file3.ext"
-  ]
-}
-</GENERATE>
-
-Additional Rules:
-
-    Maintain the original directory structure but only return files in the JSON output.
-    Keep file names and paths exactly as they appear in the ASCII tree.
-    Remeber to start with src/ as the root directory (src/...).
-    The root node should correspond to the top-level directory in the tree.
-    Do not include comments or extra fields besides "Paths".
-    Return only the JSON structure (no explanations, no additional comments). This JSON will be used directly in the application.
-    `;
+  
+  - Represent all file paths in a flat list under the "Paths" array.
+  - Each file path must be a relative path that begins exactly with "src/" (do not include any leading "/" or absolute paths).
+  - Directories should not be included—only file paths.
+  
+  Output Format:
+  Return a JSON object in the following format:
+  Surround the JSON object with <GENERATE> tags.
+  
+  <GENERATE>
+  {
+    "Paths": [
+      "src/full/path/to/file1.ext",
+      "src/full/path/to/file2.ext",
+      "src/another/path/to/file3.ext"
+    ]
+  }
+  </GENERATE>
+  
+  Additional Rules:
+  
+  - Maintain the original directory structure but only return files in the JSON output.
+  - Keep file names and paths exactly as they appear in the ASCII tree.
+  - **Important**: Ensure that all file paths are relative and begin exactly with "src/". Do not output any paths that start with a leading "/".
+  - Do not include comments or extra fields besides "Paths".
+  - Return only the JSON structure (no explanations, no additional comments). This JSON will be used directly in the application.
+  `;
   },
 
   generateCommonFileStructurePrompt: (
