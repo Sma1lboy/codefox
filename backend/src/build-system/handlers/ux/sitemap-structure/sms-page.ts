@@ -95,7 +95,7 @@ export class UXSMSPageByPageHandler implements BuildHandler<string> {
 
     // Page View
     const page_view_requests = sections.map((section) => ({
-      model: 'gpt-4o',
+      model: context.defaultModel || 'gpt-4o',
       messages: [
         {
           role: 'system' as const,
@@ -119,14 +119,6 @@ export class UXSMSPageByPageHandler implements BuildHandler<string> {
           
             Please generate the Full UX Sitemap Structre for this section now. Provide the information exclusively within <page_view> tags.`,
         },
-        // {
-        //   role: 'user' as const,
-        //   content: `
-        //   Next you need to generating a Draft HTML Layout for each <page_view>.
-        //   Your output must emphasize component placement, layout context, and styling directions to ensure developers can implement a responsive and accessible UI effectively.
-        //     ${prompts.HTML_Guidelines_Page_view_Prompt}
-        //     `,
-        // },
         {
           role: 'user' as const,
           content: `Please enrich the details of Core Components in each <page_view> block.

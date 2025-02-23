@@ -9,7 +9,6 @@ import { VirtualDirectory } from '../../virtual-dir';
 import { UXSMSHandler } from '../ux/sitemap-structure';
 import { UXDMDHandler } from '../ux/datamap';
 import { BackendRequirementHandler } from '../backend/requirements-document';
-import { FileFAHandler } from '../file-manager/file-arch';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import normalizePath from 'normalize-path';
 import path from 'path';
@@ -20,6 +19,7 @@ import { MessageInterface } from 'src/common/model-provider/types';
 
 import { FrontendCodeValidator } from './CodeValidator';
 import { FrontendQueueProcessor, CodeTaskQueue } from './CodeReview';
+import { FileFAHandler } from '../file-manager/file-arch';
 
 interface FileInfos {
   [fileName: string]: {
@@ -322,7 +322,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       modelResponse = await chatSyncWithClocker(
         context,
         {
-          model: context.defaultModel || 'gpt-4o',
+          // model: context.defaultModel || 'gpt-4o',
+          model: 'o3-mini-high',
           messages,
         },
         'generate frontend code',

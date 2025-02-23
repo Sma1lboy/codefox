@@ -195,7 +195,7 @@ export class FrontendQueueProcessor {
       let fixResponse = await chatSyncWithClocker(
         this.context,
         {
-          model: this.context.defaultModel || 'gpt-4o',
+          model: 'gpt-4o',
           messages: [
             { role: 'system', content: fixPrompt },
             {
@@ -270,7 +270,7 @@ export class FrontendQueueProcessor {
         fixResponse = await chatSyncWithClocker(
           this.context,
           {
-            model: this.context.defaultModel || 'gpt-4o',
+            model: 'gpt-4o',
             messages: [
               { role: 'system', content: fixPrompt },
               {
