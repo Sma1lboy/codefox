@@ -160,7 +160,7 @@ export class FileStructureHandler implements BuildHandler<string> {
       this.logger.log(file);
     });
 
-    this.logger.log('fileStructureContent', fileStructureContent);
+    this.logger.log('fileStructureContent:', fileStructureContent);
     return {
       success: true,
       data: removeCodeBlockFences(fileStructureContent),

@@ -8,9 +8,8 @@ import { DBRequirementHandler } from '../handlers/database/requirements-document
 import { UXDMDHandler } from '../handlers/ux/datamap';
 import { BuilderContext } from '../context';
 import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
+import { FileStructureAndArchitectureHandler } from '../handlers/file-manager/file-struct';
 import { BackendRequirementHandler } from '../handlers/backend/requirements-document';
-import { FileFAHandler } from '../handlers/file-manager/file-arch';
-import { FileStructureHandler } from '../handlers/file-manager/file-structure';
 
 (isIntegrationTest ? describe : describe.skip)('Build Sequence Test', () => {
   it('should execute build sequence successfully', async () => {
@@ -44,13 +43,17 @@ import { FileStructureHandler } from '../handlers/file-manager/file-structure';
           handler: UXDMDHandler,
           name: 'UX DataMap Document Node',
         },
+        // {
+        //   handler: FileStructureHandler,
+        //   name: 'File Structure',
+        // },
+        // {
+        //   handler: FileFAHandler,
+        //   name: 'File Arch',
+        // },
         {
-          handler: FileStructureHandler,
-          name: 'File Structure',
-        },
-        {
-          handler: FileFAHandler,
-          name: 'File Arch',
+          handler: FileStructureAndArchitectureHandler,
+          name: 'File Structure and Architecture',
         },
         // {
         //   handler: FileStructHandler,

@@ -19,7 +19,8 @@ import { MessageInterface } from 'src/common/model-provider/types';
 
 import { FrontendCodeValidator } from './CodeValidator';
 import { FrontendQueueProcessor, CodeTaskQueue } from './CodeReview';
-import { FileFAHandler } from '../file-manager/file-arch';
+// import { FileFAHandler } from '../file-manager/file-arch';
+import { FileStructureAndArchitectureHandler } from '../file-manager/file-struct';
 
 interface FileInfos {
   [fileName: string]: {
@@ -36,8 +37,9 @@ interface FileInfos {
   UXSMSHandler,
   UXDMDHandler,
   BackendRequirementHandler,
-  FileFAHandler,
+  FileStructureAndArchitectureHandler,
 ])
+// FileFAHandler,
 export class FrontendCodeHandler implements BuildHandler<string> {
   readonly logger: Logger = new Logger('FrontendCodeHandler');
   private virtualDir: VirtualDirectory;
@@ -57,7 +59,9 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     const backendRequirementDoc = context.getNodeData(
       BackendRequirementHandler,
     );
-    const fileArchDoc = context.getNodeData(FileFAHandler);
+    const fileArchDoc = context.getNodeData(
+      FileStructureAndArchitectureHandler,
+    );
 
     // 2. Grab any globally stored context as needed
     this.virtualDir = context.virtualDirectory;
@@ -310,7 +314,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         },
         {
           role: 'user',
-          content: `Now you can provide the code, don't forget the <GENERATE></GENERATE> tags.`,
+          content: `Now you can provide the code, don't forget the <GENERATE></GENERATE> tags. Do not be lazy.`,
         },
         // {
         //   role: 'assistant',
