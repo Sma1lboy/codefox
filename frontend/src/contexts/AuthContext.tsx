@@ -30,13 +30,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const login = (accessToken: string, refreshToken: string) => {
     setToken(accessToken);
-    localStorage.setItem("accessToken", accessToken);
+    sessionStorage.setItem("accessToken", accessToken);
     localStorage.setItem("refreshToken", refreshToken);
   };
 
   const logout = () => {
     setToken(null);
-    localStorage.removeItem("accessToken");
+    sessionStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
   };
 
@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (data?.refreshToken) {
         setToken(data.refreshToken.accessToken);
-        localStorage.setItem("accessToken", data.refreshToken.accessToken);
+        sessionStorage.setItem("accessToken", data.refreshToken.accessToken);
         return data.refreshToken.accessToken; 
       } else {
         logout();

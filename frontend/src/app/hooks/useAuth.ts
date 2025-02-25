@@ -45,7 +45,7 @@ export const useAuth = () => {
   );
 
   const validateToken = async () => {
-    const token = localStorage.getItem(LocalStore.accessToken);
+    const token = sessionStorage.getItem(LocalStore.accessToken);
     if (!token) {
       setIsAuthenticated(false);
       setUser(null);
@@ -85,7 +85,7 @@ export const useAuth = () => {
       });
 
       if (data?.login.accessToken) {
-        localStorage.setItem(LocalStore.accessToken, data.login.accessToken);
+        sessionStorage.setItem(LocalStore.accessToken, data.login.accessToken);
         setIsAuthenticated(true);
         await refetchUser();
         toast.success('Login successful');
@@ -125,7 +125,7 @@ export const useAuth = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem(LocalStore.accessToken);
+    sessionStorage.removeItem(LocalStore.accessToken);
     localStorage.removeItem('user');
     setIsAuthenticated(false);
     setUser(null);

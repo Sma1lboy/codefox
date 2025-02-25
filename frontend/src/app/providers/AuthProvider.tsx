@@ -1,22 +1,31 @@
+// auth-context.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useLazyQuery } from "@apollo/client";
 import { CHECK_TOKEN_QUERY } from "@/graphql/request";
-import { LocalStore } from "@/lib/storage";
 import { LoadingPage } from "@/components/global-loading";
 
-interface AuthProviderProps {
-  children: React.ReactNode;
+interface AuthContextValue {
+  isAuthorized: boolean;
+  isChecking: boolean;
+  setIsAuthorized: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const AuthProvider = ({ children }: AuthProviderProps) => {
+const AuthContext = createContext<AuthContextValue>({
+  isAuthorized: false,
+  isChecking: false,
+  setIsAuthorized: () => {},
+});
+
+export const useAuthContext = () => useContext(AuthContext);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
-  const [showSignInModal, setShowSignInModal] = useState(false);
 
   const [checkToken] = useLazyQuery(CHECK_TOKEN_QUERY);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -24,14 +33,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     async function validateToken() {
       setIsChecking(true);
 
-      const token = localStorage.getItem(LocalStore.accessToken);
+      // If you want to store the token in sessionStorage, do:
+      // const token = sessionStorage.getItem("accessToken");
+      // Otherwise, if you still prefer localStorage:
+      const token = sessionStorage.getItem("accessToken");
+
       if (!token) {
-        // No token => not authorized, but don't block the page
+        // No token => user is not authorized
         if (isMounted) {
           setIsAuthorized(false);
           setIsChecking(false);
-          // Optionally show sign-in modal:
-          setShowSignInModal(true);
         }
         return;
       }
@@ -40,10 +51,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       timeoutRef.current = setTimeout(() => {
         if (isMounted) {
           console.error("Token validation timeout");
-          localStorage.removeItem(LocalStore.accessToken);
+          sessionStorage.removeItem("accessToken");
           setIsAuthorized(false);
           setIsChecking(false);
-          setShowSignInModal(true);
         }
       }, 5000);
 
@@ -51,9 +61,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const { data } = await checkToken({ variables: { input: { token } } });
         if (isMounted) {
           if (!data?.checkToken) {
-            localStorage.removeItem(LocalStore.accessToken);
+            sessionStorage.removeItem("accessToken");
             setIsAuthorized(false);
-            setShowSignInModal(true);
           } else {
             console.log("Token valid");
             setIsAuthorized(true);
@@ -62,9 +71,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       } catch (error) {
         if (isMounted) {
           console.error("Token validation error:", error);
-          localStorage.removeItem(LocalStore.accessToken);
+          sessionStorage.removeItem("accessToken");
           setIsAuthorized(false);
-          setShowSignInModal(true);
         }
       } finally {
         if (timeoutRef.current) {
@@ -86,16 +94,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, [checkToken]);
 
+  // While checking token, show loading screen
   if (isChecking) {
     return <LoadingPage />;
   }
 
-  // Always render main page, authorized or not
   return (
-    <>
+    <AuthContext.Provider value={{ isAuthorized, isChecking, setIsAuthorized }}>
       {children}
-      {/* Show sign-in modal if unauthorized */}
-      {/* <SignInModal isOpen={showSignInModal} onClose={() => setShowSignInModal(false)} /> */}
-    </>
+    </AuthContext.Provider>
   );
-};
+}

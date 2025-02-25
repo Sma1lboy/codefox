@@ -22,7 +22,7 @@ const authLink = setContext((_, { headers }) => {
   if (typeof window === "undefined") {
     return { headers };
   }
-  const accessToken = localStorage.getItem("accessToken");
+  const accessToken = sessionStorage.getItem("accessToken");
   const refreshToken = localStorage.getItem("refreshToken");
   return {
     headers: {
@@ -56,21 +56,7 @@ const requestLoggingMiddleware = new ApolloLink((operation, forward) => {
   });
 });
 
-// 5. Auth Middleware (reads tokens from localStorage for each request)
-const authMiddleware = new ApolloLink((operation, forward) => {
-  if (typeof window === "undefined") {
-    return forward(operation);
-  }
-  const token = localStorage.getItem(LocalStore.accessToken);
-  if (token) {
-    operation.setContext({
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-  }
-  return forward(operation);
-});
+
 
 // 6. Define the Refresh Token Mutation (as a string or gql tag)
 const REFRESH_TOKEN_MUTATION = gql`
@@ -107,8 +93,8 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
             if (!data || !data.refreshToken) {
               throw new Error("Refresh token failed");
             }
-            // Update localStorage with new tokens
-            localStorage.setItem("accessToken", data.refreshToken.accessToken);
+  
+            sessionStorage.setItem("accessToken", data.refreshToken.accessToken);
             localStorage.setItem("refreshToken", data.refreshToken.refreshToken);
 
             // Update the original operation's headers
@@ -129,7 +115,7 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
           .catch((err) => {
             console.error("Refresh token error:", err);
             // Clear tokens, redirect or show sign-in modal
-            localStorage.removeItem("accessToken");
+            sessionStorage.removeItem("accessToken");
             localStorage.removeItem("refreshToken");
             window.location.href = "/login"; // or open a modal
             reject(err);
@@ -156,9 +142,9 @@ const splitLink = wsLink
         );
       },
       wsLink,
-      from([errorLink, requestLoggingMiddleware, authMiddleware, authLink, httpLink])
+      from([errorLink, requestLoggingMiddleware,  authLink, httpLink])
     )
-  : from([errorLink, requestLoggingMiddleware, authMiddleware, authLink, httpLink]);
+  : from([errorLink, requestLoggingMiddleware, authLink, httpLink]);
 
 // 9. Create the Unified Apollo Client
 export const client = new ApolloClient({

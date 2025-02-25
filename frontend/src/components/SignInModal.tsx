@@ -33,7 +33,7 @@ export function SignInModal({
   const [loginUser, { loading }] = useMutation(LOGIN_USER, {
     onCompleted: (data) => {
       if (data?.login) {
-        localStorage.setItem('accessToken', data.login.accessToken);
+        sessionStorage.setItem('accessToken', data.login.accessToken);
         localStorage.setItem('refreshToken', data.login.refreshToken);
         toast.success('Login successful!');
         setErrorMessage(null); // Clear error on success
