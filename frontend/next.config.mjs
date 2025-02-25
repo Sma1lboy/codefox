@@ -23,6 +23,7 @@ const nextConfig = {
     // !! WARN !!
     ignoreBuildErrors: true,
   },
+
 };
 
 export default nextConfig;

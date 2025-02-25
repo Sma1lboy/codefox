@@ -112,3 +112,19 @@
   height: 0;
   visibility: hidden;
 }
+
+.background-gradient {
+  background-image: radial-gradient(
+    circle at center center,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+.dark .background-gradient {
+  background-image: radial-gradient(
+    circle at center center,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}

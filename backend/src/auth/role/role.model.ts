@@ -1,4 +1,4 @@
-import { ObjectType, Field } from '@nestjs/graphql';
+import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { User } from 'src/user/user.model';
 import {
   Entity,
@@ -12,7 +12,7 @@ import { Menu } from '../menu/menu.model';
 @ObjectType()
 @Entity()
 export class Role {
-  @Field()
+  @Field(() => ID)
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
