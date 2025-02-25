@@ -48,7 +48,7 @@ export class UXDMDHandler implements BuildHandler<string> {
       const uxDatamapContent = await chatSyncWithClocker(
         context,
         {
-          model: 'gpt-4o-mini',
+          model: context.defaultModel || 'gpt-4o-mini',
           messages: [{ content: prompt, role: 'system' }],
         },
         'generateUXDataMap',

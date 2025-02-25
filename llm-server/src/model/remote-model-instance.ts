@@ -46,7 +46,7 @@ export class RemoteOpenAIModelEngine implements ModelInstance {
   }
 
   private createModelError(error: unknown): ModelError {
-    const modelError = new Error('Model error occurred') as ModelError;
+    const modelError = new Error('Model error occurred:' + error) as ModelError;
 
     if (error instanceof OpenAI.APIError) {
       modelError.message = error.message;

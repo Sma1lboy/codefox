@@ -109,7 +109,7 @@ export class FrontendQueueProcessor {
     );
 
     // 1. Write the file to disk
-    createFileWithRetries(currentFullFilePath, task.fileContents);
+    await createFileWithRetries(currentFullFilePath, task.fileContents);
 
     const maxFixAttempts = 2;
 
@@ -122,12 +122,6 @@ export class FrontendQueueProcessor {
         );
         return; // done, move on
       }
-
-      // Build failed. We'll feed the entire `validationResult.error` back to GPT
-      //   this.logger.warn(
-      //     `Build failed on attempt #${attempt} for file ${task.filePath}. Error:\n${validationResult.error}`,
-      //   );
-
       this.logger.warn(
         `Build failed on attempt #${attempt} for file ${task.filePath}.`,
       );
@@ -141,15 +135,9 @@ export class FrontendQueueProcessor {
         );
 
         if (newFilePath !== null) {
-          this.logger.log(
-            `File was renamed: ${task.filePath} → ${newFilePath}`,
-          );
           task.filePath = newFilePath;
           currentFullFilePath = normalizePath(
             path.resolve(this.frontendPath, newFilePath),
-          );
-          this.logger.log(
-            `Updated currentFullFilePath: ${currentFullFilePath}`,
           );
         }
       } catch (error) {
@@ -207,7 +195,7 @@ export class FrontendQueueProcessor {
       let fixResponse = await chatSyncWithClocker(
         this.context,
         {
-          model: 'gpt-4o',
+          model: 'o3-mini-high',
           messages: [
             { role: 'system', content: fixPrompt },
             {
@@ -282,7 +270,7 @@ export class FrontendQueueProcessor {
         fixResponse = await chatSyncWithClocker(
           this.context,
           {
-            model: 'gpt-4o',
+            model: 'o3-mini-high',
             messages: [
               { role: 'system', content: fixPrompt },
               {
@@ -342,7 +330,6 @@ export class FrontendQueueProcessor {
       this.logger.log(`Generic fix applied to file: ${task.filePath}`);
 
       if (newFilePath) {
-        this.logger.log(`File was renamed: ${task.filePath} → ${newFilePath}`);
         return newFilePath;
       }
 

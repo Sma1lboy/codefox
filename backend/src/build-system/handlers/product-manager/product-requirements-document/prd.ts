@@ -24,7 +24,7 @@ export class PRDHandler implements BuildHandler<string> {
       context.getGlobalContext('projectName') || 'Default Project Name';
     const description =
       context.getGlobalContext('description') || 'Default Description';
-    const platform = context.getGlobalContext('platform') || 'Default Platform';
+    const platform = context.getGlobalContext('platform') || 'web';
 
     // Validate extracted data
     if (!projectName || typeof projectName !== 'string') {
@@ -71,7 +71,7 @@ export class PRDHandler implements BuildHandler<string> {
       ];
       const prdContent = await chatSyncWithClocker(
         context,
-        { messages, model: 'gpt-4o-mini' },
+        { messages, model: context.defaultModel || 'gpt-4o-mini' },
         'generatePRDFromLLM',
         PRDHandler.name,
       );

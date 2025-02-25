@@ -81,6 +81,7 @@ export class BuilderContext {
 
   private logFolder: string | null = null;
 
+  public defaultModel: string;
   /**
    * Constructor to initialize the BuilderContext.
    * Sets up the handler manager, retry handler, model provider, logger, and virtual directory.
@@ -99,21 +100,41 @@ export class BuilderContext {
     this.monitor = BuildMonitor.getInstance();
     this.logger = new Logger(`builder-context-${id ?? sequence.id}`);
     this.virtualDirectory = new VirtualDirectory();
+    this.defaultModel = this.sequence.model;
 
-    // Initialize global context with default project values
     this.globalContext.set('projectName', sequence.name);
     this.globalContext.set('description', sequence.description || '');
     this.globalContext.set('platform', 'web'); // Default platform is 'web'
     this.globalContext.set('databaseType', sequence.databaseType || 'SQLite');
 
+    if (sequence.projectSize) {
+      this.globalContext.set('projectSize', sequence.projectSize);
+    } else {
+      switch (sequence.model) {
+        case 'gpt-4o-mini':
+          this.globalContext.set('projectSize', 'small');
+          break;
+        case 'gpt-4o':
+        case 'o3-mini-high':
+          this.globalContext.set('projectSize', 'medium');
+          break;
+        default:
+          this.globalContext.set('projectSize', 'small');
+          break;
+      }
+    }
+    const now = new Date();
     const projectUUIDPath =
-      new Date().toISOString().slice(0, 18).replaceAll(/:/g, '-') +
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}` +
+      `-${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}-${String(now.getMilliseconds()).padStart(3, '0')}` +
       '-' +
       uuidv4();
     this.globalContext.set('projectUUID', projectUUIDPath);
 
     if (process.env.DEBUG) {
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const timestamp =
+        `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}` +
+        `-${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}-${String(now.getMilliseconds()).padStart(3, '0')}`;
       this.logFolder = path.join(
         process.cwd(),
         'logs',

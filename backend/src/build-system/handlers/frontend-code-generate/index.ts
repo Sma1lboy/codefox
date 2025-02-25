@@ -9,7 +9,6 @@ import { VirtualDirectory } from '../../virtual-dir';
 import { UXSMSHandler } from '../ux/sitemap-structure';
 import { UXDMDHandler } from '../ux/datamap';
 import { BackendRequirementHandler } from '../backend/requirements-document';
-import { FileFAHandler } from '../file-manager/file-arch';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import normalizePath from 'normalize-path';
 import path from 'path';
@@ -20,6 +19,8 @@ import { MessageInterface } from 'src/common/model-provider/types';
 
 import { FrontendCodeValidator } from './CodeValidator';
 import { FrontendQueueProcessor, CodeTaskQueue } from './CodeReview';
+// import { FileFAHandler } from '../file-manager/file-arch';
+import { FileStructureAndArchitectureHandler } from '../file-manager/file-struct';
 
 interface FileInfos {
   [fileName: string]: {
@@ -36,8 +37,9 @@ interface FileInfos {
   UXSMSHandler,
   UXDMDHandler,
   BackendRequirementHandler,
-  FileFAHandler,
+  FileStructureAndArchitectureHandler,
 ])
+// FileFAHandler,
 export class FrontendCodeHandler implements BuildHandler<string> {
   readonly logger: Logger = new Logger('FrontendCodeHandler');
   private virtualDir: VirtualDirectory;
@@ -57,7 +59,9 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     const backendRequirementDoc = context.getNodeData(
       BackendRequirementHandler,
     );
-    const fileArchDoc = context.getNodeData(FileFAHandler);
+    const fileArchDoc = context.getNodeData(
+      FileStructureAndArchitectureHandler,
+    );
 
     // 2. Grab any globally stored context as needed
     this.virtualDir = context.virtualDirectory;
@@ -147,29 +151,32 @@ export class FrontendCodeHandler implements BuildHandler<string> {
             this.logger.debug('dependency: ' + directDepsPathString);
 
             // generate code
-            const generatedCode = await this.generateFileCode(
-              context,
-              file,
-              dependenciesText,
-              directDepsPathString,
-              sitemapStruct,
-              uxDataMapDoc,
-              failedFiles,
-            );
+            let generatedCode = '';
+            // Adding into retry part.
+            while (generatedCode === '') {
+              this.logger.log(`Attempt to generate code for file: ${file}`);
+              generatedCode = await this.generateFileCode(
+                context,
+                file,
+                dependenciesText,
+                directDepsPathString,
+                sitemapStruct,
+                uxDataMapDoc,
+                failedFiles,
+              );
+            }
 
             // 7. Add the file to the queue for writing
+            // Ensure the file path is relative by removing any leading slash
+            this.logger.log('filepath: ' + file);
+            const relativePath = file.startsWith('/')
+              ? file.substring(1)
+              : file;
             queue.enqueue({
-              filePath: file, // relative path
+              filePath: relativePath,
               fileContents: generatedCode,
               dependenciesPath: directDepsPathString,
             });
-
-            // await createFileWithRetries(
-            //   currentFullFilePath,
-            //   generatedCode,
-            //   maxRetries,
-            //   delayMs,
-            // );
           }),
         );
 
@@ -189,7 +196,6 @@ export class FrontendCodeHandler implements BuildHandler<string> {
           remainingFiles = []; // All files in this layer succeeded
         }
       }
-
       // Now process the entire queue for this layer:
       // This writes each file, runs build, fixes if needed, etc.
       const queueProcessor = new FrontendQueueProcessor(
@@ -200,7 +206,6 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         renameMap,
       );
       await queueProcessor.processAllTasks();
-
       this.logger.log(
         `\n==== Finished concurrency layer #${layerIndex + 1} ====\n`,
       );
@@ -258,10 +263,12 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       if (fileExtension === '.css') {
         frontendCodePrompt = generateCSSPrompt(file, directDepsPathString);
       } else {
+        const theme = context.getGlobalContext('theme');
         // default: treat as e.g. .ts, .js, .vue, .jsx, etc.
         frontendCodePrompt = generateFrontEndCodePrompt(
           file,
           directDepsPathString,
+          theme,
         );
       }
       // this.logger.log(
@@ -312,7 +319,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         },
         {
           role: 'user',
-          content: `Now you can provide the code, don't forget the <GENERATE></GENERATE> tags.`,
+          content: `Now you can provide the code, don't forget the <GENERATE></GENERATE> tags. Do not be lazy.`,
         },
         // {
         //   role: 'assistant',
@@ -324,13 +331,15 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       modelResponse = await chatSyncWithClocker(
         context,
         {
-          model: 'gpt-4o',
+          // model: context.defaultModel || 'gpt-4o',
+          model: 'o3-mini-high',
           messages,
         },
         'generate frontend code',
         FrontendCodeHandler.name,
       );
 
+      this.logger.debug('generated code: ', modelResponse);
       generatedCode = formatResponse(modelResponse);
 
       return generatedCode;

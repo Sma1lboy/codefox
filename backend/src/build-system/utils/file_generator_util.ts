@@ -213,7 +213,7 @@ export function validateAgainstVirtualDirectory(
     );
     return invalidFiles.join('\n');
   }
-  return null;
+  return '';
 }
 
 /**

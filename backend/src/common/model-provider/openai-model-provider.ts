@@ -46,7 +46,7 @@ export class OpenAIModelProvider implements IModelProvider {
 
       const queue = new PQueue({
         concurrency,
-        timeout: 120000, // 120 second timeout
+        timeout: 300000, // 300 second timeout
       });
 
       // Log queue events for monitoring
