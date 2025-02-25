@@ -14,7 +14,7 @@ import { Logger } from '@nestjs/common';
 import { writeFile, rename, readFile } from 'fs/promises';
 import path from 'path';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { FilePathSafetyChecks } from 'src/build-system/utils/security/Path_protect';
+import { FilePathSafetyChecks } from 'src/build-system/utils/security/path-check';
 
 export interface FileOperation {
   action: 'write' | 'rename' | 'read';
