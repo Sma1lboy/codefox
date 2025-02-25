@@ -21,6 +21,7 @@ import { BackendRequirementHandler } from '../handlers/backend/requirements-docu
         'A personal blog website. I am a cybersecurity engineer so i want it to show i am a really cool hacker, with cool terminal functionality',
       databaseType: 'SQLite',
       model: 'gpt-4o-mini',
+      projectSize: 'medium', // limit for fun
       nodes: [
         {
           handler: ProjectInitHandler,
@@ -43,22 +44,10 @@ import { BackendRequirementHandler } from '../handlers/backend/requirements-docu
           handler: UXDMDHandler,
           name: 'UX DataMap Document Node',
         },
-        // {
-        //   handler: FileStructureHandler,
-        //   name: 'File Structure',
-        // },
-        // {
-        //   handler: FileFAHandler,
-        //   name: 'File Arch',
-        // },
         {
           handler: FileStructureAndArchitectureHandler,
           name: 'File Structure and Architecture',
         },
-        // {
-        //   handler: FileStructHandler,
-        //   name: 'Unified File Handler',
-        // },
         {
           handler: DBRequirementHandler,
           name: 'Database Requirements Node',

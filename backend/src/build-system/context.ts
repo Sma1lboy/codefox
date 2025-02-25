@@ -102,12 +102,27 @@ export class BuilderContext {
     this.virtualDirectory = new VirtualDirectory();
     this.defaultModel = this.sequence.model;
 
-    // Initialize global context with default project values
     this.globalContext.set('projectName', sequence.name);
     this.globalContext.set('description', sequence.description || '');
     this.globalContext.set('platform', 'web'); // Default platform is 'web'
     this.globalContext.set('databaseType', sequence.databaseType || 'SQLite');
 
+    if (sequence.projectSize) {
+      this.globalContext.set('projectSize', sequence.projectSize);
+    } else {
+      switch (sequence.model) {
+        case 'gpt-4o-mini':
+          this.globalContext.set('projectSize', 'small');
+          break;
+        case 'gpt-4o':
+        case 'o3-mini-high':
+          this.globalContext.set('projectSize', 'medium');
+          break;
+        default:
+          this.globalContext.set('projectSize', 'small');
+          break;
+      }
+    }
     const now = new Date();
     const projectUUIDPath =
       `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}` +

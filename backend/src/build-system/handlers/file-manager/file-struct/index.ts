@@ -61,66 +61,123 @@ export const prompts = {
     dataAnalysisDoc: string,
     framework: string,
     projectPart: string,
+    projectSize: string,
   ): string => {
     let roleDescription = '';
     let includeSections = '';
     let excludeSections = '';
     let fileNamingGuidelines = '';
+    let projectSizeNote = '';
+    let spaDetectionRules = '';
+
+    switch (projectSize.toLowerCase()) {
+      case 'small':
+        projectSizeNote = `* Note: For a small project (1-3 unique UI pages), generate a minimal file structure that only includes the essential files and folders.`;
+        break;
+      case 'medium':
+        projectSizeNote = `* Note: For a medium project (1-6 unique UI pages), generate a file structure that covers all necessary pages and components with moderate detail.`;
+        break;
+      case 'large':
+        projectSizeNote = `* Note: For a large project (more than 6 unique UI pages), generate a comprehensive file structure including all pages, components, contexts, and utilities.`;
+        break;
+      default:
+        projectSizeNote = `* Note: The project size is unspecified. Please use a balanced approach.`;
+    }
+
+    const pageViewCount = (sitemapDoc.match(/page_view_/g) || []).length;
+    const isSPAFlag = pageViewCount === 1;
+
+    if (isSPAFlag) {
+      spaDetectionRules = `
+        SPA Detected: Exactly one "page_view_" entry found in the Sitemap Document.
+        Enforce the SPA folder structure:
+            src/
+              index.tsx         // Main entry point
+              pages/
+                <page-name>/
+                  index.tsx     // Contains all application logic
+        
+        For SPAs, do NOT create any additional files or folders.
+      `;
+    } else {
+      spaDetectionRules = `
+        Multi-Page Application Detected: ${pageViewCount} "page_view_" entries found in the Sitemap Document.
+        Generate a comprehensive file structure that includes multiple pages, components, contexts, and any other necessary directories.
+      `;
+    }
 
     switch (projectPart.toLowerCase()) {
       case 'frontend':
         roleDescription = 'an expert frontend developer';
         includeSections = `
-          Folder Structure example:
-            src: Main source code folder.
-              contexts: Global state management.
-              pages: Route-specific views. For Example: Home, Search, Playlist.
-              index.tsx: Application entry point with routing configuration.
+            Non-SPA Folder Structure example:
+              src/
+                contexts/ - Global state management
+                pages/ - Route-specific views (e.g., Home, Search, etc.)
+                index.tsx - Application entry point with routing configuration IMPORTANT!: it's mandatory to have this file
+            
+            ${
+              isSPAFlag
+                ? `SPA Folder Structure (MANDATORY for all SPAs):
+              src/
+                index.tsx - Main entry point that imports Home page
+                pages/
+                  Home/
+                    index.tsx - Contains ALL component code and application logic
+            
+            For SPAs, you MUST use exactly this structure - no variations allowed.`
+                : ''
+            }
         `;
         excludeSections = `
-          Do Not Include:
-            Asset folders (e.g., images, icons, fonts).
-            Test folders or files.
-            Service folders unrelated to API logic.
-            .css files.
+            Do Not Include:
+              - Asset folders (e.g., images, icons, fonts)
+              - Test folders or files
+              - Service folders unrelated to API logic
+              - .css files
+              ${isSPAFlag ? '- For SPAs: DO NOT include components/, contexts/, or any other folders beside pages/Home/\n' : ''}
         `;
         fileNamingGuidelines = `
-          File and Folder Naming Guidelines:
-            Must use .tsx extension for all files.
-            Use meaningful and descriptive file names.
-            Do NOT use page_view_* and global_view_* prefixes for folder or file names.
-            For components, include an index.tsx file in each folder to simplify imports.
-            Each component should have its own folder named after the component (e.g., Button/).
-            Use index.tsx as the main file inside the component folder.
+            File and Folder Naming Guidelines:
+              - Must use .tsx extension for all files
+              - Use meaningful and descriptive file names
+              - Do NOT use page_view_* and global_view_* prefixes for folder or file names
+              
+            ${
+              isSPAFlag
+                ? `For SPAs:
+              - Only create the exact files specified: src/index.tsx and src/pages/Home/index.tsx
+              - Do not create any additional files or folders`
+                : ''
+            }
         `;
         break;
 
       case 'backend':
         roleDescription = 'an expert backend developer';
         includeSections = `
-          Folder Structure:
-              controllers: Handle incoming requests and return responses.
-              models: Define data schemas and interact with the database.
-              routes: Define API endpoints and route requests to controllers.
-              services: Business logic and interaction with external services.
-              middleware: Custom middleware for request processing (e.g., authentication, logging).
-              utils: Utility functions and helpers.
-              config: Configuration files (e.g., database connection, environment variables).
-              tests: Unit and integration tests.
-              app.js/server.js: Application entry point.
+            Folder Structure:
+                controllers/ - Handle incoming requests and return responses
+                models/ - Define data schemas and interact with the database
+                routes/ - Define API endpoints and route requests to controllers
+                services/ - Business logic and interaction with external services
+                middleware/ - Custom middleware for request processing
+                utils/ - Utility functions and helpers
+                config/ - Configuration files
+                app.js/server.js - Application entry point
         `;
         excludeSections = `
-          Do Not Include:
-              Frontend-specific folders (e.g., components, contexts).
-              Asset folders (e.g., images, icons, fonts).
+            Do Not Include:
+                Frontend-specific folders (e.g., components, contexts)
+                Asset folders (e.g., images, icons, fonts)
         `;
         fileNamingGuidelines = `
-          File Naming Guidelines:
-              Use meaningful and descriptive file names.
-              Controllers should be named after their resource (e.g., userController.js).
-              Models should represent data entities (e.g., User.js).
-              Routes should be grouped by resource (e.g., userRoutes.js).
-              Use consistent naming conventions (e.g., camelCase or snake_case) throughout the project.
+            File Naming Guidelines:
+                Use meaningful and descriptive file names
+                Controllers should be named after their resource (e.g., userController.js)
+                Models should represent data entities (e.g., User.js)
+                Routes should be grouped by resource (e.g., userRoutes.js)
+                Use consistent naming conventions (e.g., camelCase or snake_case) throughout the project.
         `;
         break;
 
@@ -132,54 +189,87 @@ export const prompts = {
 
     return `You are ${roleDescription}. Your task is to generate a complete folder and file structure for the ${projectPart} of a project named "${projectName}". Include all necessary files and folders to cover the essential aspects while ensuring scalability and maintainability.
     
-    Based on the following input:
+Based on the following input:
     
-     - Project name: ${projectName}
-     - Sitemap Documentation (provided by user)
-     - Data Analysis Doc: (provided by user)
+ - Project name: ${projectName}
+ - Sitemap Documentation (provided below)
+ - Data Analysis Documentation (provided below)
+ - isSPA: ${isSPAFlag ? 'Yes' : 'No'}
     
-    ### Instructions and Rules:
-    
-    Include:
-    ${includeSections}
-    
-    ${fileNamingGuidelines}
-    
-    ${excludeSections}
-    
-    File Comments:
-        Include comments describing the purpose of each file or folder to improve readability.
-    
-    Ask yourself:
-        1. Are you considering all the cases based on the sitemap doc? If not, add new folder or file.
-        2. Are you considering all the components/hooks/services/APIs/routes based on the sitemap doc? If not, add new folder or file.
-    
-    This final result must be 100% complete and ready for direct use in production.
-    
-    Output Format:
+${projectSizeNote}
   
-        Start with: "\`\`\`FolderStructure"
-        Tree format:
-            Include folder names with placeholder files inside.
-            Add comments to describe the purpose of each file/folder.
-        End with: "\`\`\`"
-    `;
+${spaDetectionRules}
+    
+### Instructions and Rules:
+    
+Include:
+${includeSections}
+    
+${fileNamingGuidelines}
+    
+${excludeSections}
+    
+File Comments:
+    Include comments describing the purpose of each file or folder to improve readability.
+    
+Ask yourself:
+    1. Have I properly analyzed the Sitemap Document to determine if this is an SPA?
+    2. For non-SPAs: Are you considering all the pages based on the sitemap doc? If not, add new folder or file.
+    
+### Sitemap Document Analysis
+First, carefully read through and analyze the Sitemap Document below:
+    
+This final result must be 100% complete and ready for direct use in production.
+    
+Output Format:
+    
+    Start with: "\`\`\`FolderStructure"
+    Tree format:
+        Include folder names with placeholder files inside.
+        Add comments to describe the purpose of each file/folder.
+    End with: "\`\`\`"
+`;
   },
-};
 
-export const generateFileArchPrompt = (): string => {
-  return `Your task is to analyze the given project directory structure and create a detailed JSON object mapping file dependencies. The output JSON must be precisely formatted and wrapped in <GENERATE></GENERATE> tags.
+  generateFileArchPrompt: (sitemapDoc: string): string => {
+    const isSPAFlag = (sitemapDoc.match(/page_view_/g) || []).length === 1;
+
+    return `Your task is to analyze the given project directory structure and create a detailed JSON object mapping file dependencies. The output JSON must be precisely formatted and wrapped in <GENERATE></GENERATE> tags.
 
 ### Instructions
-1. **Analyze the Inputs**:
-   - Use the directory structure to identify all files and folders.
+
+  ${
+    isSPAFlag
+      ? `**SPA Special Case**:
+   - If the structure only contains src/index.tsx and src/pages/Home/index.tsx, this is a Single Page Application (SPA) with the mandatory minimal structure.
+   - For SPAs with this exact structure, the JSON must look like this:
+     \`\`\`json
+     <GENERATE>
+     {
+       "files": {
+         "src/index.tsx": {
+           "dependsOn": ["src/pages/Home/index.tsx"]
+         },
+         "src/pages/Home/index.tsx": {
+           "dependsOn": []
+         }
+       }
+     }
+     </GENERATE>
+     \`\`\` 
+   - This is MANDATORY: for SPAs, create exactly these two files with exactly these dependencies - no more, no less.
+  
+**For non-SPA projects**: `
+      : 'For projects'
+  }
+   - Analyze the directory structure to identify all files and folders.
    - Do not assume any additional files or paths. The structure must be based exclusively on the given list.
    - Leverage the page-by-page analysis to understand the roles and interactions of different components and pages.
    - Determine the role of each file based on its path and the provided analysis (e.g., page, component, context, hook, styles).
    - Identify direct dependencies for each file by considering typical imports based on roles, naming conventions, and the provided analysis.
    - For context files, ensure they are properly referenced in index.tsx or router.tsx, as contexts typically need to be provided at a high level in the application.
    
-2. **Generate File Dependency JSON**:
+3. **Generate File Dependency JSON**:
    - Each file must be represented using its full path starting from src/.
    - Ensure dependencies are strictly limited to files in the "Paths" array.
    - Use absolute file paths from "Paths" for all "dependsOn" values.
@@ -190,14 +280,14 @@ export const generateFileArchPrompt = (): string => {
    - Organize the output in a \`files\` object where keys are file paths, and values are their dependency objects.
    - For the router, remember to include all the page components as dependencies, as the router imports them to define the application routes.
 
-3. **Output Requirements**:
+4. **Output Requirements**:
    - The JSON object must strictly follow this structure:
      \`\`\`json
      <GENERATE>
      {
        "files": {
          "src/path/to/file1": {
-           "dependsOn": ["path/to/dependency1", "path/to/dependency2"]
+           "dependsOn": ["src/path/to/dependency1", "src/path/to/dependency2"]
          },
          "src/path/to/file2": {
            "dependsOn": []
@@ -206,11 +296,11 @@ export const generateFileArchPrompt = (): string => {
      }
      </GENERATE>
      \`\`\`
-    - Keys: Every file must be represented with its full path, starting from src/.
-    - Dependency Rules:
-      All dependencies must exist in the "Paths" array.
-      No inferred or assumed files should be added.
-    - Wrap the JSON output with \`<GENERATE></GENERATE>\` tags.
+   - Keys: Every file must be represented with its full path, starting from src/.
+   - Dependency Rules:
+     All dependencies must exist in the "Paths" array.
+     No inferred or assumed files should be added.
+   - Wrap the JSON output with \`<GENERATE></GENERATE>\` tags.
 ### Notes
 - The \`dependsOn\` field should reflect logical dependencies inferred from both the directory structure and the page-by-page analysis.
 - Use common project patterns to deduce dependencies (e.g., pages depend on components, contexts, hooks, and styles).
@@ -222,6 +312,7 @@ export const generateFileArchPrompt = (): string => {
 Return only the JSON object wrapped in \`<GENERATE></GENERATE>\` tags.
 Do not forget <GENERATE></GENERATE> tags.
 `;
+  },
 };
 
 @BuildNode()
@@ -239,10 +330,8 @@ export class FileStructureAndArchitectureHandler
     context: BuilderContext,
     opts?: BuildOpts,
   ): Promise<BuildResult<string>> {
-    // ======= Step 1: 生成文件结构文档 =======
     this.logger.log('Generating File Structure Document...');
 
-    // 从上下文中获取项目名称、sitemap 以及 datamap 文档
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
     const sitemapDoc = context.getNodeData(UXSMDHandler);
@@ -250,7 +339,7 @@ export class FileStructureAndArchitectureHandler
     const projectPart = opts?.projectPart ?? 'frontend';
     const framework = context.getGlobalContext('framework') ?? 'react';
 
-    // 校验必传参数
+    const projectSize = context.getGlobalContext('projectSize') || 'small';
     try {
       this.validateInputs(sitemapDoc, datamapDoc, framework, projectPart);
     } catch (error) {
@@ -260,13 +349,13 @@ export class FileStructureAndArchitectureHandler
       };
     }
 
-    // 构造生成文件结构的提示内容
     const fileStructPrompt = prompts.generateCommonFileStructurePrompt(
       projectName,
       sitemapDoc,
       datamapDoc,
       framework,
       projectPart,
+      projectSize,
     );
     const convertToJsonPrompt = prompts.convertTreeToJsonPrompt();
 
@@ -316,6 +405,7 @@ export class FileStructureAndArchitectureHandler
         'generateCommonFileStructure',
         this.id,
       );
+      this.logger.debug('fileStructureContent', fileStructureContent);
 
       if (!fileStructureContent || fileStructureContent.trim() === '') {
         throw new ResponseParsingError(
@@ -386,7 +476,7 @@ export class FileStructureAndArchitectureHandler
       };
     }
 
-    const fileArchPrompt = generateFileArchPrompt();
+    const fileArchPrompt = prompts.generateFileArchPrompt(sitemapDoc);
 
     let invalidFiles = 'none';
     let fileArchContent: string;
@@ -415,7 +505,8 @@ export class FileStructureAndArchitectureHandler
 
           ${fileStructure}
 
-          Based on this structure and the analysis provided earlier, please generate the File Architecture JSON object. Ensure the output adheres to all rules and guidelines specified in the system prompt.`,
+          Based on this structure and the analysis provided earlier, please generate the File Architecture JSON object. Ensure the output adheres to all rules and guidelines specified in the system prompt.
+          `,
         },
         {
           role: 'user' as const,
@@ -423,9 +514,9 @@ export class FileStructureAndArchitectureHandler
       Before returning the output, ensure the following:
       - The JSON structure is correctly formatted and wrapped in <GENERATE></GENERATE> tags.
       - File extensions and paths match those in the Directory Structure.
-      - All files and dependencies are included.`,
+      - All files and dependencies are included.
+      `,
         },
-
         {
           role: 'user' as const,
           content:

@@ -151,15 +151,20 @@ export class FrontendCodeHandler implements BuildHandler<string> {
             this.logger.debug('dependency: ' + directDepsPathString);
 
             // generate code
-            const generatedCode = await this.generateFileCode(
-              context,
-              file,
-              dependenciesText,
-              directDepsPathString,
-              sitemapStruct,
-              uxDataMapDoc,
-              failedFiles,
-            );
+            let generatedCode = '';
+            // Adding into retry part.
+            while (generatedCode === '') {
+              this.logger.log(`Attempt to generate code for file: ${file}`);
+              generatedCode = await this.generateFileCode(
+                context,
+                file,
+                dependenciesText,
+                directDepsPathString,
+                sitemapStruct,
+                uxDataMapDoc,
+                failedFiles,
+              );
+            }
 
             // 7. Add the file to the queue for writing
             // Ensure the file path is relative by removing any leading slash

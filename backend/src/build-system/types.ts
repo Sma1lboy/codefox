@@ -33,6 +33,7 @@ export interface BuildSequence {
   nodes: BuildNode[];
   packages: BuildProjectPackage[];
   model?: string;
+  projectSize?: 'small' | 'medium' | 'large';
 }
 export interface BuildProjectPackage {
   name: string;
