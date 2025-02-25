@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import Image from 'next/image';
 
 export const GoogleIcon = () => (
   <Image
@@ -8,7 +8,7 @@ export const GoogleIcon = () => (
     height={20}
     className="h-5 w-5"
   />
-)
+);
 
 export const GitHubIcon = () => (
   <Image
@@ -18,4 +18,4 @@ export const GitHubIcon = () => (
     height={20}
     className="h-5 w-5"
   />
-)
+);

@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
-import { SignInModal } from "@/components/SignInModal";
-import { SignUpModal } from "@/components/SignUpModal";
+import React, { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { SignInModal } from '@/components/SignInModal';
+import { SignUpModal } from '@/components/SignUpModal';
 // 1) Import your AuthContext hook:
-import { useAuthContext } from "../providers/AuthProvider";
+import { useAuthContext } from '../providers/AuthProvider';
 
 export default function HomeLayout({
   children,
@@ -44,11 +44,11 @@ export default function HomeLayout({
           <div className="flex items-center space-x-4">
             {/* Theme toggle button */}
             <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
               aria-label="Toggle theme"
             >
-              {theme === "dark" ? (
+              {theme === 'dark' ? (
                 <Sun className="h-5 w-5 text-gray-600 dark:text-gray-400" />
               ) : (
                 <Moon className="h-5 w-5 text-gray-600 dark:text-gray-400" />

@@ -8,7 +8,6 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { compare, hash } from 'bcrypt';
 import { LoginUserInput } from 'src/user/dto/login-user.input';
 import { RegisterUserInput } from 'src/user/dto/register-user.input';
 import { User } from 'src/user/user.model';
@@ -64,9 +63,7 @@ export class AuthService {
     return this.userRepository.save(newUser);
   }
 
-  async login(
-    loginUserInput: LoginUserInput,
-  ): Promise<AuthResponse> {
+  async login(loginUserInput: LoginUserInput): Promise<AuthResponse> {
     const { email, password } = loginUserInput;
 
     const user = await this.userRepository.findOne({
@@ -85,7 +82,7 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(
       { sub: user.id, email: user.email },
-      { expiresIn: '30m' }
+      { expiresIn: '30m' },
     );
 
     const refreshTokenEntity = await this.createRefreshToken(user);
@@ -99,7 +96,7 @@ export class AuthService {
   private async createRefreshToken(user: User): Promise<RefreshToken> {
     const token = randomUUID();
     const sevenDays = 7 * 24 * 60 * 60 * 1000;
-    
+
     const refreshToken = this.refreshTokenRepository.create({
       user,
       token,
@@ -122,12 +119,14 @@ export class AuthService {
   async logout(token: string): Promise<boolean> {
     try {
       await this.jwtService.verifyAsync(token);
-      const refreshToken = await this.refreshTokenRepository.findOne({ where: { token } });
-  
+      const refreshToken = await this.refreshTokenRepository.findOne({
+        where: { token },
+      });
+
       if (refreshToken) {
         await this.refreshTokenRepository.remove(refreshToken);
       }
-  
+
       return true;
     } catch (error) {
       return false;
@@ -383,11 +382,11 @@ export class AuthService {
     }
 
     const accessToken = this.jwtService.sign(
-      { 
-        sub: existingToken.user.id, 
-        email: existingToken.user.email 
+      {
+        sub: existingToken.user.id,
+        email: existingToken.user.email,
       },
-      { expiresIn: '30m' }
+      { expiresIn: '30m' },
     );
 
     // Generate new refresh token

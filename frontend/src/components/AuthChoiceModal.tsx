@@ -21,7 +21,6 @@ export function AuthChoiceModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] fixed top-[50%] left-[50%] transform -translate-x-[50%] -translate-y-[50%]">
-        
         {/* Invisible but accessible DialogTitle */}
         <VisuallyHidden>
           <DialogTitle>Choose Authentication Method</DialogTitle>

@@ -9,4 +9,3 @@ export class AppResolver {
     return 'Hello World!';
   }
 }
-

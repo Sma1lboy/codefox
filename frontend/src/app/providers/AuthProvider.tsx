@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { useLazyQuery, useMutation } from "@apollo/client";
-import { CHECK_TOKEN_QUERY } from "@/graphql/request";
-import { LoadingPage } from "@/components/global-loading";
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useLazyQuery, useMutation } from '@apollo/client';
+import { CHECK_TOKEN_QUERY } from '@/graphql/request';
+import { LoadingPage } from '@/components/global-loading';
 
 // Replace this with your real RefreshToken mutation
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 const REFRESH_TOKEN_MUTATION = gql`
   mutation RefreshToken($refreshToken: String!) {
     refreshToken(refreshToken: $refreshToken) {
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async function validateToken() {
       setIsChecking(true);
 
-      const storedToken = sessionStorage.getItem("accessToken");
+      const storedToken = sessionStorage.getItem('accessToken');
       if (!storedToken) {
         // No token => not authorized
         setIsAuthorized(false);
@@ -71,12 +71,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setIsAuthorized(true);
         } else {
           // invalid
-          sessionStorage.removeItem("accessToken");
+          sessionStorage.removeItem('accessToken');
           setIsAuthorized(false);
         }
       } catch (error) {
-        console.error("Token validation error:", error);
-        sessionStorage.removeItem("accessToken");
+        console.error('Token validation error:', error);
+        sessionStorage.removeItem('accessToken');
         setIsAuthorized(false);
       } finally {
         setIsChecking(false);
@@ -89,9 +89,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Called after user logs in
   function login(accessToken: string, refreshToken: string) {
     // Store the access token in sessionStorage (or localStorage if you prefer)
-    sessionStorage.setItem("accessToken", accessToken);
+    sessionStorage.setItem('accessToken', accessToken);
     // Store the refresh token in localStorage if you want it long-lived
-    localStorage.setItem("refreshToken", refreshToken);
+    localStorage.setItem('refreshToken', refreshToken);
 
     // Update state
     setToken(accessToken);
@@ -102,14 +102,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   function logout() {
     setToken(null);
     setIsAuthorized(false);
-    sessionStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+    sessionStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
   }
 
   // Called to refresh access token
   async function refreshAccessToken() {
     try {
-      const rToken = localStorage.getItem("refreshToken");
+      const rToken = localStorage.getItem('refreshToken');
       if (!rToken) {
         logout();
         return;
@@ -124,9 +124,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const newRefresh = data.refreshToken.refreshToken;
 
         // Update sessionStorage & localStorage
-        sessionStorage.setItem("accessToken", newAccess);
+        sessionStorage.setItem('accessToken', newAccess);
         if (newRefresh) {
-          localStorage.setItem("refreshToken", newRefresh);
+          localStorage.setItem('refreshToken', newRefresh);
         }
 
         setToken(newAccess);
@@ -136,7 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout();
       }
     } catch (error) {
-      console.error("Refresh token error:", error);
+      console.error('Refresh token error:', error);
       logout();
     }
   }
