@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import Home from './chat/Home';
 
 import { useState } from 'react';
@@ -8,12 +8,14 @@ import { useRouter } from 'next/navigation';
 import { SignUpModal } from '@/components/SignUpModal';
 import { SignInModal } from '@/components/SignInModal';
 import { AuthChoiceModal } from '@/components/AuthChoiceModal';
+import { useAuthContext } from '../providers/AuthProvider';
 
 export default function HomePage() {
   const [message, setMessage] = useState('');
   const [showSignUp, setShowSignUp] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
   const [showAuthChoice, setShowAuthChoice] = useState(false);
+  const { isAuthorized } = useAuthContext();
   const router = useRouter();
 
   const handleSignIn = (e: React.MouseEvent) => {
@@ -28,7 +30,14 @@ export default function HomePage() {
   };
 
   const handleMessageButtonClick = () => {
-    setShowAuthChoice(true);
+    if (!isAuthorized) {
+      // Not signed in => show AuthChoiceModal
+      setShowAuthChoice(true);
+    } else {
+      // Already signed in => do the actual "send" logic
+      console.log('Sending message...');
+      // ...
+    }
   };
 
   return (

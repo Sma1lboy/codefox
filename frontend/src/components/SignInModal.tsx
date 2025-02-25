@@ -1,48 +1,55 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { BackgroundGradient } from '@/components/ui/background-gradient';
+import { useState } from "react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { BackgroundGradient } from "@/components/ui/background-gradient";
 import {
   TextureCardHeader,
   TextureCardTitle,
   TextureCardContent,
   TextureSeparator,
-} from '@/components/ui/texture-card';
-import { useRouter } from 'next/navigation';
-import { useMutation } from '@apollo/client';
-import { LOGIN_USER } from '@/graphql/mutations/auth';
-import { toast } from 'sonner';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+} from "@/components/ui/texture-card";
+import { useRouter } from "next/navigation";
+import { useMutation } from "@apollo/client";
+import { LOGIN_USER } from "@/graphql/mutations/auth";
+import { toast } from "sonner";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useAuthContext } from "@/app/providers/AuthProvider";
 
-export function SignInModal({
-  isOpen,
-  onClose,
-}: {
+
+interface SignInModalProps {
   isOpen: boolean;
   onClose: () => void;
-}) {
+}
+
+export function SignInModal({ isOpen, onClose }: SignInModalProps) {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Destructure setIsAuthorized from our AuthContext
+  const { login } = useAuthContext();
+
+  // Destructure `loading` so we can disable the button while logging in
   const [loginUser, { loading }] = useMutation(LOGIN_USER, {
     onCompleted: (data) => {
       if (data?.login) {
-        sessionStorage.setItem('accessToken', data.login.accessToken);
-        localStorage.setItem('refreshToken', data.login.refreshToken);
-        toast.success('Login successful!');
-        setErrorMessage(null); // Clear error on success
-        onClose();
-        router.push('/main');
+        // Store tokens where desired (session storage for access, local for refresh)
+        login(data.login.accessToken, data.login.refreshToken);
+        toast.success("Login successful!");
+        setErrorMessage(null);
+        onClose(); // Close the modal
+
+        // If you want to redirect somewhere on success, uncomment:
+        // router.push("/main");
       }
     },
     onError: () => {
-      setErrorMessage('Incorrect email or password. Please try again.');
+      setErrorMessage("Incorrect email or password. Please try again.");
     },
   });
 
@@ -59,7 +66,7 @@ export function SignInModal({
         },
       });
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
     }
   };
 
@@ -113,11 +120,13 @@ export function SignInModal({
 
                 {/* Show error message if login fails */}
                 {errorMessage && (
-                  <div className="text-red-500 text-sm text-center">{errorMessage}</div>
+                  <div className="text-red-500 text-sm text-center">
+                    {errorMessage}
+                  </div>
                 )}
 
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Signing in...' : 'Sign in'}
+                  {loading ? "Signing in..." : "Sign in"}
                 </Button>
               </form>
 
@@ -164,5 +173,4 @@ export function SignInModal({
       </DialogContent>
     </Dialog>
   );
-  
 }

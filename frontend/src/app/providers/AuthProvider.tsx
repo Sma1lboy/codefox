@@ -1,107 +1,167 @@
-// auth-context.tsx
 "use client";
 
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
-import { useLazyQuery } from "@apollo/client";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { useLazyQuery, useMutation } from "@apollo/client";
 import { CHECK_TOKEN_QUERY } from "@/graphql/request";
 import { LoadingPage } from "@/components/global-loading";
+
+// Replace this with your real RefreshToken mutation
+import { gql } from "@apollo/client";
+const REFRESH_TOKEN_MUTATION = gql`
+  mutation RefreshToken($refreshToken: String!) {
+    refreshToken(refreshToken: $refreshToken) {
+      accessToken
+      refreshToken
+    }
+  }
+`;
 
 interface AuthContextValue {
   isAuthorized: boolean;
   isChecking: boolean;
-  setIsAuthorized: React.Dispatch<React.SetStateAction<boolean>>;
+  token: string | null;
+  login: (accessToken: string, refreshToken: string) => void;
+  logout: () => void;
+  refreshAccessToken: () => Promise<string | void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
   isAuthorized: false,
   isChecking: false,
-  setIsAuthorized: () => {},
+  token: null,
+  login: () => {},
+  logout: () => {},
+  refreshAccessToken: async () => {},
 });
 
-export const useAuthContext = () => useContext(AuthContext);
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [token, setToken] = useState<string | null>(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 
-  const [checkToken] = useLazyQuery(CHECK_TOKEN_QUERY);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // 1) For validating the token
+  const [checkToken] = useLazyQuery<{ checkToken: boolean }>(CHECK_TOKEN_QUERY);
 
+  // 2) For refreshing the token
+  const [refreshTokenMutation] = useMutation(REFRESH_TOKEN_MUTATION);
+
+  // On mount, see if there's an access token in sessionStorage
+  // (or localStorage if that's your choice)
   useEffect(() => {
-    let isMounted = true;
-
     async function validateToken() {
       setIsChecking(true);
 
-      // If you want to store the token in sessionStorage, do:
-      // const token = sessionStorage.getItem("accessToken");
-      // Otherwise, if you still prefer localStorage:
-      const token = sessionStorage.getItem("accessToken");
-
-      if (!token) {
-        // No token => user is not authorized
-        if (isMounted) {
-          setIsAuthorized(false);
-          setIsChecking(false);
-        }
+      const storedToken = sessionStorage.getItem("accessToken");
+      if (!storedToken) {
+        // No token => not authorized
+        setIsAuthorized(false);
+        setIsChecking(false);
         return;
       }
 
-      // Timeout if the query hangs
-      timeoutRef.current = setTimeout(() => {
-        if (isMounted) {
-          console.error("Token validation timeout");
+      try {
+        // Check if the token is valid on the server
+        const { data } = await checkToken({
+          variables: { input: { token: storedToken } },
+        });
+
+        if (data?.checkToken) {
+          // valid
+          setToken(storedToken);
+          setIsAuthorized(true);
+        } else {
+          // invalid
           sessionStorage.removeItem("accessToken");
           setIsAuthorized(false);
-          setIsChecking(false);
-        }
-      }, 5000);
-
-      try {
-        const { data } = await checkToken({ variables: { input: { token } } });
-        if (isMounted) {
-          if (!data?.checkToken) {
-            sessionStorage.removeItem("accessToken");
-            setIsAuthorized(false);
-          } else {
-            console.log("Token valid");
-            setIsAuthorized(true);
-          }
         }
       } catch (error) {
-        if (isMounted) {
-          console.error("Token validation error:", error);
-          sessionStorage.removeItem("accessToken");
-          setIsAuthorized(false);
-        }
+        console.error("Token validation error:", error);
+        sessionStorage.removeItem("accessToken");
+        setIsAuthorized(false);
       } finally {
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-        if (isMounted) {
-          setIsChecking(false);
-        }
+        setIsChecking(false);
       }
     }
 
     validateToken();
-
-    return () => {
-      isMounted = false;
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
   }, [checkToken]);
 
-  // While checking token, show loading screen
+  // Called after user logs in
+  function login(accessToken: string, refreshToken: string) {
+    // Store the access token in sessionStorage (or localStorage if you prefer)
+    sessionStorage.setItem("accessToken", accessToken);
+    // Store the refresh token in localStorage if you want it long-lived
+    localStorage.setItem("refreshToken", refreshToken);
+
+    // Update state
+    setToken(accessToken);
+    setIsAuthorized(true);
+  }
+
+  // Called to log out user
+  function logout() {
+    setToken(null);
+    setIsAuthorized(false);
+    sessionStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+  }
+
+  // Called to refresh access token
+  async function refreshAccessToken() {
+    try {
+      const rToken = localStorage.getItem("refreshToken");
+      if (!rToken) {
+        logout();
+        return;
+      }
+
+      const { data } = await refreshTokenMutation({
+        variables: { refreshToken: rToken },
+      });
+
+      if (data?.refreshToken) {
+        const newAccess = data.refreshToken.accessToken;
+        const newRefresh = data.refreshToken.refreshToken;
+
+        // Update sessionStorage & localStorage
+        sessionStorage.setItem("accessToken", newAccess);
+        if (newRefresh) {
+          localStorage.setItem("refreshToken", newRefresh);
+        }
+
+        setToken(newAccess);
+        setIsAuthorized(true);
+        return newAccess;
+      } else {
+        logout();
+      }
+    } catch (error) {
+      console.error("Refresh token error:", error);
+      logout();
+    }
+  }
+
+  // Show loading screen while checking token on mount
   if (isChecking) {
     return <LoadingPage />;
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthorized, isChecking, setIsAuthorized }}>
+    <AuthContext.Provider
+      value={{
+        isAuthorized,
+        isChecking,
+        token,
+        login,
+        logout,
+        refreshAccessToken,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
+}
+
+export function useAuthContext() {
+  return useContext(AuthContext);
 }
