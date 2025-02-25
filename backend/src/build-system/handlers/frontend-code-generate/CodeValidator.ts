@@ -84,6 +84,7 @@ export class FrontendCodeValidator {
 
       const npmInstall = spawn('npm', ['install'], {
         cwd: this.frontendPath,
+        shell: true,
       });
 
       let stdoutBuffer = '';
