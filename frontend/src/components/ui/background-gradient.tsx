@@ -1,6 +1,6 @@
-"use client";
-import React from "react";
-import { cn } from "@/lib/utils";
+'use client';
+import React from 'react';
+import { cn } from '@/lib/utils';
 
 export const BackgroundGradient = React.forwardRef<
   HTMLDivElement,
@@ -10,7 +10,7 @@ export const BackgroundGradient = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "relative background-gradient group/card dark:hover:shadow-2xl dark:hover:shadow-emerald-500/[0.1] dark:bg-zinc-900",
+        'relative background-gradient group/card dark:hover:shadow-2xl dark:hover:shadow-emerald-500/[0.1] dark:bg-zinc-900',
         className
       )}
       {...props}
@@ -19,4 +19,4 @@ export const BackgroundGradient = React.forwardRef<
     </div>
   );
 });
-BackgroundGradient.displayName = "BackgroundGradient";
+BackgroundGradient.displayName = 'BackgroundGradient';

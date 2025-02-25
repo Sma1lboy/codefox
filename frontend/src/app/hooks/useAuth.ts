@@ -64,7 +64,7 @@ export const useAuth = () => {
         await refetchUser();
         return { success: true };
       }
-      
+
       handleLogout();
       return { success: false, error: 'Session expired' };
     } catch (error) {
@@ -94,7 +94,8 @@ export const useAuth = () => {
 
       return { success: false };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Login failed';
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -118,7 +119,8 @@ export const useAuth = () => {
 
       return { success: false };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Registration failed';
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }

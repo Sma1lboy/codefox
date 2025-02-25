@@ -1,10 +1,16 @@
 // auth-context.tsx
-"use client";
+'use client';
 
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
-import { useLazyQuery } from "@apollo/client";
-import { CHECK_TOKEN_QUERY } from "@/graphql/request";
-import { LoadingPage } from "@/components/global-loading";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { useLazyQuery } from '@apollo/client';
+import { CHECK_TOKEN_QUERY } from '@/graphql/request';
+import { LoadingPage } from '@/components/global-loading';
 
 interface AuthContextValue {
   isAuthorized: boolean;
@@ -36,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // If you want to store the token in sessionStorage, do:
       // const token = sessionStorage.getItem("accessToken");
       // Otherwise, if you still prefer localStorage:
-      const token = sessionStorage.getItem("accessToken");
+      const token = sessionStorage.getItem('accessToken');
 
       if (!token) {
         // No token => user is not authorized
@@ -50,8 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Timeout if the query hangs
       timeoutRef.current = setTimeout(() => {
         if (isMounted) {
-          console.error("Token validation timeout");
-          sessionStorage.removeItem("accessToken");
+          console.error('Token validation timeout');
+          sessionStorage.removeItem('accessToken');
           setIsAuthorized(false);
           setIsChecking(false);
         }
@@ -61,17 +67,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data } = await checkToken({ variables: { input: { token } } });
         if (isMounted) {
           if (!data?.checkToken) {
-            sessionStorage.removeItem("accessToken");
+            sessionStorage.removeItem('accessToken');
             setIsAuthorized(false);
           } else {
-            console.log("Token valid");
+            console.log('Token valid');
             setIsAuthorized(true);
           }
         }
       } catch (error) {
         if (isMounted) {
-          console.error("Token validation error:", error);
-          sessionStorage.removeItem("accessToken");
+          console.error('Token validation error:', error);
+          sessionStorage.removeItem('accessToken');
           setIsAuthorized(false);
         }
       } finally {

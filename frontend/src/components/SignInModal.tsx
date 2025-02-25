@@ -113,7 +113,9 @@ export function SignInModal({
 
                 {/* Show error message if login fails */}
                 {errorMessage && (
-                  <div className="text-red-500 text-sm text-center">{errorMessage}</div>
+                  <div className="text-red-500 text-sm text-center">
+                    {errorMessage}
+                  </div>
                 )}
 
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -164,5 +166,4 @@ export function SignInModal({
       </DialogContent>
     </Dialog>
   );
-  
 }
