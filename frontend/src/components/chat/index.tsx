@@ -9,7 +9,7 @@ import {
 import { GET_CHAT_HISTORY } from '@/graphql/request';
 import { useQuery } from '@apollo/client';
 import { toast } from 'sonner';
-import { EventEnum } from '@/components/enum';
+import { EventEnum } from '@/const/EventEnum';
 import EditUsernameForm from '@/components/edit-username-form';
 import ChatContent from '@/components/chat/chat-panel';
 import { useModels } from '@/hooks/useModels';
