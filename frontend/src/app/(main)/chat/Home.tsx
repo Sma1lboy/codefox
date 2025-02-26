@@ -1,12 +1,6 @@
 // app/page.tsx or components/Home.tsx
 'use client';
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  useContext,
-} from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -14,15 +8,14 @@ import {
 } from '@/components/ui/resizable';
 import { CodeEngine } from '@/components/code-engine/code-engine';
 import { GET_CHAT_HISTORY } from '@/graphql/request';
-import { useMutation, useQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import { toast } from 'sonner';
 import { EventEnum } from '@/components/enum';
-import { useModels } from '../../hooks/useModels';
-import { useChatList } from '../../hooks/useChatList';
-import { useChatStream } from '../../hooks/useChatStream';
+import { useModels } from '../../../hooks/useModels';
+import { useChatList } from '../../../hooks/useChatList';
+import { useChatStream } from '../../../hooks/useChatStream';
 import EditUsernameForm from '@/components/edit-username-form';
 import ChatContent from '@/components/chat/chat';
-import { ProjectContext } from '@/components/code-engine/project-context';
 
 export default function Home() {
   // Initialize state, refs, and custom hooks

@@ -14,9 +14,9 @@ import {
   StopIcon,
 } from '@radix-ui/react-icons';
 import { Mic, SendHorizonal } from 'lucide-react';
-import useSpeechToText from '@/app/hooks/useSpeechRecognition';
+import useSpeechToText from '@/hooks/useSpeechRecognition';
 import MultiImagePicker from '../image-embedder';
-import useChatStore from '@/app/hooks/useChatStore';
+import useChatStore from '@/hooks/useChatStore';
 import Image from 'next/image';
 
 export default function ChatBottombar({
