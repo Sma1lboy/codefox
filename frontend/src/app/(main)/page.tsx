@@ -6,9 +6,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 
-import { SignUpModal } from '@/components/SignUpModal';
-import { SignInModal } from '@/components/SignInModal';
-import { AuthChoiceModal } from '@/components/AuthChoiceModal';
+import { SignUpModal } from '@/components/sign-up-modal';
+import { SignInModal } from '@/components/sign-in-modal';
+import { AuthChoiceModal } from '@/components/auth-choice-modal';
 import { useAuthContext } from '@/providers/AuthProvider';
 
 export default function HomePage() {
