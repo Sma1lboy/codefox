@@ -10,7 +10,7 @@ import CodeDisplayBlock from '../code-display-block';
 import { Message } from '../types';
 import { Button } from '../ui/button';
 import { Pencil } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/hooks/useAuth';
 
 interface ChatListProps {
   messages: Message[];

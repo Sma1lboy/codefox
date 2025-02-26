@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
 import { Project } from '../project-modal';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/hooks/useAuth';
 import {
   CREATE_PROJECT,
   GET_CHAT_DETAILS,

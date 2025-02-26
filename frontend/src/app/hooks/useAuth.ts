@@ -5,6 +5,7 @@ import { LocalStore } from '@/lib/storage';
 import { useCallback, useEffect, useState } from 'react';
 import { User } from '@/graphql/type';
 
+// avoid using useAuth hook directly to prevent request repeatly, it could be use in some case that you want to check auth status in the component not cover by AuthProvider
 export function useAuth() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
