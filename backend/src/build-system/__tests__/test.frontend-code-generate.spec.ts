@@ -12,6 +12,7 @@ describe('FrontendCodeHandler', () => {
     name: 'Spotify-like Music Web',
     description: 'Users can play music',
     databaseType: 'SQLite',
+    model: 'o3-mini-high',
     nodes: [
       {
         handler: FrontendCodeHandler,
@@ -19,11 +20,12 @@ describe('FrontendCodeHandler', () => {
         // requires: ['op:FILE:STRUCT', 'op:UX:DATAMAP:DOC'],
       },
     ],
+    packages: [],
   };
 
   beforeEach(() => {
     handler = new FrontendCodeHandler();
-    context = new MockBuilderContext(sequence, 'test');
+    context = new MockBuilderContext(sequence, 'frontend-only');
   });
 
   //rember to comment requirement in FrontendCodeHandler
@@ -32,5 +34,5 @@ describe('FrontendCodeHandler', () => {
     const result = await handler.run(context);
 
     expect(result.success).toBe(true);
-  });
+  }, 6000000);
 });
