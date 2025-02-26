@@ -11,11 +11,11 @@ import { GET_CHAT_HISTORY } from '@/graphql/request';
 import { useQuery } from '@apollo/client';
 import { toast } from 'sonner';
 import { EventEnum } from '@/components/enum';
-import { useModels } from '../../../hooks/useModels';
-import { useChatList } from '../../../hooks/useChatList';
-import { useChatStream } from '../../../hooks/useChatStream';
 import EditUsernameForm from '@/components/edit-username-form';
 import ChatContent from '@/components/chat/chat';
+import { useModels } from '@/hooks/useModels';
+import { useChatList } from '@/hooks/useChatList';
+import { useChatStream } from '@/hooks/useChatStream';
 
 export default function Home() {
   // Initialize state, refs, and custom hooks
