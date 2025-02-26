@@ -9,7 +9,7 @@ import { useTheme } from 'next-themes';
 import { SignUpModal } from '@/components/SignUpModal';
 import { SignInModal } from '@/components/SignInModal';
 import { AuthChoiceModal } from '@/components/AuthChoiceModal';
-import { useAuthContext } from '../providers/AuthProvider';
+import { useAuthContext } from '@/providers/AuthProvider';
 
 export default function HomePage() {
   const [message, setMessage] = useState('');
