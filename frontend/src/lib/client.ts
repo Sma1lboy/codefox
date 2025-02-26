@@ -30,8 +30,8 @@ const authLink = setContext((_, { headers }) => {
   if (typeof window === 'undefined') {
     return { headers };
   }
-  const accessToken = localStorage.getItem('accessToken');
-  const refreshToken = localStorage.getItem('refreshToken');
+  const accessToken = localStorage.getItem(LocalStore.accessToken);
+  const refreshToken = localStorage.getItem(LocalStore.refreshToken);
   return {
     headers: {
       ...headers,
@@ -107,11 +107,11 @@ const errorLink = onError(
               }
 
               localStorage.setItem(
-                'accessToken',
+                LocalStore.accessToken,
                 data.refreshToken.accessToken
               );
               localStorage.setItem(
-                'refreshToken',
+                LocalStore.refreshToken,
                 data.refreshToken.refreshToken
               );
 
@@ -133,8 +133,8 @@ const errorLink = onError(
             .catch((err) => {
               console.error('Refresh token error:', err);
               // Clear tokens, redirect or show sign-in modal
-              localStorage.removeItem('accessToken');
-              localStorage.removeItem('refreshToken');
+              localStorage.removeItem(LocalStore.accessToken);
+              localStorage.removeItem(LocalStore.refreshToken);
               observer.error(err);
             });
         });
