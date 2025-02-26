@@ -1,4 +1,5 @@
-import MainLayout from './main-layout';
+import type { Metadata, Viewport } from 'next';
+import MainLayout from './MainLayout';
 
 export default function Layout({
   children,

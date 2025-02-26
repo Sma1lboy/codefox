@@ -7,7 +7,7 @@ import {
 import React from 'react';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import { Button } from '../ui/button';
-import { useModels } from '@/hooks/useModels';
+import { useModels } from '@/app/hooks/useModels';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';

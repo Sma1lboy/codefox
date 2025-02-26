@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/avatar';
 import { GearIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, memo } from 'react';
 import { EventEnum } from './enum';

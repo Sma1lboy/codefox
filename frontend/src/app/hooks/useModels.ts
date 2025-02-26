@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { LocalStore } from '@/lib/storage';
 import { GET_MODEL_TAGS } from '@/graphql/request';
-import { useAuthContext } from '@/providers/AuthProvider';
+import { useAuthContext } from '@/app/providers/AuthProvider';
 
 interface ModelsCache {
   models: string[];

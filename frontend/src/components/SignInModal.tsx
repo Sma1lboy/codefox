@@ -17,7 +17,7 @@ import { useMutation } from '@apollo/client';
 import { LOGIN_USER } from '@/graphql/mutations/auth';
 import { toast } from 'sonner';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { useAuthContext } from '@/providers/AuthProvider';
+import { useAuthContext } from '@/app/providers/AuthProvider';
 
 interface SignInModalProps {
   isOpen: boolean;
