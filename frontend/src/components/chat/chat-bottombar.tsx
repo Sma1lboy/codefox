@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { ChatProps } from './chat';
+import { ChatProps } from './chat-panel';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Button, buttonVariants } from '../ui/button';

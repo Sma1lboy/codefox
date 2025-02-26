@@ -22,7 +22,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { EventEnum } from './enum';
+import { EventEnum } from '../const/EventEnum';
 
 interface SideBarItemProps {
   id: string;

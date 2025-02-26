@@ -1,7 +1,7 @@
 import React from 'react';
 import ChatBottombar from './chat-bottombar';
 import ChatTopbar from './chat-topbar';
-import { ChatRequestOptions, Message } from '../types';
+import { ChatRequestOptions, Message } from '../../const/MessageType';
 import ChatList from './chat-list';
 
 export interface ChatProps {

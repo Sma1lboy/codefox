@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage, SmallAvatar } from '../ui/avatar';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeDisplayBlock from '../code-display-block';
-import { Message } from '../types';
+import { Message } from '../../const/MessageType';
 import { Button } from '../ui/button';
 import { Pencil } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';

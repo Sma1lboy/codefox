@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, memo } from 'react';
-import { EventEnum } from './enum';
+import { EventEnum } from '../const/EventEnum';
 
 interface UserSettingsProps {
   isSimple: boolean;

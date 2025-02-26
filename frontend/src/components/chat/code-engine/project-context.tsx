@@ -8,13 +8,13 @@ import React, {
   useEffect,
 } from 'react';
 import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
-import { Project } from '../project-modal';
 import { useAuth } from '@/hooks/useAuth';
 import {
   CREATE_PROJECT,
   GET_CHAT_DETAILS,
   GET_USER_PROJECTS,
 } from '@/graphql/request';
+import { Project } from '../project-modal';
 
 export interface ProjectContextType {
   projects: Project[];

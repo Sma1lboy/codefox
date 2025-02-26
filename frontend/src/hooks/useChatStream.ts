@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useMutation, useSubscription } from '@apollo/client';
 import { CHAT_STREAM, CREATE_CHAT, TRIGGER_CHAT } from '@/graphql/request';
-import { Message } from '@/components/types';
+import { Message } from '@/const/MessageType';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 enum StreamStatus {
