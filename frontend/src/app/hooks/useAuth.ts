@@ -1,164 +1,133 @@
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
-import { toast } from 'sonner';
-import {
-  LoginResponse,
-  LoginUserInput,
-  RegisterUserInput,
-  User,
-} from '@/graphql/type';
-import {
-  CHECK_TOKEN_QUERY,
-  LOGIN_MUTATION,
-  REGISTER_MUTATION,
-  GET_USER_INFO,
-} from '@/graphql/request';
+import { useLazyQuery, useMutation } from '@apollo/client';
+import { GET_USER_INFO, CHECK_TOKEN_QUERY } from '@/graphql/request';
+import { REFRESH_TOKEN_MUTATION } from '@/graphql/mutations/auth';
 import { LocalStore } from '@/lib/storage';
+import { useCallback, useEffect, useState } from 'react';
+import { User } from '@/graphql/type';
 
-export const useAuth = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+// avoid using useAuth hook directly to prevent request repeatly, it could be use in some case that you want to check auth status in the component not cover by AuthProvider
+export function useAuth() {
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
 
-  const { data: userData, refetch: refetchUser } = useQuery<{ me: User }>(
-    GET_USER_INFO,
-    {
-      skip: !isAuthenticated,
-      onCompleted: (data) => {
-        if (data?.me) {
-          setUser(data.me);
-          // Store user info in localStorage
-          localStorage.setItem('user', JSON.stringify(data.me));
-        }
-      },
-    }
-  );
+  const [checkToken] = useLazyQuery<{ checkToken: boolean }>(CHECK_TOKEN_QUERY);
+  const [refreshTokenMutation] = useMutation(REFRESH_TOKEN_MUTATION);
+  const [getUserInfo] = useLazyQuery<{ me: User }>(GET_USER_INFO);
 
-  const [login, { loading: loginLoading }] = useMutation<{
-    login: LoginResponse;
-  }>(LOGIN_MUTATION);
-
-  const { refetch: checkToken } = useQuery<{ checkToken: boolean }>(
-    CHECK_TOKEN_QUERY,
-    {
-      variables: {
-        input: {
-          token: '',
-        },
-      },
-      skip: true,
-    }
-  );
-
-  const [register, { loading: registerLoading }] = useMutation<{
-    registerUser: User;
-  }>(REGISTER_MUTATION);
-
-  useEffect(() => {
-    validateToken();
-    // Try to load user from localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
-
-  const validateToken = async () => {
-    const token = localStorage.getItem(LocalStore.accessToken);
-    if (!token) {
-      setIsAuthenticated(false);
+  const validateToken = useCallback(async () => {
+    const storedToken = localStorage.getItem(LocalStore.accessToken);
+    if (!storedToken) {
+      setIsAuthorized(false);
       setUser(null);
-      return { success: false };
+      return false;
     }
 
     try {
       const { data } = await checkToken({
-        input: { token },
+        variables: { input: { token: storedToken } },
       });
+
       if (data?.checkToken) {
-        setIsAuthenticated(true);
-        // Fetch user info after successful token validation
-        await refetchUser();
-        return { success: true };
-      } else {
-        handleLogout();
-        return { success: false, error: 'Session expired' };
+        return true;
       }
+      return false;
     } catch (error) {
-      handleLogout();
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Authentication error',
-      };
+      console.error('Token validation error:', error);
+      return false;
     }
-  };
+  }, [checkToken]);
 
-  const handleLogin = async (credentials: LoginUserInput) => {
+  const refreshToken = useCallback(async () => {
     try {
-      const { data } = await login({
-        variables: {
-          input: credentials,
-        },
-      });
-      if (data?.login.accessToken) {
-        localStorage.setItem(LocalStore.accessToken, data.login.accessToken);
-        setIsAuthenticated(true);
-        await refetchUser();
-        toast.success('Login successful');
-        return { success: true };
+      const refreshToken = localStorage.getItem(LocalStore.refreshToken);
+      if (!refreshToken) {
+        return false;
       }
-      return { success: false };
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Login failed');
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Login failed',
-      };
-    }
-  };
 
-  const handleLogout = () => {
+      const { data } = await refreshTokenMutation({
+        variables: { refreshToken },
+      });
+
+      if (data?.refreshToken) {
+        localStorage.setItem(
+          LocalStore.accessToken,
+          data.refreshToken.accessToken
+        );
+        localStorage.setItem(
+          LocalStore.refreshToken,
+          data.refreshToken.refreshToken
+        );
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Refresh token error:', error);
+      return false;
+    }
+  }, [refreshTokenMutation]);
+
+  const fetchUserInfo = useCallback(async () => {
+    try {
+      const { data } = await getUserInfo();
+      if (data?.me) {
+        setUser(data.me);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to fetch user info:', error);
+      return false;
+    }
+  }, [getUserInfo]);
+
+  const login = useCallback(
+    (accessToken: string, refreshToken: string) => {
+      localStorage.setItem(LocalStore.accessToken, accessToken);
+      localStorage.setItem(LocalStore.refreshToken, refreshToken);
+      setIsAuthorized(true);
+      fetchUserInfo();
+    },
+    [fetchUserInfo]
+  );
+
+  const logout = useCallback(() => {
     localStorage.removeItem(LocalStore.accessToken);
-    localStorage.removeItem('user');
-    setIsAuthenticated(false);
+    localStorage.removeItem(LocalStore.refreshToken);
+    setIsAuthorized(false);
     setUser(null);
-    toast.success('Logged out successfully');
-    return { success: true };
-  };
+  }, []);
 
-  const handleRegister = async (credentials: RegisterUserInput) => {
-    try {
-      const { data } = await register({
-        variables: {
-          input: credentials,
-        },
-      });
-      if (data?.registerUser) {
-        toast.success('Registration successful');
-        return await handleLogin({
-          username: credentials.username,
-          password: credentials.password,
-        });
+  useEffect(() => {
+    const initAuth = async () => {
+      setIsLoading(true);
+      let isValid = await validateToken();
+
+      if (!isValid) {
+        isValid = await refreshToken();
       }
-      return { success: false };
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Registration failed'
-      );
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Registration failed',
-      };
-    }
-  };
+
+      if (isValid) {
+        setIsAuthorized(true);
+        await fetchUserInfo();
+      } else {
+        setIsAuthorized(false);
+        setUser(null);
+      }
+
+      setIsLoading(false);
+    };
+
+    initAuth();
+  }, [validateToken, refreshToken, fetchUserInfo]);
 
   return {
-    isAuthenticated,
-    isLoading: loginLoading || registerLoading,
+    isAuthorized,
+    isLoading,
     user,
-    login: handleLogin,
-    register: handleRegister,
-    logout: handleLogout,
+    login,
+    logout,
+    refreshToken,
     validateToken,
-    refetchUser,
   };
-};
+}

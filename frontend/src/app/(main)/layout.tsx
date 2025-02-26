@@ -1,14 +1,7 @@
-import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
-import MainLayout from './MainLayout';
-import { SidebarProvider } from '@/components/ui/sidebar';
-
-import { getProjectPath, getProjectsDir, getRootDir } from 'codefox-common';
-import { FileReader } from '@/utils/file-reader';
-const inter = Inter({ subsets: ['latin'] });
-
+import { Metadata, Viewport } from 'next';
+import React from 'react';
 export const metadata: Metadata = {
-  title: 'Codefox',
+  title: 'Codefox - The best dev project generator',
   description: 'The best dev project generator',
 };
 
@@ -18,11 +11,14 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
 };
-
-export default async function Layout({
+export default function HomeLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <MainLayout>{children}</MainLayout>;
+  return (
+    <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900 transition-colors">
+      <main>{children}</main>
+    </div>
+  );
 }

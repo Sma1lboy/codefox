@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { LocalStore } from '@/lib/storage';
 import { GET_MODEL_TAGS } from '@/graphql/request';
+import { useAuthContext } from '@/app/providers/AuthProvider';
 
 interface ModelsCache {
   models: string[];
@@ -10,8 +11,8 @@ interface ModelsCache {
 }
 
 const CACHE_DURATION = 30 * 60 * 1000;
-
 export const useModels = () => {
+  const { isAuthorized, isChecking } = useAuthContext();
   const [selectedModel, setSelectedModel] = useState<string | undefined>(
     undefined
   );
@@ -50,7 +51,7 @@ export const useModels = () => {
   const { data, loading, error } = useQuery<{
     getAvailableModelTags: string[];
   }>(GET_MODEL_TAGS, {
-    skip: !shouldUpdateCache(),
+    skip: !isAuthorized || isChecking || !shouldUpdateCache(),
     onCompleted: (data) => {
       console.log(data);
       if (data?.getAvailableModelTags) {

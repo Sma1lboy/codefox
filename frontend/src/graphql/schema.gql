@@ -61,11 +61,12 @@ input IsValidProjectInput {
 
 type LoginResponse {
   accessToken: String!
+  refreshToken: String!
 }
 
 input LoginUserInput {
+  email: String!
   password: String!
-  username: String!
 }
 
 type Menu {
@@ -97,6 +98,7 @@ type Mutation {
   deleteChat(chatId: String!): Boolean!
   deleteProject(projectId: String!): Boolean!
   login(input: LoginUserInput!): LoginResponse!
+  refreshToken(refreshToken: String!): RefreshTokenResponse!
   registerUser(input: RegisterUserInput!): User!
   triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
@@ -150,6 +152,11 @@ type Query {
   me: User!
 }
 
+type RefreshTokenResponse {
+  accessToken: String!
+  refreshToken: String!
+}
+
 input RegisterUserInput {
   email: String!
   password: String!
@@ -180,6 +187,7 @@ type User {
   chats: [Chat!]!
   createdAt: Date!
   email: String!
+  id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
   projects: [Project!]!

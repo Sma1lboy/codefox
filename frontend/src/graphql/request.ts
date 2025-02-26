@@ -1,23 +1,9 @@
-import { gql } from '@apollo/client';
-
-export const LOGIN_MUTATION = gql`
-  mutation Login($input: LoginUserInput!) {
-    login(input: $input) {
-      accessToken
-    }
-  }
-`;
+import { ApolloClient, gql, TypedDocumentNode } from '@apollo/client';
+import type { DocumentNode } from 'graphql';
 
 export const CHECK_TOKEN_QUERY = gql`
   query CheckToken($input: CheckTokenInput!) {
     checkToken(input: $input)
-  }
-`;
-export const REGISTER_MUTATION = gql`
-  mutation RegisterUser($input: RegisterUserInput!) {
-    registerUser(input: $input) {
-      username
-    }
   }
 `;
 
@@ -64,7 +50,7 @@ export const GET_CHAT_HISTORY = gql`
   }
 `;
 
-export const CHAT_STREAM_SUBSCRIPTION = gql`
+export const CHAT_STREAM = gql`
   subscription ChatStream($input: ChatInputType!) {
     chatStream(input: $input) {
       id
@@ -78,6 +64,7 @@ export const CHAT_STREAM_SUBSCRIPTION = gql`
       }
       model
       object
+      status
     }
   }
 `;
@@ -113,39 +100,9 @@ export const GET_USER_INFO = gql`
   }
 `;
 
-export const CHAT_STREAM = gql`
-  subscription ChatStream($input: ChatInputType!) {
-    chatStream(input: $input) {
-      id
-      created
-      choices {
-        delta {
-          content
-        }
-        finishReason
-        index
-      }
-      model
-      object
-      status
-    }
-  }
-`;
-
 export const TRIGGER_CHAT = gql`
   mutation TriggerChatStream($input: ChatInputType!) {
     triggerChatStream(input: $input)
-  }
-`;
-
-export const CREATE_PROJECT = gql`
-  mutation CreateProject($createProjectInput: CreateProjectInput!) {
-    createProject(createProjectInput: $createProjectInput) {
-      id
-      title
-      createdAt
-      updatedAt
-    }
   }
 `;
 
@@ -166,3 +123,72 @@ export const GET_CHAT_DETAILS = gql`
     }
   }
 `;
+
+export const GET_USER_PROJECTS = gql`
+  query GetUserProjects {
+    getUserProjects {
+      id
+      projectName
+      projectPath
+      projectPackages {
+        id
+        content
+      }
+    }
+  }
+`;
+
+export const GET_PROJECT_DETAILS = gql`
+  query GetProjectDetails($projectId: String!) {
+    getProjectDetails(projectId: $projectId) {
+      id
+      projectName
+      path
+      projectPackages {
+        id
+        content
+      }
+    }
+  }
+`;
+
+export const CREATE_PROJECT = gql`
+  mutation CreateProject($createProjectInput: CreateProjectInput!) {
+    createProject(createProjectInput: $createProjectInput) {
+      id
+      projectName
+      path
+      projectPackages {
+        id
+        content
+      }
+    }
+  }
+`;
+
+export const getUserProjects = async (client: ApolloClient<unknown>) => {
+  const response = await client.query({ query: GET_USER_PROJECTS });
+  return response.data.getUserProjects;
+};
+
+export const getProjectDetails = async (
+  client: ApolloClient<unknown>,
+  projectId: string
+) => {
+  const response = await client.query({
+    query: GET_PROJECT_DETAILS,
+    variables: { projectId },
+  });
+  return response.data.getProjectDetails;
+};
+
+export const createProject = async (
+  client: ApolloClient<unknown>,
+  createProjectInput: any
+) => {
+  const response = await client.mutate({
+    mutation: CREATE_PROJECT,
+    variables: { createProjectInput },
+  });
+  return response.data.createProject;
+};

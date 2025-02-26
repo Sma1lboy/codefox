@@ -31,8 +31,9 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
 
   const handleLogout = useMemo(() => {
     return () => {
+      router.push('/');
+      // router.push('/login');
       logout();
-      router.push('/login');
     };
   }, [logout, router]);
 

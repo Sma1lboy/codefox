@@ -1,130 +1,155 @@
-import { usePathname, useRouter } from 'next/navigation';
-import { useLazyQuery, useQuery } from '@apollo/client';
+'use client';
+
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useLazyQuery, useMutation } from '@apollo/client';
 import { CHECK_TOKEN_QUERY } from '@/graphql/request';
-import { LocalStore } from '@/lib/storage';
-import { useEffect, useState, useRef } from 'react';
 import { LoadingPage } from '@/components/global-loading';
 
-const VALIDATION_TIMEOUT = 5000;
+// Replace this with your real RefreshToken mutation
+import { gql } from '@apollo/client';
+import { REFRESH_TOKEN_MUTATION } from '@/graphql/mutations/auth';
+import { LocalStore } from '@/lib/storage';
 
-interface AuthProviderProps {
-  children: React.ReactNode;
+interface AuthContextValue {
+  isAuthorized: boolean;
+  isChecking: boolean;
+  token: string | null;
+  login: (accessToken: string, refreshToken: string) => void;
+  logout: () => void;
+  refreshAccessToken: () => Promise<string | void>;
 }
 
-export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
-  const [isChecking, setIsChecking] = useState(true);
-  const publicRoutes = ['/login', '/register'];
-  const isRedirectingRef = useRef(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+const AuthContext = createContext<AuthContextValue>({
+  isAuthorized: false,
+  isChecking: false,
+  token: null,
+  login: () => {},
+  logout: () => {},
+  refreshAccessToken: async () => {},
+});
 
-  const [checkToken] = useLazyQuery(CHECK_TOKEN_QUERY);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [token, setToken] = useState<string | null>(null);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  const [checkToken] = useLazyQuery<{ checkToken: boolean }>(CHECK_TOKEN_QUERY);
+
+  const [refreshTokenMutation] = useMutation(REFRESH_TOKEN_MUTATION);
 
   useEffect(() => {
-    let isMounted = true;
+    async function validateToken() {
+      setIsChecking(true);
 
-    const validateToken = async () => {
-      if (isRedirectingRef.current) {
+      const storedToken = localStorage.getItem(LocalStore.accessToken);
+      if (!storedToken) {
+        // No token => not authorized
+        setIsAuthorized(false);
+        setIsChecking(false);
         return;
       }
-
-      if (publicRoutes.includes(pathname)) {
-        if (isMounted) {
-          setIsAuthorized(true);
-          setIsChecking(false);
-        }
-        return;
-      }
-
-      if (isMounted) {
-        setIsChecking(true);
-      }
-
-      const token = localStorage.getItem(LocalStore.accessToken);
-
-      console.log(token);
-      if (!token) {
-        isRedirectingRef.current = true;
-        router.replace('/login');
-        if (isMounted) {
-          setIsChecking(false);
-        }
-        return;
-      }
-
-      timeoutRef.current = setTimeout(() => {
-        if (isMounted && !isRedirectingRef.current) {
-          console.error('Token validation timeout');
-          localStorage.removeItem(LocalStore.accessToken);
-          isRedirectingRef.current = true;
-          router.replace('/login');
-          setIsChecking(false);
-        }
-      }, VALIDATION_TIMEOUT);
 
       try {
+        // Check if the token is valid on the server
         const { data } = await checkToken({
-          variables: {
-            input: {
-              token,
-            },
-          },
+          variables: { input: { token: storedToken } },
         });
+        console.log('check:', data);
 
-        if (isMounted) {
-          if (!data?.checkToken) {
-            localStorage.removeItem(LocalStore.accessToken);
-            isRedirectingRef.current = true;
-            router.replace('/login');
-            setIsAuthorized(false);
-          } else {
-            console.log('token checked');
-            setIsAuthorized(true);
-          }
+        if (data?.checkToken) {
+          // valid
+          setToken(storedToken);
+          setIsAuthorized(true);
+        } else {
+          refreshAccessToken();
         }
       } catch (error) {
-        if (isMounted && !isRedirectingRef.current) {
-          console.error('Token validation error:', error);
-          localStorage.removeItem(LocalStore.accessToken);
-          isRedirectingRef.current = true;
-          router.replace('/login');
-          setIsAuthorized(false);
-        }
+        console.error('Token validation error:', error);
+        localStorage.removeItem(LocalStore.accessToken);
+        setIsAuthorized(false);
       } finally {
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-        if (isMounted) {
-          setIsChecking(false);
-        }
+        setIsChecking(false);
       }
-    };
+    }
 
     validateToken();
+  }, [checkToken]);
 
-    return () => {
-      isMounted = false;
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [pathname]);
+  // Called after user logs in
+  function login(accessToken: string, refreshToken: string) {
+    localStorage.setItem(LocalStore.accessToken, accessToken);
+    localStorage.setItem(LocalStore.refreshToken, refreshToken);
 
-  useEffect(() => {
-    if (publicRoutes.includes(pathname)) {
-      isRedirectingRef.current = false;
-    }
-  }, [pathname]);
-
-  if (publicRoutes.includes(pathname)) {
-    return children;
+    // Update state
+    setToken(accessToken);
+    setIsAuthorized(true);
   }
 
+  /**
+   * logout the account, remove all refreshtoken and accesstoken
+   */
+  function logout() {
+    setToken(null);
+    setIsAuthorized(false);
+    localStorage.removeItem(LocalStore.accessToken);
+    localStorage.removeItem(LocalStore.refreshToken);
+  }
+
+  // Called to refresh access token
+  async function refreshAccessToken() {
+    try {
+      const refreshToken = localStorage.getItem(LocalStore.refreshToken);
+      if (!refreshToken) {
+        logout();
+        return;
+      }
+
+      const { data } = await refreshTokenMutation({
+        variables: { refreshToken },
+      });
+
+      if (data?.refreshToken) {
+        const newAccess = data.refreshToken.accessToken;
+        const newRefresh = data.refreshToken.refreshToken;
+
+        localStorage.setItem(LocalStore.accessToken, newAccess);
+        if (newRefresh) {
+          localStorage.setItem(LocalStore.refreshToken, newRefresh);
+        }
+
+        setToken(newAccess);
+        setIsAuthorized(true);
+        return newAccess;
+      } else {
+        logout();
+      }
+    } catch (error) {
+      console.error('Refresh token error:', error);
+      logout();
+    }
+  }
+
+  // Show loading screen while checking token on mount
   if (isChecking) {
     return <LoadingPage />;
   }
 
-  return isAuthorized ? children : <LoadingPage />;
-};
+  return (
+    <AuthContext.Provider
+      value={{
+        isAuthorized,
+        isChecking,
+        token,
+        login,
+        logout,
+        refreshAccessToken,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuthContext() {
+  return useContext(AuthContext);
+}
