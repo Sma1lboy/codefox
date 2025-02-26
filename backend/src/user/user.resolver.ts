@@ -16,6 +16,15 @@ import {
   GetUserIdFromToken,
 } from 'src/decorator/get-auth-token.decorator';
 
+@ObjectType()
+class LoginResponse {
+  @Field()
+  accessToken: string;
+
+  @Field()
+  refreshToken: string;
+}
+
 @Resolver(() => User)
 export class UserResolver {
   constructor(
@@ -46,10 +55,4 @@ export class UserResolver {
   async me(@GetUserIdFromToken() id: string): Promise<User> {
     return this.userService.getUser(id);
   }
-}
-
-@ObjectType()
-class LoginResponse {
-  @Field()
-  accessToken: string;
 }

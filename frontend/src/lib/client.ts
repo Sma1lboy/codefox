@@ -13,12 +13,12 @@ import { onError } from '@apollo/client/link/error';
 import { setContext } from '@apollo/client/link/context';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
-import { getMainDefinition } from '@apollo/client/utilities';
+import { getMainDefinition, Observable } from '@apollo/client/utilities';
 import { LocalStore } from '@/lib/storage';
 
 // 1. GraphQL HTTP Link
 const httpLink = new HttpLink({
-  uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:8080/graphq',
+  uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:8080/graphql',
   headers: {
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Allow-Origin': '*',
@@ -30,7 +30,7 @@ const authLink = setContext((_, { headers }) => {
   if (typeof window === 'undefined') {
     return { headers };
   }
-  const accessToken = sessionStorage.getItem('accessToken');
+  const accessToken = localStorage.getItem('accessToken');
   const refreshToken = localStorage.getItem('refreshToken');
   return {
     headers: {
@@ -47,7 +47,7 @@ if (typeof window !== 'undefined') {
   wsLink = new GraphQLWsLink(
     createClient({
       url:
-        process.env.NEXT_PUBLIC_GRAPHQL_WS_URL || 'ws://localhost:4000/graphql',
+        process.env.NEXT_PUBLIC_GRAPHQL_WS_URL || 'ws://localhost:8080/graphql',
     })
   );
 }
@@ -86,11 +86,11 @@ const errorLink = onError(
     ) {
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
-        // Return a Promise so Apollo waits for refresh to complete
-        return new Promise((resolve, reject) => {
+        // Create a new Observable that handles the token refresh
+        return new Observable((observer) => {
           fetch(
             process.env.NEXT_PUBLIC_GRAPHQL_URL ||
-              'http://localhost:4000/graphql',
+              'http://localhost:8080/graphql',
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -106,7 +106,7 @@ const errorLink = onError(
                 throw new Error('Refresh token failed');
               }
 
-              sessionStorage.setItem(
+              localStorage.setItem(
                 'accessToken',
                 data.refreshToken.accessToken
               );
@@ -125,18 +125,17 @@ const errorLink = onError(
 
               // Retry the original operation
               forward(operation).subscribe({
-                next: (result) => resolve(result),
-                error: (err) => reject(err),
-                complete: () => resolve(null),
+                next: (result) => observer.next(result),
+                error: (err) => observer.error(err),
+                complete: () => observer.complete(),
               });
             })
             .catch((err) => {
               console.error('Refresh token error:', err);
               // Clear tokens, redirect or show sign-in modal
-              sessionStorage.removeItem('accessToken');
+              localStorage.removeItem('accessToken');
               localStorage.removeItem('refreshToken');
-              window.location.href = '/login'; // or open a modal
-              reject(err);
+              observer.error(err);
             });
         });
       }

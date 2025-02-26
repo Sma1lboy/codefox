@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-import MainLayout from './chat/MainLayout';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import MainLayout from './MainLayout';
 
 const inter = Inter({ subsets: ['latin'] });
 

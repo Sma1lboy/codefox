@@ -18,12 +18,8 @@ import { Menu } from './menu/menu.model';
 import { Role } from './role/role.model';
 import { RefreshToken } from './refresh-token/refresh-token.model';
 import { randomUUID } from 'crypto';
-import * as bcrypt from 'bcrypt';
-
-interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-}
+import { compare, hash } from 'bcrypt';
+import { RefreshTokenResponse } from './auth.resolver';
 
 @Injectable()
 export class AuthService {
@@ -53,7 +49,7 @@ export class AuthService {
       throw new ConflictException('Email already exists');
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await hash(password, 10);
     const newUser = this.userRepository.create({
       username,
       email,
@@ -63,7 +59,7 @@ export class AuthService {
     return this.userRepository.save(newUser);
   }
 
-  async login(loginUserInput: LoginUserInput): Promise<AuthResponse> {
+  async login(loginUserInput: LoginUserInput): Promise<RefreshTokenResponse> {
     const { email, password } = loginUserInput;
 
     const user = await this.userRepository.findOne({
@@ -74,7 +70,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await compare(password, user.password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
@@ -86,6 +82,7 @@ export class AuthService {
     );
 
     const refreshTokenEntity = await this.createRefreshToken(user);
+    this.jwtCacheService.storeAccessToken(refreshTokenEntity.token);
 
     return {
       accessToken,
@@ -371,7 +368,12 @@ export class AuthService {
     };
   }
 
-  async refreshToken(refreshToken: string): Promise<AuthResponse> {
+  /**
+   * refresh access token base on refresh token.
+   * @param refreshToken refresh token
+   * @returns return new access token and refresh token
+   */
+  async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
     const existingToken = await this.refreshTokenRepository.findOne({
       where: { token: refreshToken },
       relations: ['user'],
@@ -389,15 +391,11 @@ export class AuthService {
       { expiresIn: '30m' },
     );
 
-    // Generate new refresh token
-    const newRefreshToken = await this.createRefreshToken(existingToken.user);
-
-    // Revoke old refresh token
-    await this.refreshTokenRepository.remove(existingToken);
+    this.jwtCacheService.storeAccessToken(accessToken);
 
     return {
       accessToken,
-      refreshToken: newRefreshToken.token,
+      refreshToken: refreshToken,
     };
   }
 }

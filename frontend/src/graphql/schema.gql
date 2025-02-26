@@ -2,11 +2,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type AuthResponse {
-  accessToken: String!
-  refreshToken: String!
-}
-
 type Chat {
   createdAt: Date!
   id: ID!
@@ -66,6 +61,7 @@ input IsValidProjectInput {
 
 type LoginResponse {
   accessToken: String!
+  refreshToken: String!
 }
 
 input LoginUserInput {
@@ -101,8 +97,8 @@ type Mutation {
   createProject(createProjectInput: CreateProjectInput!): Chat!
   deleteChat(chatId: String!): Boolean!
   deleteProject(projectId: String!): Boolean!
-  login(input: LoginUserInput!): AuthResponse!
-  refreshToken(refreshToken: String!): AuthResponse!
+  login(input: LoginUserInput!): LoginResponse!
+  refreshToken(refreshToken: String!): RefreshTokenResponse!
   registerUser(input: RegisterUserInput!): User!
   triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
@@ -154,6 +150,11 @@ type Query {
   isValidateProject(isValidProject: IsValidProjectInput!): Boolean!
   logout: Boolean!
   me: User!
+}
+
+type RefreshTokenResponse {
+  accessToken: String!
+  refreshToken: String!
 }
 
 input RegisterUserInput {
