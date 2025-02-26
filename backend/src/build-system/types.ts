@@ -11,6 +11,7 @@ export interface BuildBase {
   name?: string;
   description?: string;
   options?: BuildOpts;
+  model?: string;
 }
 
 /**
@@ -31,6 +32,8 @@ export interface BuildSequence {
   databaseType?: string;
   nodes: BuildNode[];
   packages: BuildProjectPackage[];
+  model?: string;
+  projectSize?: 'small' | 'medium' | 'large';
 }
 export interface BuildProjectPackage {
   name: string;

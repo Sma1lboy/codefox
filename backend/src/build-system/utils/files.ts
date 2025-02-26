@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { getProjectsDir, getProjectPath } from 'codefox-common';
+import { FileWriteError } from '../errors';
 const logger = new Logger('file-utils');
 /**
  * Saves the given content to the specified file path using fs-extra.
@@ -146,7 +147,9 @@ export async function createFileWithRetries(
       attempt++;
 
       // Optionally log a warning
-      logger.warn(`Failed to write file: ${filePath}, attempt #${attempt}`);
+      logger.warn(
+        `Failed to write file: ${filePath}, attempt #${attempt}, content: ${content}`,
+      );
 
       // Wait before retrying
       if (attempt < maxRetries) {
@@ -156,5 +159,5 @@ export async function createFileWithRetries(
   }
 
   // If all retries fail, rethrow the last error
-  return null;
+  throw new FileWriteError(lastError);
 }

@@ -14,6 +14,7 @@ import { Logger } from '@nestjs/common';
 import { writeFile, rename, readFile } from 'fs/promises';
 import path from 'path';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { filePathSafetyChecks } from 'src/build-system/utils/security/path-check';
 
 export interface FileOperation {
   action: 'write' | 'rename' | 'read';
@@ -93,7 +94,8 @@ export class FileOperationManager {
    */
   private async handleWrite(op: FileOperation): Promise<void> {
     const originalPath = path.resolve(this.projectRoot, op.originalPath);
-    this.safetyChecks(originalPath);
+    const securityOptions = { projectRoot: this.projectRoot };
+    filePathSafetyChecks(originalPath, securityOptions);
 
     this.logger.debug('start update file to: ' + originalPath);
     const parseCode = removeCodeBlockFences(op.code);
@@ -109,7 +111,8 @@ export class FileOperationManager {
   private async handleRead(op: FileOperation): Promise<string | null> {
     try {
       const originalPath = path.resolve(this.projectRoot, op.originalPath);
-      this.safetyChecks(originalPath);
+      const securityOptions = { projectRoot: this.projectRoot };
+      filePathSafetyChecks(originalPath, securityOptions);
 
       this.logger.debug(`Reading file: ${originalPath}`);
 
@@ -135,9 +138,10 @@ export class FileOperationManager {
   private async handleRename(op: FileOperation): Promise<void> {
     const originalPath = path.resolve(this.projectRoot, op.originalPath);
     const RenamePath = path.resolve(this.projectRoot, op.renamePath);
+    const securityOptions = { projectRoot: this.projectRoot };
 
-    this.safetyChecks(originalPath);
-    this.safetyChecks(RenamePath);
+    filePathSafetyChecks(originalPath, securityOptions);
+    filePathSafetyChecks(RenamePath, securityOptions);
 
     this.logger.debug('start rename: ' + originalPath);
     this.logger.debug('change to name: ' + RenamePath);
@@ -205,50 +209,5 @@ export class FileOperationManager {
 
     // this.logger.log('Extracted operations:', operations);
     return operations;
-  }
-
-  /**
-   * Performs security checks on a given file path to ensure it is within
-   * the allowed project scope and doesn’t target restricted files.
-   *
-   * @param filePath - The path to be checked.
-   * @throws If the path is outside the project root or is otherwise disallowed.
-   */
-  private safetyChecks(filePath: string) {
-    // Prevent path traversal attacks
-    if (!filePath.startsWith(this.projectRoot)) {
-      throw new Error('Unauthorized file access detected');
-    }
-
-    // Prevent package.json modifications
-    if (filePath.includes('package.json')) {
-      throw new Error('Modifying package.json requires special approval');
-    }
-
-    // Security check
-    if (!this.isPathAllowed(filePath)) {
-      throw new Error(`Attempted to access restricted path: ${filePath}`);
-    }
-
-    // Limit write anddelete write operations
-    // if (path.startsWith('src/')) {
-    //   throw new Error('Can only delete or write files in src/ directory');
-    // }
-  }
-
-  /**
-   * Checks if the targetPath is within one of the allowed paths
-   * and not in node_modules or environment files.
-   *
-   * @param targetPath - The path to check.
-   * @returns True if allowed, false otherwise.
-   */
-  private isPathAllowed(targetPath: string): boolean {
-    return this.allowedPaths.some(
-      (allowedPath) =>
-        targetPath.startsWith(allowedPath) &&
-        !targetPath.includes('node_modules') &&
-        !targetPath.includes('.env'),
-    );
   }
 }

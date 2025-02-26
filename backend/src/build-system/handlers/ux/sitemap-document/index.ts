@@ -15,17 +15,22 @@ export class UXSMDHandler implements BuildHandler<string> {
   async run(context: BuilderContext): Promise<BuildResult<string>> {
     this.logger.log('Generating UXSMD...');
 
-    // Extract project data from the context
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
     const platform = context.getGlobalContext('platform') || 'Default Platform';
+    const projectSize = context.getGlobalContext('projectSize') || 'medium';
+    const description =
+      context.getGlobalContext('description') || 'Default Description';
     const prdContent = context.getNodeData(PRDHandler);
     this.logger.debug('prd in uxsmd', prdContent);
 
-    // Generate the prompt dynamically
-    const prompt = prompts.generateUxsmdPrompt(projectName, platform);
+    const prompt = prompts.generateUxsmdPrompt(
+      projectName,
+      platform,
+      projectSize,
+      description,
+    );
 
-    // Send the prompt to the LLM server and process the response
     const uxsmdContent = await this.generateUXSMDFromLLM(
       context,
       prompt,
@@ -39,10 +44,8 @@ export class UXSMDHandler implements BuildHandler<string> {
       };
     }
 
-    // Store the generated document in the context
     context.setGlobalContext('uxsmdDocument', uxsmdContent);
 
-    // Return the generated document
     return {
       success: true,
       data: removeCodeBlockFences(uxsmdContent),
@@ -91,7 +94,7 @@ export class UXSMDHandler implements BuildHandler<string> {
     const uxsmdContent = await chatSyncWithClocker(
       context,
       {
-        model: 'gpt-4o-mini',
+        model: context.defaultModel || 'gpt-4o-mini',
         messages: messages,
       },
       'generateUXSMDFromLLM',
