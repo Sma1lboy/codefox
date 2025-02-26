@@ -5,6 +5,7 @@ import { SendIcon, FileUp, Sun, Moon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
+import { motion } from 'framer-motion';
 
 import { SignUpModal } from '@/components/sign-up-modal';
 import { SignInModal } from '@/components/sign-in-modal';
@@ -20,6 +21,31 @@ export default function HomePage() {
   const { isAuthorized, logout } = useAuthContext();
   const { theme, setTheme } = useTheme();
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.8,
+        ease: 'easeInOut',
+        staggerChildren: 0.3,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: 'easeOut',
+      },
+    },
+  };
+
   return (
     <>
       <nav className="w-full p-4 bg-white dark:bg-gray-800 shadow-sm">
@@ -32,7 +58,7 @@ export default function HomePage() {
               height={40}
               className="h-10 w-auto"
             />
-            <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+            <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
               CodeFox
             </span>
           </Link>
@@ -60,7 +86,7 @@ export default function HomePage() {
                 </button>
                 <button
                   onClick={() => setShowSignUp(true)}
-                  className="px-4 py-2 rounded-md bg-indigo-500 text-white hover:text-indigo-400 transition-colors"
+                  className="px-4 py-2 rounded-md bg-primary-500 text-white hover:bg-primary-600 transition-colors"
                 >
                   Sign Up
                 </button>
@@ -68,7 +94,7 @@ export default function HomePage() {
             ) : (
               <button
                 onClick={logout}
-                className="px-4 py-2 rounded-md bg-red-500 text-white hover:bg-red-600 transition-colors"
+                className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
               >
                 Logout
               </button>
@@ -77,8 +103,13 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <div className="flex flex-col items-center pt-20">
-        <div className="mb-6">
+      <motion.div
+        className="flex flex-col items-center pt-20"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
+        <motion.div className="mb-6" variants={itemVariants}>
           <Image
             src="/codefox.svg"
             alt="CodeFox Logo"
@@ -86,25 +117,25 @@ export default function HomePage() {
             height={120}
             className="h-32 w-auto"
           />
-        </div>
+        </motion.div>
 
-        <div className="mb-16">
-          <p className="text-2xl font-medium text-indigo-600 dark:text-indigo-400">
+        <motion.div className="mb-16" variants={itemVariants}>
+          <p className="text-2xl font-medium text-primary-600 dark:text-primary-400">
             CodeFox makes everything better
           </p>
-        </div>
+        </motion.div>
 
-        <div className="w-full max-w-3xl px-4">
+        <motion.div className="w-full max-w-3xl px-4" variants={itemVariants}>
           <div className="relative">
             <input
               type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Type your message..."
-              className="w-full py-24 px-6 pr-12 text-lg border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 align-top pt-6"
+              className="w-full py-24 px-6 pr-12 text-lg border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 align-top pt-6"
             />
             <button
-              className="absolute right-3 bottom-3 p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors"
+              className="absolute right-3 bottom-3 p-3 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors"
               aria-label="Send message"
               onClick={() => {
                 if (!isAuthorized) {
@@ -117,14 +148,14 @@ export default function HomePage() {
               <SendIcon size={20} />
             </button>
             <button
-              className="absolute left-3 bottom-3 flex items-center gap-2 text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
+              className="absolute left-3 bottom-3 flex items-center gap-2 text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
               aria-label="Upload file"
             >
               <FileUp size={20} />
               <span>Upload file</span>
             </button>
           </div>
-        </div>
+        </motion.div>
 
         <AuthChoiceModal
           isOpen={showAuthChoice}
@@ -140,7 +171,7 @@ export default function HomePage() {
         />
         <SignUpModal isOpen={showSignUp} onClose={() => setShowSignUp(false)} />
         <SignInModal isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
-      </div>
+      </motion.div>
     </>
   );
 }

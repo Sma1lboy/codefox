@@ -27,6 +27,7 @@ export default function ChatList({
 }: ChatListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
+
   const [editingMessageId, setEditingMessageId] = React.useState<string | null>(
     null
   );
@@ -38,6 +39,10 @@ export default function ChatList({
     }, 100);
     return () => clearTimeout(timeoutId);
   }, [messages]);
+
+  if (!user) {
+    return <></>;
+  }
 
   const handleEditStart = (message: Message) => {
     setEditingMessageId(message.id);
