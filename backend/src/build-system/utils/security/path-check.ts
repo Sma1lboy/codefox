@@ -14,7 +14,7 @@ export interface SecurityCheckOptions {
  * @param options - The security options, including projectRoot and allowedPaths.
  * @throws If the path is outside the project root or is otherwise disallowed.
  */
-export function FilePathSafetyChecks(
+export function filePathSafetyChecks(
   filePath: string,
   options: SecurityCheckOptions,
 ) {

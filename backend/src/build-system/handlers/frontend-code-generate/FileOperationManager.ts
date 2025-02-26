@@ -14,7 +14,7 @@ import { Logger } from '@nestjs/common';
 import { writeFile, rename, readFile } from 'fs/promises';
 import path from 'path';
 import { removeCodeBlockFences } from 'src/build-system/utils/strings';
-import { FilePathSafetyChecks } from 'src/build-system/utils/security/path-check';
+import { filePathSafetyChecks } from 'src/build-system/utils/security/path-check';
 
 export interface FileOperation {
   action: 'write' | 'rename' | 'read';
@@ -95,7 +95,7 @@ export class FileOperationManager {
   private async handleWrite(op: FileOperation): Promise<void> {
     const originalPath = path.resolve(this.projectRoot, op.originalPath);
     const securityOptions = { projectRoot: this.projectRoot };
-    FilePathSafetyChecks(originalPath, securityOptions);
+    filePathSafetyChecks(originalPath, securityOptions);
 
     this.logger.debug('start update file to: ' + originalPath);
     const parseCode = removeCodeBlockFences(op.code);
@@ -112,7 +112,7 @@ export class FileOperationManager {
     try {
       const originalPath = path.resolve(this.projectRoot, op.originalPath);
       const securityOptions = { projectRoot: this.projectRoot };
-      FilePathSafetyChecks(originalPath, securityOptions);
+      filePathSafetyChecks(originalPath, securityOptions);
 
       this.logger.debug(`Reading file: ${originalPath}`);
 
@@ -140,8 +140,8 @@ export class FileOperationManager {
     const RenamePath = path.resolve(this.projectRoot, op.renamePath);
     const securityOptions = { projectRoot: this.projectRoot };
 
-    FilePathSafetyChecks(originalPath, securityOptions);
-    FilePathSafetyChecks(RenamePath, securityOptions);
+    filePathSafetyChecks(originalPath, securityOptions);
+    filePathSafetyChecks(RenamePath, securityOptions);
 
     this.logger.debug('start rename: ' + originalPath);
     this.logger.debug('change to name: ' + RenamePath);
