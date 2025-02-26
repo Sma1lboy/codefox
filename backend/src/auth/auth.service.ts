@@ -77,7 +77,7 @@ export class AuthService {
     }
 
     const accessToken = this.jwtService.sign(
-      { sub: user.id, email: user.email },
+      { userId: user.id, email: user.email },
       { expiresIn: '30m' },
     );
 
@@ -385,7 +385,7 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(
       {
-        sub: existingToken.user.id,
+        userId: existingToken.user.id,
         email: existingToken.user.email,
       },
       { expiresIn: '30m' },

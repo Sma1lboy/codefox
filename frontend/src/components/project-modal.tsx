@@ -1,7 +1,4 @@
 import React, { useContext, useState } from 'react';
-import { useMutation } from '@apollo/client';
-import { gql } from '@apollo/client';
-import { CREATE_PROJECT } from '@/graphql/request';
 import { ProjectContext, ProjectProvider } from './code-engine/project-context';
 
 export interface Project {

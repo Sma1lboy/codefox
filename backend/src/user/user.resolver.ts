@@ -15,6 +15,7 @@ import {
   GetAuthToken,
   GetUserIdFromToken,
 } from 'src/decorator/get-auth-token.decorator';
+import { Logger } from '@nestjs/common';
 
 @ObjectType()
 class LoginResponse {
@@ -53,6 +54,7 @@ export class UserResolver {
 
   @Query(() => User)
   async me(@GetUserIdFromToken() id: string): Promise<User> {
+    Logger.log('me id:', id);
     return this.userService.getUser(id);
   }
 }

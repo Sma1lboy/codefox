@@ -1,4 +1,4 @@
-'use client'; // Only needed if you import this directly in a client component
+'use client';
 
 import {
   ApolloClient,
@@ -7,57 +7,46 @@ import {
   ApolloLink,
   from,
   split,
-  gql,
 } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
-import { setContext } from '@apollo/client/link/context';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
-import { getMainDefinition, Observable } from '@apollo/client/utilities';
+import { getMainDefinition } from '@apollo/client/utilities';
 import { LocalStore } from '@/lib/storage';
 
-// 1. GraphQL HTTP Link
+// HTTP Link
 const httpLink = new HttpLink({
   uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:8080/graphql',
   headers: {
+    'Content-Type': 'application/json',
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Allow-Origin': '*',
   },
 });
 
-// 2. Auth Link (attach tokens to headers)
-const authLink = setContext((_, { headers }) => {
-  if (typeof window === 'undefined') {
-    return { headers };
-  }
-  const accessToken = localStorage.getItem(LocalStore.accessToken);
-  const refreshToken = localStorage.getItem(LocalStore.refreshToken);
-  return {
-    headers: {
-      ...headers,
-      authorization: accessToken ? `Bearer ${accessToken}` : '',
-      'x-refresh-token': refreshToken || '',
-    },
-  };
-});
-
-// 3. Conditionally create WebSocket Link for subscriptions
+// WebSocket Link (only in browser environment)
 let wsLink: GraphQLWsLink | undefined;
 if (typeof window !== 'undefined') {
   wsLink = new GraphQLWsLink(
     createClient({
       url:
         process.env.NEXT_PUBLIC_GRAPHQL_WS_URL || 'ws://localhost:8080/graphql',
+      connectionParams: () => {
+        const token = localStorage.getItem(LocalStore.accessToken);
+        return token ? { Authorization: `Bearer ${token}` } : {};
+      },
     })
   );
 }
 
-// 4. Logging Middleware (for debugging requests/responses)
+// Logging Middleware
 const requestLoggingMiddleware = new ApolloLink((operation, forward) => {
+  const context = operation.getContext();
   console.log('GraphQL Request:', {
     operationName: operation.operationName,
     variables: operation.variables,
     query: operation.query.loc?.source.body,
+    headers: context.headers,
   });
   return forward(operation).map((response) => {
     console.log('GraphQL Response:', response.data);
@@ -65,91 +54,38 @@ const requestLoggingMiddleware = new ApolloLink((operation, forward) => {
   });
 });
 
-// 6. Define the Refresh Token Mutation (as a string or gql tag)
-const REFRESH_TOKEN_MUTATION = gql`
-  mutation RefreshToken($refreshToken: String!) {
-    refreshToken(refreshToken: $refreshToken) {
-      accessToken
-      refreshToken
-    }
-  }
-`;
-
-// 7. Error Link: Direct Fetch for Refresh Token
-const errorLink = onError(
-  ({ graphQLErrors, networkError, operation, forward }) => {
-    // Check if "Unauthorized" error is present
-    if (
-      typeof window !== 'undefined' &&
-      graphQLErrors &&
-      graphQLErrors.some((err) => err.message.includes('Unauthorized'))
-    ) {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (refreshToken) {
-        // Create a new Observable that handles the token refresh
-        return new Observable((observer) => {
-          fetch(
-            process.env.NEXT_PUBLIC_GRAPHQL_URL ||
-              'http://localhost:8080/graphql',
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                query: REFRESH_TOKEN_MUTATION.loc?.source.body,
-                variables: { refreshToken },
-              }),
-            }
-          )
-            .then((res) => res.json())
-            .then(({ data }) => {
-              if (!data || !data.refreshToken) {
-                throw new Error('Refresh token failed');
-              }
-
-              localStorage.setItem(
-                LocalStore.accessToken,
-                data.refreshToken.accessToken
-              );
-              localStorage.setItem(
-                LocalStore.refreshToken,
-                data.refreshToken.refreshToken
-              );
-
-              // Update the original operation's headers
-              operation.setContext(({ headers = {} }) => ({
-                headers: {
-                  ...headers,
-                  authorization: `Bearer ${data.refreshToken.accessToken}`,
-                },
-              }));
-
-              // Retry the original operation
-              forward(operation).subscribe({
-                next: (result) => observer.next(result),
-                error: (err) => observer.error(err),
-                complete: () => observer.complete(),
-              });
-            })
-            .catch((err) => {
-              console.error('Refresh token error:', err);
-              // Clear tokens, redirect or show sign-in modal
-              localStorage.removeItem(LocalStore.accessToken);
-              localStorage.removeItem(LocalStore.refreshToken);
-              observer.error(err);
-            });
-        });
-      }
-    }
-
-    // If no refresh token or not "Unauthorized", just continue
-    if (networkError) {
-      console.error(`[Network error]: ${networkError}`);
-    }
+// Auth Middleware
+const authMiddleware = new ApolloLink((operation, forward) => {
+  if (typeof window === 'undefined') {
     return forward(operation);
   }
-);
+  const token = localStorage.getItem(LocalStore.accessToken);
+  if (token) {
+    operation.setContext(({ headers = {} }) => ({
+      headers: {
+        ...headers,
+        Authorization: `Bearer ${token}`,
+      },
+    }));
+  }
+  return forward(operation);
+});
 
-// 8. Split Link: Subscriptions vs. Queries
+// Error Link
+const errorLink = onError(({ graphQLErrors, networkError }) => {
+  if (graphQLErrors) {
+    graphQLErrors.forEach(({ message, locations, path }) => {
+      console.error(
+        `[GraphQL error]: Message: ${message}, Location: ${JSON.stringify(locations)}, Path: ${path}`
+      );
+    });
+  }
+  if (networkError) {
+    console.error(`[Network error]: ${networkError}`);
+  }
+});
+
+// Split traffic based on operation type
 const splitLink = wsLink
   ? split(
       ({ query }) => {
@@ -160,11 +96,11 @@ const splitLink = wsLink
         );
       },
       wsLink,
-      from([errorLink, requestLoggingMiddleware, authLink, httpLink])
+      from([errorLink, requestLoggingMiddleware, authMiddleware, httpLink])
     )
-  : from([errorLink, requestLoggingMiddleware, authLink, httpLink]);
+  : from([errorLink, requestLoggingMiddleware, authMiddleware, httpLink]);
 
-// 9. Create the Unified Apollo Client
+// Create Apollo Client
 export const client = new ApolloClient({
   link: splitLink,
   cache: new InMemoryCache(),

@@ -1,7 +1,8 @@
-// components/MainLayout.tsx
 'use client';
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useAuthContext } from '@/app/providers/AuthProvider';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -14,19 +15,21 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { ChatSideBar } from '@/components/sidebar';
 
 import ProjectModal from '@/components/project-modal';
-import { GET_USER_PROJECTS } from '@/utils/requests';
 import { useQuery } from '@apollo/client';
 import {
   ProjectContext,
   ProjectProvider,
 } from '@/components/code-engine/project-context';
 import { useChatList } from '@/app/hooks/useChatList';
+import { GET_USER_PROJECTS } from '@/graphql/request';
 
 export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+  const { isAuthorized, isChecking } = useAuthContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -55,6 +58,18 @@ export default function MainLayout({
     window.addEventListener('resize', checkScreenWidth);
     return () => window.removeEventListener('resize', checkScreenWidth);
   }, []);
+
+  if (isChecking) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
+  }
 
   return (
     <main className="flex h-[calc(100dvh)] flex-col items-center">

@@ -13,11 +13,7 @@ import {
   ResizableHandle,
 } from '@/components/ui/resizable';
 import { CodeEngine } from '@/components/code-engine/code-engine';
-import {
-  CREATE_CHAT,
-  CREATE_PROJECT,
-  GET_CHAT_HISTORY,
-} from '@/graphql/request';
+import { GET_CHAT_HISTORY } from '@/graphql/request';
 import { useMutation, useQuery } from '@apollo/client';
 import { toast } from 'sonner';
 import { EventEnum } from '@/components/enum';

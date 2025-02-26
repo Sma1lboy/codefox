@@ -8,9 +8,9 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeDisplayBlock from '../code-display-block';
 import { Message } from '../types';
-import { useAuth } from '@/app/hooks/useAuth';
 import { Button } from '../ui/button';
 import { Pencil } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ChatListProps {
   messages: Message[];

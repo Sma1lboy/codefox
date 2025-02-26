@@ -112,7 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const newAccess = data.refreshToken.accessToken;
         const newRefresh = data.refreshToken.refreshToken;
 
-        sessionStorage.setItem(LocalStore.accessToken, newAccess);
+        localStorage.setItem(LocalStore.accessToken, newAccess);
         if (newRefresh) {
           localStorage.setItem(LocalStore.refreshToken, newRefresh);
         }

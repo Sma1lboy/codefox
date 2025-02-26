@@ -8,10 +8,13 @@ import React, {
   useEffect,
 } from 'react';
 import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
-import { CREATE_PROJECT, GET_CHAT_DETAILS } from '@/graphql/request';
 import { Project } from '../project-modal';
-import { GET_USER_PROJECTS } from '@/utils/requests';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
+import {
+  CREATE_PROJECT,
+  GET_CHAT_DETAILS,
+  GET_USER_PROJECTS,
+} from '@/graphql/request';
 
 export interface ProjectContextType {
   projects: Project[];
@@ -88,11 +91,6 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   });
 
   const [createProject] = useMutation(CREATE_PROJECT, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${validateToken}`,
-      },
-    },
     onCompleted: (data) => {
       setProjects((prev) =>
         prev.some((p) => p.id === data.createProject.id)
@@ -105,7 +103,6 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   const [getChatDetail] = useLazyQuery(GET_CHAT_DETAILS, {
     fetchPolicy: 'network-only',
-    context: { Authorization: `Bearer ${validateToken}` },
   });
 
   const createNewProject = useCallback(
