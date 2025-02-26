@@ -97,7 +97,9 @@ async function buildAndRunDocker(
         const runCommand = `docker run -d --name ${containerName} -l "traefik.enable=true" \
             -l "traefik.http.routers.${subdomain}.rule=Host(\\"${domain}\\")" \
             -l "traefik.http.services.${subdomain}.loadbalancer.server.port=5173" \
-            --network=traefik_network -p ${exposedPort}:5173 ${imageName}`;
+            --network=traefik_network -p ${exposedPort}:5173 \
+            -v "${directory}:/app" \
+            ${imageName}`;
         console.log(runCommand);
 
         exec(runCommand, (runErr, runStdout, runStderr) => {

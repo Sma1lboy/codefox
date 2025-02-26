@@ -5,7 +5,6 @@ import * as path from 'path';
 import { UXSMSHandler } from 'src/build-system/handlers/ux/sitemap-structure';
 import { UXDMDHandler } from 'src/build-system/handlers/ux/datamap';
 import { BackendRequirementHandler } from 'src/build-system/handlers/backend/requirements-document';
-import { FileFAHandler } from 'src/build-system/handlers/file-manager/file-arch';
 import { BuilderContext, GlobalDataKeys } from 'src/build-system/context';
 import { v4 as uuidv4 } from 'uuid'; // UUID generator for unique identifiers
 import {
@@ -37,18 +36,20 @@ export class MockBuilderContext extends BuilderContext {
     const backendRequirements = this.readMockFile(
       path.join(__dirname, 'test_files', 'Backend_Requirements_Node.md'),
     );
-    const fileStructure = this.readMockFile(
-      path.join(__dirname, 'test_files', 'File_Structure_Generation.md'),
-    );
-    const fileArchitecture = this.readMockFile(
-      path.join(__dirname, 'test_files', 'File_Arch.md'),
-    );
 
+    //To do integrate FileStructureAndArchitectureHandler
+    const fileStructureAndArchitectureHandler = this.readMockFile(
+      path.join(__dirname, 'test_files', 'File_Structure_Architecture_Node.md'),
+    );
     this.mockNodeData.set(UXSMSHandler, uxSitemapStructure);
     this.mockNodeData.set(UXDMDHandler, uxDataMapDocument);
     this.mockNodeData.set(BackendRequirementHandler, backendRequirements);
-    this.mockNodeData.set(FileFAHandler, fileArchitecture);
-    this.buildVirtualDirectory(fileStructure);
+    // this.mockNodeData.set(
+    //   fileStructureAndArchitectureHandler,
+    //   FileStructureAndArchitectureHandler,
+    // );
+
+    // this.buildVirtualDirectory(fileStructure);
 
     copyProjectTemplate(
       path.join(__dirname, '..', '..', '..', '..', 'template', 'react-ts'),

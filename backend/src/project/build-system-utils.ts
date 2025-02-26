@@ -3,8 +3,6 @@ import { BackendFileReviewHandler } from 'src/build-system/handlers/backend/file
 import { BackendRequirementHandler } from 'src/build-system/handlers/backend/requirements-document';
 import { DBRequirementHandler } from 'src/build-system/handlers/database/requirements-document';
 import { DBSchemaHandler } from 'src/build-system/handlers/database/schemas/schemas';
-import { FileFAHandler } from 'src/build-system/handlers/file-manager/file-arch';
-import { FileStructureHandler } from 'src/build-system/handlers/file-manager/file-structure';
 import { FrontendCodeHandler } from 'src/build-system/handlers/frontend-code-generate';
 import { PRDHandler } from 'src/build-system/handlers/product-manager/product-requirements-document/prd';
 import { ProjectInitHandler } from 'src/build-system/handlers/project-init';
@@ -15,6 +13,7 @@ import { UXSMSPageByPageHandler } from 'src/build-system/handlers/ux/sitemap-str
 import { BuildSequence } from 'src/build-system/types';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateProjectInput } from './dto/project.input';
+import { FileStructureAndArchitectureHandler } from 'src/build-system/handlers/file-manager/file-struct';
 
 export function buildProjectSequenceByProject(
   input: CreateProjectInput,
@@ -52,11 +51,8 @@ export function buildProjectSequenceByProject(
         name: 'Database Requirements Node',
       },
       {
-        handler: FileStructureHandler,
-        name: 'File Structure Generation',
-        options: {
-          projectPart: 'frontend',
-        },
+        handler: FileStructureAndArchitectureHandler,
+        name: 'File Structure and Architecture',
       },
       {
         handler: UXSMSPageByPageHandler,
@@ -65,10 +61,6 @@ export function buildProjectSequenceByProject(
       {
         handler: DBSchemaHandler,
         name: 'Database Schemas Node',
-      },
-      {
-        handler: FileFAHandler,
-        name: 'File Arch',
       },
       {
         handler: BackendRequirementHandler,
