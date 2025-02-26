@@ -1,9 +1,9 @@
-import MainLayout from './main-layout';
+import ChatLayout from '../../components/chat/chat-layout';
 
 export default function Layout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <MainLayout>{children}</MainLayout>;
+  return <ChatLayout>{children}</ChatLayout>;
 }

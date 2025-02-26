@@ -6,18 +6,18 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from '@/components/ui/resizable';
-import { CodeEngine } from '@/components/code-engine/code-engine';
 import { GET_CHAT_HISTORY } from '@/graphql/request';
 import { useQuery } from '@apollo/client';
 import { toast } from 'sonner';
 import { EventEnum } from '@/components/enum';
 import EditUsernameForm from '@/components/edit-username-form';
-import ChatContent from '@/components/chat/chat';
+import ChatContent from '@/components/chat/chat-panel';
 import { useModels } from '@/hooks/useModels';
 import { useChatList } from '@/hooks/useChatList';
 import { useChatStream } from '@/hooks/useChatStream';
+import { CodeEngine } from './code-engine/code-engine';
 
-export default function Home() {
+export default function Chat() {
   // Initialize state, refs, and custom hooks
   const urlParams = new URLSearchParams(window.location.search);
   const [chatId, setChatId] = useState('');

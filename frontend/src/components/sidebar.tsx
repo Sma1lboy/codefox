@@ -18,7 +18,7 @@ import {
   SidebarFooter,
 } from './ui/sidebar';
 import { cn } from '@/lib/utils';
-import { ProjectContext } from './code-engine/project-context';
+import { ProjectContext } from './chat/code-engine/project-context';
 
 interface SidebarProps {
   setIsModalOpen: (value: boolean) => void; // Parent setter to update collapse state

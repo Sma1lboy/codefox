@@ -5,14 +5,14 @@ import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { ChatSideBar } from '@/components/sidebar';
 
-import ProjectModal from '@/components/project-modal';
+import ProjectModal from '@/components/chat/project-modal';
 import { useQuery } from '@apollo/client';
-import { ProjectProvider } from '@/components/code-engine/project-context';
 import { useChatList } from '@/hooks/useChatList';
 import { GET_USER_PROJECTS } from '@/graphql/request';
 import { useAuthContext } from '@/providers/AuthProvider';
+import { ProjectProvider } from './code-engine/project-context';
 
-export default function MainLayout({
+export default function ChatLayout({
   children,
 }: {
   children: React.ReactNode;
