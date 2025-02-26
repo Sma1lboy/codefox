@@ -33,8 +33,6 @@ export default function Home() {
   const formRef = useRef<HTMLFormElement>(null);
   const { models } = useModels();
   const [selectedModel, setSelectedModel] = useState(models[0] || 'gpt-4o');
-  const { projects, curProject, setCurProject } = useContext(ProjectContext);
-
   const { refetchChats } = useChatList();
 
   // Apollo query to fetch chat history
@@ -103,8 +101,12 @@ export default function Home() {
     );
   }
   // Render the main layout
-  return (
-    <ResizablePanelGroup direction="horizontal" className="h-full w-full">
+  return chatId ? (
+    <ResizablePanelGroup
+      direction="horizontal"
+      className="h-full w-full"
+      key="with-chat"
+    >
       <ResizablePanel
         defaultSize={50}
         minSize={20}
@@ -126,19 +128,32 @@ export default function Home() {
         />
       </ResizablePanel>
       <ResizableHandle withHandle className="hidden md:flex" />
-
-      {chatId && (
-        <ResizablePanel
-          defaultSize={50}
-          minSize={20}
-          maxSize={80}
-          className="h-full overflow-auto"
-        >
-          <div className="p-4">
-            <CodeEngine chatId={chatId} />
-          </div>
-        </ResizablePanel>
-      )}
+      <ResizablePanel
+        defaultSize={50}
+        minSize={20}
+        maxSize={80}
+        className="h-full overflow-auto"
+      >
+        <div className="p-4">
+          <CodeEngine chatId={chatId} />
+        </div>
+      </ResizablePanel>
     </ResizablePanelGroup>
+  ) : (
+    <div className="h-full w-full" key="without-chat">
+      <ChatContent
+        chatId={chatId}
+        setSelectedModel={setSelectedModel}
+        messages={messages}
+        input={input}
+        handleInputChange={handleInputChange}
+        handleSubmit={handleSubmit}
+        loadingSubmit={loadingSubmit}
+        stop={stop}
+        formRef={formRef}
+        setInput={setInput}
+        setMessages={setMessages}
+      />
+    </div>
   );
 }
