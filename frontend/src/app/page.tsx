@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sun, Moon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,12 +13,14 @@ import { AuthChoiceModal } from '@/components/auth-choice-modal';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { ProjectsSection } from '@/components/root/ProjectsSection';
 import { PromptForm } from '@/components/root/prompt-form';
+import FloatingNavbar from '@/components/root/nav';
 
 export default function HomePage() {
   const [message, setMessage] = useState('');
   const [showSignUp, setShowSignUp] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
   const [showAuthChoice, setShowAuthChoice] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
 
   const { isAuthorized, logout } = useAuthContext();
   const { theme, setTheme } = useTheme();
@@ -28,6 +30,7 @@ export default function HomePage() {
     visible: {
       opacity: 1,
       transition: {
+        delay: 0.4,
         duration: 0.8,
         ease: 'easeInOut',
         staggerChildren: 0.3,
@@ -47,71 +50,96 @@ export default function HomePage() {
     },
   };
 
-  // Function to handle prompt submission
   const handleSubmit = () => {
     console.log('Sending message:', message);
     // Additional submission logic here
   };
 
+  // Navbar tab content
+  const navTabs = [
+    {
+      label: 'Home',
+      content: null,
+    },
+    {
+      label: 'Features',
+      content: null,
+    },
+    {
+      label: 'About',
+      content: null,
+    },
+    {
+      label: 'Contact',
+      content: null,
+    },
+  ];
+
+  const logoElement = (
+    <Image
+      src="/codefox.svg"
+      alt="CodeFox Logo"
+      width={40}
+      height={40}
+      className="h-10 w-auto"
+    />
+  );
+
+  // Auth buttons to pass to navbar
+  const authButtons = (
+    <>
+      {/* Theme toggle button */}
+      <button
+        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+        aria-label="Toggle theme"
+      >
+        {theme === 'dark' ? (
+          <Sun className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+        ) : (
+          <Moon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+        )}
+      </button>
+
+      {/* Auth buttons */}
+      {!isAuthorized ? (
+        <>
+          <button
+            onClick={() => setShowSignIn(true)}
+            className="px-4 py-2 rounded-md bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 transition-colors"
+          >
+            Sign In
+          </button>
+          <button
+            onClick={() => setShowSignUp(true)}
+            className="px-4 py-2 rounded-md bg-primary-500 text-white hover:bg-primary-600 transition-colors"
+          >
+            Sign Up
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={logout}
+          className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+        >
+          Logout
+        </button>
+      )}
+    </>
+  );
+
   return (
     <>
-      <nav className="w-full p-4 bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <Link href="/" className="flex items-center space-x-2">
-            <Image
-              src="/codefox.svg"
-              alt="CodeFox Logo"
-              width={40}
-              height={40}
-              className="h-10 w-auto"
-            />
-            <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-              CodeFox
-            </span>
-          </Link>
-
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? (
-                <Sun className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-              ) : (
-                <Moon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-              )}
-            </button>
-
-            {!isAuthorized ? (
-              <>
-                <button
-                  onClick={() => setShowSignIn(true)}
-                  className="px-4 py-2 rounded-md bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 transition-colors"
-                >
-                  Sign In
-                </button>
-                <button
-                  onClick={() => setShowSignUp(true)}
-                  className="px-4 py-2 rounded-md bg-primary-500 text-white hover:bg-primary-600 transition-colors"
-                >
-                  Sign Up
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={logout}
-                className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
-              >
-                Logout
-              </button>
-            )}
-          </div>
-        </div>
-      </nav>
+      {/* Floating Navbar */}
+      <FloatingNavbar
+        tabs={navTabs}
+        logo={logoElement}
+        name="CodeFox"
+        authButtons={authButtons}
+      />
 
       <motion.div
-        className="flex flex-col items-center pt-20"
+        className="flex flex-col items-center pt-28" // Increased padding to accommodate floating navbar
         initial="hidden"
         animate="visible"
         variants={containerVariants}
@@ -172,6 +200,22 @@ export default function HomePage() {
         <SignUpModal isOpen={showSignUp} onClose={() => setShowSignUp(false)} />
         <SignInModal isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
       </motion.div>
+
+      {/* Add this to your global CSS for the subtle pulse animation */}
+      <style jsx global>{`
+        .animate-pulse-subtle {
+          animation: pulse-subtle 2s infinite;
+        }
+        @keyframes pulse-subtle {
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.85;
+          }
+        }
+      `}</style>
     </>
   );
 }
