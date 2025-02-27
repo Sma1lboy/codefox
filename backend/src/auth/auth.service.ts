@@ -8,7 +8,6 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { compare, hash } from 'bcrypt';
 import { LoginUserInput } from 'src/user/dto/login-user.input';
 import { RegisterUserInput } from 'src/user/dto/register-user.input';
 import { User } from 'src/user/user.model';
@@ -17,6 +16,10 @@ import { CheckTokenInput } from './dto/check-token.input';
 import { JwtCacheService } from 'src/auth/jwt-cache.service';
 import { Menu } from './menu/menu.model';
 import { Role } from './role/role.model';
+import { RefreshToken } from './refresh-token/refresh-token.model';
+import { randomUUID } from 'crypto';
+import { compare, hash } from 'bcrypt';
+import { RefreshTokenResponse } from './auth.resolver';
 
 @Injectable()
 export class AuthService {
@@ -30,17 +33,20 @@ export class AuthService {
     private menuRepository: Repository<Menu>,
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
+    @InjectRepository(RefreshToken)
+    private refreshTokenRepository: Repository<RefreshToken>,
   ) {}
 
   async register(registerUserInput: RegisterUserInput): Promise<User> {
     const { username, email, password } = registerUserInput;
 
+    // Check for existing email
     const existingUser = await this.userRepository.findOne({
-      where: [{ username }, { email }],
+      where: { email },
     });
 
     if (existingUser) {
-      throw new ConflictException('Username or email already exists');
+      throw new ConflictException('Email already exists');
     }
 
     const hashedPassword = await hash(password, 10);
@@ -53,13 +59,11 @@ export class AuthService {
     return this.userRepository.save(newUser);
   }
 
-  async login(
-    loginUserInput: LoginUserInput,
-  ): Promise<{ accessToken: string }> {
-    const { username, password } = loginUserInput;
+  async login(loginUserInput: LoginUserInput): Promise<RefreshTokenResponse> {
+    const { email, password } = loginUserInput;
 
     const user = await this.userRepository.findOne({
-      where: [{ username: username }],
+      where: { email },
     });
 
     if (!user) {
@@ -72,11 +76,32 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { userId: user.id, username: user.username };
-    const accessToken = this.jwtService.sign(payload);
-    this.jwtCacheService.storeToken(accessToken);
+    const accessToken = this.jwtService.sign(
+      { userId: user.id, email: user.email },
+      { expiresIn: '30m' },
+    );
 
-    return { accessToken };
+    const refreshTokenEntity = await this.createRefreshToken(user);
+    this.jwtCacheService.storeAccessToken(refreshTokenEntity.token);
+
+    return {
+      accessToken,
+      refreshToken: refreshTokenEntity.token,
+    };
+  }
+
+  private async createRefreshToken(user: User): Promise<RefreshToken> {
+    const token = randomUUID();
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+
+    const refreshToken = this.refreshTokenRepository.create({
+      user,
+      token,
+      expiresAt: new Date(Date.now() + sevenDays), // 7 days
+    });
+
+    await this.refreshTokenRepository.save(refreshToken);
+    return refreshToken;
   }
 
   async validateToken(params: CheckTokenInput): Promise<boolean> {
@@ -89,18 +114,20 @@ export class AuthService {
     }
   }
   async logout(token: string): Promise<boolean> {
-    Logger.log('logout token', token);
     try {
       await this.jwtService.verifyAsync(token);
+      const refreshToken = await this.refreshTokenRepository.findOne({
+        where: { token },
+      });
+
+      if (refreshToken) {
+        await this.refreshTokenRepository.remove(refreshToken);
+      }
+
+      return true;
     } catch (error) {
       return false;
     }
-
-    if (!(await this.jwtCacheService.isTokenStored(token))) {
-      return false;
-    }
-    this.jwtCacheService.removeToken(token);
-    return true;
   }
 
   async assignMenusToRole(roleId: string, menuIds: string[]): Promise<Role> {
@@ -338,6 +365,37 @@ export class AuthService {
 
     return {
       menus: userMenus,
+    };
+  }
+
+  /**
+   * refresh access token base on refresh token.
+   * @param refreshToken refresh token
+   * @returns return new access token and refresh token
+   */
+  async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
+    const existingToken = await this.refreshTokenRepository.findOne({
+      where: { token: refreshToken },
+      relations: ['user'],
+    });
+
+    if (!existingToken || existingToken.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const accessToken = this.jwtService.sign(
+      {
+        userId: existingToken.user.id,
+        email: existingToken.user.email,
+      },
+      { expiresIn: '30m' },
+    );
+
+    this.jwtCacheService.storeAccessToken(accessToken);
+
+    return {
+      accessToken,
+      refreshToken: refreshToken,
     };
   }
 }

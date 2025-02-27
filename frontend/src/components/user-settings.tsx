@@ -15,10 +15,10 @@ import {
 } from '@/components/ui/avatar';
 import { GearIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, memo } from 'react';
-import { EventEnum } from './enum';
+import { EventEnum } from '../const/EventEnum';
 
 interface UserSettingsProps {
   isSimple: boolean;
@@ -31,8 +31,9 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
 
   const handleLogout = useMemo(() => {
     return () => {
+      router.push('/');
+      // router.push('/login');
       logout();
-      router.push('/login');
     };
   }, [logout, router]);
 
