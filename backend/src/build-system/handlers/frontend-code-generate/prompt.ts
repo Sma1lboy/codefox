@@ -26,6 +26,11 @@ ${theme}
   10. Mock the response if the API returns an empty or undefined value, and you don't need to explicitly show that it is mock data.
   11. Write EVERY CODE DETAIL, DON'T LEAVE TODO.
   12. Image Assets: If your implementation requires any images except some button logo, you can use placeholder image URLs from https://picsum.photos/<width>/<height>. Note that the width and height values (e.g., 500/300) are adjustable as needed.
+  13. RESPONSIVE DESIGN: Ensure all components are fully responsive:
+     - The main container and all top-level components MUST use responsive design principles
+     - Use responsive prefixes (sm:, md:, lg:, xl:, 2xl:) for breakpoints
+     - Use flex or grid layouts with appropriate responsive settings
+     - Ensure text is readable across all device sizes
 
 ## Library:
   "react-router": "^6",
@@ -169,6 +174,7 @@ Available operations:
     Not assignable to parameter of type → Use the READ tool if you dont have enough information to fix.
 
 **Output format:**
+Return only the JSON object wrapped in \`<GENERATE></GENERATE>\` tags.
 To keep the structure consistent, other operations remain single-action:
 
 1. Read File
@@ -204,6 +210,8 @@ If a file needs to be renamed:
     }
   }
 }
+
+Do not forget <GENERATE></GENERATE> tags.
   `;
 }
 
