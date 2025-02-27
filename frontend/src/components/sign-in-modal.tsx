@@ -1,7 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,11 +31,9 @@ interface SignInModalProps {
 }
 
 export function SignInModal({ isOpen, onClose }: SignInModalProps) {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   // Destructure login from our AuthContext
   const { login } = useAuthContext();
 
@@ -73,9 +76,12 @@ export function SignInModal({ isOpen, onClose }: SignInModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] fixed top-[50%] left-[50%] transform -translate-x-[50%] -translate-y-[50%] p-0">
-        {/* Invisible but accessible DialogTitle */}
+        {/* Invisible but accessible DialogTitle and Description */}
         <VisuallyHidden>
           <DialogTitle>Sign In</DialogTitle>
+          <DialogDescription>
+            Sign in to your account by entering your credentials
+          </DialogDescription>
         </VisuallyHidden>
 
         <BackgroundGradient className="rounded-[22px] p-4 bg-white dark:bg-zinc-900">

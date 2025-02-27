@@ -1,6 +1,11 @@
 'use client';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +19,7 @@ import {
 import { useMutation } from '@apollo/client';
 import { REGISTER_USER } from '@/graphql/mutations/auth';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export function SignUpModal({
   isOpen,
@@ -69,10 +74,13 @@ export function SignUpModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] fixed top-[50%] left-[50%] transform -translate-x-[50%] -translate-y-[50%]">
-        {/* Invisible but accessible DialogTitle */}
+      <DialogContent className="sm:max-w-[425px] fixed top-[50%] left-[50%] transform -translate-x-[50%] -translate-y-[50%] p-0">
+        {/* Invisible but accessible DialogTitle and Description */}
         <VisuallyHidden>
           <DialogTitle>Sign Up</DialogTitle>
+          <DialogDescription>
+            Create an account by entering your information below
+          </DialogDescription>
         </VisuallyHidden>
 
         <BackgroundGradient className="rounded-[22px] p-4 bg-white dark:bg-zinc-900">
