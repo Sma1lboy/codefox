@@ -38,6 +38,7 @@ input ChatInputType {
   chatId: String!
   message: String!
   model: String!
+  role: String!
 }
 
 input CheckTokenInput {
@@ -98,6 +99,8 @@ type Mutation {
   deleteProject(projectId: String!): Boolean!
   login(input: LoginUserInput!): LoginResponse!
   registerUser(input: RegisterUserInput!): User!
+  saveMessage(input: ChatInputType!): Boolean!
+  triggerAgentChatStream(input: ChatInputType!): String!
   triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
 }
@@ -141,6 +144,7 @@ type Query {
   getAvailableModelTags: [String!]
   getChatDetails(chatId: String!): Chat
   getChatHistory(chatId: String!): [Message!]!
+  getCurProject(chatId: String!): Project
   getHello: String!
   getProject(projectId: String!): Project!
   getUserChats: [Chat!]

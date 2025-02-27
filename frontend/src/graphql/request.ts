@@ -166,3 +166,19 @@ export const GET_CHAT_DETAILS = gql`
     }
   }
 `;
+
+export const GET_CUR_PROJECT = gql`
+  query GetCurProject($chatId: String!) {
+    getCurProject(chatId: $chatId) {
+      id
+      name
+      description
+      projectPath
+    }
+  }
+`;
+export const SAVE_MESSAGE = gql`
+  mutation SaveMessage($input: ChatInput!) {
+    saveMessage(input: $input)
+  }
+`;
