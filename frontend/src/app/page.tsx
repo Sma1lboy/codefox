@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SendIcon, FileUp, Sun, Moon } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
@@ -11,6 +11,8 @@ import { SignUpModal } from '@/components/sign-up-modal';
 import { SignInModal } from '@/components/sign-in-modal';
 import { AuthChoiceModal } from '@/components/auth-choice-modal';
 import { useAuthContext } from '@/providers/AuthProvider';
+import { ProjectsSection } from '@/components/root/ProjectsSection';
+import { PromptForm } from '@/components/root/prompt-form';
 
 export default function HomePage() {
   const [message, setMessage] = useState('');
@@ -21,7 +23,6 @@ export default function HomePage() {
   const { isAuthorized, logout } = useAuthContext();
   const { theme, setTheme } = useTheme();
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -44,6 +45,12 @@ export default function HomePage() {
         ease: 'easeOut',
       },
     },
+  };
+
+  // Function to handle prompt submission
+  const handleSubmit = () => {
+    console.log('Sending message:', message);
+    // Additional submission logic here
   };
 
   return (
@@ -120,41 +127,34 @@ export default function HomePage() {
         </motion.div>
 
         <motion.div className="mb-16" variants={itemVariants}>
-          <p className="text-2xl font-medium text-primary-600 dark:text-primary-400">
-            CodeFox makes everything better
-          </p>
+          <div className="flex flex-col items-center">
+            <p className="text-5xl font-medium text-primary-600 dark:text-primary-400 mb-3">
+              Sentence to a project in seconds.
+            </p>
+            <p className="text-xl text-gray-600 dark:text-gray-400">
+              Codefox built AI agents crew for you to create your next project
+            </p>
+          </div>
         </motion.div>
 
-        <motion.div className="w-full max-w-3xl px-4" variants={itemVariants}>
-          <div className="relative">
-            <input
-              type="text"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Type your message..."
-              className="w-full py-24 px-6 pr-12 text-lg border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 align-top pt-6"
-            />
-            <button
-              className="absolute right-3 bottom-3 p-3 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors"
-              aria-label="Send message"
-              onClick={() => {
-                if (!isAuthorized) {
-                  setShowAuthChoice(true);
-                } else {
-                  console.log('Sending message:', message);
-                }
-              }}
-            >
-              <SendIcon size={20} />
-            </button>
-            <button
-              className="absolute left-3 bottom-3 flex items-center gap-2 text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
-              aria-label="Upload file"
-            >
-              <FileUp size={20} />
-              <span>Upload file</span>
-            </button>
-          </div>
+        <motion.div className="w-full" variants={itemVariants}>
+          {/* Using the new PromptForm component */}
+          <PromptForm
+            message={message}
+            setMessage={setMessage}
+            isAuthorized={isAuthorized}
+            onSubmit={handleSubmit}
+            onAuthRequired={() => setShowAuthChoice(true)}
+          />
+        </motion.div>
+
+        <motion.div
+          className="mt-12 mb-24"
+          variants={itemVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <ProjectsSection />
         </motion.div>
 
         <AuthChoiceModal

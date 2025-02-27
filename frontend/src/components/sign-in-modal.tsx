@@ -18,6 +18,7 @@ import { LOGIN_USER } from '@/graphql/mutations/auth';
 import { toast } from 'sonner';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { useAuthContext } from '@/providers/AuthProvider';
+import { AlertCircle } from 'lucide-react';
 
 interface SignInModalProps {
   isOpen: boolean;
@@ -30,7 +31,7 @@ export function SignInModal({ isOpen, onClose }: SignInModalProps) {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Destructure setIsAuthorized from our AuthContext
+  // Destructure login from our AuthContext
   const { login } = useAuthContext();
 
   // Destructure `loading` so we can disable the button while logging in
@@ -71,7 +72,7 @@ export function SignInModal({ isOpen, onClose }: SignInModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] fixed top-[50%] left-[50%] transform -translate-x-[50%] -translate-y-[50%]">
+      <DialogContent className="sm:max-w-[425px] fixed top-[50%] left-[50%] transform -translate-x-[50%] -translate-y-[50%] p-0">
         {/* Invisible but accessible DialogTitle */}
         <VisuallyHidden>
           <DialogTitle>Sign In</DialogTitle>
@@ -88,7 +89,7 @@ export function SignInModal({ isOpen, onClose }: SignInModalProps) {
             <TextureSeparator />
             <TextureCardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
@@ -99,10 +100,10 @@ export function SignInModal({ isOpen, onClose }: SignInModalProps) {
                       setErrorMessage(null); // Clear error when user types
                     }}
                     required
-                    className="w-full px-4 py-2 rounded-md border"
+                    className="w-full"
                   />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
@@ -113,14 +114,15 @@ export function SignInModal({ isOpen, onClose }: SignInModalProps) {
                       setErrorMessage(null); // Clear error when user types
                     }}
                     required
-                    className="w-full px-4 py-2 rounded-md border"
+                    className="w-full"
                   />
                 </div>
 
                 {/* Show error message if login fails */}
                 {errorMessage && (
-                  <div className="text-red-500 text-sm text-center">
-                    {errorMessage}
+                  <div className="flex items-center gap-2 text-primary-700 dark:text-primary-400 text-sm p-2 rounded-md bg-primary-50 dark:bg-zinc-800 border border-primary-200 dark:border-primary-800">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{errorMessage}</span>
                   </div>
                 )}
 
