@@ -110,7 +110,7 @@ export const prompts = {
     switch (projectPart.toLowerCase()) {
       case 'frontend':
         roleDescription = 'an expert frontend developer';
-        includeSections = `
+        includeSections = `              
             Non-SPA Folder Structure example:
               src/
                 contexts/ - Global state management
@@ -285,15 +285,6 @@ Output Format:
    - This project uses the shadcn UI component library. 
    - Components that likely need UI elements (forms, buttons, inputs, etc.) should include appropriate shadcn component dependencies.
    - Shadcn components are imported with the syntax @/components/ui/[component-name].tsx
-   - Common shadcn components include:
-     - @/components/ui/button.tsx - For any component with buttons or call-to-actions
-     - @/components/ui/input.tsx - For forms and search fields
-     - @/components/ui/form.tsx - For complex form components
-     - @/components/ui/card.tsx - For card-based layouts
-     - @/components/ui/dialog.tsx - For modal dialogs
-     - @/components/ui/dropdown-menu.tsx - For dropdown menus
-     - @/components/ui/table.tsx - For tabular data
-     - @/components/ui/select.tsx - For select dropdowns
    - Analyze component purposes carefully to determine which shadcn components they should depend on
    - Examples:
      - A login form component should depend on form.tsx, input.tsx, and button.tsx
