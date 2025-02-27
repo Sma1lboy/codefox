@@ -156,12 +156,9 @@ export const CREATE_PROJECT = gql`
   mutation CreateProject($createProjectInput: CreateProjectInput!) {
     createProject(createProjectInput: $createProjectInput) {
       id
-      projectName
-      path
-      projectPackages {
-        id
-        content
-      }
+      title
+      createdAt
+      updatedAt
     }
   }
 `;
