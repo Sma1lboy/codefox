@@ -156,19 +156,32 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
 
           {/* Right side - Navigation tabs and auth buttons */}
           <motion.div
-            className={`flex items-center space-x-4 ${authButtonsContainerClassName}`}
+            className={`flex items-center space-x-4  ${authButtonsContainerClassName}`}
             variants={itemVariants}
           >
             {/* Navigation tabs in a container */}
             <div
-              className={`relative bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-1 shadow-md ${tabsContainerClassName}`}
+              className={`relative left-[-40px] bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-1 shadow-md ${tabsContainerClassName}`}
             >
               <div className="flex relative z-10">
                 {tabs.map((tab, index) => (
                   <Link
                     href={tab.path}
                     key={tab.key || index}
-                    onClick={() => handleTabChange(index)}
+                    onClick={(e) => {
+                      if (tab.label === 'Pricing') {
+                        e.preventDefault(); // 阻止默认跳转
+                        alert('Coming Soon'); // 显示提示
+                      } else if (tab.label === 'Codefox Journey') {
+                        e.preventDefault(); // 阻止默认跳转
+                        window.open(
+                          'https://github.com/Sma1lboy/codefox',
+                          '_blank'
+                        ); // 新标签打开 GitHub 页面
+                      } else {
+                        handleTabChange(index);
+                      }
+                    }}
                     className="focus:outline-none"
                   >
                     <div
