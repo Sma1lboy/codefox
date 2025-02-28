@@ -1,16 +1,16 @@
-"use client";
+'use client';
 import React, { useEffect, useState, useRef } from 'react';
 import { Sun, Moon } from 'lucide-react';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
-import { motion } from 'framer-motion';  // 引入 Framer Motion
+import { motion } from 'framer-motion'; // 引入 Framer Motion
 import { useAuthContext } from '@/providers/AuthProvider';
 import FloatingNavbar, { NavbarRef } from './nav';
 import { SignUpModal } from '../sign-up-modal';
 import { SignInModal } from '../sign-in-modal';
 import ChatSideBar from '@/components/sidebar';
 import { ProjectProvider } from '@/components/chat/code-engine/project-context';
-import { SidebarProvider } from '@/components/ui/sidebar'; 
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 // Define the navigation layout props
 interface NavLayoutProps {
@@ -25,10 +25,12 @@ export default function NavLayout({ children }: NavLayoutProps) {
   const [showSignIn, setShowSignIn] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
-
+  const [hideNewChat, setHideNewChat] = useState(true); // true 为隐藏, false 为显示
+  
   // Watch authentication state and trigger sidebar
   useEffect(() => {
     setShowSidebar(isAuthorized);
+    setHideNewChat(isAuthorized); // 登录后依然隐藏 New Chat
   }, [isAuthorized]);
 
   // Set up navigation tabs with paths
@@ -94,7 +96,7 @@ export default function NavLayout({ children }: NavLayoutProps) {
   );
 
   return (
-    <SidebarProvider>  
+    <SidebarProvider>
       <div className="min-h-screen flex">
         {/** Sidebar 固定在左边 */}
         {showSidebar && (
@@ -102,7 +104,7 @@ export default function NavLayout({ children }: NavLayoutProps) {
             initial={{ x: -300, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -300, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 80, damping: 20 }}
+            transition={{ type: 'spring', stiffness: 80, damping: 20 }}
             className="fixed left-0 top-0 h-full z-50"
           >
             <ProjectProvider>
@@ -114,7 +116,7 @@ export default function NavLayout({ children }: NavLayoutProps) {
                 currentChatId={''}
                 chatListUpdated={false}
                 setChatListUpdated={() => {}}
-                chats={[]} 
+                chats={[]}
                 loading={false}
                 error={null}
                 onRefetch={() => {}}
@@ -126,9 +128,9 @@ export default function NavLayout({ children }: NavLayoutProps) {
         {/** Navbar 和 Main Content 作为一个整体进行平滑移动 */}
         <motion.div
           animate={{
-            x: showSidebar ? (isCollapsed ? 80 : 250) : 0,
+            x: showSidebar ? (isCollapsed ? 80 : 250) : 100,
           }}
-          transition={{ type: "spring", stiffness: 80, damping: 20 }}
+          transition={{ type: 'spring', stiffness: 80, damping: 20 }}
           className="flex-1"
         >
           {/** 把 FloatingNavbar 和 Main Content 放在一起 */}
@@ -140,9 +142,7 @@ export default function NavLayout({ children }: NavLayoutProps) {
             authButtons={authButtons}
           />
 
-          <div className="container mx-auto pt-32 pb-24 px-6">
-            {children}
-          </div>
+          <div className="container mx-auto pt-32 pb-24 px-6">{children}</div>
         </motion.div>
       </div>
 
