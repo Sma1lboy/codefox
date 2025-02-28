@@ -36,8 +36,8 @@ export default function NavLayout({ children }: NavLayoutProps) {
   // Set up navigation tabs with paths
   const navTabs = [
     { label: 'Home', path: '/' },
-    { label: 'Features', path: '/features' },
-    { label: 'About', path: '/about' },
+    { label: 'Codefox Journey', path: '/Codefox-Journey' },
+    { label: 'Price', path: '/price' },
     { label: 'Contact', path: '/contact' },
   ];
 
@@ -155,6 +155,19 @@ export default function NavLayout({ children }: NavLayoutProps) {
 
       <SignUpModal isOpen={showSignUp} onClose={() => setShowSignUp(false)} />
       <SignInModal isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
+
+      {/* Fixed Feedback Button */}
+      <div className="fixed bottom-5 right-5 z-50">
+        <a
+          href="https://github.com/Sma1lboy/codefox/issues/new"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <button className="bg-blue-500 text-white rounded-full p-4 shadow-lg hover:bg-blue-600 transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300">
+            💬 Feedback
+          </button>
+        </a>
+      </div>
     </SidebarProvider>
   );
 }
