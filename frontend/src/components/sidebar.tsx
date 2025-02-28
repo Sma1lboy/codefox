@@ -82,34 +82,21 @@ export function ChatSideBar({
           onClick={() => setIsCollapsed(!isCollapsed)}
         />
 
-        <Button
-          onClick={handleNewChat}
-          size="setting"
-          variant="ghost"
-          className="flex justify-between w-[90%] h-14 text-sm xl:text-lg font-normal items-center ml-[5%]"
-        >
-          <Image
-            src="/codefox.svg"
-            alt="AI"
-            width={48}
-            height={48}
-            className="flex-shrink-0 dark:invert"
-          />
-          {/* Only show extra text/icons when the sidebar is expanded */}
-          {!isCollapsed && (
-            <div
-              className={cn('flex items-center', {
-                'gap-7': !isMobile,
-                'gap-4': isMobile,
-              })}
-            >
-              New chat
-              {(!isCollapsed || isMobile) && (
-                <SquarePen className="shrink-0 m-3" />
-              )}
-            </div>
-          )}
-        </Button>
+
+<div className="flex items-center justify-start w-[90%] h-14 text-sm xl:text-lg font-normal ml-[5%]">
+  <Image
+    src="/codefox.svg"
+    alt="CodeFox Logo"
+    width={48}
+    height={48}
+    className="flex-shrink-0 dark:invert"
+  />
+  {!isCollapsed && (
+    <span className="ml-3 text-xl font-semibold text-primary-500">
+      CodeFox
+    </span>
+  )}
+</div>
 
         <Button
           onClick={() => setIsModalOpen(true)}

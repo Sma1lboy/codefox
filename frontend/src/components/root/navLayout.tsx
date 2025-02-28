@@ -26,7 +26,7 @@ export default function NavLayout({ children }: NavLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [hideNewChat, setHideNewChat] = useState(true); // true 为隐藏, false 为显示
-  
+
   // Watch authentication state and trigger sidebar
   useEffect(() => {
     setShowSidebar(isAuthorized);
@@ -41,7 +41,7 @@ export default function NavLayout({ children }: NavLayoutProps) {
     { label: 'Contact', path: '/contact' },
   ];
 
-  const logoElement = (
+  const logoElement = !isAuthorized ? (
     <Image
       src="/codefox.svg"
       alt="CodeFox Logo"
@@ -49,7 +49,7 @@ export default function NavLayout({ children }: NavLayoutProps) {
       height={40}
       className="h-10 w-auto"
     />
-  );
+  ) : null;
 
   // Auth buttons to pass to navbar
   const authButtons = (
@@ -138,7 +138,7 @@ export default function NavLayout({ children }: NavLayoutProps) {
             ref={navRef}
             tabs={navTabs}
             logo={logoElement}
-            name="CodeFox"
+            name={!isAuthorized ? 'CodeFox' : ''} // 在登入状态下隐藏文字
             authButtons={authButtons}
           />
 
