@@ -156,12 +156,12 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
 
           {/* Right side - Navigation tabs and auth buttons */}
           <motion.div
-            className={`flex items-center space-x-4 ${authButtonsContainerClassName}`}
+            className={`flex items-center space-x-4  ${authButtonsContainerClassName}`}
             variants={itemVariants}
           >
             {/* Navigation tabs in a container */}
             <div
-              className={`relative bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-1 shadow-md ${tabsContainerClassName}`}
+              className={`relative left-[-40px] bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-1 shadow-md ${tabsContainerClassName}`}
             >
               <div className="flex relative z-10">
                 {tabs.map((tab, index) => (
