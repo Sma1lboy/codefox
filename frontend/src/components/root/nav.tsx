@@ -174,7 +174,10 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
                         alert('Coming Soon'); // 显示提示
                       } else if (tab.label === 'Codefox Journey') {
                         e.preventDefault(); // 阻止默认跳转
-                        window.open('https://github.com/Sma1lboy/codefox', '_blank'); // 新标签打开 GitHub 页面
+                        window.open(
+                          'https://github.com/Sma1lboy/codefox',
+                          '_blank'
+                        ); // 新标签打开 GitHub 页面
                       } else {
                         handleTabChange(index);
                       }

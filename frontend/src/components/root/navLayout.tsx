@@ -38,7 +38,6 @@ export default function NavLayout({ children }: NavLayoutProps) {
     { label: 'Home', path: '/' },
     { label: 'Codefox Journey', path: '/Codefox-Journey' },
     { label: 'Pricing', path: '/price' },
-
   ];
 
   const logoElement = !isAuthorized ? (
@@ -52,72 +51,71 @@ export default function NavLayout({ children }: NavLayoutProps) {
   ) : null;
 
   // Auth buttons to pass to navbar
- // Auth buttons to pass to navbar
-const authButtons = (
-  <div
-    className={`flex items-center space-x-4 transition-transform duration-300 ${
-      isAuthorized ? '-translate-x-12' : ''
-    }`}
-  >
-    {/* Theme Toggle Button */}
-    <button
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-      className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-      aria-label="Toggle theme"
+  // Auth buttons to pass to navbar
+  const authButtons = (
+    <div
+      className={`flex items-center space-x-4 transition-transform duration-300 ${
+        isAuthorized ? '-translate-x-12' : ''
+      }`}
     >
-      {theme === 'dark' ? (
-        <Sun className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-      ) : (
-        <Moon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-      )}
-    </button>
-
-    {/* GitHub Icon Button */}
-    <a
-      href="https://github.com/Sma1lboy/codefox"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-      aria-label="GitHub"
-    >
-      <Image
-        src="/images/github.svg"
-        alt="GitHub"
-        width={24}
-        height={24}
-        className="h-6 w-6"
-      />
-    </a>
-
-    {!isAuthorized ? (
-      <>
-        <button
-          onClick={() => setShowSignIn(true)}
-          className="px-4 py-2 rounded-md bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 transition-colors"
-        >
-          Sign In
-        </button>
-        <button
-          onClick={() => setShowSignUp(true)}
-          className="px-4 py-2 rounded-md bg-primary-500 text-white hover:bg-primary-600 transition-colors"
-        >
-          Sign Up
-        </button>
-      </>
-    ) : (
+      {/* Theme Toggle Button */}
       <button
-        onClick={() => {
-          logout();
-          setShowSidebar(false);
-        }}
-        className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+        aria-label="Toggle theme"
       >
-        Logout
+        {theme === 'dark' ? (
+          <Sun className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+        ) : (
+          <Moon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+        )}
       </button>
-    )}
-  </div>
-);
 
+      {/* GitHub Icon Button */}
+      <a
+        href="https://github.com/Sma1lboy/codefox"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+        aria-label="GitHub"
+      >
+        <Image
+          src="/images/github.svg"
+          alt="GitHub"
+          width={24}
+          height={24}
+          className="h-6 w-6"
+        />
+      </a>
+
+      {!isAuthorized ? (
+        <>
+          <button
+            onClick={() => setShowSignIn(true)}
+            className="px-4 py-2 rounded-md bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 transition-colors"
+          >
+            Sign In
+          </button>
+          <button
+            onClick={() => setShowSignUp(true)}
+            className="px-4 py-2 rounded-md bg-primary-500 text-white hover:bg-primary-600 transition-colors"
+          >
+            Sign Up
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={() => {
+            logout();
+            setShowSidebar(false);
+          }}
+          className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+        >
+          Logout
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <SidebarProvider>

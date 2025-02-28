@@ -83,62 +83,56 @@ export function ChatSideBar({
           onClick={() => setIsCollapsed(!isCollapsed)}
         />
 
+        <div className="flex items-center justify-start w-[85%] h-14 text-sm xl:text-lg font-normal pl-4 gap-2">
+          <Image
+            src="/codefox.svg"
+            alt="CodeFox Logo"
+            width={32}
+            height={32}
+            className="flex-shrink-0 dark:invert"
+          />
+          {!isCollapsed && (
+            <span className="text-primary-500 font-semibold text-lg">
+              CodeFox
+            </span>
+          )}
+        </div>
+        {/* Divider Line */}
+        <div className="border-t border-dotted border-gray-300 my-2 w-[85%] mx-auto"></div>
 
-<div className="flex items-center justify-start w-[85%] h-14 text-sm xl:text-lg font-normal pl-4 gap-2">
-  <Image
-    src="/codefox.svg"
-    alt="CodeFox Logo"
-    width={32}
-    height={32}
-    className="flex-shrink-0 dark:invert"
-  />
-  {!isCollapsed && (
-    <span className="text-primary-500 font-semibold text-lg">
-      CodeFox
-    </span>
-  )}
-</div>
-  {/* Divider Line */}
-  <div className="border-t border-dotted border-gray-300 my-2 w-[85%] mx-auto"></div>
+        <Button
+          onClick={() => setIsModalOpen(true)}
+          size="setting"
+          variant="ghost"
+          className="flex items-center justify-start w-[85%] h-14 text-xs xl:text-sm font-normal gap-2 pl-4 hover:bg-yellow-50 rounded-md transition-all duration-200 ease-in-out"
+        >
+          <div className="flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="1.5"
+              stroke="currentColor"
+              className="w-5 h-5 text-yellow-500"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"
+              />
+            </svg>
 
-<Button
-  onClick={() => setIsModalOpen(true)}
-  size="setting"
-  variant="ghost"
-  className="flex items-center justify-start w-[85%] h-14 text-xs xl:text-sm font-normal gap-2 pl-4 hover:bg-yellow-50 rounded-md transition-all duration-200 ease-in-out"
->
-  <div className="flex items-center gap-2">
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth="1.5"
-      stroke="currentColor"
-      className="w-5 h-5 text-yellow-500"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"
-      />
-    </svg>
+            {!isCollapsed && (
+              <span className="text-primary-600 hover:text-primary-800 transition-colors text-sm">
+                New Project
+              </span>
+            )}
 
-    {!isCollapsed && (
-      <span className="text-primary-600 hover:text-primary-800 transition-colors text-sm">
-        New Project
-      </span>
-    )}
-
-    {!isCollapsed && (
-      <SquarePen className="text-primary-400 hover:text-primary-600 transition-colors w-4 h-4" />
-    )}
-  </div>
-</Button>
-
-
-
-
-
+            {!isCollapsed && (
+              <SquarePen className="text-primary-400 hover:text-primary-600 transition-colors w-4 h-4" />
+            )}
+          </div>
+        </Button>
 
         <SidebarContent>
           <SidebarGroup>
