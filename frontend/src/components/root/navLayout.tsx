@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Sun, Moon } from 'lucide-react';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
-import { motion } from 'framer-motion'; // 引入 Framer Motion
+import { motion } from 'framer-motion';
 import { useAuthContext } from '@/providers/AuthProvider';
 import FloatingNavbar, { NavbarRef } from './nav';
 import { SignUpModal } from '../sign-up-modal';
@@ -25,12 +25,12 @@ export default function NavLayout({ children }: NavLayoutProps) {
   const [showSignIn, setShowSignIn] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
-  const [hideNewChat, setHideNewChat] = useState(true); // true 为隐藏, false 为显示
+  const [hideNewChat, setHideNewChat] = useState(true);
 
   // Watch authentication state and trigger sidebar
   useEffect(() => {
     setShowSidebar(isAuthorized);
-    setHideNewChat(isAuthorized); // 登录后依然隐藏 New Chat
+    setHideNewChat(isAuthorized);
   }, [isAuthorized]);
 
   // Set up navigation tabs with paths
@@ -53,7 +53,11 @@ export default function NavLayout({ children }: NavLayoutProps) {
 
   // Auth buttons to pass to navbar
   const authButtons = (
-    <>
+    <div
+      className={`flex items-center space-x-4 transition-transform duration-300 ${
+        isAuthorized ? '-translate-x-12' : ''
+      }`}
+    >
       <button
         onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
         className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -92,7 +96,7 @@ export default function NavLayout({ children }: NavLayoutProps) {
           Logout
         </button>
       )}
-    </>
+    </div>
   );
 
   return (
@@ -128,7 +132,7 @@ export default function NavLayout({ children }: NavLayoutProps) {
         {/** Navbar 和 Main Content 作为一个整体进行平滑移动 */}
         <motion.div
           animate={{
-            x: showSidebar ? (isCollapsed ? 80 : 250) : 100,
+            x: showSidebar ? (isCollapsed ? 60 : 250) : 100,
           }}
           transition={{ type: 'spring', stiffness: 80, damping: 20 }}
           className="flex-1"
@@ -138,8 +142,11 @@ export default function NavLayout({ children }: NavLayoutProps) {
             ref={navRef}
             tabs={navTabs}
             logo={logoElement}
-            name={!isAuthorized ? 'CodeFox' : ''} // 在登入状态下隐藏文字
+            name={!isAuthorized ? 'CodeFox' : ''}
             authButtons={authButtons}
+            className={`transition-transform duration-300 ${
+              isAuthorized ? '-translate-x-2' : ''
+            }`}
           />
 
           <div className="container mx-auto pt-32 pb-24 px-6">{children}</div>
