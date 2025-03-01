@@ -73,7 +73,7 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
           <div
             className="flex w-full gap-2 p-1 items-center cursor-pointer"
             onClick={() => {
-              window.history.replaceState({}, '', '/?id=setting');
+              window.history.replaceState({}, '', '/chat?id=setting');
               const event = new Event(EventEnum.SETTING);
               window.dispatchEvent(event);
             }}

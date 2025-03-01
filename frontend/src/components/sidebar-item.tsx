@@ -91,7 +91,7 @@ export function SideBarItem({
 
   const handleChatClick = (e: React.MouseEvent) => {
     if (!(e.target as HTMLElement).closest('.dropdown-trigger')) {
-      window.history.replaceState({}, '', `/?id=${id}`);
+      window.history.replaceState({}, '', `/chat?id=${id}`);
       const event = new Event(EventEnum.CHAT);
       window.dispatchEvent(event);
       onSelect(id);

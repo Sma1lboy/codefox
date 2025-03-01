@@ -157,7 +157,11 @@ export function ChatSideBar({
                         pollChatProject(chat.id).then((p) => {
                           setCurProject(p);
                         });
-                        window.history.replaceState({}, '', `/?id=${chat.id}`);
+                        window.history.replaceState(
+                          {},
+                          '',
+                          `/chat?id=${chat.id}`
+                        );
                         setCurrentChatid(chat.id);
                       }}
                       refetchChats={onRefetch}

@@ -15,6 +15,10 @@ import { AppResolver } from './app.resolver';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from 'src/interceptor/LoggingInterceptor';
 
+// TODO(Sma1lboy): move to a separate file
+function isProduction(): boolean {
+  return process.env.NODE_ENV === 'production';
+}
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -32,7 +36,7 @@ import { LoggingInterceptor } from 'src/interceptor/LoggingInterceptor';
     TypeOrmModule.forRoot({
       type: 'sqlite',
       database: join(process.cwd(), './database.db'),
-      synchronize: true,
+      synchronize: !isProduction(),
       entities: [__dirname + '/**/*.model{.ts,.js}'],
     }),
     InitModule,

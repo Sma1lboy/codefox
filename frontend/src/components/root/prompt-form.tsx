@@ -1,0 +1,210 @@
+'use client';
+
+import { useState, forwardRef, useImperativeHandle } from 'react';
+import { SendIcon, FileUp, Sparkles, Globe, Lock, Loader2 } from 'lucide-react';
+import Typewriter from 'typewriter-effect';
+import { AnimatedInputBorder } from '@/components/ui/moving-border';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+export interface PromptFormRef {
+  getPromptData: () => {
+    message: string;
+    isPublic: boolean;
+    model: string;
+  };
+  clearMessage: () => void;
+}
+
+interface PromptFormProps {
+  isAuthorized: boolean;
+  onSubmit: () => void;
+  onAuthRequired: () => void;
+  isLoading?: boolean;
+}
+
+export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
+  function PromptForm(
+    { isAuthorized, onSubmit, onAuthRequired, isLoading = false },
+    ref
+  ) {
+    // Internal state
+    const [message, setMessage] = useState('');
+    const [visibility, setVisibility] = useState<'public' | 'private'>(
+      'public'
+    );
+    const [isEnhanced, setIsEnhanced] = useState(false);
+
+    // Expose methods to parent component
+    useImperativeHandle(ref, () => ({
+      getPromptData: () => ({
+        message,
+        isPublic: visibility === 'public',
+        model: isEnhanced ? 'gpt-4o' : 'gpt-4o-mini',
+      }),
+      clearMessage: () => setMessage(''),
+    }));
+
+    // Typewriter initialization function
+    const handleTypewriterInit = (typewriter) => {
+      typewriter
+        .typeString("Create a personal website for me, I'm an engineer...")
+        .changeDelay(50)
+        .pauseFor(10)
+        .deleteAll()
+        .start();
+    };
+
+    return (
+      <div className="relative w-full max-w-2xl mx-auto">
+        <AnimatedInputBorder borderWidth={200} borderHeight={30}>
+          <input
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder=""
+            className="w-full py-24 px-6 pr-12 text-lg border border-transparent rounded-lg focus:outline-none focus:ring-0 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 align-top pt-6 font-normal"
+            disabled={isLoading}
+          />
+        </AnimatedInputBorder>
+
+        {message === '' && !isLoading && (
+          <div className="absolute top-[26px] left-[23px] right-12 pointer-events-none text-gray-500 dark:text-gray-400 text-lg font-normal overflow-hidden">
+            <Typewriter onInit={handleTypewriterInit} />
+          </div>
+        )}
+
+        <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center">
+          <button
+            className={cn(
+              'flex items-center gap-2 text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors',
+              isLoading && 'opacity-50 cursor-not-allowed'
+            )}
+            aria-label="Upload file"
+            disabled={isLoading}
+          >
+            <FileUp size={20} />
+            <span>Drag in file</span>
+          </button>
+
+          <div className="flex items-center gap-3">
+            {/* Magic enhance tooltip */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      'rounded-full p-2 transition-all',
+                      isEnhanced
+                        ? 'bg-amber-500/20 text-amber-500 hover:bg-amber-500/30 hover:text-amber-600'
+                        : 'text-gray-500 hover:text-amber-500',
+                      isLoading && 'opacity-50 cursor-not-allowed'
+                    )}
+                    onClick={() => !isLoading && setIsEnhanced(!isEnhanced)}
+                    disabled={isLoading}
+                  >
+                    <Sparkles size={20} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>
+                    Magic enhance generation (uses GPT-4o instead of
+                    GPT-4o-mini)
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Public/Private dropdown */}
+            <Select
+              value={visibility}
+              onValueChange={(value) =>
+                !isLoading && setVisibility(value as 'public' | 'private')
+              }
+              disabled={isLoading}
+            >
+              <SelectTrigger
+                className={cn(
+                  'w-[130px] h-10 border-0 bg-gray-100 dark:bg-gray-600 focus:ring-0',
+                  isLoading && 'opacity-50 cursor-not-allowed'
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  {visibility === 'public' ? (
+                    <>
+                      <Globe size={16} />
+                      <SelectValue placeholder="Public" />
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={16} />
+                      <SelectValue placeholder="Private" />
+                    </>
+                  )}
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="public">
+                  <div className="flex items-center gap-2">
+                    <Globe size={16} />
+                    <span>Public</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="private">
+                  <div className="flex items-center gap-2">
+                    <Lock size={16} />
+                    <span>Private</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Submit button */}
+            <Button
+              className={cn(
+                'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-md hover:shadow-lg transition-all px-5 py-3 h-10 rounded-full',
+                isLoading && 'opacity-80 cursor-not-allowed'
+              )}
+              onClick={() => {
+                if (isLoading) return;
+                if (!isAuthorized) {
+                  onAuthRequired();
+                } else {
+                  onSubmit();
+                }
+              }}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 size={18} className="mr-2 animate-spin" />
+                  <span>Creating...</span>
+                </>
+              ) : (
+                <>
+                  <SendIcon size={18} className="mr-2" />
+                  <span>Create</span>
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+);

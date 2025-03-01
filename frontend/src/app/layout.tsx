@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { BaseProviders } from '@/providers/BaseProvider';
+import NavLayout from '@/components/root/navLayout';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -16,6 +17,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
 };
+
 export default function RootLayout({
   children,
 }: {
@@ -26,7 +28,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <BaseProviders>
           <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900 transition-colors">
-            {children}
+            <NavLayout>{children}</NavLayout>
           </div>
         </BaseProviders>
       </body>
