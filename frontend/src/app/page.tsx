@@ -1,23 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useContext, useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { AuthChoiceModal } from '@/components/auth-choice-modal';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { ProjectsSection } from '@/components/root/ProjectsSection';
-import { PromptForm } from '@/components/root/prompt-form';
+import { PromptForm, PromptFormRef } from '@/components/root/prompt-form';
+import { ProjectContext } from '@/components/chat/code-engine/project-context';
 
 export default function HomePage() {
-  const [message, setMessage] = useState('');
-
   const [showAuthChoice, setShowAuthChoice] = useState(false);
 
+  const promptFormRef = useRef<PromptFormRef>(null);
   const { isAuthorized } = useAuthContext();
+  const { createProjectFromPrompt, isLoading } = useContext(ProjectContext);
 
-  const handleSubmit = () => {
-    console.log('Sending message:', message);
-    // Additional submission logic here
+  const handleSubmit = async () => {
+    if (!promptFormRef.current) return;
+
+    const { message, isPublic, model } = promptFormRef.current.getPromptData();
+
+    if (!message.trim()) return;
+
+    const result = await createProjectFromPrompt(message, isPublic, model);
+
+    // TODO(Sma1lboy): should handle result check
+    if (result) {
+      promptFormRef.current.clearMessage();
+    }
   };
 
   return (
@@ -51,11 +62,11 @@ export default function HomePage() {
 
         <div className="w-full mb-12">
           <PromptForm
-            message={message}
-            setMessage={setMessage}
+            ref={promptFormRef}
             isAuthorized={isAuthorized}
             onSubmit={handleSubmit}
             onAuthRequired={() => setShowAuthChoice(true)}
+            isLoading={isLoading}
           />
         </div>
 
@@ -75,22 +86,6 @@ export default function HomePage() {
           setShowAuthChoice(false);
         }}
       />
-
-      {/* Add this to your global CSS for the subtle pulse animation */}
-      <style jsx global>{`
-        .animate-pulse-subtle {
-          animation: pulse-subtle 2s infinite;
-        }
-        @keyframes pulse-subtle {
-          0%,
-          100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.85;
-          }
-        }
-      `}</style>
     </>
   );
 }

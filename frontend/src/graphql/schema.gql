@@ -12,6 +12,7 @@ type Chat {
   title: String
   updatedAt: Date!
   user: User!
+  userId: ID!
 }
 
 type ChatCompletionChoiceType {

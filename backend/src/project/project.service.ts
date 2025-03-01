@@ -123,22 +123,16 @@ export class ProjectService {
     userId: string,
   ): Promise<Chat> {
     try {
-      // Create default chat in parallel with project creation
-      const defaultChatPromise = this.chatService.createChat(userId, {
-        title: input.projectName || 'Default Project Chat',
-      });
-
-      // Generate project name if not provided
+      // First, handle project name generation if needed (this is the only sync operation we need)
       let projectName = input.projectName;
       if (!projectName || projectName === '') {
         this.logger.debug(
-          'Project name not exist in input, generating project name',
+          'Project name not provided in input, generating project name',
         );
+
         const nameGenerationPrompt = await generateProjectNamePrompt(
           input.description,
         );
-
-        // Use user-specified model or default
         const response = await this.model.chatSync({
           model: input.model || this.model.baseModel,
           messages: [
@@ -158,6 +152,33 @@ export class ProjectService {
         this.logger.debug(`Generated project name: ${projectName}`);
       }
 
+      // Create chat with proper title
+      const defaultChat = await this.chatService.createChat(userId, {
+        title: projectName || 'New Project Chat',
+      });
+
+      // Perform the rest of project creation asynchronously
+      this.createProjectInBackground(input, projectName, userId, defaultChat);
+
+      // Return chat immediately so user can start interacting
+      return defaultChat;
+    } catch (error) {
+      this.logger.error(
+        `Error in createProject: ${error.message}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException('Error creating the project.');
+    }
+  }
+
+  // Background task for project creation
+  private async createProjectInBackground(
+    input: CreateProjectInput,
+    projectName: string,
+    userId: string,
+    chat: Chat,
+  ): Promise<void> {
+    try {
       // Build project sequence and execute
       const sequence = buildProjectSequenceByProject({
         ...input,
@@ -171,68 +192,75 @@ export class ProjectService {
       project.projectName = projectName;
       project.projectPath = projectPath;
       project.userId = userId;
-      project.isPublic = input.public || false; // Set project visibility based on input
-      project.uniqueProjectId = uuidv4(); // Generate unique project ID
+      project.isPublic = input.public || false;
+      project.uniqueProjectId = uuidv4();
 
       // Set project packages
-      project.projectPackages = await this.transformInputToProjectPackages(
-        input.packages,
-      );
+      try {
+        project.projectPackages = await this.transformInputToProjectPackages(
+          input.packages,
+        );
+      } catch (packageError) {
+        this.logger.error(`Error processing packages: ${packageError.message}`);
+        // Continue even if packages processing fails
+        project.projectPackages = [];
+      }
 
       // Save project
       const savedProject = await this.projectsRepository.save(project);
       this.logger.debug(`Project created: ${savedProject.id}`);
 
-      // Bind default chat to project
-      const defaultChat = await defaultChatPromise;
-      const bindSuccess = await this.bindProjectAndChat(
-        savedProject,
-        defaultChat,
-      );
-
+      // Bind chat to project
+      const bindSuccess = await this.bindProjectAndChat(savedProject, chat);
       if (!bindSuccess) {
-        this.logger.warn(
-          `Failed to bind project and chat: ${savedProject.id} -> ${defaultChat.id}`,
+        this.logger.error(
+          `Failed to bind project and chat: ${savedProject.id} -> ${chat.id}`,
         );
       } else {
         this.logger.debug(
-          `Project and chat bound: ${savedProject.id} -> ${defaultChat.id}`,
+          `Project and chat bound: ${savedProject.id} -> ${chat.id}`,
         );
       }
-
-      return defaultChat;
     } catch (error) {
       this.logger.error(
-        `Error creating project: ${error.message}`,
+        `Error in background project creation: ${error.message}`,
         error.stack,
       );
-      throw new InternalServerErrorException('Error creating the project.');
+      // No exception is thrown since this is a background task
     }
   }
+
   private async transformInputToProjectPackages(
     inputPackages: ProjectPackage[],
   ): Promise<ProjectPackages[]> {
     try {
-      // Find existing packages in database
-      const packageNames = inputPackages.map((pkg) => pkg.name);
+      if (!inputPackages || inputPackages.length === 0) {
+        return [];
+      }
+
+      const validPackages = inputPackages.filter(
+        (pkg) => pkg.name && pkg.name.trim() !== '',
+      );
+
+      if (validPackages.length === 0) {
+        return [];
+      }
+
+      const packageNames = validPackages.map((pkg) => pkg.name);
       const existingPackages = await this.projectPackagesRepository.find({
         where: {
           content: In(packageNames),
         },
       });
 
-      // Create map of existing packages for quick lookup
       const existingPackagesMap = new Map(
         existingPackages.map((pkg) => [pkg.content, pkg]),
       );
 
-      // Transform each input package
       const transformedPackages = await Promise.all(
-        inputPackages.map(async (inputPkg) => {
-          // Check if package already exists
+        validPackages.map(async (inputPkg) => {
           const existingPackage = existingPackagesMap.get(inputPkg.name);
           if (existingPackage) {
-            // Update version if needed
             if (existingPackage.version !== inputPkg.version) {
               existingPackage.version = inputPkg.version;
               return await this.projectPackagesRepository.save(existingPackage);
@@ -240,18 +268,50 @@ export class ProjectService {
             return existingPackage;
           }
 
-          // Create new package if it doesn't exist
           const newPackage = new ProjectPackages();
           newPackage.content = inputPkg.name;
-          newPackage.version = inputPkg.version;
-          return await this.projectPackagesRepository.save(newPackage);
+          if ('name' in newPackage) {
+            (newPackage as any).name = inputPkg.name;
+          }
+          newPackage.version = inputPkg.version || 'latest';
+
+          try {
+            return await this.projectPackagesRepository.save(newPackage);
+          } catch (err) {
+            this.logger.error(`Error saving package: ${err.message}`);
+            if (
+              err.message.includes(
+                'NOT NULL constraint failed: project_packages.name',
+              )
+            ) {
+              this.logger.warn('Attempting to fix name field constraint issue');
+              const result = await this.projectPackagesRepository.query(
+                `INSERT INTO project_packages (content, version, name, isDeleted, isActive, createdAt, updatedAt) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [
+                  inputPkg.name,
+                  inputPkg.version || 'latest',
+                  inputPkg.name,
+                  false,
+                  true,
+                  new Date(),
+                  new Date(),
+                ],
+              );
+              const newId = result.lastInsertRowid || result.insertId;
+              return await this.projectPackagesRepository.findOne({
+                where: { id: newId },
+              });
+            }
+            throw err;
+          }
         }),
       );
 
-      return transformedPackages;
+      return transformedPackages.filter(Boolean);
     } catch (error) {
       this.logger.error('Error transforming packages:', error);
-      return Promise.resolve([]);
+      return [];
     }
   }
 
