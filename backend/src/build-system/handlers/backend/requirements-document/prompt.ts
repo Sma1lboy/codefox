@@ -30,6 +30,11 @@ ${Object.entries(packages)
    - Data flow between frontend pages
    - Required data transformations
    - Authentication and authorization needs
+5. IMPORTANT: Carefully differentiate between public and authenticated endpoints:
+   - Public endpoints (No Auth): Content retrieval endpoints (GET blog posts, portfolio items, etc.)
+   - Authenticated endpoints (Auth Required): Content creation/modification endpoints (POST/PUT/DELETE blog posts, etc.)
+6. For authenticated endpoints only, include authentication in the headers section using "Authorization": "Bearer {token}"
+7. Don't add authentication requirements to public-facing read operations (GET requests for viewing content)
 
 Your reply must start with: "<GENERATE>" and end with "</GENERATE>".
 
@@ -54,7 +59,6 @@ Data Requirements:
   - Required data transformations
 Request:
   Headers: {
-    "Authorization": "Bearer {token}"
     // Other headers
   }
   Params: {

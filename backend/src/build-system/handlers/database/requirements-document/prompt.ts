@@ -10,11 +10,14 @@ export const prompts = {
 Follow these guidelines to generate the database requirements:
 
 ### Instructions and Rules:
-1. Analyze all data elements mentioned in the UX Datamap
-2. Identify entities and their relationships
-3. Determine data types and constraints
-4. Consider data persistence requirements
-5. Plan for scalability and performance
+1. Analyze data elements mentioned in the UX Datamap
+2. Carefully distinguish between frontend state management and actual database storage needs
+3. Only include entities and attributes that require persistent storage
+4. For each feature in the UX Datamap, clearly determine if it needs database support or is purely frontend
+5. Identify entities and their relationships
+6. Determine data types and constraints
+7. Consider data persistence requirements
+8. Plan for scalability and performance
 
 ### Database Requirements Structure:
 ---
