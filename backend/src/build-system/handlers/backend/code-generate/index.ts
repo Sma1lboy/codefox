@@ -43,7 +43,7 @@ export class BackendCodeHandler implements BuildHandler<string> {
     const datamapDoc = context.getNodeData(UXDMDHandler);
     const databaseSchemas = context.getNodeData(DBSchemaHandler);
     const backendRequirementDoc =
-      context.getNodeData(BackendRequirementHandler).overview || '';
+      context.getNodeData(BackendRequirementHandler) || '';
     const backendPath = context.getGlobalContext('backendPath');
     this.logger.log('backendPath: ' + backendPath);
 

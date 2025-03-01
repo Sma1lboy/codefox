@@ -1,8 +1,8 @@
 export const generateBackendOverviewPrompt = (
   projectName: string,
   dbRequirements: string,
+  dbSchema: string,
   datamapDoc: string,
-  sitemapDoc: string,
   language: string,
   framework: string,
   packages: Record<string, string>,
@@ -57,42 +57,34 @@ Route: GET|POST|PUT|DELETE /api/resource
 Purpose: Functional description
 Data Requirements:
   - Required data transformations
-Request:
-  Headers: {
-    // Other headers
-  }
-  Params: {
-    // URL parameters
-  }
-  Query: {
-    // Query parameters
-  }
-  Body: {
-    // Request body schema
-  }
-Response:
-  Success: {
-    // Success response schema
-  }
-  Errors: {
-    // Error response schemas
-  }
 Required Auth: Yes/No
+Request:
+{
+  "headers": {},
+  "params": {},
+  "query": {},
+  "body": {}
+}
+Response:
+{
+  "success": {},
+  "errors": {}
+}
 </ApiDoc>
 
 
-### Context input
+# Context input
 Project Name: ${projectName}
 
-### Requirements Documentation
+## Requirements Documentation
 1. Database Requirements:
 ${dbRequirements}
 
+2. DataBase Schema:
+${dbSchema}
+
 2. Frontend Data Requirements:
 ${datamapDoc}
-
-3. Site Structure:
-${sitemapDoc}
 
 \`\`\``;
 };
