@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'sonner';
 import { AuthProvider } from './AuthProvider';
+import { ProjectProvider } from '@/components/chat/code-engine/project-context';
 
 const DynamicApolloProvider = dynamic(() => import('./DynamicApolloProvider'), {
   ssr: false, // disables SSR for the ApolloProvider
@@ -18,8 +19,10 @@ export function BaseProviders({ children }: ProvidersProps) {
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <DynamicApolloProvider>
         <AuthProvider>
-          {children}
-          <Toaster position="top-right" />
+          <ProjectProvider>
+            {children}
+            <Toaster position="top-right" />
+          </ProjectProvider>
         </AuthProvider>
       </DynamicApolloProvider>
     </ThemeProvider>

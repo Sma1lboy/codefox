@@ -19,15 +19,25 @@ export default function HomePage() {
   const handleSubmit = async () => {
     if (!promptFormRef.current) return;
 
+    // Get form data from the prompt form
     const { message, isPublic, model } = promptFormRef.current.getPromptData();
 
     if (!message.trim()) return;
 
-    const result = await createProjectFromPrompt(message, isPublic, model);
+    try {
+      // Create the project
+      const result = await createProjectFromPrompt(message, isPublic, model);
 
-    // TODO(Sma1lboy): should handle result check
-    if (result) {
-      promptFormRef.current.clearMessage();
+      // If successful, clear the input
+      if (result) {
+        promptFormRef.current.clearMessage();
+
+        // Note: No need to navigate here as the ProjectContext's onCompleted handler
+        // in the createProject mutation will handle navigation to the chat page
+      }
+    } catch (error) {
+      console.error('Error creating project:', error);
+      // Error handling is done via toast in ProjectContext
     }
   };
 

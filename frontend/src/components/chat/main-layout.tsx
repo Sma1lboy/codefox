@@ -96,34 +96,32 @@ export default function ChatLayout({
         }}
         className="h-screen items-stretch w-full"
       >
-        <ProjectProvider>
-          <SidebarProvider>
-            <ProjectModal
-              isOpen={isModalOpen}
-              onClose={() => setIsModalOpen(false)}
-              refetchProjects={refetch}
-            />
-            <ChatSideBar
-              setIsModalOpen={setIsModalOpen}
-              isCollapsed={isCollapsed}
-              setIsCollapsed={setIsCollapsed}
-              isMobile={isMobile}
-              chatListUpdated={chatListUpdated}
-              setChatListUpdated={setChatListUpdated}
-              chats={chats}
-              loading={loading}
-              error={error}
-              onRefetch={refetchChats}
-            />
+        <SidebarProvider>
+          <ProjectModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            refetchProjects={refetch}
+          />
+          <ChatSideBar
+            setIsModalOpen={setIsModalOpen}
+            isCollapsed={isCollapsed}
+            setIsCollapsed={setIsCollapsed}
+            isMobile={isMobile}
+            chatListUpdated={chatListUpdated}
+            setChatListUpdated={setChatListUpdated}
+            chats={chats}
+            loading={loading}
+            error={error}
+            onRefetch={refetchChats}
+          />
 
-            <ResizablePanel
-              className="h-full w-full flex justify-center"
-              defaultSize={defaultLayout[1]}
-            >
-              {children}
-            </ResizablePanel>
-          </SidebarProvider>
-        </ProjectProvider>
+          <ResizablePanel
+            className="h-full w-full flex justify-center"
+            defaultSize={defaultLayout[1]}
+          >
+            {children}
+          </ResizablePanel>
+        </SidebarProvider>
       </ResizablePanelGroup>
     </main>
   );
