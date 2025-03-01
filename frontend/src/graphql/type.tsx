@@ -53,18 +53,18 @@ export type Chat = {
 
 export type ChatCompletionChoiceType = {
   __typename: 'ChatCompletionChoiceType';
-  delta: ChatCompletionDeltaType;
+  delta?: Maybe<ChatCompletionDeltaType>;
   finishReason?: Maybe<Scalars['String']['output']>;
-  index: Scalars['Float']['output'];
+  index?: Maybe<Scalars['Float']['output']>;
 };
 
 export type ChatCompletionChunkType = {
   __typename: 'ChatCompletionChunkType';
   choices: Array<ChatCompletionChoiceType>;
-  created: Scalars['Float']['output'];
+  created?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
-  model: Scalars['String']['output'];
-  object: Scalars['String']['output'];
+  model?: Maybe<Scalars['String']['output']>;
+  object?: Maybe<Scalars['String']['output']>;
   status: StreamStatus;
   systemFingerprint?: Maybe<Scalars['String']['output']>;
 };
@@ -78,7 +78,7 @@ export type ChatInputType = {
   chatId: Scalars['String']['input'];
   message: Scalars['String']['input'];
   model: Scalars['String']['input'];
-  role: Role;
+  role: Scalars['String']['input'];
 };
 
 export type CheckTokenInput = {
@@ -142,6 +142,7 @@ export type Mutation = {
   login: LoginResponse;
   refreshToken: RefreshTokenResponse;
   registerUser: User;
+  saveMessage: Scalars['Boolean']['output'];
   triggerChatStream: Scalars['Boolean']['output'];
   updateChatTitle?: Maybe<Chat>;
 };
@@ -176,6 +177,10 @@ export type MutationRefreshTokenArgs = {
 
 export type MutationRegisterUserArgs = {
   input: RegisterUserInput;
+};
+
+export type MutationSaveMessageArgs = {
+  input: ChatInputType;
 };
 
 export type MutationTriggerChatStreamArgs = {
@@ -228,6 +233,7 @@ export type Query = {
   getAvailableModelTags?: Maybe<Array<Scalars['String']['output']>>;
   getChatDetails?: Maybe<Chat>;
   getChatHistory: Array<Message>;
+  getCurProject?: Maybe<Project>;
   getHello: Scalars['String']['output'];
   getProject: Project;
   getUserChats?: Maybe<Array<Chat>>;
@@ -246,6 +252,10 @@ export type QueryGetChatDetailsArgs = {
 };
 
 export type QueryGetChatHistoryArgs = {
+  chatId: Scalars['String']['input'];
+};
+
+export type QueryGetCurProjectArgs = {
   chatId: Scalars['String']['input'];
 };
 
@@ -501,7 +511,7 @@ export type ChatCompletionChoiceTypeResolvers<
     ResolversParentTypes['ChatCompletionChoiceType'] = ResolversParentTypes['ChatCompletionChoiceType'],
 > = ResolversObject<{
   delta?: Resolver<
-    ResolversTypes['ChatCompletionDeltaType'],
+    Maybe<ResolversTypes['ChatCompletionDeltaType']>,
     ParentType,
     ContextType
   >;
@@ -510,7 +520,7 @@ export type ChatCompletionChoiceTypeResolvers<
     ParentType,
     ContextType
   >;
-  index?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  index?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
@@ -524,10 +534,10 @@ export type ChatCompletionChunkTypeResolvers<
     ParentType,
     ContextType
   >;
-  created?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  created?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  model?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  object?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  model?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  object?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['StreamStatus'], ParentType, ContextType>;
   systemFingerprint?: Resolver<
     Maybe<ResolversTypes['String']>,
@@ -646,6 +656,12 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationRegisterUserArgs, 'input'>
   >;
+  saveMessage?: Resolver<
+    ResolversTypes['Boolean'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationSaveMessageArgs, 'input'>
+  >;
   triggerChatStream?: Resolver<
     ResolversTypes['Boolean'],
     ParentType,
@@ -726,6 +742,12 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryGetChatHistoryArgs, 'chatId'>
+  >;
+  getCurProject?: Resolver<
+    Maybe<ResolversTypes['Project']>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryGetCurProjectArgs, 'chatId'>
   >;
   getHello?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   getProject?: Resolver<

@@ -43,8 +43,8 @@ export class FileReader {
 
     try {
       const items = await fs.readdir(dir, { withFileTypes: true });
-
       for (const item of items) {
+        if (item.name.includes('node_modules')) continue;
         const fullPath = path.join(dir, item.name);
         const relativePath = path.relative(this.basePath, fullPath);
 
@@ -86,7 +86,9 @@ export class FileReader {
     console.log(`📝 [FileReader] Updating file: ${fullPath}`);
 
     try {
-      const content = JSON.parse(newContent);
+      const content = newContent.trim();
+      console.log(content);
+      console.log('log content');
       await fs.writeFile(fullPath, content, 'utf-8');
 
       console.log('[FileReader] File updated successfully');

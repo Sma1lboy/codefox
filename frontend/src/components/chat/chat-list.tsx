@@ -162,7 +162,7 @@ export default function ChatList({
                         className="h-full w-full object-cover"
                       />
                       <AvatarFallback>
-                        {user.username?.substring(0, 2).toUpperCase()}
+                        {user?.username?.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </SmallAvatar>
                   </div>

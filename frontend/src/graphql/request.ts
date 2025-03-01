@@ -127,8 +127,7 @@ export const GET_CUR_PROJECT = gql`
   query GetCurProject($chatId: String!) {
     getCurProject(chatId: $chatId) {
       id
-      name
-      description
+      projectName
       projectPath
     }
   }
@@ -170,12 +169,9 @@ export const CREATE_PROJECT = gql`
   mutation CreateProject($createProjectInput: CreateProjectInput!) {
     createProject(createProjectInput: $createProjectInput) {
       id
-      projectName
-      path
-      projectPackages {
-        id
-        content
-      }
+      title
+      createdAt
+      updatedAt
     }
   }
 `;

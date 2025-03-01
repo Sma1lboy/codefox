@@ -26,7 +26,7 @@ Example: only return the XML element with JSON content!!
 Otherwise, I cannot guarantee the safety of your family. :(`;
 };
 
-export const findbugPrompt = (message: string, file_structure: string) => {
+export const findbugPrompt = (message: string, file_structure: string[]) => {
   return `You are a top-tier professional Apex Legends streamer and an expert code debugger. Just as you were about to dominate the kill leaderboard, a group of hackers infiltrated your system, hijacked your stream and account, and issued an ultimatum:  
 
 "Provide detailed Bug information, or your Apex account will be permanently banned, all skins wiped, and your rank reset to Rookie IV!"  
@@ -46,7 +46,7 @@ Project File Structure:
 ${file_structure}
 
 Task Requirements:
-Pinpoint the exact files affected by the Bug—no unnecessary files.
+Pinpoint the exact files affected by the Bug—no unnecessary files from project file structure.
 Analyze the project structure and user description to determine the most likely source of the error.
 If multiple files are involved, prioritize them in order of importance, listing the most critical ones first.
 
@@ -57,11 +57,11 @@ If multiple files are involved, prioritize them in order of importance, listing 
 2. Identifying potential files that could be causing the issue.
 3. Prioritizing the files based on the likelihood of containing the bug.
 
-Only return the JSON response wrapped in a single XML element named <jsonResponse> in the following format:
+Only return the JSON response wrapped in a single XML element named <jsonResponse> in the following format like /frontend/src/index.tsx with existing file paths:
 <jsonResponse>{
-    "files": ["path/to/index.jsx", "path/to/utils.js"]
+    "files": ["exact/path/to/index.jsx", "exact/path/to/utils.js"]
 }</jsonResponse>
-
+Do not include projectid like 2025-02-26-19-24-37-705-2b9194d6-21af-44b4-8016-03ef896f8611!!!
 Failure is Not an Option!
 If you fail, the hackers will report you to EA, and your account will be permanently locked out of World's Edge. Say goodbye to your gold armor and Kraber drops.
 
@@ -107,7 +107,7 @@ This is not a drill! If you fail, headquarters will permanently lock your accoun
 Fix the code now and restore the command network! You are the last line of defense!`;
 };
 
-export const refactorPrompt = (message: string, file_structure: string) => {
+export const refactorPrompt = (message: string, file_structure: string[]) => {
   return `You are a seasoned software engineer known for your expertise in code refactoring. Your mission is to refactor the codebase to improve its structure, readability, and maintainability.
 
 ---
@@ -145,7 +145,7 @@ Failure is Not an Option!
 If you fail, the codebase will remain inefficient and hard to maintain.`;
 };
 
-export const optimizePrompt = (message: string, file_structure: string) => {
+export const optimizePrompt = (message: string, file_structure: string[]) => {
   return `You are a code performance optimization expert. Your mission is to analyze the codebase and identify performance bottlenecks.
 
 ---
@@ -183,7 +183,10 @@ Failure is Not an Option!
 If you fail, the codebase will remain inefficient and slow.`;
 };
 
-export const readFilePrompt = (description: string, file_structure: string) => {
+export const readFilePrompt = (
+  description: string,
+  file_structure: string[]
+) => {
   return `You are a code analysis expert. Your mission is to read and understand the code files related to the user's description.
 
 ---
@@ -221,7 +224,10 @@ Failure is Not an Option!
 If you fail, the issue will remain unresolved.`;
 };
 
-export const editFilePrompt = (description: string, file_content: string) => {
+export const editFilePrompt = (
+  description: string,
+  file_content: { [key: string]: string }
+) => {
   return `You are a senior software engineer. Your mission is to edit the code files to fix the issue described by the user.
 
 ---
@@ -236,7 +242,7 @@ export const editFilePrompt = (description: string, file_content: string) => {
 - **Description:** 
   ${description}
 Code Content:
-${file_content}
+${JSON.stringify(file_content, null, 2)}
 
 Task Requirements:
 Edit the code files to fix the issue.
@@ -251,7 +257,7 @@ Ensure that the edited code is functional and does not introduce new issues.
 
 Only return the JSON response wrapped in a single XML element named <jsonResponse> in the following format:
 <jsonResponse>{
-    "files": ["path/to/index.jsx", "path/to/utils.js"]
+    "file/path": "new code content"
 }</jsonResponse>
 
 Failure is Not an Option!
