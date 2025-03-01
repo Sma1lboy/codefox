@@ -4,9 +4,10 @@ import {
   NotFoundException,
   InternalServerErrorException,
   Logger,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { Project } from './project.model';
 import { ProjectPackages } from './project-packages.model';
 import {
@@ -23,7 +24,7 @@ import { MessageRole } from 'src/chat/message.model';
 import { BuilderContext } from 'src/build-system/context';
 import { ChatService } from 'src/chat/chat.service';
 import { Chat } from 'src/chat/chat.model';
-
+import { v4 as uuidv4 } from 'uuid';
 @Injectable()
 export class ProjectService {
   private readonly model: OpenAIModelProvider =
@@ -131,7 +132,7 @@ export class ProjectService {
           input.description,
         );
         const response = await this.model.chatSync({
-          model: 'gpt-4o',
+          model: input.model || OpenAIModelProvider.getInstance().baseModel,
           messages: [
             {
               role: MessageRole.System,
@@ -291,6 +292,168 @@ export class ProjectService {
     } catch (error) {
       this.logger.error(`Error validating project: ${error.message}`);
       return false;
+    }
+  }
+
+  /**
+   * Subscribe to another user's project by creating a copy for the subscriber.
+   * The copy becomes fully owned by the subscriber and can be freely modified.
+   * This is a key feature - allowing users to start with someone else's project
+   * and customize it to their needs.
+   *
+   * @param userId The user ID of the subscriber
+   * @param projectId The project ID to subscribe to
+   * @returns The newly created project copy that the user can modify
+   */
+  async subscribeToProject(
+    userId: string,
+    projectId: string,
+  ): Promise<Project> {
+    const sourceProject = await this.getProjectById(projectId);
+
+    // Check if the project is public
+    if (!sourceProject.isPublic) {
+      throw new ForbiddenException('Cannot subscribe to a private project');
+    }
+
+    // Prevent users from subscribing to their own projects
+    if (sourceProject.userId === userId) {
+      throw new ForbiddenException('Cannot subscribe to your own project');
+    }
+
+    // Create a new project copy for the subscriber
+    const copiedProject = new Project();
+    copiedProject.projectName = sourceProject.projectName;
+    copiedProject.projectPath = sourceProject.projectPath; // You may want to create a new path
+    copiedProject.userId = userId;
+    copiedProject.isPublic = false; // Default to private for the copy
+    copiedProject.uniqueProjectId = uuidv4(); // Generate a new unique ID
+    copiedProject.forkedFromId = sourceProject.uniqueProjectId; // Track original project
+    copiedProject.photoUrl = sourceProject.photoUrl; // Copy the screenshot
+
+    // Copy packages if needed
+    if (sourceProject.projectPackages?.length > 0) {
+      copiedProject.projectPackages = [...sourceProject.projectPackages];
+    }
+
+    // Save the new project
+    const savedProject = await this.projectsRepository.save(copiedProject);
+
+    // Increment the original project's subscription count
+    sourceProject.subNumber += 1;
+    await this.projectsRepository.save(sourceProject);
+
+    return savedProject;
+  }
+
+  /**
+   * Update a project's photo URL
+   * @param userId The user ID making the request
+   * @param projectId The project ID to update
+   * @param photoUrl The new photo URL
+   * @returns The updated project
+   */
+  async updateProjectPhotoUrl(
+    userId: string,
+    projectId: string,
+    photoUrl: string,
+  ): Promise<Project> {
+    const project = await this.getProjectById(projectId);
+
+    // Check ownership permission
+    this.checkProjectOwnership(project, userId);
+
+    // Update photo URL
+    project.photoUrl = photoUrl;
+
+    return this.projectsRepository.save(project);
+  }
+
+  /**
+   * Update a project's public status
+   * @param userId The user ID making the request
+   * @param projectId The project ID to update
+   * @param isPublic The new public status
+   * @returns The updated project
+   */
+  async updateProjectPublicStatus(
+    userId: string,
+    projectId: string,
+    isPublic: boolean,
+  ): Promise<Project> {
+    const project = await this.getProjectById(projectId);
+
+    // Check ownership permission
+    this.checkProjectOwnership(project, userId);
+
+    // Update public status
+    project.isPublic = isPublic;
+
+    return this.projectsRepository.save(project);
+  }
+
+  // forkProject is now essentially the same as subscribeToProject
+  // We'll keep this method as an alias for API consistency
+  /**
+   * Fork an existing project (alias for subscribeToProject)
+   * @param userId The user ID forking the project
+   * @param projectId The project ID to fork
+   * @returns The newly created forked project
+   */
+  async forkProject(userId: string, projectId: string): Promise<Project> {
+    return this.subscribeToProject(userId, projectId);
+  }
+
+  /**
+   * Get all projects subscribed/forked by a user
+   * @param userId The user ID
+   * @returns Array of projects that are forks of other projects
+   */
+  async getSubscribedProjects(userId: string): Promise<Project[]> {
+    // With the new approach, subscribed projects are just the user's own projects
+    // that have a forkedFromId (meaning they were copied from another project)
+    const subscribedProjects = await this.projectsRepository.find({
+      where: {
+        userId: userId,
+        isDeleted: false,
+        forkedFromId: Not(null), // Only get projects that are forks
+      },
+      relations: ['projectPackages', 'user'],
+    });
+
+    return subscribedProjects;
+  }
+
+  /**
+   * Get all public projects for discovery
+   * @returns Array of public projects
+   */
+  async getPublicProjects(): Promise<Project[]> {
+    return this.projectsRepository.find({
+      where: {
+        isPublic: true,
+        isDeleted: false,
+      },
+      relations: ['projectPackages', 'user'],
+      order: {
+        subNumber: 'DESC', // Sort by popularity
+        createdAt: 'DESC', // Then by creation date
+      },
+      take: 50, // Limit results
+    });
+  }
+
+  /**
+   * Check if a user owns a project
+   * @param project The project to check
+   * @param userId The user ID to verify
+   * @throws ForbiddenException if user is not the owner
+   */
+  private checkProjectOwnership(project: Project, userId: string): void {
+    if (project.userId !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to modify this project',
+      );
     }
   }
 }

@@ -255,4 +255,8 @@ export class OpenAIModelProvider implements IModelProvider {
     // OpenAI SDK handles its own request management
     return [];
   }
+
+  get baseModel(): string {
+    return this.defaultModel;
+  }
 }
