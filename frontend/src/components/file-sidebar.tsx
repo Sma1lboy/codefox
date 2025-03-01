@@ -7,7 +7,6 @@ import { SquarePen } from 'lucide-react';
 import SidebarSkeleton from './sidebar-skeleton';
 import UserSettings from './user-settings';
 import { SideBarItem } from './sidebar-item';
-import { Chat } from '@/graphql/type';
 import { EventEnum } from '../const/EventEnum';
 import {
   SidebarContent,

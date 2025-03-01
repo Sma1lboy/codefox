@@ -28,17 +28,6 @@ export const CREATE_CHAT = gql`
   }
 `;
 
-export const SAVE_CHAT_HISTORY = gql`
-  mutation SaveChatHistory($chatId: String!, $messages: [MessageInput!]!) {
-    saveChatHistory(chatId: $chatId, messages: $messages) {
-      id
-      content
-      role
-      createdAt
-    }
-  }
-`;
-
 export const GET_CHAT_HISTORY = gql`
   query GetChatHistory($chatId: String!) {
     getChatHistory(chatId: $chatId) {
@@ -138,30 +127,13 @@ export const GET_USER_PROJECTS = gql`
   }
 `;
 
-export const GET_PROJECT_DETAILS = gql`
-  query GetProjectDetails($projectId: String!) {
-    getProjectDetails(projectId: $projectId) {
-      id
-      projectName
-      path
-      projectPackages {
-        id
-        content
-      }
-    }
-  }
-`;
-
 export const CREATE_PROJECT = gql`
   mutation CreateProject($createProjectInput: CreateProjectInput!) {
     createProject(createProjectInput: $createProjectInput) {
       id
-      projectName
-      path
-      projectPackages {
-        id
-        content
-      }
+      title
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -169,26 +141,4 @@ export const CREATE_PROJECT = gql`
 export const getUserProjects = async (client: ApolloClient<unknown>) => {
   const response = await client.query({ query: GET_USER_PROJECTS });
   return response.data.getUserProjects;
-};
-
-export const getProjectDetails = async (
-  client: ApolloClient<unknown>,
-  projectId: string
-) => {
-  const response = await client.query({
-    query: GET_PROJECT_DETAILS,
-    variables: { projectId },
-  });
-  return response.data.getProjectDetails;
-};
-
-export const createProject = async (
-  client: ApolloClient<unknown>,
-  createProjectInput: any
-) => {
-  const response = await client.mutate({
-    mutation: CREATE_PROJECT,
-    variables: { createProjectInput },
-  });
-  return response.data.createProject;
 };
