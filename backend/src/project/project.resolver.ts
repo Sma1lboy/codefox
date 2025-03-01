@@ -114,11 +114,11 @@ export class ProjectsResolver {
     );
   }
 
-  @Mutation(() => Project)
+  @Mutation(() => Chat)
   async forkProject(
     @GetUserIdFromToken() userId: string,
     @Args('projectId', { type: () => ID }) projectId: string,
-  ): Promise<Project> {
+  ): Promise<Chat> {
     this.logger.log(`User ${userId} forking project ${projectId}`);
     return this.projectService.forkProject(userId, projectId);
   }

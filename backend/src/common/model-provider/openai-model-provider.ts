@@ -95,7 +95,7 @@ export class OpenAIModelProvider implements IModelProvider {
       const completion = await queue.add(async () => {
         const result = await this.openai.chat.completions.create({
           messages: input.messages,
-          model: input.model,
+          model: input.model || this.baseModel,
           stream: false,
         });
         if (!result) throw new Error('No completion result received');

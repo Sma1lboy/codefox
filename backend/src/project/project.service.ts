@@ -122,17 +122,25 @@ export class ProjectService {
     input: CreateProjectInput,
     userId: string,
   ): Promise<Chat> {
-    const defaultChatPromise = await this.chatService.createChat(userId, {
-      title: input.projectName || 'Default Project Chat',
-    });
+    try {
+      // Create default chat in parallel with project creation
+      const defaultChatPromise = this.chatService.createChat(userId, {
+        title: input.projectName || 'Default Project Chat',
+      });
 
-    const projectPromise = (async () => {
-      try {
+      // Generate project name if not provided
+      let projectName = input.projectName;
+      if (!projectName || projectName === '') {
+        this.logger.debug(
+          'Project name not exist in input, generating project name',
+        );
         const nameGenerationPrompt = await generateProjectNamePrompt(
           input.description,
         );
+
+        // Use user-specified model or default
         const response = await this.model.chatSync({
-          model: input.model || OpenAIModelProvider.getInstance().baseModel,
+          model: input.model || this.model.baseModel,
           messages: [
             {
               role: MessageRole.System,
@@ -146,41 +154,60 @@ export class ProjectService {
           ],
         });
 
-        if (input.projectName === '') {
-          this.logger.debug(
-            'Project name not exist in input, generating project name',
-          );
-          input.projectName = response;
-          this.logger.debug(`Generated project name: ${input.projectName}`);
-        }
-
-        const sequence = buildProjectSequenceByProject(input);
-        const context = new BuilderContext(sequence, sequence.id);
-        const projectPath = await context.execute();
-
-        const project = new Project();
-        project.projectName = input.projectName;
-        project.projectPath = projectPath;
-        project.userId = userId;
-
-        project.projectPackages = await this.transformInputToProjectPackages(
-          input.packages,
-        );
-
-        const savedProject = await this.projectsRepository.save(project);
-
-        const defaultChat = await defaultChatPromise;
-        await this.bindProjectAndChat(savedProject, defaultChat);
-
-        console.log('Binded project and chats');
-        return savedProject;
-      } catch (error) {
-        this.logger.error('Error creating project:', error);
-        throw new InternalServerErrorException('Error creating the project.');
+        projectName = response;
+        this.logger.debug(`Generated project name: ${projectName}`);
       }
-    })();
 
-    return defaultChatPromise;
+      // Build project sequence and execute
+      const sequence = buildProjectSequenceByProject({
+        ...input,
+        projectName,
+      });
+      const context = new BuilderContext(sequence, sequence.id);
+      const projectPath = await context.execute();
+
+      // Create project entity and set properties
+      const project = new Project();
+      project.projectName = projectName;
+      project.projectPath = projectPath;
+      project.userId = userId;
+      project.isPublic = input.public || false; // Set project visibility based on input
+      project.uniqueProjectId = uuidv4(); // Generate unique project ID
+
+      // Set project packages
+      project.projectPackages = await this.transformInputToProjectPackages(
+        input.packages,
+      );
+
+      // Save project
+      const savedProject = await this.projectsRepository.save(project);
+      this.logger.debug(`Project created: ${savedProject.id}`);
+
+      // Bind default chat to project
+      const defaultChat = await defaultChatPromise;
+      const bindSuccess = await this.bindProjectAndChat(
+        savedProject,
+        defaultChat,
+      );
+
+      if (!bindSuccess) {
+        this.logger.warn(
+          `Failed to bind project and chat: ${savedProject.id} -> ${defaultChat.id}`,
+        );
+      } else {
+        this.logger.debug(
+          `Project and chat bound: ${savedProject.id} -> ${defaultChat.id}`,
+        );
+      }
+
+      return defaultChat;
+    } catch (error) {
+      this.logger.error(
+        `Error creating project: ${error.message}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException('Error creating the project.');
+    }
   }
   private async transformInputToProjectPackages(
     inputPackages: ProjectPackage[],
@@ -392,16 +419,73 @@ export class ProjectService {
     return this.projectsRepository.save(project);
   }
 
-  // forkProject is now essentially the same as subscribeToProject
-  // We'll keep this method as an alias for API consistency
   /**
-   * Fork an existing project (alias for subscribeToProject)
-   * @param userId The user ID forking the project
+   * Fork an existing project to create a copy for the current user
+   * @param userId The user ID making the request
    * @param projectId The project ID to fork
-   * @returns The newly created forked project
+   * @returns The chat associated with the newly created project
    */
-  async forkProject(userId: string, projectId: string): Promise<Project> {
-    return this.subscribeToProject(userId, projectId);
+  async forkProject(userId: string, projectId: string): Promise<Chat> {
+    try {
+      this.logger.debug(`User ${userId} forking project ${projectId}`);
+
+      // Get the source project
+      const sourceProject = await this.getProjectById(projectId);
+
+      // Check if the project is public or owned by the requesting user
+      if (!sourceProject.isPublic && sourceProject.userId !== userId) {
+        throw new ForbiddenException(
+          'Cannot fork a private project you do not own',
+        );
+      }
+
+      // Prevent users from forking their own projects
+      if (sourceProject.userId === userId) {
+        throw new ForbiddenException('Cannot fork your own project');
+      }
+
+      // Create default chat for the new project
+      const defaultChat = await this.chatService.createChat(userId, {
+        title: `Fork of ${sourceProject.projectName}`,
+      });
+
+      // Extract package information from source project
+      const sourcePackages = sourceProject.projectPackages.map((pkg) => ({
+        name: pkg.content,
+        version: pkg.version,
+      }));
+
+      // Create a new project entity
+      const newProject = new Project();
+      newProject.projectName = `Fork of ${sourceProject.projectName}`;
+      newProject.projectPath = sourceProject.projectPath; // Backend will handle path as needed
+      newProject.userId = userId;
+      newProject.isPublic = false; // Default to private
+      newProject.uniqueProjectId = uuidv4(); // Generate new unique ID
+      newProject.forkedFromId = sourceProject.uniqueProjectId; // Reference the original
+      newProject.photoUrl = sourceProject.photoUrl; // Copy screenshot if available
+
+      // Set project packages
+      newProject.projectPackages =
+        await this.transformInputToProjectPackages(sourcePackages);
+
+      // Save the new project
+      const savedProject = await this.projectsRepository.save(newProject);
+
+      // Increment the source project's subscription count
+      sourceProject.subNumber += 1;
+      await this.projectsRepository.save(sourceProject);
+
+      // Bind chat to the new project
+      await this.bindProjectAndChat(savedProject, defaultChat);
+
+      return defaultChat;
+    } catch (error) {
+      this.logger.error(`Error forking project: ${error.message}`, error.stack);
+      throw error instanceof ForbiddenException
+        ? error
+        : new InternalServerErrorException('Error forking the project.');
+    }
   }
 
   /**
