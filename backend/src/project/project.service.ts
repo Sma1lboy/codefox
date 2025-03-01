@@ -230,7 +230,7 @@ export class ProjectService {
     }
   }
 
-  private async transformInputToProjectPackages(
+  async transformInputToProjectPackages(
     inputPackages: ProjectPackage[],
   ): Promise<ProjectPackages[]> {
     try {
@@ -238,6 +238,7 @@ export class ProjectService {
         return [];
       }
 
+      // Filter valid packages
       const validPackages = inputPackages.filter(
         (pkg) => pkg.name && pkg.name.trim() !== '',
       );
@@ -247,68 +248,53 @@ export class ProjectService {
       }
 
       const packageNames = validPackages.map((pkg) => pkg.name);
+
+      // Find existing packages by name (not by content)
       const existingPackages = await this.projectPackagesRepository.find({
         where: {
-          content: In(packageNames),
+          name: In(packageNames),
         },
       });
 
+      // Map by name, not content
       const existingPackagesMap = new Map(
-        existingPackages.map((pkg) => [pkg.content, pkg]),
+        existingPackages.map((pkg) => [pkg.name, pkg]),
       );
 
       const transformedPackages = await Promise.all(
         validPackages.map(async (inputPkg) => {
           const existingPackage = existingPackagesMap.get(inputPkg.name);
+
           if (existingPackage) {
+            // Update the existing package version if needed
             if (existingPackage.version !== inputPkg.version) {
-              existingPackage.version = inputPkg.version;
+              existingPackage.version = inputPkg.version || 'latest';
               return await this.projectPackagesRepository.save(existingPackage);
             }
             return existingPackage;
           }
 
+          // Create a new package with required fields
           const newPackage = new ProjectPackages();
-          newPackage.content = inputPkg.name;
-          if ('name' in newPackage) {
-            (newPackage as any).name = inputPkg.name;
-          }
+          newPackage.name = inputPkg.name; // Set name
+          newPackage.content = inputPkg.name; // Set content to match name
           newPackage.version = inputPkg.version || 'latest';
 
           try {
             return await this.projectPackagesRepository.save(newPackage);
           } catch (err) {
             this.logger.error(`Error saving package: ${err.message}`);
-            if (
-              err.message.includes(
-                'NOT NULL constraint failed: project_packages.name',
-              )
-            ) {
-              this.logger.warn('Attempting to fix name field constraint issue');
-              const result = await this.projectPackagesRepository.query(
-                `INSERT INTO project_packages (content, version, name, isDeleted, isActive, createdAt, updatedAt) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [
-                  inputPkg.name,
-                  inputPkg.version || 'latest',
-                  inputPkg.name,
-                  false,
-                  true,
-                  new Date(),
-                  new Date(),
-                ],
-              );
-              const newId = result.lastInsertRowid || result.insertId;
-              return await this.projectPackagesRepository.findOne({
-                where: { id: newId },
-              });
-            }
-            throw err;
+            throw err; // Re-throw to handle it in the outer catch
           }
         }),
-      );
+      ).catch((error) => {
+        this.logger.error(
+          `Error in Promise.all for packages: ${error.message}`,
+        );
+        return [];
+      });
 
-      return transformedPackages.filter(Boolean);
+      return transformedPackages.filter(Boolean) as ProjectPackages[];
     } catch (error) {
       this.logger.error('Error transforming packages:', error);
       return [];

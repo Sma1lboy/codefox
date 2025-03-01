@@ -71,57 +71,59 @@ export default function ChatLayout({
   }
 
   return (
-    <main className="flex h-[calc(100dvh)] flex-col items-center">
-      <ResizablePanelGroup
-        direction="horizontal"
-        autoSaveId="main-layout"
-        onLayout={(sizes: number[]) => {
-          const sidebarSize = sizes[0];
-          const isNowCollapsed = sidebarSize < 10;
-          setIsCollapsed(isNowCollapsed);
+    <ProjectProvider>
+      <main className="flex h-[calc(100dvh)] flex-col items-center">
+        <ResizablePanelGroup
+          direction="horizontal"
+          autoSaveId="main-layout"
+          onLayout={(sizes: number[]) => {
+            const sidebarSize = sizes[0];
+            const isNowCollapsed = sidebarSize < 10;
+            setIsCollapsed(isNowCollapsed);
 
-          if (isNowCollapsed && sizes.length > 1) {
-            const newSizes = [navCollapsedSize, 100 - navCollapsedSize];
+            if (isNowCollapsed && sizes.length > 1) {
+              const newSizes = [navCollapsedSize, 100 - navCollapsedSize];
+              document.cookie = `react-resizable-panels:layout=${JSON.stringify(
+                newSizes
+              )}; path=/; max-age=604800`;
+              return newSizes;
+            }
+
             document.cookie = `react-resizable-panels:layout=${JSON.stringify(
-              newSizes
+              sizes
             )}; path=/; max-age=604800`;
-            return newSizes;
-          }
+            return sizes;
+          }}
+          className="h-screen items-stretch w-full"
+        >
+          <SidebarProvider>
+            <ProjectModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              refetchProjects={refetch}
+            />
+            <ChatSideBar
+              setIsModalOpen={setIsModalOpen}
+              isCollapsed={isCollapsed}
+              setIsCollapsed={setIsCollapsed}
+              isMobile={isMobile}
+              chatListUpdated={chatListUpdated}
+              setChatListUpdated={setChatListUpdated}
+              chats={chats}
+              loading={loading}
+              error={error}
+              onRefetch={refetchChats}
+            />
 
-          document.cookie = `react-resizable-panels:layout=${JSON.stringify(
-            sizes
-          )}; path=/; max-age=604800`;
-          return sizes;
-        }}
-        className="h-screen items-stretch w-full"
-      >
-        <SidebarProvider>
-          <ProjectModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            refetchProjects={refetch}
-          />
-          <ChatSideBar
-            setIsModalOpen={setIsModalOpen}
-            isCollapsed={isCollapsed}
-            setIsCollapsed={setIsCollapsed}
-            isMobile={isMobile}
-            chatListUpdated={chatListUpdated}
-            setChatListUpdated={setChatListUpdated}
-            chats={chats}
-            loading={loading}
-            error={error}
-            onRefetch={refetchChats}
-          />
-
-          <ResizablePanel
-            className="h-full w-full flex justify-center"
-            defaultSize={defaultLayout[1]}
-          >
-            {children}
-          </ResizablePanel>
-        </SidebarProvider>
-      </ResizablePanelGroup>
-    </main>
+            <ResizablePanel
+              className="h-full w-full flex justify-center"
+              defaultSize={defaultLayout[1]}
+            >
+              {children}
+            </ResizablePanel>
+          </SidebarProvider>
+        </ResizablePanelGroup>
+      </main>
+    </ProjectProvider>
   );
 }
