@@ -17,7 +17,12 @@ export class FrontendCodeValidator {
   /**
    * @param frontendPath - The absolute path to the generated frontend project.
    */
-  constructor(private readonly frontendPath: string) {}
+  constructor(
+    private readonly frontendPath: string,
+    private readonly projectPart?: string,
+  ) {
+    this.projectPart = projectPart || 'frontend';
+  }
 
   /**
    * Runs the build command (npm run build) inside the frontend project directory.
@@ -31,10 +36,18 @@ export class FrontendCodeValidator {
     return new Promise<ValidationResult>((resolve, reject) => {
       this.logger.log('Starting frontend code validation...');
       // Spawn the npm build process in the provided frontend project path.
-      const npmProcess = spawn('npm', ['run', 'build'], {
-        cwd: this.frontendPath,
-        shell: true,
-      });
+      let npmProcess;
+      if (this.projectPart === 'frontend') {
+        npmProcess = spawn('npm', ['run', 'build'], {
+          cwd: this.frontendPath,
+          shell: true,
+        });
+      } else {
+        npmProcess = spawn('npm', ['run', 'check'], {
+          cwd: this.frontendPath,
+          shell: true,
+        });
+      }
 
       this.logger.log('Running npm build command in', this.frontendPath);
       let stdoutBuffer = '';

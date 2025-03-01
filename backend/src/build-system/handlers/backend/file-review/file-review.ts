@@ -119,7 +119,7 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
         response = await chatSyncWithClocker(
           context,
           {
-            model: 'gpt-4o-mini',
+            model: 'o3-mini-high',
             messages: [{ content: modificationPrompt, role: 'system' }],
           },
           'generateBackendFile',
