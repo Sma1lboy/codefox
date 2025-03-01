@@ -66,7 +66,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
             marginLeft: showSidebar ? (isCollapsed ? '80px' : '250px') : '0px',
           }}
         >
-          <NavLayout>{children}</NavLayout>
+          <div className="w-full"> {children}</div>
         </div>
       </div>
     </SidebarProvider>

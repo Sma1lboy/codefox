@@ -21,7 +21,7 @@ export default function HomePage() {
   };
 
   return (
-    <>
+    <div className="pt-32 pb-24 px-6 ">
       <motion.div
         className="flex flex-col items-center"
         initial={{ opacity: 0, y: 20 }}
@@ -91,6 +91,6 @@ export default function HomePage() {
           }
         }
       `}</style>
-    </>
+    </div>
   );
 }

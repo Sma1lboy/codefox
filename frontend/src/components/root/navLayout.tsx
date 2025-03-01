@@ -103,7 +103,8 @@ export default function NavLayout({ children }: NavLayoutProps) {
         className="transition-transform duration-300"
       />
 
-      <div className="w-full pt-32 pb-24 px-6">{children}</div>
+      {/* TODO: shouldn't adding w-full here */}
+      <div className="w-full">{children}</div>
 
       <SignUpModal isOpen={showSignUp} onClose={() => setShowSignUp(false)} />
       <SignInModal isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
