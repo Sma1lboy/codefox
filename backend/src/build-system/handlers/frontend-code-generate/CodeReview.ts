@@ -73,6 +73,7 @@ export class FrontendQueueProcessor {
     private validator: FrontendCodeValidator, // Path to your frontend project
     private queue: CodeTaskQueue, // The queue of files to process
     private context: BuilderContext,
+    private projectPart: string,
     private frontendPath: string,
     private renameMap: Map<string, string>,
   ) {}
@@ -266,6 +267,10 @@ export class FrontendQueueProcessor {
           }
         }
 
+        this.logger.log(
+          this.projectPart === 'frontend' ? commonIssuePrompt : '',
+        );
+
         // **Second Attempt: Retry fix with additional file content**
         fixResponse = await chatSyncWithClocker(
           this.context,
@@ -298,7 +303,7 @@ export class FrontendQueueProcessor {
                 role: 'assistant',
                 content: `Let me analysis the current file. Why error message occour
               This time I shouldn't use the read tool because previous context already use it.
-              Let me check some common issue to make sure my thinking is correct ${commonIssuePrompt}.
+              Let me check some common issue to make sure my thinking is correct ${this.projectPart === 'frontend' ? commonIssuePrompt : ''}.
               I must follow the output format`,
               },
               {
@@ -330,6 +335,7 @@ export class FrontendQueueProcessor {
       this.logger.log(`Generic fix applied to file: ${task.filePath}`);
 
       if (newFilePath) {
+        this.logger.log(`File renamed to: ${newFilePath}`);
         return newFilePath;
       }
 

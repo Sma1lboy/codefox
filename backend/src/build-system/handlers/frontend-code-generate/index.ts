@@ -202,6 +202,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         validator,
         queue,
         context,
+        'frontend',
         frontendPath,
         renameMap,
       );

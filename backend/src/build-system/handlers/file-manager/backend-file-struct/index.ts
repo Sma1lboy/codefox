@@ -93,8 +93,7 @@ export const prompts = {
         src/
             controllers/ - Handle incoming requests and return responses
             models/ - Define data schemas and interact with the database
-            route.js - Define API endpoints and route requests to controllers
-            app.js - Application entry point
+            route.ts - Define API endpoints and route requests to controllers
     `;
 
     excludeSections = `
@@ -107,8 +106,8 @@ export const prompts = {
     fileNamingGuidelines = `
       File Naming Guidelines:
         - Use meaningful and descriptive file names
-        - Controllers should be named after their resource (e.g., userController.js)
-        - Models should represent data entities (e.g., User.js)
+        - Controllers should be named after their resource (e.g., userController.ts)
+        - Models should represent data entities (e.g., User.ts)
         - Use consistent naming conventions (camelCase) throughout the project
         - Match model names to the database schema entities
     `;
@@ -160,7 +159,7 @@ export const prompts = {
 
 ### Instructions
 
-1. **Analyze the directory structure** to identify all files and their relationships in this Express.js backend application.
+1. **Analyze the directory structure** to identify all files and their relationships in this Express backend application.
    - Identify direct dependencies for each file by considering typical imports based on roles, naming conventions, and the provided analysis.
    - Understand the MVC pattern used in Express.js applications (Models, Controllers, Routes)
    - Do not assume any additional files or paths. The structure must be based exclusively on the given list.

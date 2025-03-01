@@ -7,10 +7,9 @@ export const generateBackendOverviewPrompt = (
   framework: string,
   packages: Record<string, string>,
 ): string => {
-  return `You are a Senior Backend Architect specializing in backend systems. Generate the System Overview and API Endpoints specifications based on the following inputs.
+  return `Role: You are a Senior Backend Architect specializing in backend systems. Generate the System Overview and API Endpoints specifications based on the following inputs.
 
-### Inputs
-Project Name: ${projectName}
+Task: Generate a Backend Overview Document following these guidelines:
 
 ### Technology Stack
 - Language: ${language}
@@ -19,18 +18,6 @@ Project Name: ${projectName}
 ${Object.entries(packages)
   .map(([pkg, version]) => `  - ${pkg}@${version}`)
   .join('\n')}
-
-### Requirements Documentation
-1. Database Requirements:
-${dbRequirements}
-
-2. Frontend Data Requirements:
-${datamapDoc}
-
-3. Site Structure:
-${sitemapDoc}
-
-Generate a Backend Overview Document following these guidelines:
 
 ### Instructions and Rules:
 1. Design a clear system architecture based on the technology stack and requirements
@@ -42,44 +29,29 @@ Generate a Backend Overview Document following these guidelines:
 4. Consider:
    - Data flow between frontend pages
    - Required data transformations
-   - Real-time update requirements
-   - Caching strategies
    - Authentication and authorization needs
 
-Your reply must start with: "\`\`\`BackendOverview" and end with "\`\`\`".
+Your reply must start with: "<GENERATE>" and end with "</GENERATE>".
 
 Include these sections:
 
+<System_Overview>
 #### 1. System Overview
 - **Project Name**: ${projectName}
-- **Technology Stack**
-  - Core technology choices
-  - Framework architecture
-  - Key dependencies and their purposes
-- **Architecture Patterns**
-  - Framework-specific patterns
-  - Project structure
-  - Dependency management
-  - Configuration management
-  - Service organization
-- **Data Flow Architecture**
+- **Framework architecture**
+- **Data Flow**
   - Frontend-Backend data interactions
-  - Caching strategy
-  - Real-time updates handling
   - Data transformation layers
+</System_Overview>
 
-#### 2. API Endpoints
+<ApiDoc>
 Group endpoints by functional areas based on site structure.
 For each endpoint:
 \`\`\`
-Route: /api/resource
-Method: GET|POST|PUT|DELETE
+Route: GET|POST|PUT|DELETE /api/resource
 Purpose: Functional description
-Frontend Usage: Which pages/components use this endpoint
 Data Requirements:
   - Required data transformations
-  - Caching requirements
-  - Real-time update needs
 Request:
   Headers: {
     "Authorization": "Bearer {token}"
@@ -102,8 +74,22 @@ Response:
     // Error response schemas
   }
 Required Auth: Yes/No
-Rate Limiting: Specifications if needed
-Cache Strategy: Caching rules if applicable
+</ApiDoc>
+
+
+### Context input
+Project Name: ${projectName}
+
+### Requirements Documentation
+1. Database Requirements:
+${dbRequirements}
+
+2. Frontend Data Requirements:
+${datamapDoc}
+
+3. Site Structure:
+${sitemapDoc}
+
 \`\`\``;
 };
 
