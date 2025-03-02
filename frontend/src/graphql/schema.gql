@@ -54,7 +54,9 @@ input CreateProjectInput {
   public: Boolean
 }
 
-"""Date custom scalar type"""
+"""
+Date custom scalar type
+"""
 scalar Date
 
 input FetchPublicProjectsInputs {
