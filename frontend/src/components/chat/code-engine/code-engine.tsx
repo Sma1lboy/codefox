@@ -20,10 +20,18 @@ import FileStructure from './file-structure';
 import { ProjectContext } from './project-context';
 import WebPreview from './web-view';
 
-export function CodeEngine({ chatId }: { chatId: string }) {
+export function CodeEngine({
+  chatId,
+  isProjectReady = false,
+  projectId,
+}: {
+  chatId: string;
+  isProjectReady?: boolean;
+  projectId?: string;
+}) {
   // Initialize state, refs, and context
   const editorRef = useRef(null);
-  const { curProject, filePath, pollChatProject } = useContext(ProjectContext);
+  const { curProject, filePath } = useContext(ProjectContext);
   const [preCode, setPrecode] = useState('// some comment');
   const [newCode, setCode] = useState('// some comment');
   const [saving, setSaving] = useState(false);
@@ -34,9 +42,7 @@ export function CodeEngine({ chatId }: { chatId: string }) {
     Record<TreeItemIndex, TreeItem<any>>
   >({});
   const theme = useTheme();
-  console.log('codeengine current chatId: ', chatId);
 
-  const [isProjectFinished, setIsProjectFinished] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'preview' | 'code' | 'console'>(
     'code'
   );
@@ -48,23 +54,11 @@ export function CodeEngine({ chatId }: { chatId: string }) {
     editorInstance.getDomNode().style.position = 'absolute';
   };
 
-  useEffect(() => {
-    async function checkChatProject() {
-      if (curProject?.id) {
-        setIsProjectFinished(false);
-        const linkedProject = await pollChatProject(chatId);
-        console.log(linkedProject);
-        setIsProjectFinished(true);
-      } else {
-        setIsProjectFinished(false);
-      }
-    }
-    checkChatProject();
-  }, [chatId, curProject, pollChatProject]);
-
   // Effect: Fetch file content when filePath or projectId changes
   useEffect(() => {
     async function getCode() {
+      if (!curProject || !filePath) return;
+
       const file_node = fileStructureData[`root/${filePath}`];
       if (filePath == '' || !file_node) return;
       const isFolder = file_node.isFolder;
@@ -83,7 +77,7 @@ export function CodeEngine({ chatId }: { chatId: string }) {
       }
     }
     getCode();
-  }, [filePath, curProject]);
+  }, [filePath, curProject, fileStructureData]);
 
   // Effect: Fetch file structure when projectId changes
   useEffect(() => {
@@ -112,6 +106,8 @@ export function CodeEngine({ chatId }: { chatId: string }) {
 
   // Update file content on the server
   const updateCode = async (value) => {
+    if (!curProject) return;
+
     try {
       const response = await fetch('/api/file', {
         method: 'POST',
@@ -274,14 +270,14 @@ export function CodeEngine({ chatId }: { chatId: string }) {
 
   // Render the CodeEngine layout
   return (
-    <div className="rounded-lg border shadow-sm overflow-hidden">
+    <div className="rounded-lg border shadow-sm overflow-hidden h-full">
       {/* Header Bar */}
-      <ResponsiveToolbar isLoading={!isProjectFinished} />
+      <ResponsiveToolbar isLoading={!isProjectReady} />
 
       {/* Main Content Area with Loading */}
-      <div className="relative h-[calc(100vh-48px)]">
+      <div className="relative h-[calc(100vh-48px-2rem)]">
         <AnimatePresence>
-          {!isProjectFinished && (
+          {!isProjectReady && (
             <motion.div
               key="loader"
               initial={{ opacity: 0 }}
