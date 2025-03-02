@@ -39,7 +39,8 @@ export const GetUserIdFromToken = createParamDecorator(
     const decodedToken: any = jwtService.decode(token);
 
     if (!decodedToken || !decodedToken.userId) {
-      throw new UnauthorizedException('Invalid token');
+      Logger.debug('invalid token, token:' + token);
+      throw new UnauthorizedException('Invalid token, token:', token);
     }
 
     return decodedToken.userId;

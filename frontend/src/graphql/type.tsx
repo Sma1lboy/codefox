@@ -99,11 +99,12 @@ export type IsValidProjectInput = {
 export type LoginResponse = {
   __typename: 'LoginResponse';
   accessToken: Scalars['String']['output'];
+  refreshToken: Scalars['String']['output'];
 };
 
 export type LoginUserInput = {
+  email: Scalars['String']['input'];
   password: Scalars['String']['input'];
-  username: Scalars['String']['input'];
 };
 
 export type Menu = {
@@ -138,6 +139,7 @@ export type Mutation = {
   deleteChat: Scalars['Boolean']['output'];
   deleteProject: Scalars['Boolean']['output'];
   login: LoginResponse;
+  refreshToken: RefreshTokenResponse;
   registerUser: User;
   triggerChatStream: Scalars['Boolean']['output'];
   updateChatTitle?: Maybe<Chat>;
@@ -167,6 +169,10 @@ export type MutationLoginArgs = {
   input: LoginUserInput;
 };
 
+export type MutationRefreshTokenArgs = {
+  refreshToken: Scalars['String']['input'];
+};
+
 export type MutationRegisterUserArgs = {
   input: RegisterUserInput;
 };
@@ -194,6 +200,7 @@ export type Project = {
   projectPackages?: Maybe<Array<ProjectPackages>>;
   projectPath: Scalars['String']['output'];
   updatedAt: Scalars['Date']['output'];
+  user: User;
   userId: Scalars['ID']['output'];
 };
 
@@ -221,7 +228,7 @@ export type Query = {
   getChatDetails?: Maybe<Chat>;
   getChatHistory: Array<Message>;
   getHello: Scalars['String']['output'];
-  getProjectDetails: Project;
+  getProject: Project;
   getUserChats?: Maybe<Array<Chat>>;
   getUserProjects: Array<Project>;
   isValidateProject: Scalars['Boolean']['output'];
@@ -241,12 +248,18 @@ export type QueryGetChatHistoryArgs = {
   chatId: Scalars['String']['input'];
 };
 
-export type QueryGetProjectDetailsArgs = {
+export type QueryGetProjectArgs = {
   projectId: Scalars['String']['input'];
 };
 
 export type QueryIsValidateProjectArgs = {
   isValidProject: IsValidProjectInput;
+};
+
+export type RefreshTokenResponse = {
+  __typename: 'RefreshTokenResponse';
+  accessToken: Scalars['String']['output'];
+  refreshToken: Scalars['String']['output'];
 };
 
 export type RegisterUserInput = {
@@ -278,8 +291,10 @@ export type User = {
   chats: Array<Chat>;
   createdAt: Scalars['Date']['output'];
   email: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
   isActive: Scalars['Boolean']['output'];
   isDeleted: Scalars['Boolean']['output'];
+  projects: Array<Project>;
   updatedAt: Scalars['Date']['output'];
   username: Scalars['String']['output'];
 };
@@ -416,6 +431,7 @@ export type ResolversTypes = ResolversObject<{
   ProjectPackage: ProjectPackage;
   ProjectPackages: ResolverTypeWrapper<ProjectPackages>;
   Query: ResolverTypeWrapper<{}>;
+  RefreshTokenResponse: ResolverTypeWrapper<RefreshTokenResponse>;
   RegisterUserInput: RegisterUserInput;
   Role: Role;
   StreamStatus: StreamStatus;
@@ -449,6 +465,7 @@ export type ResolversParentTypes = ResolversObject<{
   ProjectPackage: ProjectPackage;
   ProjectPackages: ProjectPackages;
   Query: {};
+  RefreshTokenResponse: RefreshTokenResponse;
   RegisterUserInput: RegisterUserInput;
   String: Scalars['String']['output'];
   Subscription: {};
@@ -539,6 +556,7 @@ export type LoginResponseResolvers<
     ResolversParentTypes['LoginResponse'] = ResolversParentTypes['LoginResponse'],
 > = ResolversObject<{
   accessToken?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  refreshToken?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
@@ -615,6 +633,12 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationLoginArgs, 'input'>
   >;
+  refreshToken?: Resolver<
+    ResolversTypes['RefreshTokenResponse'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationRefreshTokenArgs, 'refreshToken'>
+  >;
   registerUser?: Resolver<
     ResolversTypes['User'],
     ParentType,
@@ -653,6 +677,7 @@ export type ProjectResolvers<
   >;
   projectPath?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
+  user?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
   userId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
@@ -702,11 +727,11 @@ export type QueryResolvers<
     RequireFields<QueryGetChatHistoryArgs, 'chatId'>
   >;
   getHello?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  getProjectDetails?: Resolver<
+  getProject?: Resolver<
     ResolversTypes['Project'],
     ParentType,
     ContextType,
-    RequireFields<QueryGetProjectDetailsArgs, 'projectId'>
+    RequireFields<QueryGetProjectArgs, 'projectId'>
   >;
   getUserChats?: Resolver<
     Maybe<Array<ResolversTypes['Chat']>>,
@@ -726,6 +751,16 @@ export type QueryResolvers<
   >;
   logout?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   me?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+}>;
+
+export type RefreshTokenResponseResolvers<
+  ContextType = any,
+  ParentType extends
+    ResolversParentTypes['RefreshTokenResponse'] = ResolversParentTypes['RefreshTokenResponse'],
+> = ResolversObject<{
+  accessToken?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  refreshToken?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
 export type SubscriptionResolvers<
@@ -750,8 +785,14 @@ export type UserResolvers<
   chats?: Resolver<Array<ResolversTypes['Chat']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   isActive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   isDeleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  projects?: Resolver<
+    Array<ResolversTypes['Project']>,
+    ParentType,
+    ContextType
+  >;
   updatedAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
   username?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -770,6 +811,7 @@ export type Resolvers<ContextType = any> = ResolversObject<{
   Project?: ProjectResolvers<ContextType>;
   ProjectPackages?: ProjectPackagesResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
+  RefreshTokenResponse?: RefreshTokenResponseResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
 }>;
