@@ -85,7 +85,7 @@ export default function EditUsernameForm() {
     setName(e.currentTarget.value);
   };
   return (
-    <div className="w-[60%] pt-10">
+    <div className="w-[60%] pt-10 mb-24">
       <h1 className="text-3xl font-semibold mb-8">User Settings</h1>
       <div className="space-y-8">
         <div className="w-[100%] flex justify-center">

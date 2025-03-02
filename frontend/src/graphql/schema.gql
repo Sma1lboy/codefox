@@ -8,6 +8,7 @@ type Chat {
   isActive: Boolean!
   isDeleted: Boolean!
   messages: [Message!]
+  project: Project
   title: String
   updatedAt: Date!
   user: User!
@@ -50,7 +51,9 @@ input CreateProjectInput {
   projectName: String
 }
 
-"""Date custom scalar type"""
+"""
+Date custom scalar type
+"""
 scalar Date
 
 input IsValidProjectInput {
@@ -60,11 +63,12 @@ input IsValidProjectInput {
 
 type LoginResponse {
   accessToken: String!
+  refreshToken: String!
 }
 
 input LoginUserInput {
+  email: String!
   password: String!
-  username: String!
 }
 
 type Menu {
@@ -92,10 +96,11 @@ type Message {
 type Mutation {
   clearChatHistory(chatId: String!): Boolean!
   createChat(newChatInput: NewChatInput!): Chat!
-  createPorject(createProjectInput: CreateProjectInput!): Project!
+  createProject(createProjectInput: CreateProjectInput!): Chat!
   deleteChat(chatId: String!): Boolean!
   deleteProject(projectId: String!): Boolean!
   login(input: LoginUserInput!): LoginResponse!
+  refreshToken(refreshToken: String!): RefreshTokenResponse!
   registerUser(input: RegisterUserInput!): User!
   triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
@@ -106,6 +111,7 @@ input NewChatInput {
 }
 
 type Project {
+  chats: [Chat!]!
   createdAt: Date!
   id: ID!
   isActive: Boolean!
@@ -114,6 +120,7 @@ type Project {
   projectPackages: [ProjectPackages!]
   projectPath: String!
   updatedAt: Date!
+  user: User!
   userId: ID!
 }
 
@@ -128,6 +135,7 @@ type ProjectPackages {
   id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
+  name: String!
   updatedAt: Date!
   version: String!
 }
@@ -138,12 +146,17 @@ type Query {
   getChatDetails(chatId: String!): Chat
   getChatHistory(chatId: String!): [Message!]!
   getHello: String!
-  getProjectDetails(projectId: String!): Project!
+  getProject(projectId: String!): Project!
   getUserChats: [Chat!]
   getUserProjects: [Project!]!
   isValidateProject(isValidProject: IsValidProjectInput!): Boolean!
   logout: Boolean!
   me: User!
+}
+
+type RefreshTokenResponse {
+  accessToken: String!
+  refreshToken: String!
 }
 
 input RegisterUserInput {
@@ -176,8 +189,10 @@ type User {
   chats: [Chat!]!
   createdAt: Date!
   email: String!
+  id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
+  projects: [Project!]!
   updatedAt: Date!
   username: String!
 }

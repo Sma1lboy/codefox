@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ChatCompletionChunk, Chat } from './chat.model';
 import { Message, MessageRole } from 'src/chat/message.model';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -73,12 +73,20 @@ export class ChatService {
   async getChatDetails(chatId: string): Promise<Chat> {
     const chat = await this.chatRepository.findOne({
       where: { id: chatId, isDeleted: false },
-      relations: ['messages'],
+      relations: ['project'],
     });
 
-    if (chat) {
-      // Filter out messages that are soft-deleted
-      chat.messages = chat.messages.filter((message) => !message.isDeleted);
+    if (!chat) {
+      throw new NotFoundException('Chat not found');
+    }
+
+    try {
+      const messages = chat.messages || [];
+      chat.messages = messages.filter((message: any) => !message.isDeleted);
+      console.log(chat);
+    } catch (error) {
+      console.error('Error parsing messages JSON:', error);
+      chat.messages = [];
     }
 
     return chat;

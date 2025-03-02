@@ -8,15 +8,18 @@ import {
   JoinColumn,
   ManyToMany,
   JoinTable,
+  OneToMany,
+  RelationId,
 } from 'typeorm';
 import { User } from 'src/user/user.model';
 import { ProjectPackages } from './project-packages.model';
+import { Chat } from 'src/chat/chat.model';
 
 @Entity()
 @ObjectType()
 export class Project extends SystemBaseModel {
   @Field(() => ID)
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Field()
@@ -28,11 +31,16 @@ export class Project extends SystemBaseModel {
   projectPath: string;
 
   @Field(() => ID)
-  @Column()
-  userId: number;
+  @RelationId((project: Project) => project.user)
+  @Column({ name: 'user_id' })
+  userId: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, (user) => user.projects, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
   @JoinColumn({ name: 'user_id' })
+  @Field(() => User)
   user: User;
 
   @Field(() => [ProjectPackages], { nullable: true })
@@ -52,4 +60,12 @@ export class Project extends SystemBaseModel {
     },
   })
   projectPackages: ProjectPackages[];
+
+  @Field(() => [Chat])
+  @OneToMany(() => Chat, (chat) => chat.project, {
+    cascade: true, // Automatically save related chats
+    lazy: true, // Load chats only when accessed
+    onDelete: 'CASCADE', // Delete chats when user is deleted
+  })
+  chats: Promise<Chat[]>;
 }

@@ -1,8 +1,15 @@
 import { Field, ObjectType, ID, registerEnumType } from '@nestjs/graphql';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Message } from 'src/chat/message.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
 import { User } from 'src/user/user.model';
+import { Project } from 'src/project/project.model';
 
 export enum StreamStatus {
   STREAMING = 'streaming',
@@ -41,9 +48,17 @@ export class Chat extends SystemBaseModel {
   })
   messages: Message[];
 
-  @ManyToOne(() => User, (user) => user.chats)
+  @ManyToOne(() => User, (user) => user.chats, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
+  @JoinColumn({ name: 'user_id' })
   @Field(() => User)
   user: User;
+
+  @ManyToOne(() => Project, (project) => project.chats)
+  @Field(() => Project, { nullable: true })
+  project: Project;
 }
 
 @ObjectType('ChatCompletionDeltaType')

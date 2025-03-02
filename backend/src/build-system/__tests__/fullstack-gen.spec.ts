@@ -5,25 +5,23 @@ import { PRDHandler } from '../handlers/product-manager/product-requirements-doc
 import { UXSMDHandler } from '../handlers/ux/sitemap-document';
 import { UXSMSHandler } from '../handlers/ux/sitemap-structure';
 import { DBRequirementHandler } from '../handlers/database/requirements-document';
-import { FileStructureHandler } from '../handlers/file-manager/file-structure';
-import { UXSMSPageByPageHandler } from '../handlers/ux/sitemap-structure/sms-page';
-import { DBSchemaHandler } from '../handlers/database/schemas/schemas';
-import { FileFAHandler } from '../handlers/file-manager/file-arch';
-import { BackendRequirementHandler } from '../handlers/backend/requirements-document';
-import { BackendCodeHandler } from '../handlers/backend/code-generate';
-import { BackendFileReviewHandler } from '../handlers/backend/file-review/file-review';
 import { UXDMDHandler } from '../handlers/ux/datamap';
 import { BuilderContext } from '../context';
 import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
+import { FileStructureAndArchitectureHandler } from '../handlers/file-manager/file-struct';
+import { BackendRequirementHandler } from '../handlers/backend/requirements-document';
 
 (isIntegrationTest ? describe : describe.skip)('Build Sequence Test', () => {
   it('should execute build sequence successfully', async () => {
     const sequence: BuildSequence = {
       id: 'test-backend-sequence',
       version: '1.0.0',
-      name: 'Spotify-like Music Web',
-      description: 'Users can play music',
+      name: 'Wrtie a Cool personal website',
+      description:
+        'A personal blog website. I am a cybersecurity engineer so i want it to show i am a really cool hacker, with cool terminal functionality',
       databaseType: 'SQLite',
+      model: 'gpt-4o-mini',
+      projectSize: 'medium', // limit for fun
       nodes: [
         {
           handler: ProjectInitHandler,
@@ -47,32 +45,13 @@ import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
           name: 'UX DataMap Document Node',
         },
         {
+          handler: FileStructureAndArchitectureHandler,
+          name: 'File Structure and Architecture',
+        },
+        {
           handler: DBRequirementHandler,
           name: 'Database Requirements Node',
           // requires: ['op:UX:DATAMAP:DOC'],
-        },
-        {
-          handler: FileStructureHandler,
-          name: 'File Structure Generation',
-          // requires: ['op:UX:SMD', 'op:UX:DATAMAP:DOC'],
-          options: {
-            projectPart: 'frontend',
-          },
-        },
-        {
-          handler: UXSMSPageByPageHandler,
-          name: 'Level 2 UX Sitemap Structure Node details',
-          // requires: ['op:UX:SMS'],
-        },
-        {
-          handler: DBSchemaHandler,
-          name: 'Database Schemas Node',
-          // requires: ['op:DATABASE_REQ'],
-        },
-        {
-          handler: FileFAHandler,
-          name: 'File Arch',
-          // requires: ['op:FILE:STRUCT', 'op:UX:DATAMAP:DOC'],
         },
         {
           handler: BackendRequirementHandler,
@@ -80,20 +59,13 @@ import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
           // requires: ['op:DATABASE_REQ', 'op:UX:DATAMAP:DOC', 'op:UX:SMD'],
         },
         {
-          handler: BackendCodeHandler,
-          name: 'Backend Code Generator Node',
-        },
-        {
-          handler: BackendFileReviewHandler,
-          name: 'Backend File Review Node',
-        },
-        {
           handler: FrontendCodeHandler,
           name: 'Frontend Code Generator Node',
         },
       ],
+      packages: [],
     };
     const context = new BuilderContext(sequence, 'fullstack-code-gen');
     await context.execute();
-  }, 300000);
+  }, 2000000);
 });

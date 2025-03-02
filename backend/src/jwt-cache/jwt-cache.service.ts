@@ -95,7 +95,13 @@ export class JwtCacheService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async storeToken(token: string): Promise<void> {
+  /**
+   * The storeAccessToken method stores the access token in the cache dbds
+   * @param token the access token
+   * @returns return void
+   */
+  async storeAccessToken(token: string): Promise<void> {
+    this.logger.debug(`Storing token: ${token.substring(0, 10)}...`);
     const now = Date.now();
     const expiresAt = now + 24 * 60 * 60 * 1000;
 

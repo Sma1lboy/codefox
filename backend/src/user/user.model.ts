@@ -1,8 +1,9 @@
-import { ObjectType, Field } from '@nestjs/graphql';
+import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { IsEmail } from 'class-validator';
 import { Role } from 'src/auth/role/role.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
 import { Chat } from 'src/chat/chat.model';
+import { Project } from 'src/project/project.model';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -15,13 +16,13 @@ import {
 @Entity()
 @ObjectType()
 export class User extends SystemBaseModel {
-  @PrimaryGeneratedColumn()
+  @Field(() => ID)
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Field()
-  @Column({ unique: true })
+  @Column()
   username: string;
-
   @Column()
   password: string;
 
@@ -32,11 +33,19 @@ export class User extends SystemBaseModel {
 
   @Field(() => [Chat])
   @OneToMany(() => Chat, (chat) => chat.user, {
-    cascade: true, // Automatically save related chats
-    lazy: true, // Load chats only when accessed
-    onDelete: 'CASCADE', // Delete chats when user is deleted
+    cascade: true,
+    lazy: true,
+    onDelete: 'CASCADE',
   })
   chats: Chat[];
+
+  @Field(() => [Project])
+  @OneToMany(() => Project, (project) => project.user, {
+    cascade: true,
+    lazy: true,
+    onDelete: 'CASCADE',
+  })
+  projects: Project[];
 
   @ManyToMany(() => Role)
   @JoinTable({

@@ -1,4 +1,5 @@
-import { LocalStore } from '@/lib/storage';
+'use client';
+
 import {
   ApolloClient,
   InMemoryCache,
@@ -10,24 +11,26 @@ import {
 import { onError } from '@apollo/client/link/error';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
-
 import { getMainDefinition } from '@apollo/client/utilities';
+import { LocalStore } from '@/lib/storage';
 
 // HTTP Link
 const httpLink = new HttpLink({
-  uri: process.env.NEXT_PUBLIC_GRAPHQL_URL,
+  uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:8080/graphql',
   headers: {
+    'Content-Type': 'application/json',
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Allow-Origin': '*',
   },
 });
 
 // WebSocket Link (only in browser environment)
-let wsLink = null;
+let wsLink: GraphQLWsLink | undefined;
 if (typeof window !== 'undefined') {
   wsLink = new GraphQLWsLink(
     createClient({
-      url: process.env.NEXT_PUBLIC_GRAPHQL_URL,
+      url:
+        process.env.NEXT_PUBLIC_GRAPHQL_WS_URL || 'ws://localhost:8080/graphql',
       connectionParams: () => {
         const token = localStorage.getItem(LocalStore.accessToken);
         return token ? { Authorization: `Bearer ${token}` } : {};
@@ -38,10 +41,12 @@ if (typeof window !== 'undefined') {
 
 // Logging Middleware
 const requestLoggingMiddleware = new ApolloLink((operation, forward) => {
+  const context = operation.getContext();
   console.log('GraphQL Request:', {
     operationName: operation.operationName,
     variables: operation.variables,
     query: operation.query.loc?.source.body,
+    headers: context.headers,
   });
   return forward(operation).map((response) => {
     console.log('GraphQL Response:', response.data);
@@ -56,21 +61,22 @@ const authMiddleware = new ApolloLink((operation, forward) => {
   }
   const token = localStorage.getItem(LocalStore.accessToken);
   if (token) {
-    operation.setContext({
+    operation.setContext(({ headers = {} }) => ({
       headers: {
+        ...headers,
         Authorization: `Bearer ${token}`,
       },
-    });
+    }));
   }
   return forward(operation);
 });
 
 // Error Link
-const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
+const errorLink = onError(({ graphQLErrors, networkError }) => {
   if (graphQLErrors) {
     graphQLErrors.forEach(({ message, locations, path }) => {
       console.error(
-        `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
+        `[GraphQL error]: Message: ${message}, Location: ${JSON.stringify(locations)}, Path: ${path}`
       );
     });
   }
@@ -83,9 +89,6 @@ const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
 const splitLink = wsLink
   ? split(
       ({ query }) => {
-        if (!query) {
-          throw new Error('Query is undefined');
-        }
         const definition = getMainDefinition(query);
         return (
           definition.kind === 'OperationDefinition' &&
@@ -98,16 +101,12 @@ const splitLink = wsLink
   : from([errorLink, requestLoggingMiddleware, authMiddleware, httpLink]);
 
 // Create Apollo Client
-const client = new ApolloClient({
-  link: splitLink, // Use splitLink here
+export const client = new ApolloClient({
+  link: splitLink,
   cache: new InMemoryCache(),
   defaultOptions: {
-    watchQuery: {
-      fetchPolicy: 'no-cache',
-    },
-    query: {
-      fetchPolicy: 'no-cache',
-    },
+    watchQuery: { fetchPolicy: 'no-cache' },
+    query: { fetchPolicy: 'no-cache' },
   },
 });
 

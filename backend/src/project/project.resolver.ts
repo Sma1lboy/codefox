@@ -1,15 +1,20 @@
 // GraphQL Resolvers for Project APIs
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Mutation,
+  Query,
+  Resolver,
+  ResolveField,
+  Parent,
+} from '@nestjs/graphql';
 import { ProjectService } from './project.service';
 import { Project } from './project.model';
-import {
-  CreateProjectInput,
-  IsValidProjectInput,
-  UpsertProjectInput,
-} from './dto/project.input';
+import { CreateProjectInput, IsValidProjectInput } from './dto/project.input';
 import { UseGuards } from '@nestjs/common';
 import { ProjectGuard } from '../guard/project.guard';
 import { GetUserIdFromToken } from '../decorator/get-auth-token.decorator';
+import { Chat } from 'src/chat/chat.model';
+import { User } from 'src/user/user.model';
 
 @Resolver(() => Project)
 export class ProjectsResolver {
@@ -17,26 +22,27 @@ export class ProjectsResolver {
 
   @Query(() => [Project])
   async getUserProjects(
-    @GetUserIdFromToken() userId: number,
+    @GetUserIdFromToken() userId: string,
   ): Promise<Project[]> {
     return this.projectsService.getProjectsByUser(userId);
   }
 
-  // @GetAuthToken() token: string
   @Query(() => Project)
   @UseGuards(ProjectGuard)
-  async getProjectDetails(
-    @Args('projectId') projectId: string,
-  ): Promise<Project> {
+  async getProject(@Args('projectId') projectId: string): Promise<Project> {
     return this.projectsService.getProjectById(projectId);
   }
 
-  @Mutation(() => Project)
-  async createPorject(
-    @GetUserIdFromToken() userId: number,
+  @Mutation(() => Chat)
+  async createProject(
+    @GetUserIdFromToken() userId: string,
     @Args('createProjectInput') createProjectInput: CreateProjectInput,
-  ): Promise<Project> {
-    return this.projectsService.createProject(createProjectInput, userId);
+  ): Promise<Chat> {
+    const resChat = await this.projectsService.createProject(
+      createProjectInput,
+      userId,
+    );
+    return resChat;
   }
 
   @Mutation(() => Boolean)
@@ -47,9 +53,21 @@ export class ProjectsResolver {
 
   @Query(() => Boolean)
   async isValidateProject(
-    @GetUserIdFromToken() userId: number,
+    @GetUserIdFromToken() userId: string,
     @Args('isValidProject') input: IsValidProjectInput,
   ): Promise<boolean> {
     return this.projectsService.isValidProject(userId, input);
+  }
+
+  @ResolveField('user', () => User)
+  async getUser(@Parent() project: Project): Promise<User> {
+    const { user } = await this.projectsService.getProjectById(project.id);
+    return user;
+  }
+
+  @ResolveField('chats', () => [Chat])
+  async getChats(@Parent() project: Project): Promise<Chat[]> {
+    const { chats } = await this.projectsService.getProjectById(project.id);
+    return (await chats)?.filter((chat) => !chat.isDeleted) || [];
   }
 }

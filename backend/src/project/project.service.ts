@@ -21,6 +21,8 @@ import {
 import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 import { MessageRole } from 'src/chat/message.model';
 import { BuilderContext } from 'src/build-system/context';
+import { ChatService } from 'src/chat/chat.service';
+import { Chat } from 'src/chat/chat.model';
 
 @Injectable()
 export class ProjectService {
@@ -30,100 +32,155 @@ export class ProjectService {
   constructor(
     @InjectRepository(Project)
     private projectsRepository: Repository<Project>,
+    @InjectRepository(Chat)
+    private chatRepository: Repository<Chat>,
     @InjectRepository(ProjectPackages)
     private projectPackagesRepository: Repository<ProjectPackages>,
+    private chatService: ChatService,
   ) {}
 
-  async getProjectsByUser(userId: number): Promise<Project[]> {
+  async getProjectsByUser(userId: string): Promise<Project[]> {
     const projects = await this.projectsRepository.find({
-      where: { userId: userId, isDeleted: false },
-      relations: ['projectPackages'],
+      where: { userId, isDeleted: false },
+      relations: ['projectPackages', 'chats'],
     });
+
     if (projects && projects.length > 0) {
-      projects.forEach((project) => {
-        project.projectPackages = project.projectPackages.filter(
-          (pkg) => !pkg.isDeleted,
-        );
-      });
+      await Promise.all(
+        projects.map(async (project) => {
+          // Filter deleted packages
+          project.projectPackages = project.projectPackages.filter(
+            (pkg) => !pkg.isDeleted,
+          );
+          // Filter deleted chats
+          if (project.chats) {
+            const chats = await project.chats;
+            this.logger.log('Project chats:', chats);
+            // Create a new Promise that resolves to filtered chats
+            project.chats = Promise.resolve(
+              chats.filter((chat) => !chat.isDeleted),
+            );
+          }
+        }),
+      );
     }
 
-    if (!projects || projects.length === 0) {
-      throw new NotFoundException(`User with ID ${userId} have no project.`);
-    }
-    return projects;
+    return projects.length > 0 ? projects : [];
   }
 
   async getProjectById(projectId: string): Promise<Project> {
     const project = await this.projectsRepository.findOne({
       where: { id: projectId, isDeleted: false },
-      relations: ['projectPackages'],
+      relations: ['projectPackages', 'chats', 'user'],
     });
-    if (project) {
-      project.projectPackages = project.projectPackages.filter(
-        (pkg) => !pkg.isDeleted,
-      );
-    }
 
     if (!project) {
       throw new NotFoundException(`Project with ID ${projectId} not found.`);
     }
+
+    project.projectPackages = project.projectPackages.filter(
+      (pkg) => !pkg.isDeleted,
+    );
+
+    if (project.chats) {
+      const chats = await project.chats;
+      this.logger.log('Project chats:', chats);
+      project.chats = Promise.resolve(chats.filter((chat) => !chat.isDeleted));
+    }
+
     return project;
   }
 
-  // staring build the project
-  async createProject(
-    input: CreateProjectInput,
-    userId: number,
-  ): Promise<Project> {
-    if (input.projectName === '') {
-      this.logger.debug(
-        'Project name not exist in input, generating project name',
-      );
-      const nameGenerationPrompt = await generateProjectNamePrompt(
-        input.description,
-      );
-      const response = await this.model.chatSync({
-        messages: [
-          {
-            role: MessageRole.System,
-            content:
-              'You are a specialized project name generator. Respond only with the generated name.',
-          },
-          {
-            role: MessageRole.User,
-            content: nameGenerationPrompt,
-          },
-        ],
-      });
-      input.projectName = response;
-      this.logger.debug(`Generated project name: ${input.projectName}`);
+  // binding project and chats
+  async bindProjectAndChat(project: Project, chat: Chat): Promise<boolean> {
+    await this.projectsRepository.manager.connection.synchronize();
+    await this.chatRepository.manager.connection.synchronize();
+    if (!chat) {
+      this.logger.error('chat is undefined');
+      return false;
     }
-
-    // Build project sequence and get project path
-    const sequence = buildProjectSequenceByProject(input);
-    const context = new BuilderContext(sequence, sequence.id);
-    const projectPath = await context.execute();
-
-    // Create new project entity
-    const project = new Project();
-    project.projectName = input.projectName;
-    project.projectPath = projectPath;
-    project.userId = userId;
-
-    // Transform input packages to ProjectPackages entities
-    const projectPackages = await this.transformInputToProjectPackages(
-      input.packages,
-    );
-    project.projectPackages = projectPackages;
-
     try {
-      return await this.projectsRepository.save(project);
+      chat.project = project;
+
+      // Get current chats and add new chat
+      const currentChats = await project.chats;
+      project.chats = Promise.resolve([...currentChats, chat]);
+
+      // Save both entities
+      await this.projectsRepository.save(project);
+      await this.chatRepository.save(chat);
+
+      return true;
     } catch (error) {
-      this.logger.error('Error creating project:', error);
-      throw new InternalServerErrorException('Error creating the project.');
+      this.logger.error('Error binding project and chat:', error);
+      return false;
     }
   }
 
+  async createProject(
+    input: CreateProjectInput,
+    userId: string,
+  ): Promise<Chat> {
+    const defaultChatPromise = await this.chatService.createChat(userId, {
+      title: input.projectName || 'Default Project Chat',
+    });
+
+    const projectPromise = (async () => {
+      try {
+        const nameGenerationPrompt = await generateProjectNamePrompt(
+          input.description,
+        );
+        const response = await this.model.chatSync({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: MessageRole.System,
+              content:
+                'You are a specialized project name generator. Respond only with the generated name.',
+            },
+            {
+              role: MessageRole.User,
+              content: nameGenerationPrompt,
+            },
+          ],
+        });
+
+        if (input.projectName === '') {
+          this.logger.debug(
+            'Project name not exist in input, generating project name',
+          );
+          input.projectName = response;
+          this.logger.debug(`Generated project name: ${input.projectName}`);
+        }
+
+        const sequence = buildProjectSequenceByProject(input);
+        const context = new BuilderContext(sequence, sequence.id);
+        const projectPath = await context.execute();
+
+        const project = new Project();
+        project.projectName = input.projectName;
+        project.projectPath = projectPath;
+        project.userId = userId;
+
+        project.projectPackages = await this.transformInputToProjectPackages(
+          input.packages,
+        );
+
+        const savedProject = await this.projectsRepository.save(project);
+
+        const defaultChat = await defaultChatPromise;
+        await this.bindProjectAndChat(savedProject, defaultChat);
+
+        console.log('Binded project and chats');
+        return savedProject;
+      } catch (error) {
+        this.logger.error('Error creating project:', error);
+        throw new InternalServerErrorException('Error creating the project.');
+      }
+    })();
+
+    return defaultChatPromise;
+  }
   private async transformInputToProjectPackages(
     inputPackages: ProjectPackage[],
   ): Promise<ProjectPackages[]> {
@@ -166,35 +223,36 @@ export class ProjectService {
       return transformedPackages;
     } catch (error) {
       this.logger.error('Error transforming packages:', error);
-      throw new InternalServerErrorException(
-        'Error processing project packages.',
-      );
+      return Promise.resolve([]);
     }
   }
 
   async deleteProject(projectId: string): Promise<boolean> {
     const project = await this.projectsRepository.findOne({
       where: { id: projectId },
+      relations: ['projectPackages', 'chats'],
     });
+
     if (!project) {
       throw new NotFoundException(`Project with ID ${projectId} not found.`);
     }
 
     try {
-      // Perform a soft delete by updating is_active and is_deleted fields
+      // Soft delete the project
       project.isActive = false;
       project.isDeleted = true;
       await this.projectsRepository.save(project);
 
-      // Perform a soft delete for related project packages
-      const projectPackages = project.projectPackages;
-      if (projectPackages && projectPackages.length > 0) {
-        for (const pkg of projectPackages) {
+      // Soft delete related project packages
+      if (project.projectPackages?.length > 0) {
+        for (const pkg of project.projectPackages) {
           pkg.isActive = false;
           pkg.isDeleted = true;
           await this.projectPackagesRepository.save(pkg);
         }
       }
+
+      // Note: Related chats will be automatically handled by the CASCADE setting
 
       return true;
     } catch (error) {
@@ -203,7 +261,7 @@ export class ProjectService {
   }
 
   async isValidProject(
-    userId: number,
+    userId: string,
     input: IsValidProjectInput,
   ): Promise<boolean> {
     try {

@@ -3,13 +3,12 @@ import { BuilderContext } from 'src/build-system/context';
 import { Logger } from '@nestjs/common';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import { generateFilesDependencyWithLayers } from '../../utils/file_generator_util';
-import { readFileWithRetries, createFileWithRetries } from '../../utils/files';
+import { readFileWithRetries } from '../../utils/files';
 import { VirtualDirectory } from '../../virtual-dir';
 
 import { UXSMSHandler } from '../ux/sitemap-structure';
 import { UXDMDHandler } from '../ux/datamap';
 import { BackendRequirementHandler } from '../backend/requirements-document';
-import { FileFAHandler } from '../file-manager/file-arch';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import normalizePath from 'normalize-path';
 import path from 'path';
@@ -18,6 +17,16 @@ import { formatResponse } from 'src/build-system/utils/strings';
 import { writeFileSync } from 'fs';
 import { MessageInterface } from 'src/common/model-provider/types';
 
+import { FrontendCodeValidator } from './CodeValidator';
+import { FrontendQueueProcessor, CodeTaskQueue } from './CodeReview';
+// import { FileFAHandler } from '../file-manager/file-arch';
+import { FileStructureAndArchitectureHandler } from '../file-manager/file-struct';
+
+interface FileInfos {
+  [fileName: string]: {
+    dependsOn: string[];
+  };
+}
 /**
  * FrontendCodeHandler is responsible for generating the frontend codebase
  * based on the provided sitemap, data mapping documents, backend requirement documents,
@@ -28,15 +37,9 @@ import { MessageInterface } from 'src/common/model-provider/types';
   UXSMSHandler,
   UXDMDHandler,
   BackendRequirementHandler,
-  FileFAHandler,
+  FileStructureAndArchitectureHandler,
 ])
-@BuildNode()
-@BuildNodeRequire([
-  UXSMSHandler,
-  UXDMDHandler,
-  BackendRequirementHandler,
-  FileFAHandler,
-])
+// FileFAHandler,
 export class FrontendCodeHandler implements BuildHandler<string> {
   readonly logger: Logger = new Logger('FrontendCodeHandler');
   private virtualDir: VirtualDirectory;
@@ -56,7 +59,9 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     const backendRequirementDoc = context.getNodeData(
       BackendRequirementHandler,
     );
-    const fileArchDoc = context.getNodeData(FileFAHandler);
+    const fileArchDoc = context.getNodeData(
+      FileStructureAndArchitectureHandler,
+    );
 
     // 2. Grab any globally stored context as needed
     this.virtualDir = context.virtualDirectory;
@@ -75,9 +80,14 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       throw new Error('Missing required parameters.');
     }
 
-    // Dependency
+    const renameMap = new Map<string, string>();
+
+    // 3. Prepare for Dependency
     const { concurrencyLayers, fileInfos } =
       await generateFilesDependencyWithLayers(fileArchDoc, this.virtualDir);
+
+    const validator = new FrontendCodeValidator(frontendPath);
+    // validator.installDependencies();
 
     // 4. Process each "layer" in sequence; files in a layer in parallel
     for (const [layerIndex, layer] of concurrencyLayers.entries()) {
@@ -86,6 +96,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
           ', ',
         )}]\n`,
       );
+
+      const queue = new CodeTaskQueue();
 
       const maxRetries = 3; // Maximum retry attempts per file
       const delayMs = 200; // Delay between retries for a file
@@ -104,141 +116,67 @@ export class FrontendCodeHandler implements BuildHandler<string> {
               `Layer #${layerIndex + 1}, generating code for file: ${file}`,
             );
 
-            // Resolve the absolute path where this file should be generated
             const currentFullFilePath = normalizePath(
               path.resolve(frontendPath, file),
-            ); // src
+            );
+
+            // Ensure fileInfos[file] exists before modifying
+            if (!fileInfos[file]) {
+              fileInfos[file] = {
+                filePath: file, // Assuming `file` is the correct path
+                dependsOn: [],
+              };
+            }
 
             // Gather direct dependencies
-            const directDepsArray = fileInfos[file]?.dependsOn || [];
+            let directDepsArray = fileInfos[file]?.dependsOn || [];
+
+            // Replace old file names in dependencies with new ones
+            directDepsArray = directDepsArray.map(
+              (dep) => renameMap.get(dep) || dep,
+            );
+
+            // **Ensure the fileInfos structure is also updated**
+            fileInfos[file].dependsOn = directDepsArray;
+
+            const directDepsPathString = directDepsArray.join('\n');
 
             // Read each dependency and append to dependenciesContext
-            let dependenciesText = '';
-            for (const dep of directDepsArray) {
-              this.logger.log(
-                `Layer #${layerIndex + 1}, file "${file}" → reading dependency "${dep}"`,
-              );
-              try {
-                // need to check if it really reflect the real path
-                const resolvedDepPath = normalizePath(
-                  path.resolve(frontendPath, dep),
-                );
-
-                // Read the content of the dependency file
-                const depContent = await readFileWithRetries(
-                  resolvedDepPath,
-                  maxRetries,
-                  delayMs,
-                );
-
-                dependenciesText += `\n\n<dependency>  File path: ${dep} \n\`\`\`typescript\n${depContent}\n\`\`\`\n </dependency>`;
-              } catch (err) {
-                this.logger.warn(
-                  `Failed to read dependency "${dep}" for file "${file}": ${err}`,
-                );
-              }
-            }
-
-            // 5. Build prompt text depending on file extension
-            const fileExtension = path.extname(file);
-            let frontendCodePrompt = '';
-            if (fileExtension === '.css') {
-              frontendCodePrompt = generateCSSPrompt(
-                file,
-                directDepsArray.join('\n'),
-              );
-            } else {
-              // default: treat as e.g. .ts, .js, .vue, .jsx, etc.
-              frontendCodePrompt = generateFrontEndCodePrompt(
-                file,
-                directDepsArray.join('\n'),
-              );
-            }
-            // this.logger.log(
-            //   `Prompt for file "${file}":\n${frontendCodePrompt}\n`,
-            // );
-
-            const messages = [
-              {
-                role: 'system' as const,
-                content: frontendCodePrompt,
-              },
-              {
-                role: 'user' as const,
-                content: `**Sitemap Structure**
-              ${sitemapStruct}
-              `,
-              },
-              // To DO need to dynamically add the UX Datamap Documentation and Backend Requirement Documentation based on the file generate
-              // {
-              //   role: 'user' as const,
-              //   content: `This is the UX Datamap Documentation:
-              // ${uxDataMapDoc}
-
-              // Next will provide UX Datamap Documentation.`,
-              // },
-              // {
-              //   role: 'user' as const,
-              //   content: `This is the Backend Requirement Documentation:
-              // ${backendRequirementDoc}
-
-              // Next will provide Backend Requirement Documentation.`,
-              // },
-              {
-                role: 'assistant',
-                content:
-                  "Good, now provider your dependencies, it's okay dependencies are empty, which means you don't have any dependencies",
-              },
-              {
-                role: 'user' as const,
-                content: `Dependencies:
-                
-                  ${dependenciesText}\n
-                  Now you can provide the code, don't forget the <GENERATE></GENERATE> xml tags.
-,                  `,
-              },
-            ] as MessageInterface[];
-
-            // 6. Call your Chat Model
-            let generatedCode = '';
-            let modelResponse = '';
-            try {
-              modelResponse = await chatSyncWithClocker(
-                context,
-                {
-                  model: 'gpt-4o',
-                  messages,
-                },
-                'generate frontend code',
-                FrontendCodeHandler.name,
-              );
-
-              generatedCode = formatResponse(modelResponse);
-
-              // 7. Write the file to the filesystem
-              await createFileWithRetries(
-                currentFullFilePath,
-                generatedCode,
-                maxRetries,
-                delayMs,
-              );
-            } catch (err) {
-              this.logger.error(`Error generating code for ${file}:`, err);
-              // FIXME: remove this later
-              failedFiles.push(
-                JSON.stringify({
-                  file: file,
-                  error: err,
-                  modelResponse,
-                  generatedCode,
-                  messages,
-                }),
-              );
-            }
-
-            this.logger.log(
-              `Layer #${layerIndex + 1}, completed generation for file: ${file}`,
+            const dependenciesText = await this.gatherDependenciesForFile(
+              file,
+              fileInfos,
+              frontendPath,
             );
+
+            this.logger.debug('dependency: ' + directDepsPathString);
+
+            // generate code
+            let generatedCode = '';
+            // Adding into retry part.
+            while (generatedCode === '') {
+              this.logger.log(`Attempt to generate code for file: ${file}`);
+              generatedCode = await this.generateFileCode(
+                context,
+                file,
+                dependenciesText,
+                directDepsPathString,
+                sitemapStruct,
+                uxDataMapDoc,
+                failedFiles,
+              );
+            }
+
+            // 7. Add the file to the queue for writing
+            // Ensure the file path is relative by removing any leading slash
+            this.logger.log('filepath: ' + file);
+            const relativePath = file.startsWith('/')
+              ? file.substring(1)
+              : file;
+            queue.enqueue({
+              filePath: relativePath,
+              fileContents: generatedCode,
+              dependenciesPath: directDepsPathString,
+            });
           }),
         );
 
@@ -258,7 +196,16 @@ export class FrontendCodeHandler implements BuildHandler<string> {
           remainingFiles = []; // All files in this layer succeeded
         }
       }
-
+      // Now process the entire queue for this layer:
+      // This writes each file, runs build, fixes if needed, etc.
+      const queueProcessor = new FrontendQueueProcessor(
+        validator,
+        queue,
+        context,
+        frontendPath,
+        renameMap,
+      );
+      await queueProcessor.processAllTasks();
       this.logger.log(
         `\n==== Finished concurrency layer #${layerIndex + 1} ====\n`,
       );
@@ -269,5 +216,145 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       data: frontendPath,
       error: new Error('Frontend code generated and parsed successfully.'),
     };
+  }
+
+  // get the dependencies content and path
+  private async gatherDependenciesForFile(
+    file: string,
+    fileInfos: FileInfos,
+    frontendPath: string,
+  ): Promise<string> {
+    const directDepsArray = fileInfos[file]?.dependsOn ?? [];
+    let dependenciesText = '';
+
+    for (const dep of directDepsArray) {
+      try {
+        const resolvedDepPath = normalizePath(path.resolve(frontendPath, dep));
+        const depContent = await readFileWithRetries(resolvedDepPath, 3, 200);
+        dependenciesText += `\n\n<dependency>  File path: ${dep}\n\`\`\`typescript\n${depContent}\n\`\`\`\n</dependency>`;
+      } catch (err) {
+        this.logger.warn(
+          `Failed to read dependency "${dep}" for file "${file}"`,
+          err,
+        );
+      }
+    }
+
+    return dependenciesText;
+  }
+
+  // Generate File Code
+  private async generateFileCode(
+    context: BuilderContext,
+    file: string,
+    dependenciesText: string,
+    directDepsPathString: string,
+    sitemapStruct: string,
+    uxDataMapDoc: string,
+    failedFiles: any[],
+  ): Promise<string> {
+    let generatedCode = '';
+    let modelResponse = '';
+    let messages = [];
+    try {
+      const fileExtension = path.extname(file);
+
+      let frontendCodePrompt = '';
+      if (fileExtension === '.css') {
+        frontendCodePrompt = generateCSSPrompt(file, directDepsPathString);
+      } else {
+        const theme = context.getGlobalContext('theme');
+        // default: treat as e.g. .ts, .js, .vue, .jsx, etc.
+        frontendCodePrompt = generateFrontEndCodePrompt(
+          file,
+          directDepsPathString,
+          theme,
+        );
+      }
+      // this.logger.log(
+      //   `Prompt for file "${file}":\n${frontendCodePrompt}\n`,
+      // );
+
+      messages = [
+        {
+          role: 'system' as const,
+          content: frontendCodePrompt,
+        },
+        {
+          role: 'user' as const,
+          content: `## Sitemap Structure
+              ${sitemapStruct}
+              `,
+        },
+        // To DO need to dynamically add the UX Datamap Documentation and Backend Requirement Documentation based on the file generate
+        // {
+        //   role: 'user' as const,
+        //   content: `This is the UX Datamap Documentation:
+        // ${uxDataMapDoc}
+
+        // Next will provide UX Datamap Documentation.`,
+        // },
+        // {
+        //   role: 'user' as const,
+        //   content: `This is the Backend Requirement Documentation:
+        // ${backendRequirementDoc}
+
+        // Next will provide Backend Requirement Documentation.`,
+        // },
+        {
+          role: 'assistant',
+          content:
+            "Good, now provider your dependencies, it's okay dependencies are empty, which means you don't have any dependencies",
+        },
+        {
+          role: 'user' as const,
+          content: `
+
+          ## Overview of The Internal Dependencies filess you may need
+            ${directDepsPathString}
+          
+          ## Detail about each Internal Dependencies:
+            ${dependenciesText}\n
+                  `,
+        },
+        {
+          role: 'user',
+          content: `Now you can provide the code, don't forget the <GENERATE></GENERATE> tags. Do not be lazy.`,
+        },
+        // {
+        //   role: 'assistant',
+        //   content: codeReviewPrompt,
+        // },
+      ] as MessageInterface[];
+
+      // 6. Call your Chat Model
+      modelResponse = await chatSyncWithClocker(
+        context,
+        {
+          // model: context.defaultModel || 'gpt-4o',
+          model: 'o3-mini-high',
+          messages,
+        },
+        'generate frontend code',
+        FrontendCodeHandler.name,
+      );
+
+      this.logger.debug('generated code: ', modelResponse);
+      generatedCode = formatResponse(modelResponse);
+
+      return generatedCode;
+    } catch (err) {
+      this.logger.error(`Error generating code for ${file}:`, err);
+      // FIXME: remove this later
+      failedFiles.push(
+        JSON.stringify({
+          file: file,
+          error: err,
+          modelResponse,
+          generatedCode,
+          messages,
+        }),
+      );
+    }
   }
 }
