@@ -9,14 +9,13 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-
-// Define types for tab items
-interface TabItem {
-  label: string;
-  path: string;
-  key?: string;
-  icon?: ReactNode;
-}
+import { Github, Star, SunMoon, Home, Info, DollarSign } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { AnimatedNumber } from '../ui/animate-number';
+import { useAuthContext } from '@/providers/AuthProvider';
+import { SignUpModal } from '../sign-up-modal';
+import { SignInModal } from '../sign-in-modal';
+import { Button } from '../ui/button';
 
 // Define the ref interface
 export interface NavbarRef {
@@ -26,10 +25,8 @@ export interface NavbarRef {
 
 // Define props interface
 interface FloatingNavbarProps {
-  tabs: TabItem[];
   logo?: ReactNode;
   name: string;
-  authButtons?: ReactNode;
   className?: string;
   containerClassName?: string;
   tabsContainerClassName?: string;
@@ -37,9 +34,7 @@ interface FloatingNavbarProps {
   inactiveTabClassName?: string;
   logoContainerClassName?: string;
   nameClassName?: string;
-  authButtonsContainerClassName?: string;
-  onTabChange?: (index: number) => void;
-  initialTab?: number;
+  toolsContainerClassName?: string;
   animationDuration?: number;
 }
 
@@ -47,10 +42,8 @@ interface FloatingNavbarProps {
 const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
   (
     {
-      tabs,
       logo,
       name,
-      authButtons,
       className = '',
       containerClassName = '',
       tabsContainerClassName = '',
@@ -58,14 +51,49 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
       inactiveTabClassName = '',
       logoContainerClassName = '',
       nameClassName = '',
-      authButtonsContainerClassName = '',
-      onTabChange,
-      initialTab = 0,
+      toolsContainerClassName = '',
       animationDuration = 300,
     },
     ref
   ) => {
     const pathname = usePathname();
+    const { theme, setTheme } = useTheme();
+    const { isAuthorized, logout } = useAuthContext();
+    const [starCount, setStarCount] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
+    const [showSignUp, setShowSignUp] = useState(false);
+    const [showSignIn, setShowSignIn] = useState(false);
+
+    const tabs = [
+      { label: 'Home', path: '/', icon: <Home size={16} /> },
+      {
+        label: 'Codefox Journey',
+        path: '/Codefox-Journey',
+        icon: <Info size={16} />,
+      },
+      { label: 'Pricing', path: '/price', icon: <DollarSign size={16} /> },
+    ];
+
+    // Fetch GitHub stars
+    useEffect(() => {
+      const fetchGitHubStars = async () => {
+        try {
+          const response = await fetch(
+            'https://api.github.com/repos/Sma1lboy/codefox'
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setStarCount(data.stargazers_count);
+          }
+        } catch (error) {
+          console.error('Error fetching GitHub stars:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchGitHubStars();
+    }, []);
 
     // Find the active tab index based on the current pathname
     const findActiveTabIndex = () => {
@@ -97,10 +125,13 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
         setTimeout(() => {
           setActiveTab(index);
           setIsVisible(true);
-          // Call the onTabChange callback if provided
-          if (onTabChange) onTabChange(index);
         }, animationDuration);
       }
+    };
+
+    // Toggle theme function
+    const toggleTheme = () => {
+      setTheme(theme === 'dark' ? 'light' : 'dark');
     };
 
     // Ensure content is visible on initial render
@@ -133,92 +164,161 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
       },
     };
 
+    const handleTabClick = (
+      e: React.MouseEvent,
+      index: number,
+      label: string,
+      path: string
+    ) => {
+      if (label === 'Pricing') {
+        e.preventDefault();
+        alert('Coming Soon');
+      } else if (label === 'Codefox Journey') {
+        e.preventDefault();
+        window.open('https://github.com/Sma1lboy/codefox', '_blank');
+      } else {
+        handleTabChange(index);
+      }
+    };
+
     return (
-      <div className={`fixed top-5 left-0 right-0 z-50 ${className}`}>
-        <motion.div
-          className={`w-full flex justify-between items-center px-6 py-4 ${containerClassName}`}
-          initial="hidden"
-          animate="visible"
-          variants={containerVariants}
-        >
-          {/* Left side - Logo and Name */}
+      <>
+        <div className={`fixed top-5 left-0 right-0 z-50 ${className}`}>
           <motion.div
-            className={`flex items-center space-x-3 ${logoContainerClassName}`}
-            variants={itemVariants}
+            className={`w-full flex justify-around items-center px-6 py-4 ${containerClassName}`}
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
           >
-            {logo && <div className="h-10 w-auto overflow-hidden">{logo}</div>}
-            <span
-              className={`font-bold text-2xl text-primary-600 dark:text-primary-400 transition-transform hover:scale-105 duration-300 ${nameClassName}`}
+            {/* Left side - Logo and Name */}
+            <motion.div
+              className={`flex items-center space-x-3 ${logoContainerClassName}`}
+              variants={itemVariants}
             >
-              {name}
-            </span>
-          </motion.div>
+              {logo && (
+                <div className="h-10 w-auto overflow-hidden">{logo}</div>
+              )}
+              <span
+                className={`font-bold text-2xl text-primary-600 dark:text-primary-400 transition-transform hover:scale-105 duration-300 ${nameClassName}`}
+              >
+                {name}
+              </span>
+            </motion.div>
 
-          {/* Right side - Navigation tabs and auth buttons */}
-          <motion.div
-            className={`flex items-center space-x-4  ${authButtonsContainerClassName}`}
-            variants={itemVariants}
-          >
-            {/* Navigation tabs in a container */}
-            <div
-              className={`relative left-[-40px] bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-1 shadow-md ${tabsContainerClassName}`}
+            <motion.div
+              className="flex-1 flex justify-end items-center space-x-4"
+              variants={itemVariants}
             >
-              <div className="flex relative z-10">
-                {tabs.map((tab, index) => (
-                  <Link
-                    href={tab.path}
-                    key={tab.key || index}
-                    onClick={(e) => {
-                      if (tab.label === 'Pricing') {
-                        e.preventDefault(); // 阻止默认跳转
-                        alert('Coming Soon'); // 显示提示
-                      } else if (tab.label === 'Codefox Journey') {
-                        e.preventDefault(); // 阻止默认跳转
-                        window.open(
-                          'https://github.com/Sma1lboy/codefox',
-                          '_blank'
-                        ); // 新标签打开 GitHub 页面
-                      } else {
-                        handleTabChange(index);
+              {/* Navigation tabs */}
+
+              {/* GitHub Stars */}
+              <a
+                href="https://github.com/Sma1lboy/codefox"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+              >
+                <Github size={18} className="mr-1.5" />
+                <Star
+                  size={16}
+                  className="mr-1 text-yellow-500"
+                  fill="currentColor"
+                />
+                {isLoading ? (
+                  <span className="animate-pulse">Loading...</span>
+                ) : (
+                  <AnimatedNumber
+                    value={starCount}
+                    precision={0}
+                    mass={0.8}
+                    stiffness={75}
+                    damping={15}
+                  />
+                )}
+              </a>
+
+              {/* Theme Toggle Button */}
+              <Button
+                onClick={toggleTheme}
+                className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                aria-label="Toggle theme"
+              >
+                <SunMoon
+                  size={20}
+                  className="text-gray-600 dark:text-gray-400"
+                />
+              </Button>
+
+              <div
+                className={`bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-1 shadow-md ${tabsContainerClassName}`}
+              >
+                <div className="flex relative z-10">
+                  {tabs.map((tab, index) => (
+                    <Link
+                      href={tab.path}
+                      key={index}
+                      onClick={(e) =>
+                        handleTabClick(e, index, tab.label, tab.path)
                       }
-                    }}
-                    className="focus:outline-none"
-                  >
-                    <div
-                      className={`relative px-4 py-2 font-medium text-sm rounded-full transition-all duration-300 ${
-                        activeTab === index
-                          ? `text-white ${activeTabClassName}`
-                          : `text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white ${inactiveTabClassName}`
-                      }`}
+                      className="focus:outline-none"
                     >
-                      {/* Icon if available */}
-                      {tab.icon && <span className="mr-2">{tab.icon}</span>}
+                      <div
+                        className={`relative px-4 py-2 font-medium text-sm rounded-full transition-all duration-300 ${
+                          activeTab === index
+                            ? `text-white ${activeTabClassName}`
+                            : `text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white ${inactiveTabClassName}`
+                        }`}
+                      >
+                        {/* Icon if available */}
+                        {/* {tab.icon && <span className="mr-2">{tab.icon}</span>} */}
 
-                      {/* Animated background for active tab */}
-                      <AnimatePresence>
-                        {activeTab === index && (
-                          <motion.span
-                            className="absolute inset-0 bg-primary-500 dark:bg-primary-600 rounded-full -z-10"
-                            layoutId="activeTabBackground"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: animationDuration / 1000 }}
-                          />
-                        )}
-                      </AnimatePresence>
-                      {tab.label}
-                    </div>
-                  </Link>
-                ))}
+                        {/* Animated background for active tab */}
+                        <AnimatePresence>
+                          {activeTab === index && (
+                            <motion.span
+                              className="absolute inset-0 bg-primary-500 dark:bg-primary-600 rounded-full -z-10"
+                              layoutId="activeTabBackground"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{
+                                duration: animationDuration / 1000,
+                              }}
+                            />
+                          )}
+                        </AnimatePresence>
+                        {tab.label}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Auth buttons passed as prop */}
-            {authButtons}
+              {/* Authentication Buttons */}
+              {!isAuthorized && (
+                <div className="flex items-center space-x-4 transition-transform duration-300">
+                  <button
+                    onClick={() => setShowSignIn(true)}
+                    className="px-4 py-2 rounded-md bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 transition-colors"
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    onClick={() => setShowSignUp(true)}
+                    className="px-4 py-2 rounded-md bg-primary-500 text-white hover:bg-primary-600 transition-colors"
+                  >
+                    Sign Up
+                  </button>
+                </div>
+              )}
+            </motion.div>
           </motion.div>
-        </motion.div>
-      </div>
+        </div>
+
+        {/* Modals */}
+        <SignUpModal isOpen={showSignUp} onClose={() => setShowSignUp(false)} />
+        <SignInModal isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
+      </>
     );
   }
 );
