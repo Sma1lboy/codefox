@@ -23,7 +23,7 @@ import { LOGIN_USER } from '@/graphql/mutations/auth';
 import { toast } from 'sonner';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { useAuthContext } from '@/providers/AuthProvider';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Github } from 'lucide-react';
 
 interface SignInModalProps {
   isOpen: boolean;
@@ -165,11 +165,7 @@ export function SignInModal({ isOpen, onClose }: SignInModalProps) {
                     variant="outline"
                     className="flex items-center gap-2 w-full"
                   >
-                    <img
-                      src="/images/github.svg"
-                      alt="GitHub"
-                      className="w-5 h-5"
-                    />
+                    <Github className="w-5 h-5 text-black dark:text-white" />
                     <span>GitHub</span>
                   </Button>
                 </div>

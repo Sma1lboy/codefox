@@ -42,7 +42,7 @@ export default function HomePage() {
   };
 
   return (
-    <>
+    <div className="pt-32 pb-24 px-6 ">
       <motion.div
         className="flex flex-col items-center"
         initial={{ opacity: 0, y: 20 }}
@@ -96,6 +96,22 @@ export default function HomePage() {
           setShowAuthChoice(false);
         }}
       />
-    </>
+
+      {/* Add this to your global CSS for the subtle pulse animation */}
+      <style jsx global>{`
+        .animate-pulse-subtle {
+          animation: pulse-subtle 2s infinite;
+        }
+        @keyframes pulse-subtle {
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.85;
+          }
+        }
+      `}</style>
+    </div>
   );
 }

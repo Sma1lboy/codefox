@@ -1,5 +1,6 @@
 'use client';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -19,7 +20,8 @@ import {
 import { useMutation } from '@apollo/client';
 import { REGISTER_USER } from '@/graphql/mutations/auth';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { AlertCircle } from 'lucide-react';
 
 export function SignUpModal({
   isOpen,
@@ -43,14 +45,13 @@ export function SignUpModal({
       }
     },
     onCompleted: () => {
-      onClose(); // Close modal on success
-      // router.push("/login"); // Redirect to login page
+      onClose();
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage(null); // Clear previous errors
+    setErrorMessage(null);
 
     if (!name || !email || !password) {
       setErrorMessage('All fields are required.');
@@ -75,7 +76,6 @@ export function SignUpModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] fixed top-[50%] left-[50%] transform -translate-x-[50%] -translate-y-[50%] p-0">
-        {/* Invisible but accessible DialogTitle and Description */}
         <VisuallyHidden>
           <DialogTitle>Sign Up</DialogTitle>
           <DialogDescription>
@@ -93,20 +93,23 @@ export function SignUpModal({
             </TextureCardHeader>
             <TextureSeparator />
             <TextureCardContent>
-              <form className="space-y-4" onSubmit={handleSubmit}>
-                <div>
+              <form onSubmit={handleSubmit} className="space-y-2">
+                <div className="space-y-1">
                   <Label htmlFor="name">Name</Label>
                   <Input
                     id="name"
                     placeholder="Name"
                     type="text"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      setErrorMessage(null);
+                    }}
                     required
-                    className="w-full px-4 py-2 rounded-md border"
+                    className="w-full"
                   />
                 </div>
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
@@ -115,32 +118,36 @@ export function SignUpModal({
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
-                      setErrorMessage(null); // Clear error when user types
+                      setErrorMessage(null);
                     }}
                     required
-                    className="w-full px-4 py-2 rounded-md border"
+                    className="w-full"
                   />
-                  {errorMessage && (
-                    <p className="text-red-500 text-sm mt-1">{errorMessage}</p>
-                  )}
                 </div>
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
                     placeholder="Password"
                     type="password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setErrorMessage(null);
+                    }}
                     required
-                    className="w-full px-4 py-2 rounded-md border"
+                    className="w-full"
                   />
                 </div>
-                <Button
-                  type="submit"
-                  className="w-full bg-red-500 text-white py-2 rounded-md"
-                  disabled={loading}
-                >
+
+                {errorMessage && (
+                  <div className="flex items-center gap-2 text-primary-700 dark:text-primary-400 text-sm p-2 rounded-md bg-primary-50 dark:bg-zinc-800 border border-primary-200 dark:border-primary-800">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
+
+                <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Signing up...' : 'Sign up'}
                 </Button>
               </form>

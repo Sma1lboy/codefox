@@ -15,17 +15,17 @@ import {
 } from '@/components/ui/avatar';
 import { GearIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, memo } from 'react';
 import { EventEnum } from '../const/EventEnum';
+import { useAuthContext } from '@/providers/AuthProvider';
 
 interface UserSettingsProps {
   isSimple: boolean;
 }
 
 export const UserSettings = ({ isSimple }: UserSettingsProps) => {
-  const { user, isLoading, logout } = useAuth();
+  const { user, isLoading, logout } = useAuthContext();
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
