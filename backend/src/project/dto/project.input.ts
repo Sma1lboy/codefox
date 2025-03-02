@@ -109,3 +109,12 @@ export class ProjectSubscriptionResult {
   @Field(() => Project, { nullable: true })
   project?: Project;
 }
+
+@InputType()
+export class FetchPublicProjectsInputs {
+  @Field()
+  strategy: 'trending' | 'latest';
+
+  @Field()
+  size: number;
+}

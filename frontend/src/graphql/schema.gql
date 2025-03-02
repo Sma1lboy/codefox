@@ -57,6 +57,11 @@ input CreateProjectInput {
 """Date custom scalar type"""
 scalar Date
 
+input FetchPublicProjectsInputs {
+  size: Float!
+  strategy: String!
+}
+
 input IsValidProjectInput {
   projectId: ID!
   projectPath: String
@@ -157,12 +162,12 @@ type ProjectPackages {
 
 type Query {
   checkToken(input: CheckTokenInput!): Boolean!
+  fetchPublicProjects(input: FetchPublicProjectsInputs!): [Project!]!
   getAvailableModelTags: [String!]
   getChatDetails(chatId: String!): Chat
   getChatHistory(chatId: String!): [Message!]!
   getHello: String!
   getProject(projectId: String!): Project!
-  getPublicProjects: [Project!]!
   getSubscribedProjects: [Project!]!
   getUserChats: [Chat!]
   getUserProjects: [Project!]!

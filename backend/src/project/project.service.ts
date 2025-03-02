@@ -12,6 +12,7 @@ import { Project } from './project.model';
 import { ProjectPackages } from './project-packages.model';
 import {
   CreateProjectInput,
+  FetchPublicProjectsInputs,
   IsValidProjectInput,
   ProjectPackage,
 } from './dto/project.input';
@@ -555,25 +556,6 @@ export class ProjectService {
   }
 
   /**
-   * Get all public projects for discovery
-   * @returns Array of public projects
-   */
-  async getPublicProjects(): Promise<Project[]> {
-    return this.projectsRepository.find({
-      where: {
-        isPublic: true,
-        isDeleted: false,
-      },
-      relations: ['projectPackages', 'user'],
-      order: {
-        subNumber: 'DESC', // Sort by popularity
-        createdAt: 'DESC', // Then by creation date
-      },
-      take: 50, // Limit results
-    });
-  }
-
-  /**
    * Check if a user owns a project
    * @param project The project to check
    * @param userId The user ID to verify
@@ -585,5 +567,39 @@ export class ProjectService {
         'You do not have permission to modify this project',
       );
     }
+  }
+
+  async fetchPublicProjects(
+    input: FetchPublicProjectsInputs,
+  ): Promise<Project[]> {
+    const limit = input.size > 50 ? 50 : input.size;
+
+    const whereCondition = {
+      isPublic: true,
+      isDeleted: false,
+    };
+
+    if (input.strategy === 'latest') {
+      return this.projectsRepository.find({
+        where: whereCondition,
+        order: { createdAt: 'DESC' },
+        take: limit,
+        relations: ['projectPackages', 'user'],
+      });
+    } else if (input.strategy === 'trending') {
+      const totalCount = await this.projectsRepository.count({
+        where: whereCondition,
+      });
+      const topCount = Math.max(1, Math.ceil(totalCount * 0.01));
+      const take = Math.min(limit, topCount);
+      return this.projectsRepository.find({
+        where: whereCondition,
+        order: { subNumber: 'DESC', createdAt: 'DESC' },
+        take,
+        relations: ['projectPackages', 'user'],
+      });
+    }
+
+    return [];
   }
 }

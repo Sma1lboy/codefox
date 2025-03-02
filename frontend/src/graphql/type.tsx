@@ -94,6 +94,11 @@ export type CreateProjectInput = {
   public?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
+export type FetchPublicProjectsInputs = {
+  size: Scalars['Float']['input'];
+  strategy: Scalars['String']['input'];
+};
+
 export type IsValidProjectInput = {
   projectId: Scalars['ID']['input'];
   projectPath?: InputMaybe<Scalars['String']['input']>;
@@ -258,6 +263,7 @@ export type ProjectPackages = {
 export type Query = {
   __typename: 'Query';
   checkToken: Scalars['Boolean']['output'];
+  fetchPublicProjects: Array<Project>;
   getAvailableModelTags?: Maybe<Array<Scalars['String']['output']>>;
   getChatDetails?: Maybe<Chat>;
   getChatHistory: Array<Message>;
@@ -274,6 +280,10 @@ export type Query = {
 
 export type QueryCheckTokenArgs = {
   input: CheckTokenInput;
+};
+
+export type QueryFetchPublicProjectsArgs = {
+  input: FetchPublicProjectsInputs;
 };
 
 export type QueryGetChatDetailsArgs = {
@@ -456,6 +466,7 @@ export type ResolversTypes = ResolversObject<{
   CheckTokenInput: CheckTokenInput;
   CreateProjectInput: CreateProjectInput;
   Date: ResolverTypeWrapper<Scalars['Date']['output']>;
+  FetchPublicProjectsInputs: FetchPublicProjectsInputs;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   IsValidProjectInput: IsValidProjectInput;
@@ -490,6 +501,7 @@ export type ResolversParentTypes = ResolversObject<{
   CheckTokenInput: CheckTokenInput;
   CreateProjectInput: CreateProjectInput;
   Date: Scalars['Date']['output'];
+  FetchPublicProjectsInputs: FetchPublicProjectsInputs;
   Float: Scalars['Float']['output'];
   ID: Scalars['ID']['output'];
   IsValidProjectInput: IsValidProjectInput;
@@ -798,6 +810,12 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryCheckTokenArgs, 'input'>
+  >;
+  fetchPublicProjects?: Resolver<
+    Array<ResolversTypes['Project']>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryFetchPublicProjectsArgs, 'input'>
   >;
   getAvailableModelTags?: Resolver<
     Maybe<Array<ResolversTypes['String']>>,

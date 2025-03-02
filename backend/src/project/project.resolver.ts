@@ -10,7 +10,11 @@ import {
 } from '@nestjs/graphql';
 import { ProjectService } from './project.service';
 import { Project } from './project.model';
-import { CreateProjectInput, IsValidProjectInput } from './dto/project.input';
+import {
+  CreateProjectInput,
+  FetchPublicProjectsInputs,
+  IsValidProjectInput,
+} from './dto/project.input';
 import { Logger, UseGuards } from '@nestjs/common';
 import { ProjectGuard } from '../guard/project.guard';
 import { GetUserIdFromToken } from '../decorator/get-auth-token.decorator';
@@ -131,9 +135,16 @@ export class ProjectsResolver {
     return this.projectService.getSubscribedProjects(userId);
   }
 
-  // Optional: Method to get all public projects (for discovery)
+  /**
+   * Fetch public projects with limittation
+   * TODO(Sma1lboy): handle Rate limit later - each MAC shouldn't exceed 20 requests per minute
+   * @param input the inputs
+   * @returns return some projects
+   */
   @Query(() => [Project])
-  async getPublicProjects(): Promise<Project[]> {
-    return this.projectService.getPublicProjects();
+  async fetchPublicProjects(
+    @Args('input') input: FetchPublicProjectsInputs,
+  ): Promise<Project[]> {
+    return this.projectService.fetchPublicProjects(input);
   }
 }
