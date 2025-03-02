@@ -8,7 +8,6 @@ import React, {
   useEffect,
 } from 'react';
 import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
-import { useAuth } from '@/hooks/useAuth';
 import {
   CREATE_PROJECT,
   GET_CHAT_DETAILS,
@@ -32,7 +31,6 @@ export const ProjectContext = createContext<ProjectContextType | undefined>(
 );
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
-  const { validateToken } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [curProject, setCurProject] = useState<Project | undefined>(undefined);
   const [filePath, setFilePath] = useState<string | null>(null);

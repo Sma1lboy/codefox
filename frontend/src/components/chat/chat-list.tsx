@@ -10,7 +10,7 @@ import CodeDisplayBlock from '../code-display-block';
 import { Message } from '../../const/MessageType';
 import { Button } from '../ui/button';
 import { Pencil } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/providers/AuthProvider';
 
 interface ChatListProps {
   messages: Message[];
@@ -26,7 +26,7 @@ export default function ChatList({
   onMessageEdit,
 }: ChatListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
+  const { user } = useAuthContext();
 
   const [editingMessageId, setEditingMessageId] = React.useState<string | null>(
     null
