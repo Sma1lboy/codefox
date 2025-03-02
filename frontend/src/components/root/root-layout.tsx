@@ -5,7 +5,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import ChatSideBar from '@/components/sidebar';
 import { ProjectProvider } from '@/components/chat/code-engine/project-context';
 import { useChatList } from '@/hooks/useChatList';
-import NavLayout from './navLayout';
+import NavLayout from './nav-layout';
 import { useAuthContext } from '@/providers/AuthProvider';
 
 interface RootLayoutProps {

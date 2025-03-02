@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { AuthChoiceModal } from '@/components/auth-choice-modal';
 import { useAuthContext } from '@/providers/AuthProvider';
-import { ProjectsSection } from '@/components/root/ProjectsSection';
+import { ProjectsSection } from '@/components/root/projects-section';
 import { PromptForm, PromptFormRef } from '@/components/root/prompt-form';
 import { ProjectContext } from '@/components/chat/code-engine/project-context';
 

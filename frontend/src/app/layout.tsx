@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { BaseProviders } from '@/providers/BaseProvider';
-import NavLayout from '@/components/root/navLayout';
+import NavLayout from '@/components/root/nav-layout';
 import RootLayout from '@/components/root/root-layout';
 
 const inter = Inter({ subsets: ['latin'] });

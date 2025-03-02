@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-import NavLayout from '@/components/root/navLayout';
+import NavLayout from '@/components/root/nav-layout';
 
 export const metadata: Metadata = {
   title: 'Codefox - The best dev project generator',
