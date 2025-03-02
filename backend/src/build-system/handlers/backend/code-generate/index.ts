@@ -16,12 +16,12 @@ import { UXDMDHandler } from '../../ux/datamap';
 import { DBSchemaHandler } from '../../database/schemas/schemas';
 import { BackendRequirementHandler } from '../requirements-document';
 import { MessageInterface } from 'src/common/model-provider/types';
-import { FrontendCodeValidator } from 'src/build-system/handlers/frontend-code-generate/CodeValidator';
 import {
+  CodeQueueProcessor,
   CodeTaskQueue,
-  FrontendQueueProcessor,
 } from '../../frontend-code-generate/CodeReview';
 import { Logger } from '@nestjs/common';
+import { CodeValidator } from '../../frontend-code-generate/CodeValidator';
 
 /**
  * BackendCodeHandler is responsible for generating the backend codebase
@@ -60,7 +60,7 @@ export class BackendCodeHandler implements BuildHandler<string> {
       );
     }
 
-    const validator = new FrontendCodeValidator(backendPath, 'backend'); //TODO: make here dynamic
+    const validator = new CodeValidator(backendPath, 'backend'); //TODO: make here dynamic
     const queue = new CodeTaskQueue();
     const renameMap = new Map<string, string>();
 
@@ -141,7 +141,7 @@ export class BackendCodeHandler implements BuildHandler<string> {
       );
     }
 
-    const queueProcessor = new FrontendQueueProcessor(
+    const queueProcessor = new CodeQueueProcessor(
       validator,
       queue,
       context,

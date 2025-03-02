@@ -7,25 +7,25 @@ export interface ValidationResult {
 }
 
 /**
- * FrontendCodeValidator is responsible for checking the correctness of the generated frontend code.
+ * CodeValidator is responsible for checking the correctness of the generated frontend code.
  * It runs an npm build command (or any custom build script) in the given project directory (frontendPath)
  * and captures any errors produced during the build process.
  */
-export class FrontendCodeValidator {
-  private readonly logger = new Logger('FrontendCodeValidator');
+export class CodeValidator {
+  private readonly logger = new Logger('CodeValidator');
 
   /**
-   * @param frontendPath - The absolute path to the generated frontend project.
+   * @param projectPath - The absolute path to the generated project.
    */
   constructor(
-    private readonly frontendPath: string,
+    private readonly projectPath: string,
     private readonly projectPart?: string,
   ) {
     this.projectPart = projectPart || 'frontend';
   }
 
   /**
-   * Runs the build command (npm run build) inside the frontend project directory.
+   * Runs the build command (npm run build) inside the project directory.
    * This method returns a promise that resolves with a ValidationResult, indicating whether
    * the build succeeded or failed along with any error messages.
    *
@@ -34,22 +34,22 @@ export class FrontendCodeValidator {
   public async validate(): Promise<ValidationResult> {
     await this.installDependencies();
     return new Promise<ValidationResult>((resolve, reject) => {
-      this.logger.log('Starting frontend code validation...');
-      // Spawn the npm build process in the provided frontend project path.
+      this.logger.log(`Starting ${this.projectPart} code validation...`);
+      // Spawn the npm build process in the provided project path.
       let npmProcess;
       if (this.projectPart === 'frontend') {
         npmProcess = spawn('npm', ['run', 'build'], {
-          cwd: this.frontendPath,
+          cwd: this.projectPath,
           shell: true,
         });
       } else {
         npmProcess = spawn('npm', ['run', 'check'], {
-          cwd: this.frontendPath,
+          cwd: this.projectPath,
           shell: true,
         });
       }
 
-      this.logger.log('Running npm build command in', this.frontendPath);
+      this.logger.log('Running npm build command in', this.projectPath);
       let stdoutBuffer = '';
       let stderrBuffer = '';
 
@@ -78,7 +78,9 @@ export class FrontendCodeValidator {
           });
         } else {
           // Build succeeded
-          this.logger.log('Build process completed successfully.');
+          this.logger.log(
+            `Build process ${this.projectPart} completed successfully.`,
+          );
           resolve({
             success: true,
           });
@@ -93,10 +95,10 @@ export class FrontendCodeValidator {
 
   public async installDependencies(): Promise<ValidationResult> {
     return new Promise<ValidationResult>((resolve, reject) => {
-      this.logger.log('Starting npm install in', this.frontendPath);
+      this.logger.log('Starting npm install in', this.projectPath);
 
       const npmInstall = spawn('npm', ['install'], {
-        cwd: this.frontendPath,
+        cwd: this.projectPath,
         shell: true,
       });
 

@@ -17,10 +17,9 @@ import { formatResponse } from 'src/build-system/utils/strings';
 import { writeFileSync } from 'fs';
 import { MessageInterface } from 'src/common/model-provider/types';
 
-import { FrontendCodeValidator } from './CodeValidator';
-import { FrontendQueueProcessor, CodeTaskQueue } from './CodeReview';
-// import { FileFAHandler } from '../file-manager/file-arch';
+import { CodeQueueProcessor, CodeTaskQueue } from './CodeReview';
 import { FileStructureAndArchitectureHandler } from '../file-manager/file-struct';
+import { CodeValidator } from './CodeValidator';
 
 interface FileInfos {
   [fileName: string]: {
@@ -34,8 +33,6 @@ interface FileInfos {
  */
 @BuildNode()
 @BuildNodeRequire([
-  UXSMSHandler,
-  UXDMDHandler,
   BackendRequirementHandler,
   FileStructureAndArchitectureHandler,
 ])
@@ -86,7 +83,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     const { concurrencyLayers, fileInfos } =
       await generateFilesDependencyWithLayers(fileArchDoc, this.virtualDir);
 
-    const validator = new FrontendCodeValidator(frontendPath);
+    const validator = new CodeValidator(frontendPath);
     // validator.installDependencies();
 
     // 4. Process each "layer" in sequence; files in a layer in parallel
@@ -161,7 +158,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
                 dependenciesText,
                 directDepsPathString,
                 sitemapStruct,
-                uxDataMapDoc,
+                backendRequirementDoc,
                 failedFiles,
               );
             }
@@ -198,7 +195,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       }
       // Now process the entire queue for this layer:
       // This writes each file, runs build, fixes if needed, etc.
-      const queueProcessor = new FrontendQueueProcessor(
+      const queueProcessor = new CodeQueueProcessor(
         validator,
         queue,
         context,
@@ -251,7 +248,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     dependenciesText: string,
     directDepsPathString: string,
     sitemapStruct: string,
-    uxDataMapDoc: string,
+    backendRequirementDoc: string,
     failedFiles: any[],
   ): Promise<string> {
     let generatedCode = '';
@@ -295,13 +292,16 @@ export class FrontendCodeHandler implements BuildHandler<string> {
 
         // Next will provide UX Datamap Documentation.`,
         // },
-        // {
-        //   role: 'user' as const,
-        //   content: `This is the Backend Requirement Documentation:
-        // ${backendRequirementDoc}
-
-        // Next will provide Backend Requirement Documentation.`,
-        // },
+        {
+          role: 'assistant',
+          content:
+            "Good, now provider your API Documentation, it's okay API Documentation are empty, which means I don't need use API",
+        },
+        {
+          role: 'user' as const,
+          content: `This is the API Documentation:
+          ${backendRequirementDoc}`,
+        },
         {
           role: 'assistant',
           content:
