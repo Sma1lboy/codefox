@@ -7,12 +7,11 @@
  * 2) The `CodeTaskQueue` class, a simple FIFO queue for tasks.
  * 3) The `FrontendQueueProcessor` class, which orchestrates:
  *    - Writing files
- *    - Validating builds via `FrontendCodeValidator`
+ *    - Validating builds via `CodeValidator`
  *    - Attempting fixes (via LLM) if builds fail
  */
 
 import { Logger } from '@nestjs/common';
-import { FrontendCodeValidator } from './CodeValidator';
 import { readFileSync } from 'fs';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import { createFileWithRetries } from 'src/build-system/utils/files';
@@ -26,6 +25,7 @@ import { FileOperationManager } from './FileOperationManager';
 
 import normalizePath from 'normalize-path';
 import path from 'path';
+import { CodeValidator } from './CodeValidator';
 
 /**
  * Describes a single file task that the queue will process.
@@ -57,23 +57,24 @@ export class CodeTaskQueue {
 }
 
 /**
- * FrontendQueueProcessor
+ * QueueProcessor
  *
  * This class orchestrates how each `FileTask` is handled:
  * 1. Writes the file content to disk.
- * 2. Runs a build/validation step (via `FrontendCodeValidator`).
+ * 2. Runs a build/validation step (via `CodeValidator`).
  * 3. If there is a build error, attempts to fix the file by
  *    invoking an LLM and performing the suggested operations.
  * 4. Repeats until build succeeds or max attempts are reached.
  */
-export class FrontendQueueProcessor {
-  private logger = new Logger('FrontendQueueProcessor');
+export class CodeQueueProcessor {
+  private logger = new Logger('CodeQueueProcessor');
 
   constructor(
-    private validator: FrontendCodeValidator, // Path to your frontend project
+    private validator: CodeValidator, // Path to your frontend project
     private queue: CodeTaskQueue, // The queue of files to process
     private context: BuilderContext,
-    private frontendPath: string,
+    private projectPart: string,
+    private projectPath: string,
     private renameMap: Map<string, string>,
   ) {}
 
@@ -105,7 +106,7 @@ export class FrontendQueueProcessor {
     this.logger.log(`Processing file task: ${task.filePath}`);
 
     let currentFullFilePath = normalizePath(
-      path.resolve(this.frontendPath, task.filePath),
+      path.resolve(this.projectPath, task.filePath),
     );
 
     // 1. Write the file to disk
@@ -137,7 +138,7 @@ export class FrontendQueueProcessor {
         if (newFilePath !== null) {
           task.filePath = newFilePath;
           currentFullFilePath = normalizePath(
-            path.resolve(this.frontendPath, newFilePath),
+            path.resolve(this.projectPath, newFilePath),
           );
         }
       } catch (error) {
@@ -185,7 +186,7 @@ export class FrontendQueueProcessor {
       const commonIssuePrompt = generateCommonErrorPrompt();
 
       const fileOperationManager = new FileOperationManager(
-        this.frontendPath,
+        this.projectPath,
         this.renameMap,
       );
 
@@ -195,7 +196,8 @@ export class FrontendQueueProcessor {
       let fixResponse = await chatSyncWithClocker(
         this.context,
         {
-          model: 'o3-mini-high',
+          // model: 'o3-mini-high',
+          model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: fixPrompt },
             {
@@ -232,7 +234,7 @@ export class FrontendQueueProcessor {
           ],
         },
         'fix code (generic)',
-        'FrontendQueueProcessor',
+        'CodeQueueProcessor',
       );
 
       this.logger.debug('Fix Response: ' + fixResponse);
@@ -254,7 +256,7 @@ export class FrontendQueueProcessor {
           if (op.action === 'read' && op.originalPath) {
             try {
               op.code = readFileSync(
-                path.resolve(this.frontendPath, op.originalPath),
+                path.resolve(this.projectPath, op.originalPath),
                 'utf-8',
               );
               this.logger.log(`Read file: ${op.originalPath}`);
@@ -266,11 +268,16 @@ export class FrontendQueueProcessor {
           }
         }
 
+        this.logger.log(
+          this.projectPart === 'frontend' ? commonIssuePrompt : '',
+        );
+
         // **Second Attempt: Retry fix with additional file content**
         fixResponse = await chatSyncWithClocker(
           this.context,
           {
             model: 'o3-mini-high',
+            // model: 'gpt-4o-mini',
             messages: [
               { role: 'system', content: fixPrompt },
               {
@@ -298,7 +305,7 @@ export class FrontendQueueProcessor {
                 role: 'assistant',
                 content: `Let me analysis the current file. Why error message occour
               This time I shouldn't use the read tool because previous context already use it.
-              Let me check some common issue to make sure my thinking is correct ${commonIssuePrompt}.
+              Let me check some common issue to make sure my thinking is correct ${this.projectPart === 'frontend' ? commonIssuePrompt : ''}.
               I must follow the output format`,
               },
               {
@@ -312,7 +319,7 @@ export class FrontendQueueProcessor {
             ],
           },
           'fix code (generic)',
-          'FrontendQueueProcessor',
+          'CodeQueueProcessor',
         );
         this.logger.debug(
           'Updated Fix Response with extra context: ' + fixResponse,
@@ -330,6 +337,7 @@ export class FrontendQueueProcessor {
       this.logger.log(`Generic fix applied to file: ${task.filePath}`);
 
       if (newFilePath) {
+        this.logger.log(`File renamed to: ${newFilePath}`);
         return newFilePath;
       }
 
