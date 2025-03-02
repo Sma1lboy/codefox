@@ -55,6 +55,7 @@ Please compile this into a clean, professional website that effectively represen
           },
         ],
       });
+
       this.logger.debug('Enhanced description generated');
       return response;
     } catch (error) {
