@@ -12,7 +12,6 @@ interface ModelsCache {
 
 const CACHE_DURATION = 30 * 60 * 1000;
 export const useModels = () => {
-  const { isAuthorized, isChecking } = useAuthContext();
   const [selectedModel, setSelectedModel] = useState<string | undefined>(
     undefined
   );
@@ -51,7 +50,7 @@ export const useModels = () => {
   const { data, loading, error } = useQuery<{
     getAvailableModelTags: string[];
   }>(GET_MODEL_TAGS, {
-    skip: !isAuthorized || isChecking || !shouldUpdateCache(),
+    skip: !shouldUpdateCache(),
     onCompleted: (data) => {
       console.log(data);
       if (data?.getAvailableModelTags) {

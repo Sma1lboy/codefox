@@ -1,7 +1,15 @@
 'use client';
 
 import { useState, forwardRef, useImperativeHandle } from 'react';
-import { SendIcon, FileUp, Sparkles, Globe, Lock, Loader2 } from 'lucide-react';
+import {
+  SendIcon,
+  FileUp,
+  Sparkles,
+  Globe,
+  Lock,
+  Loader2,
+  Cpu,
+} from 'lucide-react';
 import Typewriter from 'typewriter-effect';
 import { AnimatedInputBorder } from '@/components/ui/moving-border';
 import {
@@ -19,6 +27,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useModels } from '@/hooks/useModels';
 
 export interface PromptFormRef {
   getPromptData: () => {
@@ -50,12 +59,19 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
     // New state for tracking input focus
     const [isFocused, setIsFocused] = useState(false);
 
+    const {
+      selectedModel,
+      setSelectedModel,
+      loading: isModelLoading,
+      models,
+    } = useModels();
+
     // Expose methods to parent component
     useImperativeHandle(ref, () => ({
       getPromptData: () => ({
         message,
         isPublic: visibility === 'public',
-        model: isEnhanced ? 'gpt-4o' : 'gpt-4o-mini',
+        model: selectedModel,
       }),
       clearMessage: () => setMessage(''),
     }));
@@ -93,52 +109,71 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
         )}
 
         <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center">
-          {/* TODO: adding drag in file later */}
-          {/* <button
-            className={cn(
-              'flex items-center gap-2 text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors',
-              isLoading && 'opacity-50 cursor-not-allowed'
-            )}
-            aria-label="Upload file"
-            disabled={isLoading}
-          >
-            <FileUp size={20} />
-            <span>Drag in file</span>
-          </button> */}
-
-          {/* Public/Private dropdown - OPTIMIZED */}
-          <Select
-            value={visibility}
-            onValueChange={(value) =>
-              !isLoading && setVisibility(value as 'public' | 'private')
-            }
-            disabled={isLoading}
-          >
-            <SelectTrigger
-              className={cn(
-                'w-[72px] h-6  border-0 focus:ring-0 hover:bg-gray-100 dark:hover:bg-gray-600 pl-1',
-                isLoading && 'opacity-50 cursor-not-allowed'
-              )}
+          <div className="flex items-center gap-2">
+            <Select
+              value={visibility}
+              onValueChange={(value) =>
+                !isLoading && setVisibility(value as 'public' | 'private')
+              }
+              disabled={isLoading}
             >
-              <div className="flex items-center gap-2">
-                <SelectValue />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="public">
+              <SelectTrigger
+                className={cn(
+                  'w-[72px] h-6 border-0 focus:ring-0 hover:bg-gray-100 dark:hover:bg-gray-600 pl-1',
+                  isLoading && 'opacity-50 cursor-not-allowed'
+                )}
+              >
                 <div className="flex items-center gap-2">
-                  <Globe size={16} />
-                  <span>Public</span>
+                  <SelectValue />
                 </div>
-              </SelectItem>
-              <SelectItem value="private">
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="public">
+                  <div className="flex items-center gap-2">
+                    <Globe size={16} />
+                    <span>Public</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="private">
+                  <div className="flex items-center gap-2">
+                    <Lock size={16} />
+                    <span>Private</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={selectedModel}
+              onValueChange={(value) => !isLoading && setSelectedModel(value)}
+              disabled={isLoading}
+            >
+              <SelectTrigger
+                className={cn(
+                  'w-[117px] h-6 border-0 focus:ring-0 hover:bg-gray-100 dark:hover:bg-gray-600 pl-1',
+                  isLoading && 'opacity-50 cursor-not-allowed'
+                )}
+              >
                 <div className="flex items-center gap-2">
-                  <Lock size={16} />
-                  <span>Private</span>
+                  {!isModelLoading ? <SelectValue /> : 'Loading...'}
                 </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
+              </SelectTrigger>
+              <SelectContent>
+                {!isModelLoading ? (
+                  models.map((model) => (
+                    <SelectItem key={model} value={model}>
+                      <div className="flex items-center gap-2">
+                        <Cpu size={16} />
+                        <span>{model}</span>
+                      </div>
+                    </SelectItem>
+                  ))
+                ) : (
+                  <>Loading...</>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="flex items-center gap-3">
             {/* Magic enhance tooltip */}
