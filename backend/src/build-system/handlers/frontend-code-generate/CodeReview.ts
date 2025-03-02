@@ -67,7 +67,7 @@ export class CodeTaskQueue {
  * 4. Repeats until build succeeds or max attempts are reached.
  */
 export class CodeQueueProcessor {
-  private logger = new Logger('FrontendQueueProcessor');
+  private logger = new Logger('CodeQueueProcessor');
 
   constructor(
     private validator: CodeValidator, // Path to your frontend project
@@ -196,7 +196,8 @@ export class CodeQueueProcessor {
       let fixResponse = await chatSyncWithClocker(
         this.context,
         {
-          model: 'o3-mini-high',
+          // model: 'o3-mini-high',
+          model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: fixPrompt },
             {
@@ -275,7 +276,8 @@ export class CodeQueueProcessor {
         fixResponse = await chatSyncWithClocker(
           this.context,
           {
-            model: 'o3-mini-high',
+            // model: 'o3-mini-high',
+            model: 'gpt-4o-mini',
             messages: [
               { role: 'system', content: fixPrompt },
               {
