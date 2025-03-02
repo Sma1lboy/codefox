@@ -291,7 +291,13 @@ Output Format:
      - A data table component should depend on table.tsx
      - A navigation component with dropdowns should depend on dropdown-menu.tsx
 
-5. **Output Requirements**:
+5. **Global Components Usage**:
+   - Consider how global components are used across pages.
+   - Global components (like navigation bars, footers, layouts) should be dependencies for all page components.
+   - For example, a Nav component should be included as a dependency for all page files.
+   - Ensure these global components are properly represented in the dependency tree for all relevant pages.
+
+6. **Output Requirements**:
    - The JSON object must strictly follow this structure:
      \`\`\`json
      <GENERATE>
@@ -317,6 +323,7 @@ Output Format:
 - Use common project patterns to deduce dependencies (e.g., pages depend on components, contexts, hooks, and styles).
 - Include all files in the output, even if they have no dependencies.
 - For context providers, ensure they are included as dependencies in either index.tsx or router.tsx to maintain proper context hierarchy in the React application.
+- Global components like navigation bars should appear as dependencies in all page components.
 - Include all files in the output, even if they have no dependencies.
 
 ### Output
