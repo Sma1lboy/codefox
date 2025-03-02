@@ -6,11 +6,12 @@ import {
   Resolver,
   ResolveField,
   Parent,
+  ID,
 } from '@nestjs/graphql';
 import { ProjectService } from './project.service';
 import { Project } from './project.model';
 import { CreateProjectInput, IsValidProjectInput } from './dto/project.input';
-import { UseGuards } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import { ProjectGuard } from '../guard/project.guard';
 import { GetUserIdFromToken } from '../decorator/get-auth-token.decorator';
 import { Chat } from 'src/chat/chat.model';
@@ -18,19 +19,20 @@ import { User } from 'src/user/user.model';
 
 @Resolver(() => Project)
 export class ProjectsResolver {
-  constructor(private readonly projectsService: ProjectService) {}
+  private readonly logger = new Logger('ProjectsResolver');
+  constructor(private readonly projectService: ProjectService) {}
 
   @Query(() => [Project])
   async getUserProjects(
     @GetUserIdFromToken() userId: string,
   ): Promise<Project[]> {
-    return this.projectsService.getProjectsByUser(userId);
+    return this.projectService.getProjectsByUser(userId);
   }
 
   @Query(() => Project)
   @UseGuards(ProjectGuard)
   async getProject(@Args('projectId') projectId: string): Promise<Project> {
-    return this.projectsService.getProjectById(projectId);
+    return this.projectService.getProjectById(projectId);
   }
 
   @Mutation(() => Chat)
@@ -38,7 +40,7 @@ export class ProjectsResolver {
     @GetUserIdFromToken() userId: string,
     @Args('createProjectInput') createProjectInput: CreateProjectInput,
   ): Promise<Chat> {
-    const resChat = await this.projectsService.createProject(
+    const resChat = await this.projectService.createProject(
       createProjectInput,
       userId,
     );
@@ -48,7 +50,7 @@ export class ProjectsResolver {
   @Mutation(() => Boolean)
   @UseGuards(ProjectGuard)
   async deleteProject(@Args('projectId') projectId: string): Promise<boolean> {
-    return this.projectsService.deleteProject(projectId);
+    return this.projectService.deleteProject(projectId);
   }
 
   @Query(() => Boolean)
@@ -56,18 +58,82 @@ export class ProjectsResolver {
     @GetUserIdFromToken() userId: string,
     @Args('isValidProject') input: IsValidProjectInput,
   ): Promise<boolean> {
-    return this.projectsService.isValidProject(userId, input);
+    return this.projectService.isValidProject(userId, input);
   }
 
   @ResolveField('user', () => User)
   async getUser(@Parent() project: Project): Promise<User> {
-    const { user } = await this.projectsService.getProjectById(project.id);
+    const { user } = await this.projectService.getProjectById(project.id);
     return user;
   }
 
   @ResolveField('chats', () => [Chat])
   async getChats(@Parent() project: Project): Promise<Chat[]> {
-    const { chats } = await this.projectsService.getProjectById(project.id);
+    const { chats } = await this.projectService.getProjectById(project.id);
     return (await chats)?.filter((chat) => !chat.isDeleted) || [];
+  }
+
+  @Mutation(() => Project)
+  async subscribeToProject(
+    @GetUserIdFromToken() userId: string,
+    @Args('projectId', { type: () => ID }) projectId: string,
+  ): Promise<Project> {
+    this.logger.log(`User ${userId} subscribing to project ${projectId}`);
+    return this.projectService.subscribeToProject(userId, projectId);
+  }
+
+  @Mutation(() => Project)
+  async updateProjectPhotoUrl(
+    @GetUserIdFromToken() userId: string,
+    @Args('projectId', { type: () => ID }) projectId: string,
+    @Args('photoUrl') photoUrl: string,
+  ): Promise<Project> {
+    this.logger.log(
+      `User ${userId} updating photo URL for project ${projectId}`,
+    );
+    return this.projectService.updateProjectPhotoUrl(
+      userId,
+      projectId,
+      photoUrl,
+    );
+  }
+
+  @Mutation(() => Project)
+  async updateProjectPublicStatus(
+    @GetUserIdFromToken() userId: string,
+    @Args('projectId', { type: () => ID }) projectId: string,
+    @Args('isPublic') isPublic: boolean,
+  ): Promise<Project> {
+    this.logger.log(
+      `User ${userId} updating public status for project ${projectId} to ${isPublic}`,
+    );
+    return this.projectService.updateProjectPublicStatus(
+      userId,
+      projectId,
+      isPublic,
+    );
+  }
+
+  @Mutation(() => Chat)
+  async forkProject(
+    @GetUserIdFromToken() userId: string,
+    @Args('projectId', { type: () => ID }) projectId: string,
+  ): Promise<Chat> {
+    this.logger.log(`User ${userId} forking project ${projectId}`);
+    return this.projectService.forkProject(userId, projectId);
+  }
+
+  @Query(() => [Project])
+  async getSubscribedProjects(
+    @GetUserIdFromToken() userId: string,
+  ): Promise<Project[]> {
+    this.logger.log(`Fetching subscribed projects for user ${userId}`);
+    return this.projectService.getSubscribedProjects(userId);
+  }
+
+  // Optional: Method to get all public projects (for discovery)
+  @Query(() => [Project])
+  async getPublicProjects(): Promise<Project[]> {
+    return this.projectService.getPublicProjects();
   }
 }

@@ -12,25 +12,17 @@ export default function ChatLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthorized, isChecking } = useAuthContext();
+  const { isAuthorized } = useAuthContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { refetch } = useQuery(GET_USER_PROJECTS);
   const router = useRouter();
 
   useEffect(() => {
-    if (isChecking || !isAuthorized) {
+    if (!isAuthorized) {
       router.push('/');
     }
-  }, [isChecking, isAuthorized, router]);
-
-  if (isChecking) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        Loading...
-      </div>
-    );
-  }
+  }, [isAuthorized, router]);
 
   if (!isAuthorized) {
     return null;
@@ -44,7 +36,6 @@ export default function ChatLayout({
           onClose={() => setIsModalOpen(false)}
           refetchProjects={refetch}
         />
-        {/* 仅渲染聊天主要内容，侧边栏在 NavLayout 中统一管理 */}
         <div className="w-full h-full">{children}</div>
       </ProjectProvider>
     </main>

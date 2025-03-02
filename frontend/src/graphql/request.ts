@@ -28,17 +28,6 @@ export const CREATE_CHAT = gql`
   }
 `;
 
-export const SAVE_CHAT_HISTORY = gql`
-  mutation SaveChatHistory($chatId: String!, $messages: [MessageInput!]!) {
-    saveChatHistory(chatId: $chatId, messages: $messages) {
-      id
-      content
-      role
-      createdAt
-    }
-  }
-`;
-
 export const GET_CHAT_HISTORY = gql`
   query GetChatHistory($chatId: String!) {
     getChatHistory(chatId: $chatId) {
@@ -106,10 +95,51 @@ export const TRIGGER_CHAT = gql`
   }
 `;
 
+// Query to get user projects
+export const GET_USER_PROJECTS = gql`
+  query GetUserProjects {
+    getUserProjects {
+      id
+      projectName
+      projectPath
+      isPublic
+      photoUrl
+      subNumber
+      userId
+      forkedFromId
+      isDeleted
+      projectPackages {
+        id
+        content
+        version
+      }
+    }
+  }
+`;
+
+// export const CREATE_PROJECT = gql`
+//   mutation CreateProject($createProjectInput: CreateProjectInput!) {
+//     createProject(createProjectInput: $createProjectInput) {
+//       id
+//       title
+//       createdAt
+//       updatedAt
+//     }
+//   }
+// `;
+
+export const getUserProjects = async (client: ApolloClient<unknown>) => {
+  const response = await client.query({ query: GET_USER_PROJECTS });
+  return response.data.getUserProjects;
+};
+
+// Query to get chat details
 export const GET_CHAT_DETAILS = gql`
   query GetChatDetails($chatId: String!) {
     getChatDetails(chatId: $chatId) {
       id
+      title
+      userId
       messages {
         id
         content
@@ -118,77 +148,109 @@ export const GET_CHAT_DETAILS = gql`
       }
       project {
         id
+        projectName
         projectPath
+        isPublic
+        photoUrl
       }
     }
   }
 `;
 
-export const GET_USER_PROJECTS = gql`
-  query GetUserProjects {
-    getUserProjects {
-      id
-      projectName
-      projectPath
-      projectPackages {
-        id
-        content
-      }
-    }
-  }
-`;
-
-export const GET_PROJECT_DETAILS = gql`
-  query GetProjectDetails($projectId: String!) {
-    getProjectDetails(projectId: $projectId) {
-      id
-      projectName
-      path
-      projectPackages {
-        id
-        content
-      }
-    }
-  }
-`;
-
+// Mutation to create a new project
 export const CREATE_PROJECT = gql`
   mutation CreateProject($createProjectInput: CreateProjectInput!) {
     createProject(createProjectInput: $createProjectInput) {
       id
-      projectName
-      path
-      projectPackages {
+      title
+      createdAt
+      updatedAt
+      project {
         id
-        content
+        projectName
+        projectPath
+        isPublic
+        photoUrl
+        userId
+        subNumber
       }
     }
   }
 `;
 
-export const getUserProjects = async (client: ApolloClient<unknown>) => {
-  const response = await client.query({ query: GET_USER_PROJECTS });
-  return response.data.getUserProjects;
-};
+// Mutation to fork an existing project
+export const FORK_PROJECT = gql`
+  mutation ForkProject($projectId: ID!) {
+    forkProject(projectId: $projectId) {
+      id
+      title
+      project {
+        id
+        projectName
+        projectPath
+        isPublic
+        photoUrl
+        userId
+        forkedFromId
+        subNumber
+      }
+    }
+  }
+`;
 
-export const getProjectDetails = async (
-  client: ApolloClient<unknown>,
-  projectId: string
-) => {
-  const response = await client.query({
-    query: GET_PROJECT_DETAILS,
-    variables: { projectId },
-  });
-  return response.data.getProjectDetails;
-};
+// Mutation to update project public status
+export const UPDATE_PROJECT_PUBLIC_STATUS = gql`
+  mutation UpdateProjectPublicStatus($projectId: ID!, $isPublic: Boolean!) {
+    updateProjectPublicStatus(projectId: $projectId, isPublic: $isPublic) {
+      id
+      projectName
+      isPublic
+    }
+  }
+`;
 
-export const createProject = async (
-  client: ApolloClient<unknown>,
-  createProjectInput: any
-) => {
-  const response = await client.mutate({
-    mutation: CREATE_PROJECT,
-    variables: { createProjectInput },
-  });
-  return response.data.createProject;
-};
+// Mutation to update project photo URL
+export const UPDATE_PROJECT_PHOTO_URL = gql`
+  mutation UpdateProjectPhotoUrl($projectId: ID!, $photoUrl: String!) {
+    updateProjectPhotoUrl(projectId: $projectId, photoUrl: $photoUrl) {
+      id
+      projectName
+      photoUrl
+    }
+  }
+`;
+
+// Query to get subscribed/forked projects
+export const GET_SUBSCRIBED_PROJECTS = gql`
+  query GetSubscribedProjects {
+    getSubscribedProjects {
+      id
+      projectName
+      projectPath
+      isPublic
+      photoUrl
+      userId
+      forkedFromId
+      subNumber
+    }
+  }
+`;
+
+// Query to get public projects
+export const GET_PUBLIC_PROJECTS = gql`
+  query GetPublicProjects {
+    getPublicProjects {
+      id
+      projectName
+      projectPath
+      isPublic
+      photoUrl
+      userId
+      subNumber
+      user {
+        id
+        username
+      }
+    }
+  }
+`;
