@@ -149,6 +149,7 @@ export type Mutation = {
   forkProject: Chat;
   login: LoginResponse;
   refreshToken: RefreshTokenResponse;
+  regenerateDescription: Scalars['String']['output'];
   registerUser: User;
   subscribeToProject: Project;
   triggerChatStream: Scalars['Boolean']['output'];
@@ -187,6 +188,10 @@ export type MutationLoginArgs = {
 
 export type MutationRefreshTokenArgs = {
   refreshToken: Scalars['String']['input'];
+};
+
+export type MutationRegenerateDescriptionArgs = {
+  input: Scalars['String']['input'];
 };
 
 export type MutationRegisterUserArgs = {
@@ -269,7 +274,6 @@ export type Query = {
   getChatHistory: Array<Message>;
   getHello: Scalars['String']['output'];
   getProject: Project;
-  getPublicProjects: Array<Project>;
   getSubscribedProjects: Array<Project>;
   getUserChats?: Maybe<Array<Chat>>;
   getUserProjects: Array<Project>;
@@ -696,6 +700,12 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationRefreshTokenArgs, 'refreshToken'>
   >;
+  regenerateDescription?: Resolver<
+    ResolversTypes['String'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationRegenerateDescriptionArgs, 'input'>
+  >;
   registerUser?: Resolver<
     ResolversTypes['User'],
     ParentType,
@@ -840,11 +850,6 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryGetProjectArgs, 'projectId'>
-  >;
-  getPublicProjects?: Resolver<
-    Array<ResolversTypes['Project']>,
-    ParentType,
-    ContextType
   >;
   getSubscribedProjects?: Resolver<
     Array<ResolversTypes['Project']>,

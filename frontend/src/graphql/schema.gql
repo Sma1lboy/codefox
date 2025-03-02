@@ -54,9 +54,7 @@ input CreateProjectInput {
   public: Boolean
 }
 
-"""
-Date custom scalar type
-"""
+"""Date custom scalar type"""
 scalar Date
 
 input FetchPublicProjectsInputs {
@@ -110,6 +108,7 @@ type Mutation {
   forkProject(projectId: ID!): Chat!
   login(input: LoginUserInput!): LoginResponse!
   refreshToken(refreshToken: String!): RefreshTokenResponse!
+  regenerateDescription(input: String!): String!
   registerUser(input: RegisterUserInput!): User!
   subscribeToProject(projectId: ID!): Project!
   triggerChatStream(input: ChatInputType!): Boolean!

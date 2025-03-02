@@ -1,5 +1,4 @@
 'use client';
-
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { BackgroundGradient } from '@/components/ui/background-gradient';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,6 @@ export function AuthChoiceModal({
         <VisuallyHidden>
           <DialogTitle>Choose Authentication Method</DialogTitle>
         </VisuallyHidden>
-
         <BackgroundGradient className="rounded-[22px] p-4 bg-white dark:bg-zinc-900">
           <div className="w-full p-6 space-y-6">
             <h2 className="text-2xl font-semibold text-center dark:text-white">
@@ -36,7 +34,7 @@ export function AuthChoiceModal({
             </p>
             <div className="space-y-4">
               <Button
-                className="w-full py-6 text-lg bg-red-500 hover:bg-red-600"
+                className="w-full py-6 text-lg bg-primary hover:bg-primary/90"
                 onClick={onSignInClick}
               >
                 Sign in

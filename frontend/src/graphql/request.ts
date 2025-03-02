@@ -235,22 +235,3 @@ export const GET_SUBSCRIBED_PROJECTS = gql`
     }
   }
 `;
-
-// Query to get public projects
-export const GET_PUBLIC_PROJECTS = gql`
-  query GetPublicProjects {
-    getPublicProjects {
-      id
-      projectName
-      projectPath
-      isPublic
-      photoUrl
-      userId
-      subNumber
-      user {
-        id
-        username
-      }
-    }
-  }
-`;

@@ -37,7 +37,7 @@ export class OpenAIModelProvider implements IModelProvider {
 
     for (const model of chatModels) {
       if (model.default) {
-        this.defaultModel = model.model;
+        this.defaultModel = model.alias || model.model;
       }
       if (!model.endpoint || !model.token) continue;
 

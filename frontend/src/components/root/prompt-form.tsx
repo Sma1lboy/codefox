@@ -28,6 +28,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useModels } from '@/hooks/useModels';
+import { gql, useMutation } from '@apollo/client';
 
 export interface PromptFormRef {
   getPromptData: () => {
@@ -45,6 +46,12 @@ interface PromptFormProps {
   isLoading?: boolean;
 }
 
+const REGENERATE_DESCRIPTION = gql`
+  mutation RegenerateDescription($input: String!) {
+    regenerateDescription(input: $input)
+  }
+`;
+
 export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
   function PromptForm(
     { isAuthorized, onSubmit, onAuthRequired, isLoading = false },
@@ -58,6 +65,8 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
     const [isEnhanced, setIsEnhanced] = useState(false);
     // New state for tracking input focus
     const [isFocused, setIsFocused] = useState(false);
+    // State for regeneration loading
+    const [isRegenerating, setIsRegenerating] = useState(false);
 
     const {
       selectedModel,
@@ -65,6 +74,49 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
       loading: isModelLoading,
       models,
     } = useModels();
+
+    // Set up the regenerate mutation
+    const [regenerateDescriptionMutation] = useMutation(
+      REGENERATE_DESCRIPTION,
+      {
+        onCompleted: (data) => {
+          // Update the message with the regenerated description
+          setMessage(data.regenerateDescription);
+          setIsRegenerating(false);
+        },
+        onError: (error) => {
+          console.error('Error regenerating description:', error);
+          setIsRegenerating(false);
+        },
+      }
+    );
+
+    // Handle magic enhance button click
+    const handleMagicEnhance = () => {
+      // Don't do anything if already loading
+      if (isLoading || isRegenerating) {
+        return;
+      }
+
+      // Check if user is authorized
+      if (!isAuthorized) {
+        onAuthRequired();
+        return;
+      }
+
+      // If there's text, regenerate it
+      if (message.trim()) {
+        setIsRegenerating(true);
+        regenerateDescriptionMutation({
+          variables: {
+            input: message,
+          },
+        });
+      }
+
+      // Toggle the enhanced state regardless
+      setIsEnhanced(!isEnhanced);
+    };
 
     // Expose methods to parent component
     useImperativeHandle(ref, () => ({
@@ -88,150 +140,170 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
 
     return (
       <div className="relative w-full max-w-2xl mx-auto">
+        {/* Main content area with textarea */}
         <AnimatedInputBorder borderWidth={200} borderHeight={30}>
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            placeholder=""
-            className="w-full py-24 px-6 pr-12 text-lg border border-transparent rounded-lg focus:outline-none focus:ring-0 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 align-top pt-6 font-normal"
-            disabled={isLoading}
-          />
-        </AnimatedInputBorder>
+          <div className="flex flex-col">
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              placeholder=""
+              className="w-full min-h-[200px] py-6 px-6 pr-12 text-lg border border-transparent rounded-lg focus:outline-none focus:ring-0 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 resize-none font-normal"
+              disabled={isLoading || isRegenerating}
+              rows={4}
+              style={{ paddingBottom: '48px' }} // Extra padding at bottom to avoid text touching buttons
+            />
 
-        {/* The typewriter only shows when the input is empty, not loading, and not focused */}
-        {message === '' && !isLoading && !isFocused && (
-          <div className="absolute top-[26px] left-[23px] right-12 pointer-events-none text-gray-500 dark:text-gray-400 text-lg font-normal overflow-hidden">
-            <Typewriter onInit={handleTypewriterInit} />
-          </div>
-        )}
-
-        <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Select
-              value={visibility}
-              onValueChange={(value) =>
-                !isLoading && setVisibility(value as 'public' | 'private')
-              }
-              disabled={isLoading}
-            >
-              <SelectTrigger
-                className={cn(
-                  'w-[72px] h-6 border-0 focus:ring-0 hover:bg-gray-100 dark:hover:bg-gray-600 pl-1',
-                  isLoading && 'opacity-50 cursor-not-allowed'
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <SelectValue />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="public">
-                  <div className="flex items-center gap-2">
-                    <Globe size={16} />
-                    <span>Public</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="private">
-                  <div className="flex items-center gap-2">
-                    <Lock size={16} />
-                    <span>Private</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={selectedModel}
-              onValueChange={(value) => !isLoading && setSelectedModel(value)}
-              disabled={isLoading}
-            >
-              <SelectTrigger
-                className={cn(
-                  'w-[117px] h-6 border-0 focus:ring-0 hover:bg-gray-100 dark:hover:bg-gray-600 pl-1',
-                  isLoading && 'opacity-50 cursor-not-allowed'
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  {!isModelLoading ? <SelectValue /> : 'Loading...'}
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                {!isModelLoading ? (
-                  models.map((model) => (
-                    <SelectItem key={model} value={model}>
-                      <div className="flex items-center gap-2">
-                        <Cpu size={16} />
-                        <span>{model}</span>
-                      </div>
-                    </SelectItem>
-                  ))
-                ) : (
-                  <>Loading...</>
-                )}
-              </SelectContent>
-            </Select>
+            {/* The typewriter only shows when the input is empty, not loading, and not focused */}
+            {message === '' && !isLoading && !isRegenerating && !isFocused && (
+              <div className="absolute top-[26px] left-[23px] right-12 pointer-events-none text-gray-500 dark:text-gray-400 text-lg font-normal overflow-hidden">
+                <Typewriter onInit={handleTypewriterInit} />
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Magic enhance tooltip */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(
-                      'rounded-full p-2 transition-all',
-                      isEnhanced
-                        ? 'bg-amber-500/20 text-amber-500 hover:bg-amber-500/30 hover:text-amber-600'
-                        : 'text-gray-500 hover:text-amber-500',
-                      isLoading && 'opacity-50 cursor-not-allowed'
-                    )}
-                    onClick={() => !isLoading && setIsEnhanced(!isEnhanced)}
-                    disabled={isLoading}
-                  >
-                    <Sparkles size={20} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>Magic enhance generation</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            {/* Submit button */}
-            <Button
-              className={cn(
-                'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-md hover:shadow-lg transition-all px-5 py-3 h-10 rounded-full',
-                isLoading && 'opacity-80 cursor-not-allowed'
-              )}
-              onClick={() => {
-                if (isLoading) return;
-                if (!isAuthorized) {
-                  onAuthRequired();
-                } else {
-                  onSubmit();
+          {/* Controls section - now separated with a background */}
+          <div className="absolute bottom-0 left-0 right-0 py-3 px-3 flex justify-between items-center  rounded-b-lg  border-gray-100 dark:border-gray-600">
+            <div className="flex items-center gap-2">
+              <Select
+                value={visibility}
+                onValueChange={(value) =>
+                  !isLoading &&
+                  !isRegenerating &&
+                  setVisibility(value as 'public' | 'private')
                 }
-              }}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 size={18} className="mr-2 animate-spin" />
-                  <span>Creating...</span>
-                </>
-              ) : (
-                <>
-                  <SendIcon size={18} className="mr-2" />
-                  <span>Create</span>
-                </>
-              )}
-            </Button>
+                disabled={isLoading || isRegenerating}
+              >
+                <SelectTrigger
+                  className={cn(
+                    'w-[72px] h-6 border-0 focus:ring-0 hover:bg-gray-100 dark:hover:bg-gray-600 pl-1',
+                    (isLoading || isRegenerating) &&
+                      'opacity-50 cursor-not-allowed'
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <SelectValue />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="public">
+                    <div className="flex items-center gap-2">
+                      <Globe size={16} />
+                      <span>Public</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="private">
+                    <div className="flex items-center gap-2">
+                      <Lock size={16} />
+                      <span>Private</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={selectedModel}
+                onValueChange={(value) =>
+                  !isLoading && !isRegenerating && setSelectedModel(value)
+                }
+                disabled={isLoading || isRegenerating}
+              >
+                <SelectTrigger
+                  className={cn(
+                    'w-[117px] h-6 border-0 focus:ring-0 hover:bg-gray-100 dark:hover:bg-gray-600 pl-1',
+                    (isLoading || isRegenerating) &&
+                      'opacity-50 cursor-not-allowed'
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    {!isModelLoading ? <SelectValue /> : 'Loading...'}
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  {!isModelLoading ? (
+                    models.map((model) => (
+                      <SelectItem key={model} value={model}>
+                        <div className="flex items-center gap-2">
+                          <Cpu size={16} />
+                          <span>{model}</span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <>Loading...</>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Magic enhance tooltip */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        'rounded-full p-2 transition-all',
+                        isEnhanced
+                          ? 'bg-amber-500/20 text-amber-500 hover:bg-amber-500/30 hover:text-amber-600'
+                          : 'text-gray-500 hover:text-amber-500',
+                        (isLoading || isRegenerating) &&
+                          'opacity-50 cursor-not-allowed'
+                      )}
+                      onClick={handleMagicEnhance}
+                      disabled={isLoading || isRegenerating}
+                    >
+                      <Sparkles
+                        size={20}
+                        className={cn(isRegenerating && 'animate-spin')}
+                      />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>
+                      {message.trim()
+                        ? 'Regenerate & enhance'
+                        : 'Magic enhance generation'}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              {/* Submit button */}
+              <Button
+                className={cn(
+                  'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-md hover:shadow-lg transition-all px-5 py-3 h-10 rounded-full',
+                  (isLoading || isRegenerating) &&
+                    'opacity-80 cursor-not-allowed'
+                )}
+                onClick={() => {
+                  if (isLoading || isRegenerating) return;
+                  if (!isAuthorized) {
+                    onAuthRequired();
+                  } else {
+                    onSubmit();
+                  }
+                }}
+                disabled={isLoading || isRegenerating}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 size={18} className="mr-2 animate-spin" />
+                    <span>Creating...</span>
+                  </>
+                ) : (
+                  <>
+                    <SendIcon size={18} className="mr-2" />
+                    <span>Create</span>
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
-        </div>
+        </AnimatedInputBorder>
       </div>
     );
   }
