@@ -346,7 +346,7 @@ export class BuilderContext {
    * @returns A promise that resolves when the entire build sequence is complete.
    */
 
-  async execute(): Promise<void> {
+  async execute(): Promise<string> {
     try {
       const nodes = this.sequence.nodes;
       let currentIndex = 0;
@@ -403,6 +403,15 @@ export class BuilderContext {
         await Promise.all(Array.from(runningPromises));
         await new Promise((resolve) => setTimeout(resolve, this.POLL_INTERVAL));
       }
+
+      const projectUUID = this.getGlobalContext('projectUUID');
+      await this.monitor.endSequenceExecution(this.sequence.id, projectUUID);
+
+      this.writeLog(
+        'summery-matrix.json',
+        this.monitor.generateTextReport(this.sequence.id),
+      );
+      return projectUUID;
     } catch (error) {
       this.writeLog('execution-error.json', {
         error: error.message,
