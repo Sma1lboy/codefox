@@ -48,6 +48,7 @@ export const generateBackendCodePrompt = (
        **Include:**
        1. **Server Setup:**
           - Initialize the server using the Express framework with ES Module syntax (use \`import\` instead of \`require\`).
+          - Configure middleware for JSON parsing and CORS it should allow localhost.
    
        2. **Database Connection and Initialization:**
           Database schemas: These schemas are defined in \`./schema.sql\`. The code must read and execute this file during database initialization.
@@ -137,7 +138,7 @@ export const generateBackendCodePrompt = (
        7. **Environment Configuration:**
           - Use dotenv or similar for environment variables.
           - Database configuration should be environment-based.
-          - Server port and other settings should be configurable.
+          - Server port is 3000 and other settings should be configurable.
    
        8. **Comments and Documentation:**
           - Add comments explaining each section and key code blocks.
