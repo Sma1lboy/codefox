@@ -12,6 +12,7 @@ import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import { DBRequirementHandler } from '../../database/requirements-document';
 import { UXDMDHandler } from '../../ux/datamap';
 import { DBSchemaHandler } from '../../database/schemas/schemas';
+import { MessageInterface } from 'src/common/model-provider/types';
 
 type BackendRequirementResult = {
   overview: string;
@@ -65,6 +66,34 @@ export class BackendRequirementHandler implements BuildHandler<string> {
       packages,
     );
 
+    const messages = [
+      {
+        role: 'system' as const,
+        content: overviewPrompt,
+      },
+      {
+        role: 'user' as const,
+        content: `## Database Requirements:
+            ${dbRequirements}
+                              `,
+      },
+      {
+        role: 'user' as const,
+        content: `## DataBase Schema:
+            ${dbSchema}
+                              `,
+      },
+      {
+        role: 'user' as const,
+        content: `## Frontend Data Requirements:
+            ${datamapDoc} `,
+      },
+      {
+        role: 'user',
+        content: `Now you can provide the code, don't forget the <GENERATE></GENERATE> tags. Do not be lazy.`,
+      },
+    ] as MessageInterface[];
+
     let backendOverview: string;
 
     try {
@@ -72,7 +101,7 @@ export class BackendRequirementHandler implements BuildHandler<string> {
         context,
         {
           model: 'gpt-4o-mini',
-          messages: [{ content: overviewPrompt, role: 'system' }],
+          messages: messages,
         },
         'generateBackendOverviewPrompt',
         BackendRequirementHandler.name,

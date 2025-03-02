@@ -10,14 +10,17 @@ export const prompts = {
 Follow these guidelines to generate the database requirements:
 
 ### Instructions and Rules:
-1. Analyze data elements mentioned in the UX Datamap
-2. Carefully distinguish between frontend state management and actual database storage needs
-3. Only include entities and attributes that require persistent storage
-4. For each feature in the UX Datamap, clearly determine if it needs database support or is purely frontend
-5. Identify entities and their relationships
-6. Determine data types and constraints
-7. Consider data persistence requirements
-8. Plan for scalability and performance
+1. IMPORTANT: Only include features and entities that are EXPLICITLY mentioned in the UX Datamap.
+2. Analyze data elements mentioned in the UX Datamap.
+3. DO NOT include any conditional or optional features (phrases containing "if", "optional", "may", "possible", or similar qualifiers).
+4. Do not add User, login, authentication unless specifically mentioned in the UX Datamap.
+5. Carefully distinguish between frontend state management and actual database storage needs
+6. Only include entities and attributes that require persistent storage
+7. For each feature in the UX Datamap, clearly determine if it needs database support or is purely frontend
+8. Identify entities and their relationships
+9. Determine data types and constraints
+10. Consider data persistence requirements
+11. Plan for scalability and performance
 
 ### Database Requirements Structure:
 ---
@@ -56,10 +59,10 @@ For each entity:
 - Performance considerations
 
 #### 6. Security Requirements
-- Access control
-- Data privacy considerations
-- Audit requirements
-- Encryption needs
+- Only include access control if user authentication is EXPLICITLY REQUIRED
+- Only include data privacy considerations for sensitive data that is actually being stored
+- Only include audit requirements if explicitly mentioned
+- Only include encryption needs if sensitive data is being stored
 
 #### 7. Performance Requirements
 - Expected data volume
@@ -93,8 +96,8 @@ Focus on creating practical, implementable database requirements that will effec
    - Partitioning needs
 
 4. Security & Compliance:
-   - Access control
-   - Data encryption
+   - Only include access control if authentication is explicitly required
+   - Data encryption only if sensitive data is being stored
    - Audit requirements
 
 5. Maintenance & Operations:

@@ -3,13 +3,15 @@ import { BuildSequence } from '../types';
 import { ProjectInitHandler } from '../handlers/project-init';
 import { PRDHandler } from '../handlers/product-manager/product-requirements-document/prd';
 import { UXSMDHandler } from '../handlers/ux/sitemap-document';
-import { UXSMSHandler } from '../handlers/ux/sitemap-structure';
 import { DBRequirementHandler } from '../handlers/database/requirements-document';
 import { UXDMDHandler } from '../handlers/ux/datamap';
 import { BuilderContext } from '../context';
-import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
-import { FileStructureAndArchitectureHandler } from '../handlers/file-manager/file-struct';
+import { DBSchemaHandler } from '../handlers/database/schemas/schemas';
 import { BackendRequirementHandler } from '../handlers/backend/requirements-document';
+import { FileStructureAndArchitectureHandler } from '../handlers/file-manager/file-struct';
+import { UXSMSHandler } from '../handlers/ux/sitemap-structure';
+import { BackendCodeHandler } from '../handlers/backend/code-generate';
+import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
 
 (isIntegrationTest ? describe : describe.skip)('Build Sequence Test', () => {
   it('should execute build sequence successfully', async () => {
@@ -17,8 +19,7 @@ import { BackendRequirementHandler } from '../handlers/backend/requirements-docu
       id: 'test-backend-sequence',
       version: '1.0.0',
       name: 'Wrtie a Cool personal website',
-      description:
-        'A personal blog website. I am a cybersecurity engineer so i want it to show i am a really cool hacker, with cool terminal functionality',
+      description: `A personal blog website. I am a cybersecurity engineer so i want it to show i am a really cool hacker, with cool terminal functionality`,
       databaseType: 'SQLite',
       model: 'gpt-4o-mini',
       projectSize: 'medium', // limit for fun
@@ -38,7 +39,6 @@ import { BackendRequirementHandler } from '../handlers/backend/requirements-docu
         {
           handler: UXSMSHandler,
           name: 'UX Sitemap Structure Node',
-          // requires: ['op:UX:SMD'],
         },
         {
           handler: UXDMDHandler,
@@ -54,14 +54,32 @@ import { BackendRequirementHandler } from '../handlers/backend/requirements-docu
           // requires: ['op:UX:DATAMAP:DOC'],
         },
         {
+          handler: DBSchemaHandler,
+          name: 'Database schema Node',
+          // requires: ['op:UX:DATAMAP:DOC'],
+        },
+        {
           handler: BackendRequirementHandler,
           name: 'Backend Requirements Node',
           // requires: ['op:DATABASE_REQ', 'op:UX:DATAMAP:DOC', 'op:UX:SMD'],
         },
         {
+          handler: BackendCodeHandler,
+          name: 'Backend Code Generator Node',
+        },
+        {
           handler: FrontendCodeHandler,
           name: 'Frontend Code Generator Node',
         },
+
+        // // {
+        // //   handler: BackendFileStructureAndArchitectureHandler,
+        // //   name: 'Backend File Structure and Architecture',
+        // // },
+        // {
+        //   handler: BackendFileReviewHandler,
+        //   name: 'Backend File review Node',
+        // },
       ],
       packages: [],
     };

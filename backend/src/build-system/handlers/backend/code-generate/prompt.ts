@@ -48,7 +48,7 @@ export const generateBackendCodePrompt = (
        **Include:**
        1. **Server Setup:**
           - Initialize the server using the Express framework with ES Module syntax (use \`import\` instead of \`require\`).
-          - Configure middleware for JSON parsing and CORS it should allow localhost.
+          - Configure middleware for JSON parsing and CORS example "app.use(cors()); "
    
        2. **Database Connection and Initialization:**
           Database schemas: These schemas are defined in \`./schema.sql\`. The code must read and execute this file during database initialization.

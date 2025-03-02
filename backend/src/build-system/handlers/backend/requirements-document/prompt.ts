@@ -10,6 +10,7 @@ export const generateBackendOverviewPrompt = (
   return `Role: You are a Senior Backend Architect specializing in backend systems. Generate the System Overview and API Endpoints specifications based on the following inputs.
 
 Task: Generate a Backend Overview Document following these guidelines:
+Project Name: ${projectName}
 
 ### Technology Stack
 - Language: ${language}
@@ -29,27 +30,17 @@ ${Object.entries(packages)
 4. Consider:
    - Data flow between frontend pages
    - Required data transformations
-   - Authentication and authorization needs
 5. IMPORTANT: Carefully differentiate between public and authenticated endpoints:
-   - Public endpoints (No Auth): Content retrieval endpoints (GET blog posts, portfolio items, etc.)
-   - Authenticated endpoints (Auth Required): Content creation/modification endpoints (POST/PUT/DELETE blog posts, etc.)
+   - Public endpoints (No Auth)
 6. For authenticated endpoints only, include authentication in the headers section using "Authorization": "Bearer {token}"
 7. Don't add authentication requirements to public-facing read operations (GET requests for viewing content)
+8. Do not add login when no documentation mentioned.
+9. It MUST be COMPLETE DO NOTE write TODO, and Future for api.
 
 Your reply must start with: "<GENERATE>" and end with "</GENERATE>".
 
 Include these sections:
-
-<System_Overview>
-#### 1. System Overview
-- **Project Name**: ${projectName}
-- **Framework architecture**
-- **Data Flow**
-  - Frontend-Backend data interactions
-  - Data transformation layers
-</System_Overview>
-
-<ApiDoc>
+## API Documentation
 Group endpoints by functional areas based on site structure.
 For each endpoint:
 \`\`\`
@@ -57,7 +48,7 @@ Route: GET|POST|PUT|DELETE /api/resource
 Purpose: Functional description
 Data Requirements:
   - Required data transformations
-Required Auth: Yes/No
+Required Auth: No/Yes
 Request:
 {
   "headers": {},
@@ -70,22 +61,6 @@ Response:
   "success": {},
   "errors": {}
 }
-</ApiDoc>
-
-
-# Context input
-Project Name: ${projectName}
-
-## Requirements Documentation
-1. Database Requirements:
-${dbRequirements}
-
-2. DataBase Schema:
-${dbSchema}
-
-2. Frontend Data Requirements:
-${datamapDoc}
-
 \`\`\``;
 };
 

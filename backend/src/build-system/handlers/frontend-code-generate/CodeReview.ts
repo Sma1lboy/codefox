@@ -276,8 +276,8 @@ export class CodeQueueProcessor {
         fixResponse = await chatSyncWithClocker(
           this.context,
           {
-            // model: 'o3-mini-high',
-            model: 'gpt-4o-mini',
+            model: 'o3-mini-high',
+            // model: 'gpt-4o-mini',
             messages: [
               { role: 'system', content: fixPrompt },
               {
