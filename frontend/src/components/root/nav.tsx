@@ -15,7 +15,6 @@ import { AnimatedNumber } from '../ui/animate-number';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { SignUpModal } from '../sign-up-modal';
 import { SignInModal } from '../sign-in-modal';
-import { Button } from '../ui/button';
 
 // Define the ref interface
 export interface NavbarRef {
@@ -209,14 +208,11 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
               className="flex-1 flex justify-end items-center space-x-4"
               variants={itemVariants}
             >
-              {/* Navigation tabs */}
-
-              {/* GitHub Stars */}
               <a
                 href="https://github.com/Sma1lboy/codefox"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                className="flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
               >
                 <Github size={18} className="mr-1.5" />
                 <Star
@@ -237,17 +233,13 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
                 )}
               </a>
 
-              {/* Theme Toggle Button */}
-              <Button
+              <button
                 onClick={toggleTheme}
-                className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                className="p-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
                 aria-label="Toggle theme"
               >
-                <SunMoon
-                  size={20}
-                  className="text-gray-600 dark:text-gray-400"
-                />
-              </Button>
+                <SunMoon size={20} />
+              </button>
 
               <div
                 className={`bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-1 shadow-md ${tabsContainerClassName}`}
@@ -269,9 +261,6 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
                             : `text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white ${inactiveTabClassName}`
                         }`}
                       >
-                        {/* Icon if available */}
-                        {/* {tab.icon && <span className="mr-2">{tab.icon}</span>} */}
-
                         {/* Animated background for active tab */}
                         <AnimatePresence>
                           {activeTab === index && (
@@ -299,7 +288,8 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
                 <div className="flex items-center space-x-4 transition-transform duration-300">
                   <button
                     onClick={() => setShowSignIn(true)}
-                    className="px-4 py-2 rounded-md bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 transition-colors"
+                    className="px-4 py-2 rounded-md border border-primary-500 text-primary-500 dark:text-primary-400
+                 hover:bg-primary-500 hover:text-white transition-colors"
                   >
                     Sign In
                   </button>
