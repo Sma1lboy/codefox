@@ -51,7 +51,9 @@ input CreateProjectInput {
   projectName: String
 }
 
-"""Date custom scalar type"""
+"""
+Date custom scalar type
+"""
 scalar Date
 
 input IsValidProjectInput {
