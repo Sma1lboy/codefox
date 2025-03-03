@@ -8,16 +8,13 @@ import { useAuthContext } from '@/providers/AuthProvider';
 import { ProjectsSection } from '@/components/root/projects-section';
 import { PromptForm, PromptFormRef } from '@/components/root/prompt-form';
 import { ProjectContext } from '@/components/chat/code-engine/project-context';
-
-// ✅ Import your SignInModal and SignUpModal
 import { SignInModal } from '@/components/sign-in-modal';
 import { SignUpModal } from '@/components/sign-up-modal';
-
+import { useRouter } from 'next/navigation';
 export default function HomePage() {
   // States for AuthChoiceModal
   const [showAuthChoice, setShowAuthChoice] = useState(false);
-
-  // ✅ Add states for sign in / sign up modals
+  const router = useRouter();
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
 
@@ -32,11 +29,8 @@ export default function HomePage() {
     if (!message.trim()) return;
 
     try {
-      const result = await createProjectFromPrompt(message, isPublic, model);
-      if (result) {
-        promptFormRef.current.clearMessage();
-        // No need to navigate here, ProjectContext handles navigation
-      }
+      await createProjectFromPrompt(message, isPublic, model);
+      promptFormRef.current.clearMessage();
     } catch (error) {
       console.error('Error creating project:', error);
     }
@@ -76,7 +70,6 @@ export default function HomePage() {
             ref={promptFormRef}
             isAuthorized={isAuthorized}
             onSubmit={handleSubmit}
-            // 💡 If the user isn't authorized, show the AuthChoiceModal
             onAuthRequired={() => setShowAuthChoice(true)}
             isLoading={isLoading}
           />
@@ -92,9 +85,7 @@ export default function HomePage() {
         isOpen={showAuthChoice}
         onClose={() => setShowAuthChoice(false)}
         onSignUpClick={() => {
-          // 1) Close the AuthChoice
           setShowAuthChoice(false);
-          // 2) Then open SignUpModal
           setTimeout(() => {
             setShowSignUp(true);
           }, 100);
