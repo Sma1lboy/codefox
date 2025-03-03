@@ -173,8 +173,8 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
         e.preventDefault();
         alert('Coming Soon');
       } else if (label === 'Codefox Journey') {
-        e.preventDefault();
-        window.open('https://github.com/Sma1lboy/codefox', '_blank');
+          e.preventDefault();
+          alert('Coming Soon');
       } else {
         handleTabChange(index);
       }
