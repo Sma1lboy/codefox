@@ -7,11 +7,12 @@
   "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
+      "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js",
-      "types": "./dist/types/index.d.ts"
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/esm/index.js"
     },
-    "./dist/esm": "./dist/esm/index.js",
-    "./dist/esm/*": "./dist/esm/*"
+    "./dist/*": "./dist/*"
   },
   "files": [
     "dist"
