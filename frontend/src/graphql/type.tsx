@@ -36,6 +36,8 @@ export type Scalars = {
   Float: { input: number; output: number };
   /** Date custom scalar type */
   Date: { input: Date; output: Date };
+  /** The `Upload` scalar type represents a file upload. */
+  Upload: { input: any; output: any };
 };
 
 export type Chat = {
@@ -211,7 +213,7 @@ export type MutationUpdateChatTitleArgs = {
 };
 
 export type MutationUpdateProjectPhotoUrlArgs = {
-  photoUrl: Scalars['String']['input'];
+  file: Scalars['Upload']['input'];
   projectId: Scalars['ID']['input'];
 };
 
@@ -491,6 +493,7 @@ export type ResolversTypes = ResolversObject<{
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   Subscription: ResolverTypeWrapper<{}>;
   UpdateChatTitleInput: UpdateChatTitleInput;
+  Upload: ResolverTypeWrapper<Scalars['Upload']['output']>;
   User: ResolverTypeWrapper<User>;
 }>;
 
@@ -524,6 +527,7 @@ export type ResolversParentTypes = ResolversObject<{
   String: Scalars['String']['output'];
   Subscription: {};
   UpdateChatTitleInput: UpdateChatTitleInput;
+  Upload: Scalars['Upload']['output'];
   User: User;
 }>;
 
@@ -734,7 +738,7 @@ export type MutationResolvers<
     ResolversTypes['Project'],
     ParentType,
     ContextType,
-    RequireFields<MutationUpdateProjectPhotoUrlArgs, 'photoUrl' | 'projectId'>
+    RequireFields<MutationUpdateProjectPhotoUrlArgs, 'file' | 'projectId'>
   >;
   updateProjectPublicStatus?: Resolver<
     ResolversTypes['Project'],
@@ -900,6 +904,11 @@ export type SubscriptionResolvers<
   >;
 }>;
 
+export interface UploadScalarConfig
+  extends GraphQLScalarTypeConfig<ResolversTypes['Upload'], any> {
+  name: 'Upload';
+}
+
 export type UserResolvers<
   ContextType = any,
   ParentType extends
@@ -941,5 +950,6 @@ export type Resolvers<ContextType = any> = ResolversObject<{
   Query?: QueryResolvers<ContextType>;
   RefreshTokenResponse?: RefreshTokenResponseResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
+  Upload?: GraphQLScalarType;
   User?: UserResolvers<ContextType>;
 }>;
