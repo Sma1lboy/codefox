@@ -29,15 +29,10 @@ export default function HomePage() {
     if (!message.trim()) return;
 
     try {
-      // Create the project
       const result = await createProjectFromPrompt(message, isPublic, model);
-
-      // If successful, clear the input
       if (result) {
         promptFormRef.current.clearMessage();
-
-        // Note: No need to navigate here as the ProjectContext's onCompleted handler
-        // in the createProject mutation will handle navigation to the chat page
+        // No need to navigate here, ProjectContext handles navigation
       }
     } catch (error) {
       console.error('Error creating project:', error);
@@ -78,6 +73,7 @@ export default function HomePage() {
             ref={promptFormRef}
             isAuthorized={isAuthorized}
             onSubmit={handleSubmit}
+            // 💡 If the user isn't authorized, show the AuthChoiceModal
             onAuthRequired={() => setShowAuthChoice(true)}
             isLoading={isLoading}
           />
@@ -93,6 +89,7 @@ export default function HomePage() {
         isOpen={showAuthChoice}
         onClose={() => setShowAuthChoice(false)}
         onSignUpClick={() => {
+          // 1) Close the AuthChoice
           setShowAuthChoice(false);
           setTimeout(() => {
             setShowSignUp(true);
