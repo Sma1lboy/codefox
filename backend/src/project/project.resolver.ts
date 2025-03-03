@@ -10,6 +10,7 @@ import {
 } from '@nestjs/graphql';
 import { ProjectService } from './project.service';
 import { Project } from './project.model';
+import { FileUpload, GraphQLUpload } from 'graphql-upload-minimal';
 import {
   CreateProjectInput,
   FetchPublicProjectsInputs,
@@ -90,15 +91,22 @@ export class ProjectsResolver {
   async updateProjectPhotoUrl(
     @GetUserIdFromToken() userId: string,
     @Args('projectId', { type: () => ID }) projectId: string,
-    @Args('photoUrl') photoUrl: string,
+    @Args('file', { type: () => GraphQLUpload }) file: FileUpload,
   ): Promise<Project> {
-    this.logger.log(
-      `User ${userId} updating photo URL for project ${projectId}`,
-    );
+    this.logger.log(`User ${userId} uploading photo for project ${projectId}`);
+
+    const { createReadStream, mimetype } = await file;
+    const chunks = [];
+    for await (const chunk of createReadStream()) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+
     return this.projectService.updateProjectPhotoUrl(
       userId,
       projectId,
-      photoUrl,
+      buffer,
+      mimetype,
     );
   }
 

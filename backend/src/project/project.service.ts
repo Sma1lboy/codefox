@@ -26,11 +26,23 @@ import { BuilderContext } from 'src/build-system/context';
 import { ChatService } from 'src/chat/chat.service';
 import { Chat } from 'src/chat/chat.model';
 import { v4 as uuidv4 } from 'uuid';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { getRootDir } from 'codefox-common';
+import path from 'path';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  promises as fsPromises,
+} from 'fs-extra';
 @Injectable()
 export class ProjectService {
   private readonly model: OpenAIModelProvider =
     OpenAIModelProvider.getInstance();
   private readonly logger = new Logger('ProjectService');
+  private readonly s3Client: S3Client | null = null;
+  private readonly mediaDir: string;
+
   constructor(
     @InjectRepository(Project)
     private projectsRepository: Repository<Project>,
@@ -39,7 +51,29 @@ export class ProjectService {
     @InjectRepository(ProjectPackages)
     private projectPackagesRepository: Repository<ProjectPackages>,
     private chatService: ChatService,
-  ) {}
+  ) {
+    // Initialize S3 client if environment variables exist
+    if (
+      process.env.CF_ACCOUNT_ID &&
+      process.env.CF_ACCESS_KEY_ID &&
+      process.env.CF_SECRET_ACCESS_KEY
+    ) {
+      this.s3Client = new S3Client({
+        region: 'auto',
+        endpoint: `https://${process.env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        credentials: {
+          accessKeyId: process.env.CF_ACCESS_KEY_ID,
+          secretAccessKey: process.env.CF_SECRET_ACCESS_KEY,
+        },
+      });
+    }
+
+    // Initialize media directory
+    this.mediaDir = path.join(getRootDir(), 'media');
+    if (!existsSync(this.mediaDir)) {
+      mkdirSync(this.mediaDir, { recursive: true });
+    }
+  }
 
   async getProjectsByUser(userId: string): Promise<Project[]> {
     const projects = await this.projectsRepository.find({
@@ -430,17 +464,59 @@ export class ProjectService {
   async updateProjectPhotoUrl(
     userId: string,
     projectId: string,
-    photoUrl: string,
+    file: Buffer,
+    mimeType: string,
   ): Promise<Project> {
     const project = await this.getProjectById(projectId);
 
     // Check ownership permission
     this.checkProjectOwnership(project, userId);
 
-    // Update photo URL
-    project.photoUrl = photoUrl;
+    try {
+      let photoUrl: string;
+      const fileExtension = mimeType.split('/')[1] || 'jpg';
 
-    return this.projectsRepository.save(project);
+      if (this.s3Client) {
+        // Use R2 storage
+        const filename = `${project.uniqueProjectId}/${uuidv4()}.${fileExtension}`;
+        await this.s3Client.send(
+          new PutObjectCommand({
+            Bucket: process.env.CF_BUCKET_NAME,
+            Key: filename,
+            Body: file,
+            ContentType: mimeType,
+          }),
+        );
+        photoUrl = `https://${process.env.CF_BUCKET_NAME}.${process.env.CF_CUSTOM_DOMAIN}/${filename}`;
+      } else {
+        // Use local storage
+        const projectDir = path.join(this.mediaDir, project.uniqueProjectId);
+        if (!existsSync(projectDir)) {
+          mkdirSync(projectDir, { recursive: true });
+        }
+
+        // Find next available number for filename
+        const files = readdirSync(projectDir);
+        const existingNumbers = files
+          .map((f) => parseInt(f.split('.')[0]))
+          .filter((n) => !isNaN(n));
+        const nextNumber =
+          existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 0;
+
+        const filename = `${nextNumber}.${fileExtension}`;
+        const filePath = path.join(projectDir, filename);
+
+        await fsPromises.writeFile(filePath, file);
+        photoUrl = `/media/${project.uniqueProjectId}/${filename}`;
+      }
+
+      // Update photo URL
+      project.photoUrl = photoUrl;
+      return this.projectsRepository.save(project);
+    } catch (error) {
+      this.logger.error('Error uploading image:', error);
+      throw new InternalServerErrorException('Failed to upload image');
+    }
   }
 
   /**

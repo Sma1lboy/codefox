@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@apollo/server": "^4.11.0",
+    "@aws-sdk/client-s3": "^3.758.0",
     "@huggingface/hub": "latest",
     "@huggingface/transformers": "latest",
     "@nestjs/apollo": "^12.2.0",
@@ -51,6 +52,7 @@
     "gpt-3-encoder": "^1.1.4",
     "graphql": "^16.9.0",
     "graphql-subscriptions": "^2.0.0",
+    "graphql-upload-minimal": "^1.6.1",
     "graphql-ws": "^5.16.0",
     "lodash": "^4.17.21",
     "markdown-to-txt": "^2.0.1",
