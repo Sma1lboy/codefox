@@ -3,12 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "build": "next build",
     "dev": "next dev",
     "start:dev": "next dev",
-    "build:common": "pnpm --filter codefox-common run build",
     "start:dev-watch": "tmuxinator start -p .tmuxinator/build.yml",
     "dev:watch": "tmuxinator start -p .tmuxinator/dev.yml",
-    "build": "pnpm run build:common && next build",
     "start": "next start",
     "lint": "next lint --fix",
     "format": "prettier --write \"src/**/*.ts\"",
@@ -16,6 +15,7 @@
     "generate:watch": "graphql-codegen --watch"
   },
   "dependencies": {
+    "codefox-common": "workspace:*",
     "@apollo/client": "^3.11.8",
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
@@ -40,7 +40,6 @@
     "@types/dom-speech-recognition": "^0.0.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "codefox-common": "workspace:*",
     "emoji-mart": "^5.6.0",
     "framer-motion": "^11.18.2",
     "graphql": "^16.9.0",

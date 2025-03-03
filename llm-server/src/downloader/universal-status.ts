@@ -1,4 +1,4 @@
-import { getModelStatusPath } from 'codefox-common';
+import { getModelStatusPath } from 'codefox-common/dist/esm';
 import * as fs from 'fs';
 import * as path from 'path';
 

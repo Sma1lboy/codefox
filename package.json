@@ -13,7 +13,8 @@
     "format": "prettier --write .",
     "dev:backend": "turbo dev:backend",
     "test": "turbo test",
-    "fix": "eslint . --ext .js,.ts,.tsx --fix"
+    "fix": "eslint . --ext .js,.ts,.tsx --fix",
+    "start": "turbo start"
   },
   "postinstall": "pnpm --filter codefox-common run build",
   "keywords": [],
