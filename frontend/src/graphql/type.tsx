@@ -49,6 +49,7 @@ export type Chat = {
   title?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['Date']['output'];
   user: User;
+  userId: Scalars['ID']['output'];
 };
 
 export type ChatCompletionChoiceType = {
@@ -88,8 +89,15 @@ export type CheckTokenInput = {
 export type CreateProjectInput = {
   databaseType?: InputMaybe<Scalars['String']['input']>;
   description: Scalars['String']['input'];
+  model?: InputMaybe<Scalars['String']['input']>;
   packages: Array<ProjectPackage>;
   projectName?: InputMaybe<Scalars['String']['input']>;
+  public?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type FetchPublicProjectsInputs = {
+  size: Scalars['Float']['input'];
+  strategy: Scalars['String']['input'];
 };
 
 export type IsValidProjectInput = {
@@ -139,12 +147,17 @@ export type Mutation = {
   createProject: Chat;
   deleteChat: Scalars['Boolean']['output'];
   deleteProject: Scalars['Boolean']['output'];
+  forkProject: Chat;
   login: LoginResponse;
   refreshToken: RefreshTokenResponse;
+  regenerateDescription: Scalars['String']['output'];
   registerUser: User;
   saveMessage: Scalars['Boolean']['output'];
+  subscribeToProject: Project;
   triggerChatStream: Scalars['Boolean']['output'];
   updateChatTitle?: Maybe<Chat>;
+  updateProjectPhotoUrl: Project;
+  updateProjectPublicStatus: Project;
 };
 
 export type MutationClearChatHistoryArgs = {
@@ -167,12 +180,20 @@ export type MutationDeleteProjectArgs = {
   projectId: Scalars['String']['input'];
 };
 
+export type MutationForkProjectArgs = {
+  projectId: Scalars['ID']['input'];
+};
+
 export type MutationLoginArgs = {
   input: LoginUserInput;
 };
 
 export type MutationRefreshTokenArgs = {
   refreshToken: Scalars['String']['input'];
+};
+
+export type MutationRegenerateDescriptionArgs = {
+  input: Scalars['String']['input'];
 };
 
 export type MutationRegisterUserArgs = {
@@ -183,12 +204,26 @@ export type MutationSaveMessageArgs = {
   input: ChatInputType;
 };
 
+export type MutationSubscribeToProjectArgs = {
+  projectId: Scalars['ID']['input'];
+};
+
 export type MutationTriggerChatStreamArgs = {
   input: ChatInputType;
 };
 
 export type MutationUpdateChatTitleArgs = {
   updateChatTitleInput: UpdateChatTitleInput;
+};
+
+export type MutationUpdateProjectPhotoUrlArgs = {
+  photoUrl: Scalars['String']['input'];
+  projectId: Scalars['ID']['input'];
+};
+
+export type MutationUpdateProjectPublicStatusArgs = {
+  isPublic: Scalars['Boolean']['input'];
+  projectId: Scalars['ID']['input'];
 };
 
 export type NewChatInput = {
@@ -199,12 +234,21 @@ export type Project = {
   __typename: 'Project';
   chats: Array<Chat>;
   createdAt: Scalars['Date']['output'];
+  forkedFrom?: Maybe<Project>;
+  forkedFromId?: Maybe<Scalars['String']['output']>;
+  forks?: Maybe<Array<Project>>;
   id: Scalars['ID']['output'];
   isActive: Scalars['Boolean']['output'];
   isDeleted: Scalars['Boolean']['output'];
+  isPublic: Scalars['Boolean']['output'];
+  photoUrl?: Maybe<Scalars['String']['output']>;
   projectName: Scalars['String']['output'];
   projectPackages?: Maybe<Array<ProjectPackages>>;
   projectPath: Scalars['String']['output'];
+  subNumber: Scalars['Float']['output'];
+  /** Projects that are copies of this project */
+  subscribers?: Maybe<Array<Project>>;
+  uniqueProjectId: Scalars['String']['output'];
   updatedAt: Scalars['Date']['output'];
   user: User;
   userId: Scalars['ID']['output'];
@@ -230,12 +274,14 @@ export type ProjectPackages = {
 export type Query = {
   __typename: 'Query';
   checkToken: Scalars['Boolean']['output'];
+  fetchPublicProjects: Array<Project>;
   getAvailableModelTags?: Maybe<Array<Scalars['String']['output']>>;
   getChatDetails?: Maybe<Chat>;
   getChatHistory: Array<Message>;
   getCurProject?: Maybe<Project>;
   getHello: Scalars['String']['output'];
   getProject: Project;
+  getSubscribedProjects: Array<Project>;
   getUserChats?: Maybe<Array<Chat>>;
   getUserProjects: Array<Project>;
   isValidateProject: Scalars['Boolean']['output'];
@@ -245,6 +291,10 @@ export type Query = {
 
 export type QueryCheckTokenArgs = {
   input: CheckTokenInput;
+};
+
+export type QueryFetchPublicProjectsArgs = {
+  input: FetchPublicProjectsInputs;
 };
 
 export type QueryGetChatDetailsArgs = {
@@ -306,6 +356,8 @@ export type User = {
   isActive: Scalars['Boolean']['output'];
   isDeleted: Scalars['Boolean']['output'];
   projects: Array<Project>;
+  /** @deprecated Use projects with forkedFromId instead */
+  subscribedProjects?: Maybe<Array<Project>>;
   updatedAt: Scalars['Date']['output'];
   username: Scalars['String']['output'];
 };
@@ -429,6 +481,7 @@ export type ResolversTypes = ResolversObject<{
   CheckTokenInput: CheckTokenInput;
   CreateProjectInput: CreateProjectInput;
   Date: ResolverTypeWrapper<Scalars['Date']['output']>;
+  FetchPublicProjectsInputs: FetchPublicProjectsInputs;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   IsValidProjectInput: IsValidProjectInput;
@@ -463,6 +516,7 @@ export type ResolversParentTypes = ResolversObject<{
   CheckTokenInput: CheckTokenInput;
   CreateProjectInput: CreateProjectInput;
   Date: Scalars['Date']['output'];
+  FetchPublicProjectsInputs: FetchPublicProjectsInputs;
   Float: Scalars['Float']['output'];
   ID: Scalars['ID']['output'];
   IsValidProjectInput: IsValidProjectInput;
@@ -502,6 +556,7 @@ export type ChatResolvers<
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
   user?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
@@ -638,6 +693,12 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationDeleteProjectArgs, 'projectId'>
   >;
+  forkProject?: Resolver<
+    ResolversTypes['Chat'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationForkProjectArgs, 'projectId'>
+  >;
   login?: Resolver<
     ResolversTypes['LoginResponse'],
     ParentType,
@@ -649,6 +710,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationRefreshTokenArgs, 'refreshToken'>
+  >;
+  regenerateDescription?: Resolver<
+    ResolversTypes['String'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationRegenerateDescriptionArgs, 'input'>
   >;
   registerUser?: Resolver<
     ResolversTypes['User'],
@@ -662,6 +729,12 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationSaveMessageArgs, 'input'>
   >;
+  subscribeToProject?: Resolver<
+    ResolversTypes['Project'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationSubscribeToProjectArgs, 'projectId'>
+  >;
   triggerChatStream?: Resolver<
     ResolversTypes['Boolean'],
     ParentType,
@@ -674,6 +747,21 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationUpdateChatTitleArgs, 'updateChatTitleInput'>
   >;
+  updateProjectPhotoUrl?: Resolver<
+    ResolversTypes['Project'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationUpdateProjectPhotoUrlArgs, 'photoUrl' | 'projectId'>
+  >;
+  updateProjectPublicStatus?: Resolver<
+    ResolversTypes['Project'],
+    ParentType,
+    ContextType,
+    RequireFields<
+      MutationUpdateProjectPublicStatusArgs,
+      'isPublic' | 'projectId'
+    >
+  >;
 }>;
 
 export type ProjectResolvers<
@@ -683,9 +771,26 @@ export type ProjectResolvers<
 > = ResolversObject<{
   chats?: Resolver<Array<ResolversTypes['Chat']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
+  forkedFrom?: Resolver<
+    Maybe<ResolversTypes['Project']>,
+    ParentType,
+    ContextType
+  >;
+  forkedFromId?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
+  forks?: Resolver<
+    Maybe<Array<ResolversTypes['Project']>>,
+    ParentType,
+    ContextType
+  >;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   isActive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   isDeleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  isPublic?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  photoUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   projectName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   projectPackages?: Resolver<
     Maybe<Array<ResolversTypes['ProjectPackages']>>,
@@ -693,6 +798,13 @@ export type ProjectResolvers<
     ContextType
   >;
   projectPath?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  subNumber?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  subscribers?: Resolver<
+    Maybe<Array<ResolversTypes['Project']>>,
+    ParentType,
+    ContextType
+  >;
+  uniqueProjectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
   user?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
   userId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
@@ -726,6 +838,12 @@ export type QueryResolvers<
     ContextType,
     RequireFields<QueryCheckTokenArgs, 'input'>
   >;
+  fetchPublicProjects?: Resolver<
+    Array<ResolversTypes['Project']>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryFetchPublicProjectsArgs, 'input'>
+  >;
   getAvailableModelTags?: Resolver<
     Maybe<Array<ResolversTypes['String']>>,
     ParentType,
@@ -755,6 +873,11 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryGetProjectArgs, 'projectId'>
+  >;
+  getSubscribedProjects?: Resolver<
+    Array<ResolversTypes['Project']>,
+    ParentType,
+    ContextType
   >;
   getUserChats?: Resolver<
     Maybe<Array<ResolversTypes['Chat']>>,
@@ -813,6 +936,11 @@ export type UserResolvers<
   isDeleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   projects?: Resolver<
     Array<ResolversTypes['Project']>,
+    ParentType,
+    ContextType
+  >;
+  subscribedProjects?: Resolver<
+    Maybe<Array<ResolversTypes['Project']>>,
     ParentType,
     ContextType
   >;

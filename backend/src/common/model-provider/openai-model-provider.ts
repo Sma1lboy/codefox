@@ -37,7 +37,7 @@ export class OpenAIModelProvider implements IModelProvider {
 
     for (const model of chatModels) {
       if (model.default) {
-        this.defaultModel = model.model;
+        this.defaultModel = model.alias || model.model;
       }
       if (!model.endpoint || !model.token) continue;
 
@@ -95,7 +95,7 @@ export class OpenAIModelProvider implements IModelProvider {
       const completion = await queue.add(async () => {
         const result = await this.openai.chat.completions.create({
           messages: input.messages,
-          model: input.model,
+          model: input.model || this.baseModel,
           stream: false,
         });
         if (!result) throw new Error('No completion result received');
@@ -271,5 +271,9 @@ export class OpenAIModelProvider implements IModelProvider {
   getAllActivePromises(): Promise<string>[] {
     // OpenAI SDK handles its own request management
     return [];
+  }
+
+  get baseModel(): string {
+    return this.defaultModel;
   }
 }

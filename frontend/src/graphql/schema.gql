@@ -12,6 +12,7 @@ type Chat {
   title: String
   updatedAt: Date!
   user: User!
+  userId: ID!
 }
 
 type ChatCompletionChoiceType {
@@ -48,12 +49,21 @@ input CheckTokenInput {
 input CreateProjectInput {
   databaseType: String
   description: String!
+  model: String = "gpt-4o-mini"
   packages: [ProjectPackage!]!
   projectName: String
+  public: Boolean
 }
 
-"""Date custom scalar type"""
+"""
+Date custom scalar type
+"""
 scalar Date
+
+input FetchPublicProjectsInputs {
+  size: Float!
+  strategy: String!
+}
 
 input IsValidProjectInput {
   projectId: ID!
@@ -98,12 +108,17 @@ type Mutation {
   createProject(createProjectInput: CreateProjectInput!): Chat!
   deleteChat(chatId: String!): Boolean!
   deleteProject(projectId: String!): Boolean!
+  forkProject(projectId: ID!): Chat!
   login(input: LoginUserInput!): LoginResponse!
   refreshToken(refreshToken: String!): RefreshTokenResponse!
+  regenerateDescription(input: String!): String!
   registerUser(input: RegisterUserInput!): User!
   saveMessage(input: ChatInputType!): Boolean!
+  subscribeToProject(projectId: ID!): Project!
   triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
+  updateProjectPhotoUrl(photoUrl: String!, projectId: ID!): Project!
+  updateProjectPublicStatus(isPublic: Boolean!, projectId: ID!): Project!
 }
 
 input NewChatInput {
@@ -113,12 +128,24 @@ input NewChatInput {
 type Project {
   chats: [Chat!]!
   createdAt: Date!
+  forkedFrom: Project
+  forkedFromId: String
+  forks: [Project!]
   id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
+  isPublic: Boolean!
+  photoUrl: String
   projectName: String!
   projectPackages: [ProjectPackages!]
   projectPath: String!
+  subNumber: Float!
+
+  """
+  Projects that are copies of this project
+  """
+  subscribers: [Project!]
+  uniqueProjectId: String!
   updatedAt: Date!
   user: User!
   userId: ID!
@@ -142,12 +169,14 @@ type ProjectPackages {
 
 type Query {
   checkToken(input: CheckTokenInput!): Boolean!
+  fetchPublicProjects(input: FetchPublicProjectsInputs!): [Project!]!
   getAvailableModelTags: [String!]
   getChatDetails(chatId: String!): Chat
   getChatHistory(chatId: String!): [Message!]!
   getCurProject(chatId: String!): Project
   getHello: String!
   getProject(projectId: String!): Project!
+  getSubscribedProjects: [Project!]!
   getUserChats: [Chat!]
   getUserProjects: [Project!]!
   isValidateProject(isValidProject: IsValidProjectInput!): Boolean!
@@ -194,6 +223,8 @@ type User {
   isActive: Boolean!
   isDeleted: Boolean!
   projects: [Project!]!
+  subscribedProjects: [Project!]
+    @deprecated(reason: "Use projects with forkedFromId instead")
   updatedAt: Date!
   username: String!
 }

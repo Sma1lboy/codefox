@@ -5,6 +5,7 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  RelationId,
 } from 'typeorm';
 import { Message } from 'src/chat/message.model';
 import { SystemBaseModel } from 'src/system-base-model/system-base.model';
@@ -55,6 +56,11 @@ export class Chat extends SystemBaseModel {
   @JoinColumn({ name: 'user_id' })
   @Field(() => User)
   user: User;
+
+  // Adding relation id to easily access the user id
+  @RelationId((chat: Chat) => chat.user)
+  @Field(() => ID)
+  userId: string;
 
   @ManyToOne(() => Project, (project) => project.chats)
   @Field(() => Project, { nullable: true })

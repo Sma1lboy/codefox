@@ -153,7 +153,7 @@ export function useChatStream({
       const newChatId = data.createChat.id;
       setCurrentChatId(newChatId);
       await startChatStream(newChatId, input);
-      window.history.pushState({}, '', `/?id=${newChatId}`);
+      window.history.pushState({}, '', `/chat?id=${newChatId}`);
       console.log(`new chat: ${newChatId}`);
     },
     onError: () => {

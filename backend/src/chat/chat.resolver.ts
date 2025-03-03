@@ -111,10 +111,7 @@ export class ChatResolver {
   }
 
   @Query(() => [String], { nullable: true })
-  async getAvailableModelTags(
-    @GetUserIdFromToken() userId: string,
-  ): Promise<string[]> {
-    this.logger.log('Fetching model tags for user:', userId);
+  async getAvailableModelTags(): Promise<string[]> {
     try {
       const response = await this.chatProxyService.fetchModelTags();
       this.logger.log('Loaded model tags:', response);

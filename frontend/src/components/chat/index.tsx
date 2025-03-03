@@ -1,4 +1,3 @@
-// app/page.tsx or components/Home.tsx
 'use client';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
@@ -16,6 +15,8 @@ import { useModels } from '@/hooks/useModels';
 import { useChatList } from '@/hooks/useChatList';
 import { useChatStream } from '@/hooks/useChatStream';
 import { CodeEngine } from './code-engine/code-engine';
+import { useProjectStatusMonitor } from '@/hooks/useProjectStatusMonitor';
+import { Loader2 } from 'lucide-react';
 
 export default function Chat() {
   // Initialize state, refs, and custom hooks
@@ -27,6 +28,10 @@ export default function Chat() {
   const { models } = useModels();
   const [selectedModel, setSelectedModel] = useState(models[0] || 'gpt-4o');
   const { refetchChats } = useChatList();
+
+  // Project status monitoring for the current chat
+  const { isReady, projectId, projectName, error } =
+    useProjectStatusMonitor(chatId);
 
   // Apollo query to fetch chat history
   useQuery(GET_CHAT_HISTORY, {
@@ -93,6 +98,7 @@ export default function Chat() {
       </div>
     );
   }
+
   // Render the main layout
   return chatId ? (
     <ResizablePanelGroup
@@ -127,8 +133,12 @@ export default function Chat() {
         maxSize={80}
         className="h-full overflow-auto"
       >
-        <div className="p-4">
-          <CodeEngine chatId={chatId} />
+        <div className="p-4 h-full">
+          <CodeEngine
+            chatId={chatId}
+            isProjectReady={isReady}
+            projectId={projectId}
+          />
         </div>
       </ResizablePanel>
     </ResizablePanelGroup>
