@@ -44,9 +44,7 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
         project description: ${description},
       `;
 
-    const backendRequirement = context.getNodeData(
-      BackendRequirementHandler,
-    )?.overview;
+    const backendRequirement = context.getNodeData(BackendRequirementHandler);
     const backendCode = [context.getNodeData(BackendCodeHandler)];
 
     if (!backendRequirement) {
@@ -119,7 +117,7 @@ export class BackendFileReviewHandler implements BuildHandler<string> {
         response = await chatSyncWithClocker(
           context,
           {
-            model: 'gpt-4o-mini',
+            model: 'o3-mini-high',
             messages: [{ content: modificationPrompt, role: 'system' }],
           },
           'generateBackendFile',
