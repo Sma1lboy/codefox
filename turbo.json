@@ -3,24 +3,56 @@
   "ui": "tui",
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "cache": true
     },
     "dev": {},
     "dev:backend": {},
     "test": {
-      "dependsOn": ["^test"]
+      "dependsOn": [
+        "^test"
+      ]
     },
     "lint": {
       "outputs": [],
-      "dependsOn": ["^lint"]
+      "dependsOn": [
+        "^lint"
+      ]
     },
     "format": {
       "outputs": []
     },
     "start": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "cache": false
+    },
+    "start:frontend": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "start:backend": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "build:frontend": {
+      "dependsOn": [
+        "^build:frontend"
+      ],
+      "cache": true
+    },
+    "build:backend": {
+      "dependsOn": [
+        "^build:backend"
+      ],
+      "cache": true
     }
   }
 }
