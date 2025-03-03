@@ -17,7 +17,9 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "*": ["node_modules/*"]
+      "*": ["node_modules/*"],
+      "codefox-common": ["../codefox-common/src"],
+      "codefox-common/*": ["../codefox-common/src/*"]
     },
     "types": ["node", "express"]
   },
