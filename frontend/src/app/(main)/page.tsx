@@ -8,13 +8,19 @@ import { useAuthContext } from '@/providers/AuthProvider';
 import { ProjectsSection } from '@/components/root/projects-section';
 import { PromptForm, PromptFormRef } from '@/components/root/prompt-form';
 import { ProjectContext } from '@/components/chat/code-engine/project-context';
+
+// ✅ Import your SignInModal and SignUpModal
 import { SignInModal } from '@/components/sign-in-modal';
 import { SignUpModal } from '@/components/sign-up-modal';
-import { useRouter } from 'next/navigation';
+
 export default function HomePage() {
   // States for AuthChoiceModal
   const [showAuthChoice, setShowAuthChoice] = useState(false);
   const router = useRouter();
+  const [showSignIn, setShowSignIn] = useState(false);
+  const [showSignUp, setShowSignUp] = useState(false);
+
+  // ✅ Add states for sign in / sign up modals
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
 
@@ -29,15 +35,10 @@ export default function HomePage() {
     if (!message.trim()) return;
 
     try {
-      // Create the project
       const result = await createProjectFromPrompt(message, isPublic, model);
-
-      // If successful, clear the input
       if (result) {
         promptFormRef.current.clearMessage();
-
-        // Note: No need to navigate here as the ProjectContext's onCompleted handler
-        // in the createProject mutation will handle navigation to the chat page
+        // No need to navigate here, ProjectContext handles navigation
       }
     } catch (error) {
       console.error('Error creating project:', error);
@@ -78,6 +79,7 @@ export default function HomePage() {
             ref={promptFormRef}
             isAuthorized={isAuthorized}
             onSubmit={handleSubmit}
+            // 💡 If the user isn't authorized, show the AuthChoiceModal
             onAuthRequired={() => setShowAuthChoice(true)}
             isLoading={isLoading}
           />
@@ -93,7 +95,9 @@ export default function HomePage() {
         isOpen={showAuthChoice}
         onClose={() => setShowAuthChoice(false)}
         onSignUpClick={() => {
+          // 1) Close the AuthChoice
           setShowAuthChoice(false);
+          // 2) Then open SignUpModal
           setTimeout(() => {
             setShowSignUp(true);
           }, 100);
@@ -107,8 +111,14 @@ export default function HomePage() {
       />
 
       {/* SignInModal & SignUpModal */}
-      <SignInModal isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
-      <SignUpModal isOpen={showSignUp} onClose={() => setShowSignUp(false)} />
+      <SignInModal
+        isOpen={showSignIn}
+        onClose={() => setShowSignIn(false)}
+      />
+      <SignUpModal
+        isOpen={showSignUp}
+        onClose={() => setShowSignUp(false)}
+      />
 
       <style jsx global>{`
         .animate-pulse-subtle {
