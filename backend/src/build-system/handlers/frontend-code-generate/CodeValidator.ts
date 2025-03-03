@@ -42,8 +42,14 @@ export class CodeValidator {
           cwd: this.projectPath,
           shell: true,
         });
-      } else {
+      } else if (this.projectPart === 'backend') {
         npmProcess = spawn('npm', ['run', 'check'], {
+          cwd: this.projectPath,
+          shell: true,
+        });
+      } else if (this.projectPart === 'sqlite3') {
+        // Run SQLite in-memory check on the schema file
+        npmProcess = spawn('sqlite3', [':memory:', '".read schema.sql"'], {
           cwd: this.projectPath,
           shell: true,
         });

@@ -7,6 +7,10 @@ export const generateBackendOverviewPrompt = (
   framework: string,
   packages: Record<string, string>,
 ): string => {
+  const defaultDependencies = {
+    sqlite3: '^5',
+    express: '^4',
+  };
   return `Role: You are a Senior Backend Architect specializing in backend systems. Generate the System Overview and API Endpoints specifications based on the following inputs.
 
 Task: Generate a Backend Overview Document following these guidelines:
@@ -15,10 +19,7 @@ Project Name: ${projectName}
 ### Technology Stack
 - Language: ${language}
 - Framework: ${framework}
-- Key Packages:
-${Object.entries(packages)
-  .map(([pkg, version]) => `  - ${pkg}@${version}`)
-  .join('\n')}
+- Key Packages: ${JSON.stringify(defaultDependencies)}
 
 ### Instructions and Rules:
 1. Design a clear system architecture based on the technology stack and requirements

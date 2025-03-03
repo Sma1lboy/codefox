@@ -33,6 +33,8 @@ interface FileInfos {
  */
 @BuildNode()
 @BuildNodeRequire([
+  UXSMSHandler,
+  UXDMDHandler,
   BackendRequirementHandler,
   FileStructureAndArchitectureHandler,
 ])
