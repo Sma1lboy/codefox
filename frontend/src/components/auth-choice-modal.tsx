@@ -1,4 +1,5 @@
 'use client';
+
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { BackgroundGradient } from '@/components/ui/background-gradient';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ export function AuthChoiceModal({
         <VisuallyHidden>
           <DialogTitle>Choose Authentication Method</DialogTitle>
         </VisuallyHidden>
+
         <BackgroundGradient className="rounded-[22px] p-4 bg-white dark:bg-zinc-900">
           <div className="w-full p-6 space-y-6">
             <h2 className="text-2xl font-semibold text-center dark:text-white">
@@ -33,16 +35,31 @@ export function AuthChoiceModal({
               Choose how you want to continue
             </p>
             <div className="space-y-4">
+              {/* Sign In button */}
               <Button
                 className="w-full py-6 text-lg bg-primary hover:bg-primary/90"
-                onClick={onSignInClick}
+                onClick={() => {
+                  // 1) Close current modal
+                  onClose();
+                  // 2) After a brief delay, call onSignInClick
+                  setTimeout(() => {
+                    onSignInClick();
+                  }, 100);
+                }}
               >
                 Sign in
               </Button>
+
+              {/* Sign Up button */}
               <Button
                 variant="outline"
                 className="w-full py-6 text-lg"
-                onClick={onSignUpClick}
+                onClick={() => {
+                  onClose();
+                  setTimeout(() => {
+                    onSignUpClick();
+                  }, 100);
+                }}
               >
                 Create an account
               </Button>
