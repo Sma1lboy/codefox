@@ -43,8 +43,8 @@ export function SignInModal({ isOpen, onClose }: SignInModalProps) {
       if (data?.login) {
         // Store tokens where desired (session storage for access, local for refresh)
         login(data.login.accessToken, data.login.refreshToken);
-        toast.success('Login successful!', {
-          position: 'bottom-right',
+        toast.success('Login successful!',{
+           position: 'bottom-right'
         });
         setErrorMessage(null);
         onClose(); // Close the modal

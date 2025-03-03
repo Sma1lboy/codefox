@@ -173,8 +173,8 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
         e.preventDefault();
         alert('Coming Soon');
       } else if (label === 'Codefox Journey') {
-        e.preventDefault();
-        alert('Coming Soon');
+          e.preventDefault();
+          alert('Coming Soon');
       } else {
         handleTabChange(index);
       }
