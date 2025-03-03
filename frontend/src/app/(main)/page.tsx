@@ -29,11 +29,8 @@ export default function HomePage() {
     if (!message.trim()) return;
 
     try {
-      const result = await createProjectFromPrompt(message, isPublic, model);
-      if (result) {
-        promptFormRef.current.clearMessage();
-        // No need to navigate here, ProjectContext handles navigation
-      }
+      await createProjectFromPrompt(message, isPublic, model);
+      promptFormRef.current.clearMessage();
     } catch (error) {
       console.error('Error creating project:', error);
     }
@@ -73,7 +70,6 @@ export default function HomePage() {
             ref={promptFormRef}
             isAuthorized={isAuthorized}
             onSubmit={handleSubmit}
-            // 💡 If the user isn't authorized, show the AuthChoiceModal
             onAuthRequired={() => setShowAuthChoice(true)}
             isLoading={isLoading}
           />
@@ -89,7 +85,6 @@ export default function HomePage() {
         isOpen={showAuthChoice}
         onClose={() => setShowAuthChoice(false)}
         onSignUpClick={() => {
-          // 1) Close the AuthChoice
           setShowAuthChoice(false);
           setTimeout(() => {
             setShowSignUp(true);
