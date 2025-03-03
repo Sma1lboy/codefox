@@ -1,19 +1,19 @@
-name: FD CI 
+name: Frontend CI
 on:
   push:
     branches: [ main ]
     paths:
-      - 'llm-server/**'
+      - 'frontend/**'
       - 'codefox-common/**'
   pull_request:
     branches: [ main ]
     paths:
-      - 'llm-server/**'
+      - 'frontend/**'
       - 'codefox-common/**'
   workflow_dispatch:
 jobs:
   build:
-    name: Install and Build LLM Server
+    name: Install and Build Frontend
     runs-on: ubuntu-latest
     
     steps:
@@ -51,16 +51,16 @@ jobs:
         working-directory: ./codefox-common
         run: pnpm build
         
-      - name: Build LLM Server
-        working-directory: ./llm-server
+      - name: Build frontend
+        working-directory: ./frontend
         run: pnpm build
       
       - name: Cache build artifacts
         uses: actions/cache@v3
         with:
           path: |
-            ./llm-server/dist
-            ./llm-server/node_modules
-          key: ${{ runner.os }}-llm-server-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ github.sha }}
+            ./frontend/.next
+            ./frontend/node_modules
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-llm-server-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
