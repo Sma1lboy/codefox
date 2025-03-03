@@ -8,10 +8,12 @@
   "packageManager": "pnpm@9.1.0",
   "scripts": {
     "build": "nest build",
+    "build:backend": "pnpm build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "ts-prune \"{src,apps,libs,test}/**/*.ts\" && eslint \"{src,apps,libs,test}/**/*.ts\" --fix ",
     "start": "nest start",
     "start:dev": "NODE_OPTIONS=\"--experimental-specifier-resolution=node\" nest start --watch",
+    "start:backend": "pnpm start",
     "dev": "pnpm start:dev",
     "dev:backend": "pnpm start:dev",
     "start:debug": "nest start --debug --watch",
