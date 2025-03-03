@@ -1,5 +1,4 @@
 name: Frontend CI
-
 on:
   push:
     branches: [ main ]
@@ -10,15 +9,10 @@ on:
     paths:
       - 'frontend/**'
   workflow_dispatch:
-
 jobs:
   build:
     name: Install and Build Frontend
     runs-on: ubuntu-latest
-    
-    defaults:
-      run:
-        working-directory: ./frontend
     
     steps:
       - name: Checkout repository
@@ -52,6 +46,7 @@ jobs:
         run: pnpm install --frozen-lockfile
       
       - name: Build frontend
+        working-directory: ./frontend
         run: pnpm build
       
       - name: Cache build artifacts
