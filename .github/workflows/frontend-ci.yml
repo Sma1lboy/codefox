@@ -1,4 +1,4 @@
-name: LLM Server CI
+name: FD CI 
 on:
   push:
     branches: [ main ]
@@ -45,7 +45,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
       
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
       
       - name: Build codefox-common
         working-directory: ./codefox-common
