@@ -9,7 +9,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "rimraf dist && pnpm run build:cjs && pnpm run build:esm && pnpm run build:types",
+    "build": "pnpm run build:cjs && pnpm run build:esm && pnpm run build:types",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:esm": "tsc -p tsconfig.esm.json",
     "build:types": "tsc -p tsconfig.types.json",
