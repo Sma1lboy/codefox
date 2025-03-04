@@ -35,12 +35,13 @@ import {
   readdirSync,
   promises as fsPromises,
 } from 'fs-extra';
+import { AppConfigService } from 'src/config/config.service';
 @Injectable()
 export class ProjectService {
   private readonly model: OpenAIModelProvider =
     OpenAIModelProvider.getInstance();
   private readonly logger = new Logger('ProjectService');
-  private readonly s3Client: S3Client | null = null;
+  private s3Client: S3Client | null = null;
   private readonly mediaDir: string;
 
   constructor(
@@ -51,19 +52,16 @@ export class ProjectService {
     @InjectRepository(ProjectPackages)
     private projectPackagesRepository: Repository<ProjectPackages>,
     private chatService: ChatService,
+    private configService: AppConfigService,
   ) {
-    // Initialize S3 client if environment variables exist
-    if (
-      process.env.S3_ACCESS_KEY_ID &&
-      process.env.S3_SECRET_ACCESS_KEY &&
-      process.env.S3_REGION
-    ) {
+    const s3Config = this.configService.s3Config;
+    if (this.configService.hasS3Configured) {
       this.s3Client = new S3Client({
-        region: process.env.S3_REGION,
-        endpoint: process.env.S3_ENDPOINT,
+        region: s3Config.region,
+        endpoint: s3Config.endpoint,
         credentials: {
-          accessKeyId: process.env.S3_ACCESS_KEY_ID,
-          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+          accessKeyId: s3Config.accessKeyId,
+          secretAccessKey: s3Config.secretAccessKey,
         },
       });
     }
@@ -481,13 +479,15 @@ export class ProjectService {
         const filename = `${project.uniqueProjectId}/${uuidv4()}.${fileExtension}`;
         await this.s3Client.send(
           new PutObjectCommand({
-            Bucket: process.env.CF_BUCKET_NAME,
+            Bucket: this.configService.s3Config.bucketName,
             Key: filename,
             Body: file,
             ContentType: mimeType,
           }),
         );
-        photoUrl = `https://${process.env.CF_BUCKET_NAME}.${process.env.CF_CUSTOM_DOMAIN}/${filename}`;
+        photoUrl = this.configService.s3Config.endpoint
+          ? `${this.configService.s3Config.endpoint}/${filename}`
+          : `https://${this.configService.s3Config.bucketName}.s3.${this.configService.s3Config.region}.amazonaws.com/${filename}`;
       } else {
         // Use local storage
         const projectDir = path.join(this.mediaDir, project.uniqueProjectId);

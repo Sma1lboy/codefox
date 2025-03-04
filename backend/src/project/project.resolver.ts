@@ -87,8 +87,9 @@ export class ProjectsResolver {
     return this.projectService.subscribeToProject(userId, projectId);
   }
 
+  @UseGuards(ProjectGuard)
   @Mutation(() => Project)
-  async updateProjectPhotoUrl(
+  async updateProjectPhoto(
     @GetUserIdFromToken() userId: string,
     @Args('projectId', { type: () => ID }) projectId: string,
     @Args('file', { type: () => GraphQLUpload }) file: FileUpload,

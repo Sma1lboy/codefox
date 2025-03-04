@@ -113,7 +113,7 @@ type Mutation {
   subscribeToProject(projectId: ID!): Project!
   triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
-  updateProjectPhotoUrl(file: Upload!, projectId: ID!): Project!
+  updateProjectPhoto(file: Upload!, projectId: ID!): Project!
   updateProjectPublicStatus(isPublic: Boolean!, projectId: ID!): Project!
 }
 

@@ -9,11 +9,13 @@ import { ProjectGuard } from '../guard/project.guard';
 import { ChatService } from 'src/chat/chat.service';
 import { User } from 'src/user/user.model';
 import { Chat } from 'src/chat/chat.model';
+import { AppConfigModule } from 'src/config/config.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Project, Chat, User, ProjectPackages]),
-    AuthModule, // Import AuthModule to provide JwtService to the ProjectGuard
+    AuthModule,
+    AppConfigModule,
   ],
   providers: [ChatService, ProjectService, ProjectsResolver, ProjectGuard],
   exports: [ProjectService, ProjectGuard],

@@ -156,7 +156,7 @@ export type Mutation = {
   subscribeToProject: Project;
   triggerChatStream: Scalars['Boolean']['output'];
   updateChatTitle?: Maybe<Chat>;
-  updateProjectPhotoUrl: Project;
+  updateProjectPhoto: Project;
   updateProjectPublicStatus: Project;
 };
 
@@ -212,7 +212,7 @@ export type MutationUpdateChatTitleArgs = {
   updateChatTitleInput: UpdateChatTitleInput;
 };
 
-export type MutationUpdateProjectPhotoUrlArgs = {
+export type MutationUpdateProjectPhotoArgs = {
   file: Scalars['Upload']['input'];
   projectId: Scalars['ID']['input'];
 };
@@ -734,11 +734,11 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationUpdateChatTitleArgs, 'updateChatTitleInput'>
   >;
-  updateProjectPhotoUrl?: Resolver<
+  updateProjectPhoto?: Resolver<
     ResolversTypes['Project'],
     ParentType,
     ContextType,
-    RequireFields<MutationUpdateProjectPhotoUrlArgs, 'file' | 'projectId'>
+    RequireFields<MutationUpdateProjectPhotoArgs, 'file' | 'projectId'>
   >;
   updateProjectPublicStatus?: Resolver<
     ResolversTypes['Project'],
