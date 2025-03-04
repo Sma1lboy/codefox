@@ -114,7 +114,7 @@ export function ChatSideBar({
           onClick={() => setIsModalOpen(true)}
           size="setting"
           variant="ghost"
-          className="flex items-center justify-start w-[85%] h-14 text-xs xl:text-sm font-normal gap-2 pl-4 hover:bg-yellow-50 rounded-md transition-all duration-200 ease-in-out"
+          className="flex items-center justify-start w-full h-14 text-xs xl:text-sm font-normal gap-2 pl-4 hover:bg-yellow-50 rounded-md transition-all duration-200 ease-in-out"
         >
           <div className="flex items-center gap-2">
             <svg
