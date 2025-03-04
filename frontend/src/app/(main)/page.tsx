@@ -29,16 +29,17 @@ export default function HomePage() {
     if (!message.trim()) return;
 
     try {
-     // Create the project
-     const result = await createProjectFromPrompt(message, isPublic, model);
+      // Create the project
+      const result = await createProjectFromPrompt(message, isPublic, model);
 
-     // If successful, clear the input
-     if (result) {
-       promptFormRef.current.clearMessage();
+      // If successful, clear the input
+      if (result) {
+        promptFormRef.current.clearMessage();
 
-       // Note: No need to navigate here as the ProjectContext's onCompleted handler
-       // in the createProject mutation will handle navigation to the chat page
-    }} catch (error) {
+        // Note: No need to navigate here as the ProjectContext's onCompleted handler
+        // in the createProject mutation will handle navigation to the chat page
+      }
+    } catch (error) {
       console.error('Error creating project:', error);
     }
   };
@@ -106,14 +107,8 @@ export default function HomePage() {
       />
 
       {/* SignInModal & SignUpModal */}
-      <SignInModal
-        isOpen={showSignIn}
-        onClose={() => setShowSignIn(false)}
-      />
-      <SignUpModal
-        isOpen={showSignUp}
-        onClose={() => setShowSignUp(false)}
-      />
+      <SignInModal isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
+      <SignUpModal isOpen={showSignUp} onClose={() => setShowSignUp(false)} />
 
       <style jsx global>{`
         .animate-pulse-subtle {
