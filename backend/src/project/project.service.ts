@@ -54,16 +54,16 @@ export class ProjectService {
   ) {
     // Initialize S3 client if environment variables exist
     if (
-      process.env.CF_ACCOUNT_ID &&
-      process.env.CF_ACCESS_KEY_ID &&
-      process.env.CF_SECRET_ACCESS_KEY
+      process.env.S3_ACCESS_KEY_ID &&
+      process.env.S3_SECRET_ACCESS_KEY &&
+      process.env.S3_REGION
     ) {
       this.s3Client = new S3Client({
-        region: 'auto',
-        endpoint: `https://${process.env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        region: process.env.S3_REGION,
+        endpoint: process.env.S3_ENDPOINT,
         credentials: {
-          accessKeyId: process.env.CF_ACCESS_KEY_ID,
-          secretAccessKey: process.env.CF_SECRET_ACCESS_KEY,
+          accessKeyId: process.env.S3_ACCESS_KEY_ID,
+          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
         },
       });
     }
