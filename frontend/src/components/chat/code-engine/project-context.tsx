@@ -113,7 +113,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       // Navigate to chat page after project creation
       if (data?.createProject?.id) {
         toast.success('Project created successfully!');
-        router.push(`/chat/${data.createProject.id}`);
+        router.push(`/chat?id=${data.createProject.id}`);
       }
     },
     onError: (error) => {
