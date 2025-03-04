@@ -19,8 +19,12 @@ import { Role } from './role/role.model';
 import { RefreshToken } from './refresh-token/refresh-token.model';
 import { randomUUID } from 'crypto';
 import { compare, hash } from 'bcrypt';
-import { RefreshTokenResponse } from './auth.resolver';
+import {
+  EmailConfirmationResponse,
+  RefreshTokenResponse,
+} from './auth.resolver';
 import { MailService } from 'src/mail/mail.service';
+import { RegisterResponse } from 'src/user/user.resolver';
 
 @Injectable()
 export class AuthService {
@@ -39,7 +43,72 @@ export class AuthService {
     private refreshTokenRepository: Repository<RefreshToken>,
   ) {}
 
-  async register(registerUserInput: RegisterUserInput): Promise<User> {
+  async confirmEmail(token: string): Promise<EmailConfirmationResponse> {
+    try {
+      const payload = await this.jwtService.verifyAsync(token);
+
+      // Find user and update
+      const user = await this.userRepository.findOne({
+        where: { email: payload.email },
+      });
+
+      if (user && !user.isEmailConfirmed) {
+        user.isEmailConfirmed = true;
+        await this.userRepository.save(user);
+
+        return {
+          message: 'Email confirmed successfully!',
+          success: true,
+        };
+      }
+
+      return {
+        message: 'Email already confirmed or user not found.',
+        success: false,
+      };
+    } catch (error) {
+      return {
+        message: 'Invalid or expired token',
+        success: false,
+      };
+    }
+  }
+
+  async sendVerificationEmail(user: User): Promise<EmailConfirmationResponse> {
+    // Generate confirmation token
+    const verifyToken = this.jwtService.sign(
+      { email: user.email },
+      { expiresIn: '30m' },
+    );
+
+    // Send confirmation email
+    await this.mailService.sendConfirmationEmail(user.email, verifyToken);
+
+    return {
+      message: 'Verification email sent successfully!',
+      success: true,
+    };
+  }
+
+  async resendVerificationEmail(email: string) {
+    const user = await this.userRepository.findOne({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (user.isEmailConfirmed) {
+      return { message: 'Email already confirmed!' };
+    }
+
+    return this.sendVerificationEmail(user);
+  }
+
+  async register(
+    registerUserInput: RegisterUserInput,
+  ): Promise<RegisterResponse> {
     const { username, email, password } = registerUserInput;
 
     // Check for existing email
@@ -56,14 +125,13 @@ export class AuthService {
       username,
       email,
       password: hashedPassword,
+      isEmailConfirmed: false,
     });
 
-    const token = Math.floor(1000 + Math.random() * 9000).toString();
-    await this.mailService.sendVerificationEmail(email, token);
+    await this.userRepository.save(newUser);
+    await this.sendVerificationEmail(newUser);
 
-    // return { message: 'Confirmation email sent' };
-
-    return this.userRepository.save(newUser);
+    return { user: newUser, message: 'Confirmation email sent' };
   }
 
   async login(loginUserInput: LoginUserInput): Promise<RefreshTokenResponse> {
@@ -120,6 +188,7 @@ export class AuthService {
       return false;
     }
   }
+
   async logout(token: string): Promise<boolean> {
     try {
       await this.jwtService.verifyAsync(token);

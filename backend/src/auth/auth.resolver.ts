@@ -18,6 +18,15 @@ export class RefreshTokenResponse {
   refreshToken: string;
 }
 
+@ObjectType()
+export class EmailConfirmationResponse {
+  @Field()
+  message: string;
+
+  @Field({ nullable: true })
+  success?: boolean;
+}
+
 @Resolver()
 export class AuthResolver {
   constructor(private readonly authService: AuthService) {}

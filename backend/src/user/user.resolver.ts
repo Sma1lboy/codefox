@@ -16,6 +16,7 @@ import {
   GetUserIdFromToken,
 } from 'src/decorator/get-auth-token.decorator';
 import { Logger } from '@nestjs/common';
+import { EmailConfirmationResponse } from 'src/auth/auth.resolver';
 
 @ObjectType()
 class LoginResponse {
@@ -26,6 +27,15 @@ class LoginResponse {
   refreshToken: string;
 }
 
+@ObjectType()
+export class RegisterResponse {
+  @Field()
+  user: User;
+
+  @Field()
+  message: string;
+}
+
 @Resolver(() => User)
 export class UserResolver {
   constructor(
@@ -33,10 +43,17 @@ export class UserResolver {
     private readonly authService: AuthService,
   ) {}
 
-  @Mutation(() => User)
+  @Mutation(() => EmailConfirmationResponse)
+  async resendConfirmationEmail(
+    @Args('input') resendInput: ResendConfirmationInput,
+  ): Promise<EmailConfirmationResponse> {
+    return this.authService.resendVerificationEmail(resendInput.email);
+  }
+
+  @Mutation(() => RegisterResponse)
   async registerUser(
     @Args('input') registerUserInput: RegisterUserInput,
-  ): Promise<User> {
+  ): Promise<RegisterResponse> {
     return this.authService.register(registerUserInput);
   }
 
