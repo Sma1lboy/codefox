@@ -17,9 +17,11 @@ import { useChatStream } from '@/hooks/useChatStream';
 import { CodeEngine } from './code-engine/code-engine';
 import { useProjectStatusMonitor } from '@/hooks/useProjectStatusMonitor';
 import { Loader2 } from 'lucide-react';
+import { useAuthContext } from '@/providers/AuthProvider';
 
 export default function Chat() {
   // Initialize state, refs, and custom hooks
+  const { isAuthorized } = useAuthContext();
   const urlParams = new URLSearchParams(window.location.search);
   const [chatId, setChatId] = useState('');
   const [messages, setMessages] = useState<any[]>([]);
@@ -36,6 +38,7 @@ export default function Chat() {
   // Apollo query to fetch chat history
   useQuery(GET_CHAT_HISTORY, {
     variables: { chatId },
+    skip: !isAuthorized || !chatId,
     onCompleted: (data) => {
       if (data?.getChatHistory) {
         setMessages(data.getChatHistory);
