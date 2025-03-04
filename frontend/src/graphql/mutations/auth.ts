@@ -29,10 +29,11 @@ export const REFRESH_TOKEN_MUTATION = gql`
 `;
 
 export const CONFIRM_EMAIL_MUTATION = gql`
-  mutation ConfirmEmail($token: String!) { 
-    confirmEmail(token: $token) { 
-    message success 
-    } 
+  mutation ConfirmEmail($token: String!) {
+    confirmEmail(token: $token) {
+      message
+      success
+    }
   }
 `;
 
@@ -42,5 +43,5 @@ export const RESEND_CONFIRMATION_EMAIL_MUTATION = gql`
       message
       success
     }
-}
+  }
 `;
