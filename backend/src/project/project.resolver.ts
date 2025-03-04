@@ -7,6 +7,7 @@ import {
   ResolveField,
   Parent,
   ID,
+  Int,
 } from '@nestjs/graphql';
 import { ProjectService } from './project.service';
 import { Project } from './project.model';
@@ -146,5 +147,13 @@ export class ProjectsResolver {
     @Args('input') input: FetchPublicProjectsInputs,
   ): Promise<Project[]> {
     return this.projectService.fetchPublicProjects(input);
+  }
+
+  // In ProjectsResolver:
+  @Query(() => Int)
+  async getRemainingProjectLimit(
+    @GetUserIdFromToken() userId: string,
+  ): Promise<number> {
+    return this.projectService.getRemainingProjectLimit(userId);
   }
 }
