@@ -145,6 +145,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (!user.isEmailConfirmed) {
+      throw new Error('Email not confirmed. Please check your inbox.');
+    }
+
     const isPasswordValid = await compare(password, user.password);
 
     if (!isPasswordValid) {
