@@ -104,11 +104,11 @@ export function SideBarItem({
         buttonVariants({
           variant,
         }),
-        'flex justify-between w-full h-14 text-base font-normal items-center group'
+        'relative flex w-full h-14 text-base font-normal items-center group px-2'
       )}
       onClick={handleChatClick}
     >
-      <div className="flex-1 flex gap-3 items-center truncate ml-2">
+      <div className="flex-1 flex items-center truncate ml-2 mr-12">
         <div className="flex flex-col">
           <span className="text-xs font-normal">{title || 'New Chat'}</span>
         </div>
@@ -119,7 +119,7 @@ export function SideBarItem({
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="flex justify-end items-center dropdown-trigger mr-2"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 w-10 h-10 rounded-md hover:bg-gray-200"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

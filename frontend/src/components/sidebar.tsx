@@ -120,26 +120,20 @@ export function ChatSideBar({
             justify-start
           "
         >
-          {!isCollapsed && (
+          {
             <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
+              data-name="Layer 1"
               viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              <path d="m11 19-1.106-.552a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0l4.212 2.106a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619V12" />
-              <path d="M15 5.764V12" />
-              <path d="M18 15v6" />
-              <path d="M21 18h-6" />
-              <path d="M9 3.236v15" />
+              <g transform="scale(-1,1) translate(-24,0)">
+                <path
+                  d="M5,8A1,1,0,0,0,7,8V7H8A1,1,0,0,0,8,5H7V4A1,1,0,0,0,5,4V5H4A1,1,0,0,0,4,7H5ZM18,5H12a1,1,0,0,0,0,2h6a1,1,0,0,1,1,1v9.72l-1.57-1.45a1,1,0,0,0-.68-.27H8a1,1,0,0,1-1-1V12a1,1,0,0,0-2,0v3a3,3,0,0,0,3,3h8.36l3,2.73A1,1,0,0,0,20,21a1.1,1.1,0,0,0,.4-.08A1,1,0,0,0,21,20V8A3,3,0,0,0,18,5Z"
+                  fill="#808080"
+                />
+              </g>
             </svg>
-          )}
+          }
           {!isCollapsed && (
             <span className="text-gray-600 hover:text-gray-800  font-semibold text-sm">
               New Project
