@@ -113,7 +113,7 @@ type Mutation {
   subscribeToProject(projectId: ID!): Project!
   triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
-  updateProjectPhoto(file: Upload!, projectId: ID!): Project!
+  updateProjectPhoto(input: UpdateProjectPhotoInput!): Project!
   updateProjectPublicStatus(isPublic: Boolean!, projectId: ID!): Project!
 }
 
@@ -206,6 +206,11 @@ type Subscription {
 input UpdateChatTitleInput {
   chatId: String!
   title: String
+}
+
+input UpdateProjectPhotoInput {
+  file: Upload!
+  projectId: ID!
 }
 
 """The `Upload` scalar type represents a file upload."""

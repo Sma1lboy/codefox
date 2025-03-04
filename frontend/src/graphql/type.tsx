@@ -213,8 +213,7 @@ export type MutationUpdateChatTitleArgs = {
 };
 
 export type MutationUpdateProjectPhotoArgs = {
-  file: Scalars['Upload']['input'];
-  projectId: Scalars['ID']['input'];
+  input: UpdateProjectPhotoInput;
 };
 
 export type MutationUpdateProjectPublicStatusArgs = {
@@ -336,6 +335,11 @@ export type SubscriptionChatStreamArgs = {
 export type UpdateChatTitleInput = {
   chatId: Scalars['String']['input'];
   title?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateProjectPhotoInput = {
+  file: Scalars['Upload']['input'];
+  projectId: Scalars['ID']['input'];
 };
 
 export type User = {
@@ -493,6 +497,7 @@ export type ResolversTypes = ResolversObject<{
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   Subscription: ResolverTypeWrapper<{}>;
   UpdateChatTitleInput: UpdateChatTitleInput;
+  UpdateProjectPhotoInput: UpdateProjectPhotoInput;
   Upload: ResolverTypeWrapper<Scalars['Upload']['output']>;
   User: ResolverTypeWrapper<User>;
 }>;
@@ -527,6 +532,7 @@ export type ResolversParentTypes = ResolversObject<{
   String: Scalars['String']['output'];
   Subscription: {};
   UpdateChatTitleInput: UpdateChatTitleInput;
+  UpdateProjectPhotoInput: UpdateProjectPhotoInput;
   Upload: Scalars['Upload']['output'];
   User: User;
 }>;
@@ -738,7 +744,7 @@ export type MutationResolvers<
     ResolversTypes['Project'],
     ParentType,
     ContextType,
-    RequireFields<MutationUpdateProjectPhotoArgs, 'file' | 'projectId'>
+    RequireFields<MutationUpdateProjectPhotoArgs, 'input'>
   >;
   updateProjectPublicStatus?: Resolver<
     ResolversTypes['Project'],

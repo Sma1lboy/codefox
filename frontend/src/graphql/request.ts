@@ -209,17 +209,6 @@ export const UPDATE_PROJECT_PUBLIC_STATUS = gql`
   }
 `;
 
-// Mutation to update project photo URL
-export const UPDATE_PROJECT_PHOTO_URL = gql`
-  mutation UpdateProjectPhotoUrl($projectId: ID!, $photoUrl: String!) {
-    updateProjectPhotoUrl(projectId: $projectId, photoUrl: $photoUrl) {
-      id
-      projectName
-      photoUrl
-    }
-  }
-`;
-
 // Query to get subscribed/forked projects
 export const GET_SUBSCRIBED_PROJECTS = gql`
   query GetSubscribedProjects {
