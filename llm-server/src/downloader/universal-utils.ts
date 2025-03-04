@@ -1,7 +1,7 @@
 import { UniversalDownloader } from './model-downloader';
 import { Logger } from '@nestjs/common';
 import { UniversalStatusManager } from './universal-status';
-import { ConfigLoader, getModelsDir } from 'codefox-common';
+import { ConfigLoader, getModelsDir } from 'codefox-common/dist/esm';
 
 const logger = new Logger('model-utils');
 
