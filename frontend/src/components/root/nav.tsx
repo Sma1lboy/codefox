@@ -174,7 +174,7 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
         alert('Coming Soon');
       } else if (label === 'Codefox Journey') {
         e.preventDefault();
-        window.open('https://github.com/Sma1lboy/codefox', '_blank');
+        alert('Coming Soon');
       } else {
         handleTabChange(index);
       }
@@ -182,7 +182,7 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
 
     return (
       <>
-        <div className={`fixed top-5 left-0 right-0 z-50 ${className}`}>
+        <div className={` top-5 left-0 right-0 z-50 ${className}`}>
           <motion.div
             className={`w-full flex justify-around items-center px-6 py-4 ${containerClassName}`}
             initial="hidden"
