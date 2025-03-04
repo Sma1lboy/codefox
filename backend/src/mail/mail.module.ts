@@ -19,6 +19,7 @@ import { JwtModule } from '@nestjs/jwt';
         // or
         transport: {
           host: config.get('MAIL_HOST'),
+          port: config.get<number>('MAIL_PORT'),
           secure: false,
           auth: {
             user: config.get('MAIL_USER'),
@@ -26,7 +27,7 @@ import { JwtModule } from '@nestjs/jwt';
           },
         },
         defaults: {
-          from: `"No Reply" <${config.get('MAIL_FROM')}>`,
+          from: `"Your App" <${config.get<string>('MAIL_FROM')}>`,
         },
         template: {
           dir: join(__dirname, 'templates'),
