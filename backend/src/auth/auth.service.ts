@@ -24,7 +24,6 @@ import {
   RefreshTokenResponse,
 } from './auth.resolver';
 import { MailService } from 'src/mail/mail.service';
-import { RegisterResponse } from 'src/user/user.resolver';
 
 @Injectable()
 export class AuthService {
@@ -135,9 +134,7 @@ export class AuthService {
     return this.sendVerificationEmail(user);
   }
 
-  async register(
-    registerUserInput: RegisterUserInput,
-  ): Promise<RegisterResponse> {
+  async register(registerUserInput: RegisterUserInput): Promise<User> {
     const { username, email, password } = registerUserInput;
 
     // Check for existing email
@@ -160,7 +157,7 @@ export class AuthService {
     await this.userRepository.save(newUser);
     await this.sendVerificationEmail(newUser);
 
-    return { user: newUser, message: 'Confirmation email sent' };
+    return newUser;
   }
 
   async login(loginUserInput: LoginUserInput): Promise<RefreshTokenResponse> {

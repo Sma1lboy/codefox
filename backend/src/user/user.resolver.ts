@@ -28,15 +28,6 @@ class LoginResponse {
   refreshToken: string;
 }
 
-@ObjectType()
-export class RegisterResponse {
-  @Field()
-  user: User;
-
-  @Field()
-  message: string;
-}
-
 @Resolver(() => User)
 export class UserResolver {
   constructor(
@@ -58,10 +49,10 @@ export class UserResolver {
     return this.authService.resendVerificationEmail(input.email);
   }
 
-  @Mutation(() => RegisterResponse)
+  @Mutation(() => User)
   async registerUser(
     @Args('input') registerUserInput: RegisterUserInput,
-  ): Promise<RegisterResponse> {
+  ): Promise<User> {
     return this.authService.register(registerUserInput);
   }
 
