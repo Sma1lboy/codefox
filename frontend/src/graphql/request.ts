@@ -17,6 +17,22 @@ export interface ModelTagsData {
   getAvailableModelTags: string[];
 }
 
+export const FETCH_PUBLIC_PROJECTS = gql`
+  query FetchPublicProjects($input: FetchPublicProjectsInputs!) {
+    fetchPublicProjects(input: $input) {
+      id
+      projectName
+      projectPath
+      createdAt
+      user {
+        username
+      }
+      photoUrl
+      subNumber
+    }
+  }
+`;
+
 export const CREATE_CHAT = gql`
   mutation CreateChat($input: NewChatInput!) {
     createChat(newChatInput: $input) {
