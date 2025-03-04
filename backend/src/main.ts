@@ -19,6 +19,7 @@ async function bootstrap() {
       'Authorization',
       'Access-Control-Allow-Origin',
       'Access-Control-Allow-Credentials',
+      'Apollo-Require-Preflight',
       'x-refresh-token',
     ],
   });

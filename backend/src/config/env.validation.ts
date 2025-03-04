@@ -1,10 +1,12 @@
-import { IsString, IsOptional, IsNumber } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { IsOptional, IsString, IsNumber, IsIn } from 'class-validator';
 
 export class EnvironmentVariables {
   @IsNumber()
-  @Transform(({ value }) => Number(value))
   PORT: number;
+
+  @IsString()
+  @IsIn(['DEV', 'PROD', 'TEST'])
+  NODE_ENV: string;
 
   @IsString()
   JWT_SECRET: string;
@@ -13,13 +15,12 @@ export class EnvironmentVariables {
   JWT_REFRESH: string;
 
   @IsNumber()
-  @Transform(({ value }) => Number(value))
   SALT_ROUNDS: number;
 
   @IsString()
   OPENAI_BASE_URI: string;
 
-  // S3 Configuration
+  // S3/Cloudflare R2 Configuration - all optional
   @IsOptional()
   @IsString()
   S3_ACCESS_KEY_ID?: string;
@@ -39,4 +40,12 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   S3_ENDPOINT?: string;
+
+  @IsOptional()
+  @IsString()
+  S3_ACCOUNT_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  S3_PUBLIC_URL?: string;
 }
