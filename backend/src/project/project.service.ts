@@ -26,23 +26,12 @@ import { BuilderContext } from 'src/build-system/context';
 import { ChatService } from 'src/chat/chat.service';
 import { Chat } from 'src/chat/chat.model';
 import { v4 as uuidv4 } from 'uuid';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { getRootDir } from 'codefox-common';
-import path from 'path';
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  promises as fsPromises,
-} from 'fs-extra';
-import { AppConfigService } from 'src/config/config.service';
+import { UploadService } from 'src/upload/upload.service';
 @Injectable()
 export class ProjectService {
   private readonly model: OpenAIModelProvider =
     OpenAIModelProvider.getInstance();
   private readonly logger = new Logger('ProjectService');
-  private s3Client: S3Client | null = null;
-  private readonly mediaDir: string;
 
   constructor(
     @InjectRepository(Project)
@@ -52,26 +41,8 @@ export class ProjectService {
     @InjectRepository(ProjectPackages)
     private projectPackagesRepository: Repository<ProjectPackages>,
     private chatService: ChatService,
-    private configService: AppConfigService,
-  ) {
-    const s3Config = this.configService.s3Config;
-    if (this.configService.hasS3Configured) {
-      this.s3Client = new S3Client({
-        region: s3Config.region,
-        endpoint: s3Config.endpoint,
-        credentials: {
-          accessKeyId: s3Config.accessKeyId,
-          secretAccessKey: s3Config.secretAccessKey,
-        },
-      });
-    }
-
-    // Initialize media directory
-    this.mediaDir = path.join(getRootDir(), 'media');
-    if (!existsSync(this.mediaDir)) {
-      mkdirSync(this.mediaDir, { recursive: true });
-    }
-  }
+    private uploadService: UploadService,
+  ) {}
 
   async getProjectsByUser(userId: string): Promise<Project[]> {
     const projects = await this.projectsRepository.find({
@@ -471,51 +442,25 @@ export class ProjectService {
     this.checkProjectOwnership(project, userId);
 
     try {
-      let photoUrl: string;
-      const fileExtension = mimeType.split('/')[1] || 'jpg';
+      // Use the upload service to handle the file upload
+      const subdirectory = `projects/${projectId}/images`;
+      const uploadResult = await this.uploadService.upload(
+        file,
+        mimeType,
+        subdirectory,
+      );
 
-      if (this.s3Client) {
-        // Use R2 storage
-        const filename = `${project.uniqueProjectId}/${uuidv4()}.${fileExtension}`;
-        await this.s3Client.send(
-          new PutObjectCommand({
-            Bucket: this.configService.s3Config.bucketName,
-            Key: filename,
-            Body: file,
-            ContentType: mimeType,
-          }),
-        );
-        photoUrl = this.configService.s3Config.endpoint
-          ? `${this.configService.s3Config.endpoint}/${filename}`
-          : `https://${this.configService.s3Config.bucketName}.s3.${this.configService.s3Config.region}.amazonaws.com/${filename}`;
-      } else {
-        // Use local storage
-        const projectDir = path.join(this.mediaDir, project.uniqueProjectId);
-        if (!existsSync(projectDir)) {
-          mkdirSync(projectDir, { recursive: true });
-        }
+      // Update the project with the new URL
+      project.photoUrl = uploadResult.url;
 
-        // Find next available number for filename
-        const files = readdirSync(projectDir);
-        const existingNumbers = files
-          .map((f) => parseInt(f.split('.')[0]))
-          .filter((n) => !isNaN(n));
-        const nextNumber =
-          existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 0;
+      this.logger.debug(
+        `Updated photo URL for project ${projectId} to ${uploadResult.url}`,
+      );
 
-        const filename = `${nextNumber}.${fileExtension}`;
-        const filePath = path.join(projectDir, filename);
-
-        await fsPromises.writeFile(filePath, file);
-        photoUrl = `/media/${project.uniqueProjectId}/${filename}`;
-      }
-
-      // Update photo URL
-      project.photoUrl = photoUrl;
       return this.projectsRepository.save(project);
     } catch (error) {
       this.logger.error('Error uploading image:', error);
-      throw new InternalServerErrorException('Failed to upload image');
+      throw new InternalServerErrorException('Failed to upload image:', error);
     }
   }
 
