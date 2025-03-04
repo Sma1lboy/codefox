@@ -20,6 +20,7 @@ import { RefreshToken } from './refresh-token/refresh-token.model';
 import { randomUUID } from 'crypto';
 import { compare, hash } from 'bcrypt';
 import { RefreshTokenResponse } from './auth.resolver';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -29,6 +30,7 @@ export class AuthService {
     private jwtService: JwtService,
     private jwtCacheService: JwtCacheService,
     private configService: ConfigService,
+    private mailService: MailService,
     @InjectRepository(Menu)
     private menuRepository: Repository<Menu>,
     @InjectRepository(Role)
@@ -55,6 +57,11 @@ export class AuthService {
       email,
       password: hashedPassword,
     });
+
+    const token = Math.floor(1000 + Math.random() * 9000).toString();
+    await this.mailService.sendVerificationEmail(email, token);
+
+    // return { message: 'Confirmation email sent' };
 
     return this.userRepository.save(newUser);
   }
