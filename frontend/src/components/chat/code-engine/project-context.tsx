@@ -49,7 +49,7 @@ export const ProjectContext = createContext<ProjectContextType | undefined>(
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-const { isAuthorized } = useAuthContext();
+  const { isAuthorized } = useAuthContext();
   const [projects, setProjects] = useState<Project[]>([]);
   const [curProject, setCurProject] = useState<Project | undefined>(undefined);
   const [filePath, setFilePath] = useState<string | null>(null);
