@@ -42,4 +42,11 @@ export class AuthResolver {
   ): Promise<RefreshTokenResponse> {
     return this.authService.refreshToken(refreshToken);
   }
+
+  @Mutation(() => EmailConfirmationResponse)
+  async confirmEmail(
+    @Args('token') token: string,
+  ): Promise<EmailConfirmationResponse> {
+    return this.authService.confirmEmail(token);
+  }
 }

@@ -15,7 +15,7 @@ export class MailService {
   ) {}
 
   async sendConfirmationEmail(email: string, token: string) {
-    const confirmUrl = `https://yourwebsite.com/auth/confirm?token=${token}`;
+    const confirmUrl = `https://${this.configService.get('MAIL_DOMAIN')}/auth/confirm?token=${token}`;
 
     await this.mailerService.sendMail({
       to: email,

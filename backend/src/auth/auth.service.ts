@@ -47,6 +47,14 @@ export class AuthService {
     try {
       const payload = await this.jwtService.verifyAsync(token);
 
+      // Check if payload has the required email field
+      if (!payload || !payload.email) {
+        return {
+          message: 'Invalid token format',
+          success: false,
+        };
+      }
+
       // Find user and update
       const user = await this.userRepository.findOne({
         where: { email: payload.email },
@@ -84,6 +92,10 @@ export class AuthService {
     // Send confirmation email
     await this.mailService.sendConfirmationEmail(user.email, verifyToken);
 
+    // update user last time send email time
+    user.lastEmailSendTime = new Date();
+    await this.userRepository.save(user);
+
     return {
       message: 'Verification email sent successfully!',
       success: true,
@@ -101,6 +113,23 @@ export class AuthService {
 
     if (user.isEmailConfirmed) {
       return { message: 'Email already confirmed!' };
+    }
+
+    // Check if a cooldown period has passed (e.g., 1 minute)
+    const cooldownPeriod = 1 * 60 * 1000; // 1 minute in milliseconds
+    if (
+      user.lastEmailSendTime &&
+      new Date().getTime() - user.lastEmailSendTime.getTime() < cooldownPeriod
+    ) {
+      const timeLeft = Math.ceil(
+        (cooldownPeriod -
+          (new Date().getTime() - user.lastEmailSendTime.getTime())) /
+          1000,
+      );
+      return {
+        message: `Please wait ${timeLeft} seconds before requesting another email`,
+        success: false,
+      };
     }
 
     return this.sendVerificationEmail(user);
