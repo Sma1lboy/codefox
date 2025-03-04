@@ -82,12 +82,16 @@ export function CodeEngine({
   // Effect: Fetch file structure when projectId changes
   useEffect(() => {
     async function fetchFiles() {
-      if (!curProject?.projectPath) return;
+      if (!curProject?.projectPath) {
+        console.log('no project path found');
+        return;
+      }
 
       try {
         const response = await fetch(
           `/api/project?path=${curProject.projectPath}`
         );
+        console.log('loading file structure');
         const data = await response.json();
         setFileStructureData(data.res || {});
       } catch (error) {
@@ -270,12 +274,12 @@ export function CodeEngine({
 
   // Render the CodeEngine layout
   return (
-    <div className="rounded-lg border shadow-sm overflow-hidden h-full">
+    <div className="rounded-lg border shadow-sm overflow-scroll h-full">
       {/* Header Bar */}
       <ResponsiveToolbar isLoading={!isProjectReady} />
 
       {/* Main Content Area with Loading */}
-      <div className="relative h-[calc(100vh-48px-2rem)]">
+      <div className="relative h-[calc(100vh-48px-4rem)]">
         <AnimatePresence>
           {!isProjectReady && (
             <motion.div
@@ -311,7 +315,7 @@ export function CodeEngine({
                 <Editor
                   height="100%"
                   width="100%"
-                  defaultLanguage="typescript"
+                  defaultLanguage="typescriptreact"
                   value={newCode}
                   language={type}
                   loading={isLoading}

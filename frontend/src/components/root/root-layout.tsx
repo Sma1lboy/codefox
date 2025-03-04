@@ -42,21 +42,19 @@ export default function RootLayout({ children }: RootLayoutProps) {
             className="fixed left-0 top-0 h-full z-50"
             style={{ width: isCollapsed ? '80px' : '250px' }}
           >
-            <ProjectProvider>
-              <ChatSideBar
-                setIsModalOpen={() => {}}
-                isCollapsed={isCollapsed}
-                setIsCollapsed={setIsCollapsed}
-                isMobile={false}
-                currentChatId={''}
-                chatListUpdated={chatListUpdated}
-                setChatListUpdated={setChatListUpdated}
-                chats={chats}
-                loading={loading}
-                error={error}
-                onRefetch={refetchChats}
-              />
-            </ProjectProvider>
+            <ChatSideBar
+              setIsModalOpen={() => {}}
+              isCollapsed={isCollapsed}
+              setIsCollapsed={setIsCollapsed}
+              isMobile={false}
+              currentChatId={''}
+              chatListUpdated={chatListUpdated}
+              setChatListUpdated={setChatListUpdated}
+              chats={chats}
+              loading={loading}
+              error={error}
+              onRefetch={refetchChats}
+            />
           </motion.div>
         )}
 
