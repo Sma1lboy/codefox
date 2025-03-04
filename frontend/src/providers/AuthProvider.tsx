@@ -46,6 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [refreshTokenMutation] = useMutation(REFRESH_TOKEN_MUTATION);
   const [getUserInfo] = useLazyQuery<{ me: User }>(GET_USER_INFO);
 
+  // 验证本地 token 是否有效
   const validateToken = useCallback(async () => {
     const storedToken = localStorage.getItem(LocalStore.accessToken);
     if (!storedToken) {
@@ -68,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [checkToken]);
 
+  // 获取当前用户信息
   const fetchUserInfo = useCallback(async () => {
     try {
       const { data } = await getUserInfo();
@@ -82,6 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [getUserInfo]);
 
+  // 刷新 token
   const refreshAccessToken = useCallback(async () => {
     try {
       const refreshToken = localStorage.getItem(LocalStore.refreshToken);
@@ -114,6 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [refreshTokenMutation]);
 
+  // 登录时写入 token 并获取用户信息
   const login = useCallback(
     (accessToken: string, refreshToken: string) => {
       localStorage.setItem(LocalStore.accessToken, accessToken);
@@ -129,6 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [fetchUserInfo]
   );
 
+  // 登出
   const logout = useCallback(() => {
     setToken(null);
     setIsAuthorized(false);
@@ -137,6 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(LocalStore.refreshToken);
   }, []);
 
+  // 初始化，尝试验证或刷新 token
   useEffect(() => {
     async function initAuth() {
       setIsLoading(true);
@@ -152,10 +158,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       let isValid = await validateToken();
 
+      // 如果验证失败，再试图刷新
       if (!isValid) {
         isValid = (await refreshAccessToken()) ? true : false;
       }
 
+      // 最终判断
       if (isValid) {
         setIsAuthorized(true);
         await fetchUserInfo();
