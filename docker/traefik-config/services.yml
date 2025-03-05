@@ -15,6 +15,15 @@ http:
       tls: {}
       service: backend
       priority: 20
+
+    subdomain:
+      rule: 'HostRegexp(`{subdomain:.+}.codefox.net`)'
+      entrypoints:
+        - websecure
+      tls: {}
+      service: frontend
+      priority: 30
+
     redirect-all:
       rule: 'hostregexp(`{host:.+}`)'
       entrypoints:

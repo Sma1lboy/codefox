@@ -14,11 +14,13 @@ import {
 import puppeteer from 'puppeteer';
 import { URL_PROTOCOL_PREFIX } from '@/utils/const';
 
-export default function WebPreview() {
-  const { curProject, getWebUrl } = useContext(ProjectContext);
-  if (!curProject || !getWebUrl) {
-    throw new Error('ProjectContext not properly initialized');
-  }
+function PreviewContent({
+  curProject,
+  getWebUrl,
+}: {
+  curProject: any;
+  getWebUrl: any;
+}) {
   const [baseUrl, setBaseUrl] = useState('');
   const [displayPath, setDisplayPath] = useState('/');
   const [history, setHistory] = useState<string[]>(['/']);
@@ -109,6 +111,7 @@ export default function WebPreview() {
       setDisplayPath(history[currentIndex + 1]);
     }
   };
+
   const reloadIframe = () => {
     const iframe = document.getElementById('myIframe') as HTMLIFrameElement;
     if (iframe) {
@@ -239,5 +242,24 @@ export default function WebPreview() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function WebPreview() {
+  const context = useContext(ProjectContext);
+
+  if (!context) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-sm text-muted-foreground">Loading project...</p>
+      </div>
+    );
+  }
+
+  return (
+    <PreviewContent
+      curProject={context.curProject}
+      getWebUrl={context.getWebUrl}
+    />
   );
 }

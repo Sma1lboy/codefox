@@ -155,7 +155,7 @@ async function buildAndRunDocker(
         -l "traefik.http.routers.${subdomain}.entrypoints=websecure" \
         -l "traefik.http.routers.${subdomain}.tls=true" \
         -l "traefik.http.services.${subdomain}.loadbalancer.server.port=5173" \
-        --network=codefox_traefik_network -p ${exposedPort}:5173 \
+        --network=docker_traefik_network  -p ${exposedPort}:5173 \
         -v "${directory}:/app" \
         ${imageName}`;
         } else {
@@ -163,7 +163,7 @@ async function buildAndRunDocker(
         -l "traefik.http.routers.${subdomain}.rule=Host(\\"${domain}\\")" \
         -l "traefik.http.routers.${subdomain}.entrypoints=web" \
         -l "traefik.http.services.${subdomain}.loadbalancer.server.port=5173" \
-        --network=codefox_traefik_network -p ${exposedPort}:5173 \
+        --network=docker_traefik_network  -p ${exposedPort}:5173 \
         -v "${directory}:/app" \
         ${imageName}`;
         }

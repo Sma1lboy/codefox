@@ -20,6 +20,7 @@ import { Project } from '../project-modal';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner'; // Assuming you use Sonner for toasts
 import { useAuthContext } from '@/providers/AuthProvider';
+import { URL_PROTOCOL_PREFIX } from '@/utils/const';
 
 export interface ProjectContextType {
   projects: Project[];
@@ -277,7 +278,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         }
 
         const data = await response.json();
-        const baseUrl = `http://${data.domain}`;
+        const baseUrl = `${URL_PROTOCOL_PREFIX}://${data.domain}`;
         const project = projects.find((p) => p.projectPath === projectPath);
         if (project) {
           await takeProjectScreenshot(project.id, baseUrl);
@@ -439,7 +440,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
               if (response.ok) {
                 const data = await response.json();
-                const baseUrl = `http://${data.domain}`;
+                const baseUrl = `${URL_PROTOCOL_PREFIX}://${data.domain}`;
                 await takeProjectScreenshot(project.id, baseUrl);
               }
             } catch (error) {
