@@ -3,7 +3,6 @@
 import {
   ApolloClient,
   InMemoryCache,
-  HttpLink,
   ApolloLink,
   from,
   split,
@@ -12,13 +11,14 @@ import { onError } from '@apollo/client/link/error';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 import { getMainDefinition } from '@apollo/client/utilities';
+import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import { LocalStore } from '@/lib/storage';
 
-// HTTP Link
-const httpLink = new HttpLink({
+// Create the upload link as the terminating link
+const uploadLink = createUploadLink({
   uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:8080/graphql',
   headers: {
-    'Content-Type': 'application/json',
+    'Apollo-Require-Preflight': 'true',
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Allow-Origin': '*',
   },
@@ -85,7 +85,15 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
   }
 });
 
-// Split traffic based on operation type
+// Build the HTTP link chain
+const httpLinkWithMiddleware = from([
+  errorLink,
+  requestLoggingMiddleware,
+  authMiddleware,
+  uploadLink as unknown as ApolloLink, // Cast to ApolloLink to satisfy TypeScript
+]);
+
+// Split traffic between WebSocket and HTTP
 const splitLink = wsLink
   ? split(
       ({ query }) => {
@@ -96,9 +104,9 @@ const splitLink = wsLink
         );
       },
       wsLink,
-      from([errorLink, requestLoggingMiddleware, authMiddleware, httpLink])
+      httpLinkWithMiddleware
     )
-  : from([errorLink, requestLoggingMiddleware, authMiddleware, httpLink]);
+  : httpLinkWithMiddleware;
 
 // Create Apollo Client
 export const client = new ApolloClient({

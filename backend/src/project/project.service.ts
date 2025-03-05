@@ -26,16 +26,17 @@ import { BuilderContext } from 'src/build-system/context';
 import { ChatService } from 'src/chat/chat.service';
 import { Chat } from 'src/chat/chat.model';
 import { v4 as uuidv4 } from 'uuid';
+import { UploadService } from 'src/upload/upload.service';
 import {
   PROJECT_DAILY_LIMIT,
   ProjectRateLimitException,
 } from './project-limits';
-
 @Injectable()
 export class ProjectService {
   private readonly model: OpenAIModelProvider =
     OpenAIModelProvider.getInstance();
   private readonly logger = new Logger('ProjectService');
+
   constructor(
     @InjectRepository(Project)
     private projectsRepository: Repository<Project>,
@@ -44,6 +45,7 @@ export class ProjectService {
     @InjectRepository(ProjectPackages)
     private projectPackagesRepository: Repository<ProjectPackages>,
     private chatService: ChatService,
+    private uploadService: UploadService,
   ) {}
 
   async getProjectsByUser(userId: string): Promise<Project[]> {
@@ -468,17 +470,35 @@ export class ProjectService {
   async updateProjectPhotoUrl(
     userId: string,
     projectId: string,
-    photoUrl: string,
+    file: Buffer,
+    mimeType: string,
   ): Promise<Project> {
     const project = await this.getProjectById(projectId);
 
     // Check ownership permission
     this.checkProjectOwnership(project, userId);
 
-    // Update photo URL
-    project.photoUrl = photoUrl;
+    try {
+      // Use the upload service to handle the file upload
+      const subdirectory = `projects/${projectId}/images`;
+      const uploadResult = await this.uploadService.upload(
+        file,
+        mimeType,
+        subdirectory,
+      );
 
-    return this.projectsRepository.save(project);
+      // Update the project with the new URL
+      project.photoUrl = uploadResult.url;
+
+      this.logger.debug(
+        `Updated photo URL for project ${projectId} to ${uploadResult.url}`,
+      );
+
+      return this.projectsRepository.save(project);
+    } catch (error) {
+      this.logger.error('Error uploading image:', error);
+      throw new InternalServerErrorException('Failed to upload image:', error);
+    }
   }
 
   /**
