@@ -128,6 +128,9 @@ async function buildAndRunDocker(
 
   return new Promise((resolve, reject) => {
     // 2. Build the Docker image
+    console.log(
+      `Starting Docker build for image: ${imageName} in directory: ${directory}`
+    );
     exec(
       `docker build -t ${imageName} ${directory}`,
       (buildErr, buildStdout, buildStderr) => {
@@ -141,19 +144,61 @@ async function buildAndRunDocker(
 
         // 3. Run the Docker container
         const runCommand = `docker run -d --name ${containerName} -l "traefik.enable=true" \
-            -l "traefik.http.routers.${subdomain}.rule=Host(\\"${domain}\\")" \
-            -l "traefik.http.services.${subdomain}.loadbalancer.server.port=5173" \
-            --network=codefox_traefik_network -p ${exposedPort}:5173 \
-            -v "${directory}:/app" \
-            ${imageName}`;
+          -l "traefik.http.routers.${subdomain}.rule=Host(\\"${domain}\\")" \
+          -l "traefik.http.services.${subdomain}.loadbalancer.server.port=5173" \
+          --network=codefox_traefik_network -p ${exposedPort}:5173 \
+          -v "${directory}:/app" \
+          ${imageName}`;
 
-        console.log(runCommand);
+        console.log(`Executing run command: ${runCommand}`);
 
         exec(runCommand, (runErr, runStdout, runStderr) => {
           if (runErr) {
             // If the container name already exists
+            console.error(`Error during Docker run: ${runStderr}`);
             if (runStderr.includes('Conflict. The container name')) {
-              resolve({ domain, containerId: containerName });
+              console.log(
+                `Container name conflict detected. Removing existing container ${containerName}.`
+              );
+              // Remove the existing container
+              exec(
+                `docker rm -f ${containerName}`,
+                (removeErr, removeStdout, removeStderr) => {
+                  if (removeErr) {
+                    console.error(
+                      `Error removing existing container: ${removeStderr}`
+                    );
+                    return reject(removeErr);
+                  }
+                  console.log(
+                    `Existing container ${containerName} removed. Retrying to run the container.`
+                  );
+
+                  // Retry running the Docker container
+                  exec(
+                    runCommand,
+                    (retryRunErr, retryRunStdout, retryRunStderr) => {
+                      if (retryRunErr) {
+                        console.error(
+                          `Error during Docker run: ${retryRunStderr}`
+                        );
+                        return reject(retryRunErr);
+                      }
+
+                      const containerActualId = retryRunStdout.trim();
+                      runningContainers.set(projectPath, {
+                        domain,
+                        containerId: containerActualId,
+                      });
+
+                      console.log(
+                        `Container ${containerName} is now running at http://${domain}`
+                      );
+                      resolve({ domain, containerId: containerActualId });
+                    }
+                  );
+                }
+              );
               return;
             }
             console.error(`Error during Docker run: ${runStderr}`);
@@ -169,7 +214,6 @@ async function buildAndRunDocker(
           console.log(
             `Container ${containerName} is now running at http://${domain}`
           );
-
           resolve({ domain, containerId: containerActualId });
         });
       }
@@ -204,11 +248,38 @@ export async function GET(req: Request) {
   // Check if a container is already running
   const existingContainer = runningContainers.get(projectPath);
   if (existingContainer) {
-    return NextResponse.json({
-      message: 'Docker container already running',
-      domain: existingContainer.domain,
-      containerId: existingContainer.containerId,
+    // Check if the container is running
+    const containerStatus = await new Promise<string>((resolve) => {
+      exec(
+        `docker inspect -f "{{.State.Running}}" ${existingContainer.containerId}`,
+        (err, stdout) => {
+          if (err) {
+            resolve('not found');
+          } else {
+            resolve(stdout.trim());
+          }
+        }
+      );
     });
+
+    if (containerStatus === 'true') {
+      return NextResponse.json({
+        message: 'Docker container already running',
+        domain: existingContainer.domain,
+        containerId: existingContainer.containerId,
+      });
+    } else {
+      // Remove the existing container if it's not running
+      exec(`docker rm -f ${existingContainer.containerId}`, (removeErr) => {
+        if (removeErr) {
+          console.error(`Error removing existing container: ${removeErr}`);
+        } else {
+          console.log(
+            `Removed existing container: ${existingContainer.containerId}`
+          );
+        }
+      });
+    }
   }
 
   // Prevent duplicate builds
