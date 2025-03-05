@@ -7,6 +7,7 @@ import {
   ResolveField,
   Parent,
   ID,
+  Int,
 } from '@nestjs/graphql';
 import { ProjectService } from './project.service';
 import { Project } from './project.model';
@@ -14,6 +15,7 @@ import {
   CreateProjectInput,
   FetchPublicProjectsInputs,
   IsValidProjectInput,
+  UpdateProjectPhotoInput,
 } from './dto/project.input';
 import { Logger, UseGuards } from '@nestjs/common';
 import { ProjectGuard } from '../guard/project.guard';
@@ -86,22 +88,33 @@ export class ProjectsResolver {
     return this.projectService.subscribeToProject(userId, projectId);
   }
 
+  @UseGuards(ProjectGuard)
   @Mutation(() => Project)
-  async updateProjectPhotoUrl(
+  async updateProjectPhoto(
     @GetUserIdFromToken() userId: string,
-    @Args('projectId', { type: () => ID }) projectId: string,
-    @Args('photoUrl') photoUrl: string,
+    @Args('input') input: UpdateProjectPhotoInput,
   ): Promise<Project> {
-    this.logger.log(
-      `User ${userId} updating photo URL for project ${projectId}`,
-    );
+    const { projectId, file } = input;
+    this.logger.log(`User ${userId} uploading photo for project ${projectId}`);
+
+    // Extract the file data
+    const { createReadStream, mimetype } = await file;
+
+    // Buffer the file content
+    const chunks = [];
+    for await (const chunk of createReadStream()) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+
+    // Call the service with the extracted buffer and mimetype
     return this.projectService.updateProjectPhotoUrl(
       userId,
       projectId,
-      photoUrl,
+      buffer,
+      mimetype,
     );
   }
-
   @Mutation(() => Project)
   async updateProjectPublicStatus(
     @GetUserIdFromToken() userId: string,
@@ -146,5 +159,13 @@ export class ProjectsResolver {
     @Args('input') input: FetchPublicProjectsInputs,
   ): Promise<Project[]> {
     return this.projectService.fetchPublicProjects(input);
+  }
+
+  // In ProjectsResolver:
+  @Query(() => Int)
+  async getRemainingProjectLimit(
+    @GetUserIdFromToken() userId: string,
+  ): Promise<number> {
+    return this.projectService.getRemainingProjectLimit(userId);
   }
 }

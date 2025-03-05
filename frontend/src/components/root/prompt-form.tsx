@@ -211,7 +211,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
               >
                 <SelectTrigger
                   className={cn(
-                    'w-[117px] h-6 border-0 focus:ring-0 hover:bg-gray-100 dark:hover:bg-gray-600 pl-1',
+                    'h-6 border-0 focus:ring-0 hover:bg-gray-100 dark:hover:bg-gray-600 pl-1 min-w-max',
                     (isLoading || isRegenerating) &&
                       'opacity-50 cursor-not-allowed'
                   )}

@@ -8,6 +8,7 @@ import UserSettings from './user-settings';
 import { SideBarItem } from './sidebar-item';
 import { Chat } from '@/graphql/type';
 import { EventEnum } from '../const/EventEnum';
+import { useRouter } from 'next/navigation';
 
 import {
   SidebarContent,
@@ -18,7 +19,6 @@ import {
   SidebarRail,
   SidebarFooter,
 } from './ui/sidebar';
-import { cn } from '@/lib/utils';
 import { ProjectContext } from './chat/code-engine/project-context';
 
 interface SidebarProps {
@@ -39,15 +39,13 @@ export function ChatSideBar({
   setIsModalOpen,
   isCollapsed,
   setIsCollapsed,
-  isMobile,
-  chatListUpdated,
-  setChatListUpdated,
   chats,
   loading,
   error,
   onRefetch,
 }: SidebarProps) {
   // Use a local state only for the currently selected chat.
+  const router = useRouter();
   const [currentChatid, setCurrentChatid] = useState('');
   const { setCurProject, pollChatProject } = useContext(ProjectContext);
   // Handler for starting a new chat.
@@ -82,8 +80,27 @@ export function ChatSideBar({
           className="lg:flex items-center justify-center cursor-pointer p-2 ml-3.5 mt-2"
           onClick={() => setIsCollapsed(!isCollapsed)}
         />
-
-        <div className="flex items-center justify-start w-[85%] h-14 text-sm xl:text-lg font-normal pl-4 gap-2">
+        <Button
+          onClick={() => router.push('/')}
+          variant="ghost"
+          className="
+            w-full
+            h-14
+            flex
+            items-center
+            justify-start
+            px-4
+            gap-2
+            text-sm
+            xl:text-lg
+            font-normal
+            rounded-md
+            hover:bg-yellow-50
+            transition-all
+            duration-200
+            ease-in-out
+          "
+        >
           <Image
             src="/codefox.svg"
             alt="CodeFox Logo"
@@ -96,9 +113,10 @@ export function ChatSideBar({
               CodeFox
             </span>
           )}
-        </div>
+        </Button>
+
         {/* Divider Line */}
-        <div className="border-t border-dotted border-gray-300 my-2 w-[85%] mx-auto"></div>
+        <div className="border-t border-dotted border-gray-300 my-2 w-full mx-auto" />
 
         <Button
           onClick={() => setIsModalOpen(true)}
@@ -151,11 +169,7 @@ export function ChatSideBar({
                         pollChatProject(chat.id).then((p) => {
                           setCurProject(p);
                         });
-                        window.history.replaceState(
-                          {},
-                          '',
-                          `/chat?id=${chat.id}`
-                        );
+                        router.push(`/chat?id=${chat.id}`);
                         setCurrentChatid(chat.id);
                       }}
                       refetchChats={onRefetch}
