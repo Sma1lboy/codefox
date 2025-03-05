@@ -11,9 +11,13 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
+import puppeteer from 'puppeteer';
 
 export default function WebPreview() {
-  const { curProject } = useContext(ProjectContext);
+  const { curProject, getWebUrl } = useContext(ProjectContext);
+  if (!curProject || !getWebUrl) {
+    throw new Error('ProjectContext not properly initialized');
+  }
   const [baseUrl, setBaseUrl] = useState('');
   const [displayPath, setDisplayPath] = useState('/');
   const [history, setHistory] = useState<string[]>(['/']);
@@ -26,7 +30,7 @@ export default function WebPreview() {
   const lastProjectPathRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const getWebUrl = async () => {
+    const initWebUrl = async () => {
       if (!curProject) return;
       const projectPath = curProject.projectPath;
 
@@ -42,53 +46,23 @@ export default function WebPreview() {
       }
 
       try {
-        const response = await fetch(
-          `/api/runProject?projectPath=${encodeURIComponent(projectPath)}`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-        const json = await response.json();
-
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
+        const { domain } = await getWebUrl(projectPath);
         containerRef.current = {
           projectPath,
-          domain: json.domain,
+          domain,
         };
 
-        const checkUrlStatus = async (url: string) => {
-          let status = 0;
-          while (status !== 200) {
-            try {
-              const res = await fetch(url, { method: 'HEAD' });
-              status = res.status;
-              if (status !== 200) {
-                console.log(`URL status: ${status}. Retrying...`);
-                await new Promise((resolve) => setTimeout(resolve, 1000));
-              }
-            } catch (err) {
-              console.error('Error checking URL status:', err);
-              await new Promise((resolve) => setTimeout(resolve, 1000));
-            }
-          }
-        };
-
-        const baseUrl = `http://${json.domain}`;
-        await checkUrlStatus(baseUrl);
-
+        const baseUrl = `http://${domain}`;
+        console.log('baseUrl:', baseUrl);
         setBaseUrl(baseUrl);
         setDisplayPath('/');
       } catch (error) {
-        console.error('fetching url error:', error);
+        console.error('Error getting web URL:', error);
       }
     };
 
-    getWebUrl();
-  }, [curProject]);
+    initWebUrl();
+  }, [curProject, getWebUrl]);
 
   useEffect(() => {
     if (iframeRef.current && baseUrl) {
