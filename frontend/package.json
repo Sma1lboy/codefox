@@ -16,7 +16,6 @@
     "generate:watch": "graphql-codegen --watch"
   },
   "dependencies": {
-    "codefox-common": "workspace:*",
     "@apollo/client": "^3.11.8",
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
@@ -38,9 +37,12 @@
     "@radix-ui/react-tabs": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.6",
     "@radix-ui/react-visually-hidden": "^1.1.1",
+    "@types/apollo-upload-client": "^18.0.0",
     "@types/dom-speech-recognition": "^0.0.4",
+    "apollo-upload-client": "^18.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "codefox-common": "workspace:*",
     "emoji-mart": "^5.6.0",
     "framer-motion": "^11.18.2",
     "graphql": "^16.9.0",

@@ -54,9 +54,7 @@ input CreateProjectInput {
   public: Boolean
 }
 
-"""
-Date custom scalar type
-"""
+"""Date custom scalar type"""
 scalar Date
 
 input FetchPublicProjectsInputs {
@@ -115,7 +113,7 @@ type Mutation {
   subscribeToProject(projectId: ID!): Project!
   triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
-  updateProjectPhotoUrl(photoUrl: String!, projectId: ID!): Project!
+  updateProjectPhoto(input: UpdateProjectPhotoInput!): Project!
   updateProjectPublicStatus(isPublic: Boolean!, projectId: ID!): Project!
 }
 
@@ -209,6 +207,14 @@ input UpdateChatTitleInput {
   chatId: String!
   title: String
 }
+
+input UpdateProjectPhotoInput {
+  file: Upload!
+  projectId: ID!
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
 
 type User {
   chats: [Chat!]!
