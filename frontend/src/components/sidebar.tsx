@@ -20,6 +20,7 @@ import {
   SidebarFooter,
 } from './ui/sidebar';
 import { ProjectContext } from './chat/code-engine/project-context';
+import { useRouter } from 'next/navigation';
 
 interface SidebarProps {
   setIsModalOpen: (value: boolean) => void;
