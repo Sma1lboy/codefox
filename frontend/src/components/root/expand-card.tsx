@@ -4,6 +4,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { ProjectContext } from '../chat/code-engine/project-context';
+import { URL_PROTOCOL_PREFIX } from '@/utils/const';
 
 export function ExpandableCard({ projects }) {
   const [active, setActive] = useState(null);
@@ -37,7 +38,7 @@ export function ExpandableCard({ projects }) {
 
     try {
       const data = await getWebUrl(project.path);
-      const url = `https://${data.domain}`;
+      const url = `${URL_PROTOCOL_PREFIX}://${data.domain}`;
       cachedUrls.current.set(project.id, url);
       setIframeUrl(url);
     } catch (error) {
@@ -120,7 +121,7 @@ export function ExpandableCard({ projects }) {
               const data = await getWebUrl(project.path);
 
               console.log(project.image);
-              const url = `http://${data.domain}`;
+              const url = `${URL_PROTOCOL_PREFIX}://${data.domain}`;
               setIframeUrl(url);
               handleCardClick(project);
               setActive(project);
