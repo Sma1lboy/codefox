@@ -14,7 +14,9 @@ export default function ChatLayout({
   const { isAuthorized } = useAuthContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { refetch } = useQuery(GET_USER_PROJECTS);
+  const { refetch } = useQuery(GET_USER_PROJECTS, {
+    skip: !isAuthorized,
+  });
   const router = useRouter();
 
   useEffect(() => {

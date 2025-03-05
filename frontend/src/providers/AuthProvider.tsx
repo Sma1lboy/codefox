@@ -53,12 +53,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       return false;
     }
-
     try {
       const { data } = await checkToken({
         variables: { input: { token: storedToken } },
       });
-
       if (data?.checkToken) {
         setToken(storedToken);
         return true;
@@ -91,11 +89,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout();
         return false;
       }
-
       const { data } = await refreshTokenMutation({
         variables: { refreshToken },
       });
-
       if (data?.refreshToken) {
         const newAccess = data.refreshToken.accessToken;
         const newRefresh = data.refreshToken.refreshToken;
@@ -104,7 +100,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (newRefresh) {
           localStorage.setItem(LocalStore.refreshToken, newRefresh);
         }
-
         setToken(newAccess);
         setIsAuthorized(true);
         return newAccess;
@@ -125,6 +120,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem(LocalStore.refreshToken, refreshToken);
 
       setToken(accessToken);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Token saved successfully');
+      }
       setIsAuthorized(true);
       fetchUserInfo();
     },
@@ -142,6 +140,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function initAuth() {
       setIsLoading(true);
+
+      const storedToken = localStorage.getItem(LocalStore.accessToken);
+      if (!storedToken) {
+        console.log('No stored token found, skip checkToken');
+        setIsAuthorized(false);
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
 
       let isValid = await validateToken();
 
