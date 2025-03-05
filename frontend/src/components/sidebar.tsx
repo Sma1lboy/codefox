@@ -19,9 +19,7 @@ import {
   SidebarRail,
   SidebarFooter,
 } from './ui/sidebar';
-import { cn } from '@/lib/utils';
 import { ProjectContext } from './chat/code-engine/project-context';
-import { useRouter } from 'next/navigation';
 
 interface SidebarProps {
   setIsModalOpen: (value: boolean) => void; // Parent setter to update collapse state
@@ -41,9 +39,6 @@ export function ChatSideBar({
   setIsModalOpen,
   isCollapsed,
   setIsCollapsed,
-  isMobile,
-  chatListUpdated,
-  setChatListUpdated,
   chats,
   loading,
   error,
@@ -60,7 +55,6 @@ export function ChatSideBar({
     const event = new Event(EventEnum.NEW_CHAT);
     window.dispatchEvent(event);
   }, []);
-  const router = useRouter();
 
   if (loading) return <SidebarSkeleton />;
   if (error) {
