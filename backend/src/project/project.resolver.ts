@@ -22,6 +22,7 @@ import { ProjectGuard } from '../guard/project.guard';
 import { GetUserIdFromToken } from '../decorator/get-auth-token.decorator';
 import { Chat } from 'src/chat/chat.model';
 import { User } from 'src/user/user.model';
+import { validateAndBufferFile } from 'src/common/security/file_check';
 
 @Resolver(() => Project)
 export class ProjectsResolver {
@@ -98,14 +99,8 @@ export class ProjectsResolver {
     this.logger.log(`User ${userId} uploading photo for project ${projectId}`);
 
     // Extract the file data
-    const { createReadStream, mimetype } = await file;
-
-    // Buffer the file content
-    const chunks = [];
-    for await (const chunk of createReadStream()) {
-      chunks.push(chunk);
-    }
-    const buffer = Buffer.concat(chunks);
+    // Validate file and convert it to buffer
+    const { buffer, mimetype } = await validateAndBufferFile(file);
 
     // Call the service with the extracted buffer and mimetype
     return this.projectService.updateProjectPhotoUrl(
@@ -115,6 +110,7 @@ export class ProjectsResolver {
       mimetype,
     );
   }
+
   @Mutation(() => Project)
   async updateProjectPublicStatus(
     @GetUserIdFromToken() userId: string,
