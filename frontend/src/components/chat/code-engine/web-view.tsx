@@ -41,7 +41,7 @@ export default function WebPreview() {
       lastProjectPathRef.current = projectPath;
 
       if (containerRef.current?.projectPath === projectPath) {
-        setBaseUrl(`http://${containerRef.current.domain}`);
+        setBaseUrl(`https://${containerRef.current.domain}`);
         return;
       }
 
@@ -52,7 +52,7 @@ export default function WebPreview() {
           domain,
         };
 
-        const baseUrl = `http://${domain}`;
+        const baseUrl = `https://${domain}`;
         console.log('baseUrl:', baseUrl);
         setBaseUrl(baseUrl);
         setDisplayPath('/');

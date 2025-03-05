@@ -1,6 +1,27 @@
-import { IsOptional, IsString, IsNumber, IsIn } from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsIn, IsPort } from 'class-validator';
 
 export class EnvironmentVariables {
+  // Database Configuration - all optional
+  @IsOptional()
+  @IsString()
+  DB_HOST?: string;
+
+  @IsOptional()
+  @IsPort()
+  DB_PORT?: string;
+
+  @IsOptional()
+  @IsString()
+  DB_USERNAME?: string;
+
+  @IsOptional()
+  @IsString()
+  DB_PASSWORD?: string;
+
+  @IsOptional()
+  @IsString()
+  DB_DATABASE?: string;
+
   @IsNumber()
   PORT: number;
 

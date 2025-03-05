@@ -37,7 +37,7 @@ export function ExpandableCard({ projects }) {
 
     try {
       const data = await getWebUrl(project.path);
-      const url = `http://${data.domain}`;
+      const url = `https://${data.domain}`;
       cachedUrls.current.set(project.id, url);
       setIframeUrl(url);
     } catch (error) {
