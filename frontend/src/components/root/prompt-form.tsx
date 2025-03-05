@@ -164,7 +164,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
           </div>
 
           {/* Controls section - now separated with a background */}
-          <div className="absolute bottom-0 left-0 right-0 py-3 px-3 flex justify-between items-center  rounded-b-lg  border-gray-100 dark:border-gray-600">
+          <div className="absolute bottom-0 left-0 right-0 pb-3 px-3 flex pt-1 justify-between items-center bg-white dark:bg-gray-600 rounded-b-lg dark:border-gray-600">
             <div className="flex items-center gap-2">
               <Select
                 value={visibility}
