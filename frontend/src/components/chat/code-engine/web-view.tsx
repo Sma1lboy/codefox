@@ -137,8 +137,12 @@ export default function WebPreview() {
   const reloadIframe = () => {
     const iframe = document.getElementById('myIframe') as HTMLIFrameElement;
     if (iframe) {
-      iframe.src = iframe.src;
-      setScale(0.7);
+      const src = iframe.src;
+      iframe.src = 'about:blank';
+      setTimeout(() => {
+        iframe.src = src;
+        setScale(0.7);
+      }, 50);
     }
   };
 

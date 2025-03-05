@@ -137,7 +137,9 @@ type Project {
   projectPath: String!
   subNumber: Float!
 
-  """Projects that are copies of this project"""
+  """
+  Projects that are copies of this project
+  """
   subscribers: [Project!]
   uniqueProjectId: String!
   updatedAt: Date!
@@ -224,7 +226,8 @@ type User {
   isActive: Boolean!
   isDeleted: Boolean!
   projects: [Project!]!
-  subscribedProjects: [Project!] @deprecated(reason: "Use projects with forkedFromId instead")
+  subscribedProjects: [Project!]
+    @deprecated(reason: "Use projects with forkedFromId instead")
   updatedAt: Date!
   username: String!
 }
