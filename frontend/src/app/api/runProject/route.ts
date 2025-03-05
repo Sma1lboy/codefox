@@ -7,6 +7,7 @@ import puppetter from 'puppeteer';
 import { useMutation } from '@apollo/client/react/hooks/useMutation';
 import { toast } from 'sonner';
 import { UPDATE_PROJECT_PHOTO_URL } from '@/graphql/request';
+import { TLS } from '@/utils/const';
 
 const runningContainers = new Map<
   string,
@@ -147,12 +148,25 @@ async function buildAndRunDocker(
         console.log(`Running Docker container: ${containerName}`);
 
         // 3. Run the Docker container
-        const runCommand = `docker run -d --name ${containerName} -l "traefik.enable=true" \
-          -l "traefik.http.routers.${subdomain}.rule=Host(\\"${domain}\\")" \
-          -l "traefik.http.services.${subdomain}.loadbalancer.server.port=5173" \
-          --network=codefox_traefik_network -p ${exposedPort}:5173 \
-          -v "${directory}:/app" \
-          ${imageName}`;
+        let runCommand;
+        if (TLS) {
+          runCommand = `docker run -d --name ${containerName} -l "traefik.enable=true" \
+        -l "traefik.http.routers.${subdomain}.rule=Host(\\"${domain}\\")" \
+        -l "traefik.http.routers.${subdomain}.entrypoints=websecure" \
+        -l "traefik.http.routers.${subdomain}.tls=true" \
+        -l "traefik.http.services.${subdomain}.loadbalancer.server.port=5173" \
+        --network=codefox_traefik_network -p ${exposedPort}:5173 \
+        -v "${directory}:/app" \
+        ${imageName}`;
+        } else {
+          runCommand = `docker run -d --name ${containerName} -l "traefik.enable=true" \
+        -l "traefik.http.routers.${subdomain}.rule=Host(\\"${domain}\\")" \
+        -l "traefik.http.routers.${subdomain}.entrypoints=web" \
+        -l "traefik.http.services.${subdomain}.loadbalancer.server.port=5173" \
+        --network=codefox_traefik_network -p ${exposedPort}:5173 \
+        -v "${directory}:/app" \
+        ${imageName}`;
+        }
 
         console.log(`Executing run command: ${runCommand}`);
 

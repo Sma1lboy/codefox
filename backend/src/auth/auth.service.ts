@@ -45,7 +45,7 @@ export class AuthService {
   ) {
     // Read the MAIL_ENABLED environment variable, default to 'true'
     this.isMailEnabled =
-      this.configService.get<string>('MAIL_ENABLED', 'true').toLowerCase() ===
+      this.configService.get<string>('MAIL_ENABLED', 'false').toLowerCase() ===
       'true';
   }
 
@@ -192,7 +192,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    if (!user.isEmailConfirmed) {
+    if (!user.isEmailConfirmed && this.isMailEnabled) {
       throw new Error('Email not confirmed. Please check your inbox.');
     }
 
