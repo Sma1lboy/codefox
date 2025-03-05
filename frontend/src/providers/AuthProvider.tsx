@@ -120,7 +120,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem(LocalStore.refreshToken, refreshToken);
 
       setToken(accessToken);
-      console.log('Saved token:', accessToken);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Token saved successfully');
+      }
       setIsAuthorized(true);
       fetchUserInfo();
     },
