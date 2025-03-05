@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import { PipelineType, pipeline, env } from '@huggingface/transformers';
 import { isRemoteModel } from './const';
 import { UniversalStatusManager } from './universal-status';
-import { getModelsDir } from 'codefox-common/dist/esm';
+import { getModelsDir } from 'codefox-common';
 
 env.allowLocalModels = true;
 env.localModelPath = getModelsDir();

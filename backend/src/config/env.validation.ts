@@ -23,7 +23,7 @@ export class EnvironmentVariables {
   DB_DATABASE?: string;
 
   @IsNumber()
-  PORT: number;
+  PORT: number = 8000;
 
   @IsString()
   @IsIn(['DEV', 'PROD', 'TEST'])

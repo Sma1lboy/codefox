@@ -1,10 +1,6 @@
 import { Response } from 'express';
 import { Logger } from '@nestjs/common';
-import {
-  ConfigLoader,
-  ModelConfig,
-  ModelApiStreamChunk,
-} from 'codefox-common/dist/esm';
+import { ConfigLoader, ModelConfig, ModelApiStreamChunk } from 'codefox-common';
 import {
   ModelProviderType,
   ModelProviderOptions,
