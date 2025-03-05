@@ -99,14 +99,8 @@ export default function HomePage() {
       />
 
       {/* SignInModal & SignUpModal */}
-      <SignInModal
-        isOpen={showSignIn}
-        onClose={() => setShowSignIn(false)}
-      />
-      <SignUpModal
-        isOpen={showSignUp}
-        onClose={() => setShowSignUp(false)}
-      />
+      <SignInModal isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
+      <SignUpModal isOpen={showSignUp} onClose={() => setShowSignUp(false)} />
 
       <style jsx global>{`
         .animate-pulse-subtle {

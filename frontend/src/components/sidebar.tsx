@@ -21,7 +21,6 @@ import {
 } from './ui/sidebar';
 import { ProjectContext } from './chat/code-engine/project-context';
 
-
 interface SidebarProps {
   setIsModalOpen: (value: boolean) => void;
   isCollapsed: boolean;
