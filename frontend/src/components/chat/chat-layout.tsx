@@ -5,7 +5,6 @@ import ProjectModal from '@/components/chat/project-modal';
 import { useQuery } from '@apollo/client';
 import { GET_USER_PROJECTS } from '@/graphql/request';
 import { useAuthContext } from '@/providers/AuthProvider';
-import { ProjectProvider } from './code-engine/project-context';
 
 export default function ChatLayout({
   children,
@@ -15,7 +14,9 @@ export default function ChatLayout({
   const { isAuthorized } = useAuthContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { refetch } = useQuery(GET_USER_PROJECTS);
+  const { refetch } = useQuery(GET_USER_PROJECTS, {
+    skip: !isAuthorized,
+  });
   const router = useRouter();
 
   useEffect(() => {
@@ -30,14 +31,12 @@ export default function ChatLayout({
 
   return (
     <main className="flex h-[calc(100dvh)] flex-col items-center">
-      <ProjectProvider>
-        <ProjectModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          refetchProjects={refetch}
-        />
-        <div className="w-full h-full">{children}</div>
-      </ProjectProvider>
+      <ProjectModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        refetchProjects={refetch}
+      />
+      <div className="w-full h-full">{children}</div>
     </main>
   );
 }

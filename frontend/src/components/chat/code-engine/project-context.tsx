@@ -18,6 +18,7 @@ import {
 import { Project } from '../project-modal';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner'; // Assuming you use Sonner for toasts
+import { useAuthContext } from '@/providers/AuthProvider';
 
 export interface ProjectContextType {
   projects: Project[];
@@ -48,7 +49,7 @@ export const ProjectContext = createContext<ProjectContextType | undefined>(
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-
+  const { isAuthorized } = useAuthContext();
   const [projects, setProjects] = useState<Project[]>([]);
   const [curProject, setCurProject] = useState<Project | undefined>(undefined);
   const [filePath, setFilePath] = useState<string | null>(null);
@@ -85,6 +86,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   const { loading, error, refetch } = useQuery(GET_USER_PROJECTS, {
     fetchPolicy: 'network-only',
+    skip: !isAuthorized,
     onCompleted: (data) => {
       setProjects(data.getUserProjects);
       // If we have a current project in the list, update it
@@ -113,7 +115,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       // Navigate to chat page after project creation
       if (data?.createProject?.id) {
         toast.success('Project created successfully!');
-        router.push(`/chat/${data.createProject.id}`);
+        router.push(`/chat?id=${data.createProject.id}`);
       }
     },
     onError: (error) => {
