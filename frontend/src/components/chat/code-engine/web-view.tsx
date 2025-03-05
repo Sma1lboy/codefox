@@ -12,6 +12,7 @@ import {
   ZoomOut,
 } from 'lucide-react';
 import puppeteer from 'puppeteer';
+import { URL_PROTOCOL_PREFIX } from '@/utils/const';
 
 export default function WebPreview() {
   const { curProject, getWebUrl } = useContext(ProjectContext);
@@ -41,7 +42,7 @@ export default function WebPreview() {
       lastProjectPathRef.current = projectPath;
 
       if (containerRef.current?.projectPath === projectPath) {
-        setBaseUrl(`https://${containerRef.current.domain}`);
+        setBaseUrl(`${URL_PROTOCOL_PREFIX}://${containerRef.current.domain}`);
         return;
       }
 
@@ -52,7 +53,7 @@ export default function WebPreview() {
           domain,
         };
 
-        const baseUrl = `https://${domain}`;
+        const baseUrl = `${URL_PROTOCOL_PREFIX}://${domain}`;
         console.log('baseUrl:', baseUrl);
         setBaseUrl(baseUrl);
         setDisplayPath('/');
