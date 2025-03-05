@@ -1,14 +1,12 @@
 'use client';
 import Image from 'next/image';
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useOutsideClick } from '@/hooks/use-outside-click';
 import { X } from 'lucide-react';
 
 export function ExpandableCard({ projects }) {
   const [active, setActive] = useState(null);
   const [iframeUrl, setIframeUrl] = useState('');
-  const id = useId();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,8 +25,6 @@ export function ExpandableCard({ projects }) {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [active]);
-
-  useOutsideClick(ref, () => setActive(null));
 
   const getWebUrl = async (project) => {
     if (!project) return;
@@ -59,6 +55,7 @@ export function ExpandableCard({ projects }) {
       <AnimatePresence mode="wait">
         {active && (
           <motion.div
+            onClick={() => setActive(null)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

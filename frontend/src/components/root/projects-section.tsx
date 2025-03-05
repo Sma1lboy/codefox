@@ -1,9 +1,5 @@
-import { gql, useQuery } from '@apollo/client';
-import Image from 'next/image';
-import { useState } from 'react';
-import { X } from 'lucide-react';
+import { useQuery } from '@apollo/client';
 import { FETCH_PUBLIC_PROJECTS } from '@/graphql/request';
-import path from 'path';
 import { ExpandableCard } from './expand-card';
 
 export function ProjectsSection() {
