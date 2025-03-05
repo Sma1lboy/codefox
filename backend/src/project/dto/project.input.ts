@@ -2,6 +2,7 @@
 import { InputType, Field, ID, ObjectType } from '@nestjs/graphql';
 import { IsNotEmpty, IsString, IsUUID, IsOptional } from 'class-validator';
 import { Project } from '../project.model';
+import { FileUpload, GraphQLUpload } from 'graphql-upload-minimal';
 
 /**
  * @deprecated We don't need project upsert
@@ -117,4 +118,15 @@ export class FetchPublicProjectsInputs {
 
   @Field()
   size: number;
+}
+
+@InputType()
+export class UpdateProjectPhotoInput {
+  @IsString()
+  @Field(() => ID)
+  projectId: string;
+
+  @IsOptional()
+  @Field(() => GraphQLUpload)
+  file: FileUpload;
 }

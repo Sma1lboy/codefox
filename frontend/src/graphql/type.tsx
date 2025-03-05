@@ -36,6 +36,8 @@ export type Scalars = {
   Float: { input: number; output: number };
   /** Date custom scalar type */
   Date: { input: Date; output: Date };
+  /** The `Upload` scalar type represents a file upload. */
+  Upload: { input: any; output: any };
 };
 
 export type Chat = {
@@ -154,7 +156,7 @@ export type Mutation = {
   subscribeToProject: Project;
   triggerChatStream: Scalars['Boolean']['output'];
   updateChatTitle?: Maybe<Chat>;
-  updateProjectPhotoUrl: Project;
+  updateProjectPhoto: Project;
   updateProjectPublicStatus: Project;
 };
 
@@ -210,9 +212,8 @@ export type MutationUpdateChatTitleArgs = {
   updateChatTitleInput: UpdateChatTitleInput;
 };
 
-export type MutationUpdateProjectPhotoUrlArgs = {
-  photoUrl: Scalars['String']['input'];
-  projectId: Scalars['ID']['input'];
+export type MutationUpdateProjectPhotoArgs = {
+  input: UpdateProjectPhotoInput;
 };
 
 export type MutationUpdateProjectPublicStatusArgs = {
@@ -334,6 +335,11 @@ export type SubscriptionChatStreamArgs = {
 export type UpdateChatTitleInput = {
   chatId: Scalars['String']['input'];
   title?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateProjectPhotoInput = {
+  file: Scalars['Upload']['input'];
+  projectId: Scalars['ID']['input'];
 };
 
 export type User = {
@@ -491,6 +497,8 @@ export type ResolversTypes = ResolversObject<{
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   Subscription: ResolverTypeWrapper<{}>;
   UpdateChatTitleInput: UpdateChatTitleInput;
+  UpdateProjectPhotoInput: UpdateProjectPhotoInput;
+  Upload: ResolverTypeWrapper<Scalars['Upload']['output']>;
   User: ResolverTypeWrapper<User>;
 }>;
 
@@ -524,6 +532,8 @@ export type ResolversParentTypes = ResolversObject<{
   String: Scalars['String']['output'];
   Subscription: {};
   UpdateChatTitleInput: UpdateChatTitleInput;
+  UpdateProjectPhotoInput: UpdateProjectPhotoInput;
+  Upload: Scalars['Upload']['output'];
   User: User;
 }>;
 
@@ -730,11 +740,11 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationUpdateChatTitleArgs, 'updateChatTitleInput'>
   >;
-  updateProjectPhotoUrl?: Resolver<
+  updateProjectPhoto?: Resolver<
     ResolversTypes['Project'],
     ParentType,
     ContextType,
-    RequireFields<MutationUpdateProjectPhotoUrlArgs, 'photoUrl' | 'projectId'>
+    RequireFields<MutationUpdateProjectPhotoArgs, 'input'>
   >;
   updateProjectPublicStatus?: Resolver<
     ResolversTypes['Project'],
@@ -900,6 +910,11 @@ export type SubscriptionResolvers<
   >;
 }>;
 
+export interface UploadScalarConfig
+  extends GraphQLScalarTypeConfig<ResolversTypes['Upload'], any> {
+  name: 'Upload';
+}
+
 export type UserResolvers<
   ContextType = any,
   ParentType extends
@@ -941,5 +956,6 @@ export type Resolvers<ContextType = any> = ResolversObject<{
   Query?: QueryResolvers<ContextType>;
   RefreshTokenResponse?: RefreshTokenResponseResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
+  Upload?: GraphQLScalarType;
   User?: UserResolvers<ContextType>;
 }>;
