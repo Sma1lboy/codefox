@@ -16,6 +16,8 @@ import {
   GetUserIdFromToken,
 } from 'src/decorator/get-auth-token.decorator';
 import { Logger } from '@nestjs/common';
+import { EmailConfirmationResponse } from 'src/auth/auth.resolver';
+import { ResendEmailInput } from './dto/resend-email.input';
 
 @ObjectType()
 class LoginResponse {
@@ -32,6 +34,20 @@ export class UserResolver {
     private readonly userService: UserService,
     private readonly authService: AuthService,
   ) {}
+
+  // @Mutation(() => EmailConfirmationResponse)
+  // async resendConfirmationEmail(
+  //   @Args('input') resendInput: ResendConfirmationInput,
+  // ): Promise<EmailConfirmationResponse> {
+  //   return this.authService.resendVerificationEmail(resendInput.email);
+  // }
+
+  @Mutation(() => EmailConfirmationResponse)
+  async resendConfirmationEmail(
+    @Args('input') input: ResendEmailInput,
+  ): Promise<EmailConfirmationResponse> {
+    return this.authService.resendVerificationEmail(input.email);
+  }
 
   @Mutation(() => User)
   async registerUser(
