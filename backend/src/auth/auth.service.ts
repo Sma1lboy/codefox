@@ -27,6 +27,8 @@ import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AuthService {
+  private readonly isMailEnabled: boolean;
+
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
@@ -40,7 +42,12 @@ export class AuthService {
     private roleRepository: Repository<Role>,
     @InjectRepository(RefreshToken)
     private refreshTokenRepository: Repository<RefreshToken>,
-  ) {}
+  ) {
+    // Read the MAIL_ENABLED environment variable, default to 'true'
+    this.isMailEnabled =
+      this.configService.get<string>('MAIL_ENABLED', 'true').toLowerCase() ===
+      'true';
+  }
 
   async confirmEmail(token: string): Promise<EmailConfirmationResponse> {
     try {
@@ -147,15 +154,29 @@ export class AuthService {
     }
 
     const hashedPassword = await hash(password, 10);
-    const newUser = this.userRepository.create({
-      username,
-      email,
-      password: hashedPassword,
-      isEmailConfirmed: false,
-    });
+
+    let newUser;
+    if (this.isMailEnabled) {
+      newUser = this.userRepository.create({
+        username,
+        email,
+        password: hashedPassword,
+        isEmailConfirmed: false,
+      });
+    } else {
+      newUser = this.userRepository.create({
+        username,
+        email,
+        password: hashedPassword,
+        isEmailConfirmed: true,
+      });
+    }
 
     await this.userRepository.save(newUser);
-    await this.sendVerificationEmail(newUser);
+
+    if (this.isMailEnabled) {
+      await this.sendVerificationEmail(newUser);
+    }
 
     return newUser;
   }
