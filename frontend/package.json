@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "build": "next build",
+    "build:frontend": "next build",
     "dev": "next dev",
-    "start:dev": "next dev",
+    "start:frontend": "next start",
     "start:dev-watch": "tmuxinator start -p .tmuxinator/build.yml",
     "dev:watch": "tmuxinator start -p .tmuxinator/dev.yml",
     "start": "next start",
