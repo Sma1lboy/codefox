@@ -7,6 +7,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
+    "rootDir": "./src",
     "sourceMap": true,
     "inlineSourceMap": false,
     "inlineSources": true,
@@ -16,9 +17,7 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "*": ["node_modules/*"],
-      "codefox-common": ["../codefox-common/src"],
-      "codefox-common/*": ["../codefox-common/src/*"]
+      "*": ["node_modules/*"]
     },
     "types": ["node", "express"]
   },
