@@ -7,6 +7,9 @@ import {
   ChevronRight,
   Maximize,
   ExternalLink,
+  RefreshCcw,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
 
 export default function WebPreview() {
@@ -15,6 +18,7 @@ export default function WebPreview() {
   const [displayPath, setDisplayPath] = useState('/');
   const [history, setHistory] = useState<string[]>(['/']);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [scale, setScale] = useState(0.7);
   const iframeRef = useRef(null);
   const containerRef = useRef<{ projectPath: string; domain: string } | null>(
     null
@@ -49,13 +53,34 @@ export default function WebPreview() {
         );
         const json = await response.json();
 
-        await new Promise((resolve) => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
         containerRef.current = {
           projectPath,
           domain: json.domain,
         };
-        setBaseUrl(`http://${json.domain}`);
+
+        const checkUrlStatus = async (url: string) => {
+          let status = 0;
+          while (status !== 200) {
+            try {
+              const res = await fetch(url, { method: 'HEAD' });
+              status = res.status;
+              if (status !== 200) {
+                console.log(`URL status: ${status}. Retrying...`);
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+              }
+            } catch (err) {
+              console.error('Error checking URL status:', err);
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+          }
+        };
+
+        const baseUrl = `http://${json.domain}`;
+        await checkUrlStatus(baseUrl);
+
+        setBaseUrl(baseUrl);
         setDisplayPath('/');
       } catch (error) {
         console.error('fetching url error:', error);
@@ -109,6 +134,25 @@ export default function WebPreview() {
       setDisplayPath(history[currentIndex + 1]);
     }
   };
+  const reloadIframe = () => {
+    const iframe = document.getElementById('myIframe') as HTMLIFrameElement;
+    if (iframe) {
+      const src = iframe.src;
+      iframe.src = 'about:blank';
+      setTimeout(() => {
+        iframe.src = src;
+        setScale(0.7);
+      }, 50);
+    }
+  };
+
+  const zoomIn = () => {
+    setScale((prevScale) => Math.min(prevScale + 0.1, 2)); // 最大缩放比例为 2
+  };
+
+  const zoomOut = () => {
+    setScale((prevScale) => Math.max(prevScale - 0.1, 0.5)); // 最小缩放比例为 0.5
+  };
 
   return (
     <div className="flex flex-col w-full h-full">
@@ -119,7 +163,7 @@ export default function WebPreview() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-6 w-6"
             onClick={goBack}
             disabled={!baseUrl || currentIndex === 0}
           >
@@ -128,11 +172,19 @@ export default function WebPreview() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-6 w-6"
             onClick={goForward}
             disabled={!baseUrl || currentIndex >= history.length - 1}
           >
             <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={reloadIframe}
+          >
+            <RefreshCcw />
           </Button>
         </div>
 
@@ -150,6 +202,24 @@ export default function WebPreview() {
 
         {/* Actions */}
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={zoomOut}
+            className="h-8 w-8"
+            disabled={!baseUrl}
+          >
+            <ZoomOut className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={zoomIn}
+            className="h-8 w-8"
+            disabled={!baseUrl}
+          >
+            <ZoomIn className="h-4 w-4" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -175,9 +245,17 @@ export default function WebPreview() {
       <div className="relative flex-1 w-full h-full">
         {baseUrl ? (
           <iframe
+            id="myIframe"
             ref={iframeRef}
             src={`${baseUrl}${displayPath}`}
-            className="absolute inset-0 w-full h-full border-none bg-background"
+            className="absolute inset-0 w-full h-80% border-none bg-background"
+            style={{
+              transform: `scale(${scale})`,
+              transformOrigin: 'top left',
+              width: `calc(100% / ${scale})`,
+              height: `calc(100% / ${scale})`,
+              border: 'none',
+            }}
           />
         ) : (
           <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-background">
