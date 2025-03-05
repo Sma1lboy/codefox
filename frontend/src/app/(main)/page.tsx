@@ -29,16 +29,8 @@ export default function HomePage() {
     if (!message.trim()) return;
 
     try {
-      // Create the project
-      const result = await createProjectFromPrompt(message, isPublic, model);
-
-      // If successful, clear the input
-      if (result) {
-        promptFormRef.current.clearMessage();
-
-        // Note: No need to navigate here as the ProjectContext's onCompleted handler
-        // in the createProject mutation will handle navigation to the chat page
-      }
+      await createProjectFromPrompt(message, isPublic, model);
+      promptFormRef.current.clearMessage();
     } catch (error) {
       console.error('Error creating project:', error);
     }

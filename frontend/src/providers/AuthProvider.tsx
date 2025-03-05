@@ -152,10 +152,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       let isValid = await validateToken();
 
+      // 如果验证失败，再试图刷新
       if (!isValid) {
         isValid = (await refreshAccessToken()) ? true : false;
       }
 
+      // 最终判断
       if (isValid) {
         setIsAuthorized(true);
         await fetchUserInfo();
