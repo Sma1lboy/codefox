@@ -20,6 +20,7 @@ import {
 } from './ui/sidebar';
 import { cn } from '@/lib/utils';
 import { ProjectContext } from './chat/code-engine/project-context';
+import { useRouter } from 'next/navigation';
 
 interface SidebarProps {
   setIsModalOpen: (value: boolean) => void; // Parent setter to update collapse state
@@ -57,6 +58,7 @@ export function ChatSideBar({
     const event = new Event(EventEnum.NEW_CHAT);
     window.dispatchEvent(event);
   }, []);
+  const router = useRouter();
 
   if (loading) return <SidebarSkeleton />;
   if (error) {
@@ -151,11 +153,7 @@ export function ChatSideBar({
                         pollChatProject(chat.id).then((p) => {
                           setCurProject(p);
                         });
-                        window.history.replaceState(
-                          {},
-                          '',
-                          `/chat?id=${chat.id}`
-                        );
+                        router.push(`/chat?id=${chat.id}`);
                         setCurrentChatid(chat.id);
                       }}
                       refetchChats={onRefetch}
