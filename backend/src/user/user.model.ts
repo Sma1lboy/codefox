@@ -11,6 +11,7 @@ import {
   ManyToMany,
   JoinTable,
   OneToMany,
+  UpdateDateColumn,
 } from 'typeorm';
 
 @Entity()
@@ -31,6 +32,14 @@ export class User extends SystemBaseModel {
   @Column({ unique: true })
   @IsEmail()
   email: string;
+
+  @Field(() => Boolean)
+  @Column({ default: false })
+  isEmailConfirmed: boolean;
+
+  @Field()
+  @UpdateDateColumn({ type: 'datetime' })
+  lastEmailSendTime: Date;
 
   @Field(() => [Chat])
   @OneToMany(() => Chat, (chat) => chat.user, {

@@ -9,6 +9,7 @@ import { User } from 'src/user/user.model';
 import { AuthResolver } from './auth.resolver';
 import { RefreshToken } from './refresh-token/refresh-token.model';
 import { JwtCacheModule } from 'src/jwt-cache/jwt-cache.module';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { JwtCacheModule } from 'src/jwt-cache/jwt-cache.module';
       inject: [ConfigService],
     }),
     JwtCacheModule,
+    MailModule,
   ],
   providers: [AuthService, AuthResolver],
   exports: [AuthService, JwtModule],
