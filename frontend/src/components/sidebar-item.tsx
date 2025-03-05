@@ -108,7 +108,7 @@ export function SideBarItem({
       )}
       onClick={handleChatClick}
     >
-      <div className="flex-1 flex items-center truncate ml-2 mr-12">
+      <div className="flex-1 flex items-center truncate ml-2 mr-12 min-w-0">
         <div className="flex flex-col">
           <span className="text-xs font-normal">{title || 'New Chat'}</span>
         </div>

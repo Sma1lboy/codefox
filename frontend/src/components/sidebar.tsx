@@ -68,78 +68,90 @@ export function ChatSideBar({
       <Sidebar collapsible="icon" side="left">
         {/* Header Row: Fox Logo (clickable) on the left, SidebarTrigger on the right */}
         <div
-          className={`flex items-center ${
-            isCollapsed ? 'justify-center w-full' : 'justify-between'
-          } px-3 pt-3`}
+          className={`flex items-center ${isCollapsed ? 'justify-center w-full px-0' : 'justify-between px-3'} pt-3`}
         >
-          {/* 只包裹图标与文字，让点击区域正好等于这两个元素 */}
-          <Button
-            onClick={() => router.push('/')}
-            variant="ghost"
-            className="inline-flex items-center justify-start gap-2 pl-0 hover:bg-yellow-50 rounded-md transition-all duration-200 ease-in-out"
-          >
-            <Image
-              src="/codefox.svg"
-              alt="CodeFox Logo"
-              width={28}
-              height={28}
-              className="dark:invert"
-            />
-            {!isCollapsed && (
-              <span className="text-primary-500 font-semibold text-base">
-                CodeFox
-              </span>
-            )}
-          </Button>
+          {!isCollapsed && (
+            <div className="flex flex-1 items-center justify-between">
+              <Button
+                onClick={() => router.push('/')}
+                variant="ghost"
+                className="inline-flex items-center gap-2 pl-0 
+          rounded-md  ease-in-out"
+              >
+                <Image
+                  src="/codefox.svg"
+                  alt="CodeFox Logo"
+                  width={40}
+                  height={40}
+                  className="dark:invert"
+                />
+                <span className="text-primary-500 font-semibold text-base">
+                  CodeFox
+                </span>
+              </Button>
 
-          {/* 折叠/展开图标放右侧 */}
-          <SidebarTrigger
-            className="flex items-center justify-center cursor-pointer p-2"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-          />
+              {/* SidebarTrigger 保证在 CodeFox 按钮的中间 */}
+              <SidebarTrigger
+                className="flex items-center justify-center w-12 h-12 "
+                onClick={() => setIsCollapsed(!isCollapsed)}
+              />
+            </div>
+          )}
+
+          {isCollapsed && (
+            <SidebarTrigger
+              className="flex items-center justify-center w-full p-2 mt"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+            />
+          )}
         </div>
 
         {/* Divider Line */}
         <div className="border-t border-dotted border-gray-300 my-2 w-full mx-auto" />
 
         {/* New Project 按钮 - 依然占据整行 */}
-        <Button
-          onClick={() => setIsModalOpen(true)}
-          variant="ghost"
-          className="
-            flex items-center
-            w-full
-            h-14
-            gap-2
-            pl-4
-            rounded-md
-            hover:bg-yellow-50
-            transition-all
-            duration-200
-            ease-in-out
-            justify-start
-          "
+        <div
+          className={`flex ${isCollapsed ? 'justify-center items-center w-full px-0' : ''} w-full mt-4`}
         >
-          {
+          <Button
+            onClick={() => {
+              if (isCollapsed) {
+                router.push('/');
+              } else {
+                setIsModalOpen(true);
+              }
+            }}
+            variant="ghost"
+            className={`h-7 w-7 flex items-center justify-center rounded-md ease-in-out ${
+              !isCollapsed && 'w-full gap-2 pl-4 justify-start'
+            }`}
+          >
             <svg
               data-name="Layer 1"
-              viewBox="0 0 24 24"
+              viewBox="0 0 32 32"
+              preserveAspectRatio="xMidYMid meet"
               xmlns="http://www.w3.org/2000/svg"
+              className={
+                isCollapsed
+                  ? 'w-8 h-8 min-w-[32px] min-h-[32px] ml-[-5px] mt-[-10px]'
+                  : 'w-10 h-10 min-w-[32px] min-h-[32px] mr-1'
+              }
+              strokeWidth="0.1"
             >
-              <g transform="scale(-1,1) translate(-24,0)">
+              <g transform="scale(-1,1) translate(-32,0)">
                 <path
                   d="M5,8A1,1,0,0,0,7,8V7H8A1,1,0,0,0,8,5H7V4A1,1,0,0,0,5,4V5H4A1,1,0,0,0,4,7H5ZM18,5H12a1,1,0,0,0,0,2h6a1,1,0,0,1,1,1v9.72l-1.57-1.45a1,1,0,0,0-.68-.27H8a1,1,0,0,1-1-1V12a1,1,0,0,0-2,0v3a3,3,0,0,0,3,3h8.36l3,2.73A1,1,0,0,0,20,21a1.1,1.1,0,0,0,.4-.08A1,1,0,0,0,21,20V8A3,3,0,0,0,18,5Z"
                   fill="#808080"
                 />
               </g>
             </svg>
-          }
-          {!isCollapsed && (
-            <span className="text-gray-600 hover:text-gray-800  font-semibold text-sm">
-              New Project
-            </span>
-          )}
-        </Button>
+            {!isCollapsed && (
+              <span className="text-gray-600 hover:text-gray-800 font-semibold text-sm relative -top-0.5">
+                New Project
+              </span>
+            )}
+          </Button>
+        </div>
 
         {/* 聊天列表 */}
         <SidebarContent>
@@ -170,7 +182,9 @@ export function ChatSideBar({
         </SidebarContent>
 
         {/* 底部设置 */}
-        <SidebarFooter>
+        <SidebarFooter
+          className={`mt-auto ${isCollapsed ? 'flex justify-center px-0' : ''}`}
+        >
           <UserSettings isSimple={false} />
         </SidebarFooter>
 
