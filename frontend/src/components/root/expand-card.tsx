@@ -1,13 +1,16 @@
 'use client';
 import Image from 'next/image';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
+import { ProjectContext } from '../chat/code-engine/project-context';
 
 export function ExpandableCard({ projects }) {
   const [active, setActive] = useState(null);
   const [iframeUrl, setIframeUrl] = useState('');
   const ref = useRef<HTMLDivElement>(null);
+  const { getWebUrl, takeProjectScreenshot } = useContext(ProjectContext);
+  const cachedUrls = useRef(new Map());
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -15,7 +18,6 @@ export function ExpandableCard({ projects }) {
         setActive(null);
       }
     }
-
     if (active && typeof active === 'object') {
       document.body.style.overflow = 'hidden';
     } else {
@@ -25,31 +27,23 @@ export function ExpandableCard({ projects }) {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [active]);
-
-  const getWebUrl = async (project) => {
-    if (!project) return;
-    console.log('project:', project);
-    const projectPath = project.path;
+  const handleCardClick = async (project) => {
+    setActive(project);
+    setIframeUrl('');
+    if (cachedUrls.current.has(project.id)) {
+      setIframeUrl(cachedUrls.current.get(project.id));
+      return;
+    }
 
     try {
-      const response = await fetch(
-        `/api/runProject?projectPath=${encodeURIComponent(projectPath)}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const json = await response.json();
-      const baseUrl = `http://${json.domain}`;
-      setIframeUrl(baseUrl);
-      setActive(project);
+      const data = await getWebUrl(project.path);
+      const url = `http://${data.domain}`;
+      cachedUrls.current.set(project.id, url);
+      setIframeUrl(url);
     } catch (error) {
-      console.error('fetching url error:', error);
+      console.error('Error fetching project URL:', error);
     }
   };
-
   return (
     <>
       <AnimatePresence mode="wait">
@@ -122,7 +116,15 @@ export function ExpandableCard({ projects }) {
           <motion.div
             key={project.id}
             layoutId={`card-${project.id}`}
-            onClick={() => getWebUrl(project)}
+            onClick={async () => {
+              const data = await getWebUrl(project.path);
+
+              console.log(project.image);
+              const url = `http://${data.domain}`;
+              setIframeUrl(url);
+              handleCardClick(project);
+              setActive(project);
+            }}
             className="group cursor-pointer"
           >
             <motion.div
@@ -130,7 +132,7 @@ export function ExpandableCard({ projects }) {
               className="relative rounded-xl overflow-hidden"
             >
               <motion.div layoutId={`image-${project.id}`}>
-                <Image
+                <img
                   src={project.image}
                   alt={project.name}
                   width={600}

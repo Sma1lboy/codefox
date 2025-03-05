@@ -14,6 +14,7 @@ import {
   GET_CHAT_DETAILS,
   GET_USER_PROJECTS,
   UPDATE_PROJECT_PUBLIC_STATUS,
+  UPDATE_PROJECT_PHOTO_URL,
 } from '@/graphql/request';
 import { Project } from '../project-modal';
 import { useRouter } from 'next/navigation';
@@ -41,12 +42,31 @@ export interface ProjectContextType {
   ) => Promise<void>;
   pollChatProject: (chatId: string) => Promise<Project | null>;
   isLoading: boolean;
+  getWebUrl: (
+    projectPath: string
+  ) => Promise<{ domain: string; containerId: string }>;
+  takeProjectScreenshot: (projectId: string, url: string) => Promise<void>;
 }
 
 export const ProjectContext = createContext<ProjectContextType | undefined>(
   undefined
 );
-
+const checkUrlStatus = async (url: string) => {
+  let status = 0;
+  while (status !== 200) {
+    try {
+      const res = await fetch(url, { method: 'HEAD' });
+      status = res.status;
+      if (status !== 200) {
+        console.log(`URL status: ${status}. Retrying...`);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    } catch (err) {
+      console.error('Error checking URL status:', err);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  }
+};
 export function ProjectProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { isAuthorized } = useAuthContext();
@@ -173,6 +193,106 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         toast.error(`Failed to update project visibility: ${error.message}`);
       },
     }
+  );
+
+  const [updateProjectPhotoMutation] = useMutation(UPDATE_PROJECT_PHOTO_URL, {
+    onCompleted: (data) => {
+      // Update projects list
+      setProjects((prev) =>
+        prev.map((project) =>
+          project.id === data.updateProjectPhoto.id
+            ? {
+                ...project,
+                photoUrl: data.updateProjectPhoto.photoUrl,
+              }
+            : project
+        )
+      );
+
+      // Update current project if it's the one being modified
+      if (curProject?.id === data.updateProjectPhoto.id) {
+        setCurProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                photoUrl: data.updateProjectPhoto.photoUrl,
+              }
+            : prev
+        );
+      }
+    },
+    onError: (error) => {
+      toast.error(`Failed to update project photo: ${error.message}`);
+    },
+  });
+
+  const takeProjectScreenshot = useCallback(
+    async (projectId: string, url: string) => {
+      try {
+        await checkUrlStatus(url);
+
+        const screenshotResponse = await fetch(
+          `/api/screenshot?url=${encodeURIComponent(url)}`
+        );
+
+        if (!screenshotResponse.ok) {
+          throw new Error('Failed to capture screenshot');
+        }
+
+        const arrayBuffer = await screenshotResponse.arrayBuffer();
+        const blob = new Blob([arrayBuffer], { type: 'image/png' });
+
+        const file = new File([blob], 'screenshot.png', { type: 'image/png' });
+
+        await updateProjectPhotoMutation({
+          variables: {
+            input: {
+              projectId,
+              file,
+            },
+          },
+        });
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    },
+    [updateProjectPhotoMutation]
+  );
+
+  const getWebUrl = useCallback(
+    async (projectPath: string) => {
+      try {
+        const response = await fetch(
+          `/api/runProject?projectPath=${encodeURIComponent(projectPath)}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to get web URL');
+        }
+
+        const data = await response.json();
+        const baseUrl = `http://${data.domain}`;
+        const project = projects.find((p) => p.projectPath === projectPath);
+        if (project) {
+          await takeProjectScreenshot(project.id, baseUrl);
+        }
+
+        return {
+          domain: data.domain,
+          containerId: data.containerId,
+        };
+      } catch (error) {
+        console.error('Error getting web URL:', error);
+        throw error;
+      }
+    },
+    [projects, updateProjectPhotoMutation]
   );
 
   const [getChatDetail] = useLazyQuery(GET_CHAT_DETAILS, {
@@ -302,8 +422,31 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           const { data } = await getChatDetail({ variables: { chatId } });
 
           if (data?.getChatDetails?.project) {
-            chatProjectCache.current.set(chatId, data.getChatDetails.project);
-            return data.getChatDetails.project;
+            const project = data.getChatDetails.project;
+            chatProjectCache.current.set(chatId, project);
+
+            try {
+              // Get web URL and wait for it to be ready
+              const response = await fetch(
+                `/api/runProject?projectPath=${encodeURIComponent(project.projectPath)}`,
+                {
+                  method: 'GET',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                }
+              );
+
+              if (response.ok) {
+                const data = await response.json();
+                const baseUrl = `http://${data.domain}`;
+                await takeProjectScreenshot(project.id, baseUrl);
+              }
+            } catch (error) {
+              console.error('Error capturing project screenshot:', error);
+            }
+
+            return project;
           }
         } catch (error) {
           console.error('Error polling chat:', error);
@@ -316,7 +459,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       chatProjectCache.current.set(chatId, null);
       return null;
     },
-    [getChatDetail]
+    [getChatDetail, updateProjectPhotoMutation]
   );
 
   const contextValue = useMemo(
@@ -333,6 +476,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       setProjectPublicStatus,
       pollChatProject,
       isLoading,
+      getWebUrl,
+      takeProjectScreenshot,
     }),
     [
       projects,
@@ -344,6 +489,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       setProjectPublicStatus,
       pollChatProject,
       isLoading,
+      getWebUrl,
     ]
   );
 

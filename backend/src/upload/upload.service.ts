@@ -99,7 +99,7 @@ export class UploadService {
         // Get the appropriate URL for the uploaded file
         const bucketUrl = this.getBucketUrl();
 
-        return { url: `${bucketUrl}/${key}`, key };
+        return { url: path.join(bucketUrl, key), key };
       } else {
         // Upload to local storage from buffer
         const directory = path.join(this.mediaDir, subdirectory);
@@ -135,8 +135,7 @@ export class UploadService {
 
         // Get the appropriate URL for the uploaded file
         const bucketUrl = this.getBucketUrl();
-
-        return { url: `${bucketUrl}/${key}`, key };
+        return { url: path.join(bucketUrl, key), key };
       } else {
         // Upload to local storage using stream
         const directory = path.join(this.mediaDir, subdirectory);

@@ -3,6 +3,10 @@ import { exec } from 'child_process';
 import * as path from 'path';
 import * as net from 'net';
 import { getProjectPath } from 'codefox-common';
+import puppetter from 'puppeteer';
+import { useMutation } from '@apollo/client/react/hooks/useMutation';
+import { toast } from 'sonner';
+import { UPDATE_PROJECT_PHOTO_URL } from '@/graphql/request';
 
 const runningContainers = new Map<
   string,
@@ -294,6 +298,7 @@ export async function GET(req: Request) {
 
   try {
     const { domain, containerId } = await buildAndRunDocker(projectPath);
+
     return NextResponse.json({
       message: 'Docker container started',
       domain,
