@@ -59,19 +59,11 @@ export function ChatSideBar({
     const event = new Event(EventEnum.NEW_CHAT);
     window.dispatchEvent(event);
   }, []);
-
   if (loading) return <SidebarSkeleton />;
   if (error) {
     console.error('Error loading chats:', error);
     return null;
   }
-
-  console.log(
-    'ChatSideBar state: isCollapsed:',
-    isCollapsed,
-    'currentChatid:',
-    currentChatid
-  );
 
   return (
     <div
