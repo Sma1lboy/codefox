@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
 import puppeteer from 'puppeteer';
 
@@ -32,9 +31,8 @@ export async function GET(req: Request) {
 
     // Take screenshot
     const screenshot = await page.screenshot({
-      path: `dsadas.png`,
       type: 'png',
-      fullPage: true,
+      fullPage: false,
     });
 
     await browser.close();

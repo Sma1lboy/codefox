@@ -133,7 +133,7 @@ export function ExpandableCard({ projects }) {
               className="relative rounded-xl overflow-hidden"
             >
               <motion.div layoutId={`image-${project.id}`}>
-                <img
+                <Image
                   src={project.image}
                   alt={project.name}
                   width={600}

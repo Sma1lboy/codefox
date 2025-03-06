@@ -151,21 +151,29 @@ async function buildAndRunDocker(
         let runCommand;
         if (TLS) {
           runCommand = `docker run -d --name ${containerName} -l "traefik.enable=true" \
-        -l "traefik.http.routers.${subdomain}.rule=Host(\\"${domain}\\")" \
-        -l "traefik.http.routers.${subdomain}.entrypoints=websecure" \
-        -l "traefik.http.routers.${subdomain}.tls=true" \
-        -l "traefik.http.services.${subdomain}.loadbalancer.server.port=5173" \
-        --network=docker_traefik_network  -p ${exposedPort}:5173 \
-        -v "${directory}:/app" \
-        ${imageName}`;
+          -l "traefik.http.routers.${subdomain}.rule=Host(\\"${domain}\\")" \
+          -l "traefik.http.routers.${subdomain}.entrypoints=websecure" \
+          -l "traefik.http.routers.${subdomain}.tls=true" \
+          -l "traefik.http.services.${subdomain}.loadbalancer.server.port=5173" \
+          -l "traefik.http.middlewares.${subdomain}-cors.headers.accessControlAllowOriginList=*" \
+          -l "traefik.http.middlewares.${subdomain}-cors.headers.accessControlAllowMethods=GET,POST,PUT,DELETE,OPTIONS" \
+          -l "traefik.http.middlewares.${subdomain}-cors.headers.accessControlAllowHeaders=*" \
+          -l "traefik.http.routers.${subdomain}.middlewares=${subdomain}-cors" \
+          --network=docker_traefik_network  -p ${exposedPort}:5173 \
+          -v "${directory}:/app" \
+          ${imageName}`;
         } else {
           runCommand = `docker run -d --name ${containerName} -l "traefik.enable=true" \
-        -l "traefik.http.routers.${subdomain}.rule=Host(\\"${domain}\\")" \
-        -l "traefik.http.routers.${subdomain}.entrypoints=web" \
-        -l "traefik.http.services.${subdomain}.loadbalancer.server.port=5173" \
-        --network=docker_traefik_network  -p ${exposedPort}:5173 \
-        -v "${directory}:/app" \
-        ${imageName}`;
+          -l "traefik.http.routers.${subdomain}.rule=Host(\\"${domain}\\")" \
+          -l "traefik.http.routers.${subdomain}.entrypoints=web" \
+          -l "traefik.http.services.${subdomain}.loadbalancer.server.port=5173" \
+          -l "traefik.http.middlewares.${subdomain}-cors.headers.accessControlAllowOriginList=*" \
+          -l "traefik.http.middlewares.${subdomain}-cors.headers.accessControlAllowMethods=GET,POST,PUT,DELETE,OPTIONS" \
+          -l "traefik.http.middlewares.${subdomain}-cors.headers.accessControlAllowHeaders=*" \
+          -l "traefik.http.routers.${subdomain}.middlewares=${subdomain}-cors" \
+          --network=docker_traefik_network  -p ${exposedPort}:5173 \
+          -v "${directory}:/app" \
+          ${imageName}`;
         }
 
         console.log(`Executing run command: ${runCommand}`);
