@@ -10,12 +10,14 @@ import { AuthModule } from '../auth/auth.module';
 import { UserService } from 'src/user/user.service';
 import { PubSub } from 'graphql-subscriptions';
 import { JwtCacheModule } from 'src/jwt-cache/jwt-cache.module';
+import { UploadModule } from 'src/upload/upload.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Chat, User, Message]),
     AuthModule,
     JwtCacheModule,
+    UploadModule,
   ],
   providers: [
     ChatResolver,

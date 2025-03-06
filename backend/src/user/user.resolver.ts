@@ -18,6 +18,7 @@ import {
 import { Logger } from '@nestjs/common';
 import { EmailConfirmationResponse } from 'src/auth/auth.resolver';
 import { ResendEmailInput } from './dto/resend-email.input';
+import { FileUpload, GraphQLUpload } from 'graphql-upload-minimal';
 
 @ObjectType()
 class LoginResponse {
@@ -26,6 +27,15 @@ class LoginResponse {
 
   @Field()
   refreshToken: string;
+}
+
+@ObjectType()
+class AvatarUploadResponse {
+  @Field()
+  success: boolean;
+
+  @Field()
+  avatarUrl: string;
 }
 
 @Resolver(() => User)
@@ -72,5 +82,42 @@ export class UserResolver {
   async me(@GetUserIdFromToken() id: string): Promise<User> {
     Logger.log('me id:', id);
     return this.userService.getUser(id);
+  }
+
+  /**
+   * Upload a new avatar for the authenticated user
+   * Uses validateAndBufferFile to ensure the image meets requirements
+   */
+  @Mutation(() => AvatarUploadResponse)
+  async uploadAvatar(
+    @GetUserIdFromToken() userId: string,
+    @Args('file', { type: () => GraphQLUpload }) file: Promise<FileUpload>,
+  ): Promise<AvatarUploadResponse> {
+    try {
+      const updatedUser = await this.userService.updateAvatar(userId, file);
+      return {
+        success: true,
+        avatarUrl: updatedUser.avartarUrl,
+      };
+    } catch (error) {
+      // Log the error
+      Logger.error(
+        `Avatar upload failed: ${error.message}`,
+        error.stack,
+        'UserResolver',
+      );
+
+      // Rethrow the exception to be handled by the GraphQL error handler
+      throw error;
+    }
+  }
+
+  /**
+   * Get the avatar URL for a user
+   */
+  @Query(() => String, { nullable: true })
+  async getUserAvatar(@Args('userId') userId: string): Promise<string | null> {
+    const user = await this.userService.getUser(userId);
+    return user ? user.avartarUrl : null;
   }
 }

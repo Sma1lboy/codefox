@@ -29,6 +29,10 @@ export class User extends SystemBaseModel {
   password: string;
 
   @Field()
+  @Column({ nullable: true })
+  avartarUrl?: string;
+
+  @Field()
   @Column({ unique: true })
   @IsEmail()
   email: string;
