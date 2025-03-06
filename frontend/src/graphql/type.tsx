@@ -364,6 +364,7 @@ export type UpdateProjectPhotoInput = {
 };
 
 export type User = {
+  avatarUrl: string;
   __typename: 'User';
   chats: Array<Chat>;
   createdAt: Scalars['Date']['output'];
