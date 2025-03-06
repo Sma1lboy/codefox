@@ -18,8 +18,11 @@ import {
   Sidebar,
   SidebarRail,
   SidebarFooter,
+  useSidebar,
 } from './ui/sidebar';
 import { ProjectContext } from './chat/code-engine/project-context';
+import { useChatList } from '@/hooks/useChatList';
+import { motion } from 'framer-motion';
 
 interface SidebarProps {
   setIsModalOpen: (value: boolean) => void;
@@ -207,3 +210,65 @@ export default memo(ChatSideBar, (prevProps, nextProps) => {
     JSON.stringify(prevProps.chats) === JSON.stringify(nextProps.chats)
   );
 });
+
+export function SidebarWrapper({
+  children,
+  isAuthorized,
+}: {
+  children: React.ReactNode;
+  isAuthorized: boolean;
+}) {
+  const { state, setOpen } = useSidebar();
+  const [isCollapsed, setIsCollapsed] = useState(state === 'collapsed');
+  const {
+    chats,
+    loading,
+    error,
+    chatListUpdated,
+    setChatListUpdated,
+    refetchChats,
+  } = useChatList();
+
+  // When user collapses or expands the sidebar, update both local state and Sidebar context
+  const handleCollapsedChange = (collapsed: boolean) => {
+    setIsCollapsed(collapsed);
+    setOpen(!collapsed);
+  };
+
+  return (
+    <div className="min-h-screen flex">
+      {isAuthorized && (
+        <motion.div
+          initial={{ x: isCollapsed ? -80 : -250, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: isCollapsed ? -80 : -250, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 80, damping: 20 }}
+          className="fixed left-0 top-0 h-full z-50"
+          style={{ width: isCollapsed ? '80px' : '250px' }}
+        >
+          <ChatSideBar
+            setIsModalOpen={() => {}}
+            isCollapsed={isCollapsed}
+            setIsCollapsed={handleCollapsedChange}
+            isMobile={false}
+            currentChatId={''}
+            chatListUpdated={chatListUpdated}
+            setChatListUpdated={setChatListUpdated}
+            chats={chats}
+            loading={loading}
+            error={error}
+            onRefetch={refetchChats}
+          />
+        </motion.div>
+      )}
+      <div
+        className="transition-all duration-300 flex justify-center w-full"
+        style={{
+          marginLeft: isAuthorized ? (isCollapsed ? '80px' : '250px') : '0px',
+        }}
+      >
+        <div className="w-full">{children}</div>
+      </div>
+    </div>
+  );
+}
