@@ -8,6 +8,9 @@ import { useMutation } from '@apollo/client/react/hooks/useMutation';
 import { toast } from 'sonner';
 import { UPDATE_PROJECT_PHOTO_URL } from '@/graphql/request';
 import { TLS } from '@/utils/const';
+import os from 'os';
+
+const isWindows = os.platform() === 'win32';
 
 const runningContainers = new Map<
   string,
@@ -81,10 +84,9 @@ async function checkExistingContainer(
 async function removeNodeModulesAndLockFiles(directory: string) {
   return new Promise<void>((resolve, reject) => {
     // Linux/macOS command. On Windows, you might need a different approach.
-    const removeCmd = `rm -rf "${path.join(directory, 'node_modules')}" \
-      "${path.join(directory, 'yarn.lock')}" \
-      "${path.join(directory, 'package-lock.json')}" \
-      "${path.join(directory, 'pnpm-lock.yaml')}"`;
+    const removeCmd = isWindows
+      ? `rd /s /q "${path.join(directory, 'node_modules')}" && del /f /q "${path.join(directory, 'yarn.lock')}" "${path.join(directory, 'package-lock.json')}" "${path.join(directory, 'pnpm-lock.yaml')}"`
+      : `rm -rf "${path.join(directory, 'node_modules')}" "${path.join(directory, 'yarn.lock')}" "${path.join(directory, 'package-lock.json')}" "${path.join(directory, 'pnpm-lock.yaml')}"`;
 
     console.log(`Cleaning up node_modules and lock files in: ${directory}`);
     exec(removeCmd, (err, stdout, stderr) => {
