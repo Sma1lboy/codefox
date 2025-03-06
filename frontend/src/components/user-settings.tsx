@@ -16,7 +16,7 @@ import {
 import { GearIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState, memo } from 'react';
+import { useMemo, useState, memo, useEffect } from 'react';
 import { EventEnum } from '../const/EventEnum';
 import { useAuthContext } from '@/providers/AuthProvider';
 
@@ -47,6 +47,17 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
     return user?.username || 'Anonymous';
   }, [isLoading, user?.username]);
 
+  const handleSettingsClick = () => {
+    // First navigate using Next.js router
+    router.push('/chat?id=setting');
+
+    // Then dispatch the event
+    setTimeout(() => {
+      const event = new Event(EventEnum.SETTING);
+      window.dispatchEvent(event);
+    }, 0);
+  };
+
   const avatarButton = useMemo(() => {
     return (
       <Button
@@ -72,11 +83,7 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
           <div
             className="flex w-full gap-2 p-1 items-center cursor-pointer"
-            onClick={() => {
-              window.history.replaceState({}, '', '/chat?id=setting');
-              const event = new Event(EventEnum.SETTING);
-              window.dispatchEvent(event);
-            }}
+            onClick={handleSettingsClick}
           >
             <GearIcon className="w-4 h-4" />
             Settings
