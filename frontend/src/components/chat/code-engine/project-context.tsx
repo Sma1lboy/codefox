@@ -101,14 +101,31 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [filePath, setFilePath] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  interface ChatProjectCacheEntry {
+    project: Project | null;
+    timestamp: number;
+    retryCount?: number;
+  }
+
+  interface ProjectSyncState {
+    lastSyncTime: number;
+    syncInProgress: boolean;
+    lastError?: Error;
+  }
+
   // Use maps with timestamps for better cache management
-  const chatProjectCache = useRef<
-    Map<string, { project: Project | null; timestamp: number }>
-  >(new Map());
+  const chatProjectCache = useRef<Map<string, ChatProjectCacheEntry>>(
+    new Map()
+  );
   const pendingOperations = useRef<Map<string, boolean>>(new Map());
+  const projectSyncState = useRef<ProjectSyncState>({
+    lastSyncTime: 0,
+    syncInProgress: false,
+  });
 
   const MAX_RETRIES = 30;
   const CACHE_TTL = 5 * 60 * 1000; // 5 minutes TTL for cache
+  const SYNC_DEBOUNCE_TIME = 1000; // 1 second debounce for sync operations
 
   // Mounted ref to prevent state updates after unmount
   const isMounted = useRef(true);
@@ -137,28 +154,77 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(intervalId);
   }, [cleanCache]);
 
-  // Effect to restore current project state if needed
-  useEffect(() => {
-    if (projects.length > 0 && !curProject) {
+  // Project state synchronization function
+  const syncProjectState = useCallback(async () => {
+    if (!isMounted.current || projectSyncState.current.syncInProgress) return;
+
+    const now = Date.now();
+    if (now - projectSyncState.current.lastSyncTime < SYNC_DEBOUNCE_TIME) {
+      return;
+    }
+
+    try {
+      projectSyncState.current.syncInProgress = true;
       const lastProjectId = localStorage.getItem('lastProjectId');
-      if (lastProjectId) {
-        const project = projects.find((p) => p.id === lastProjectId);
-        if (project && isMounted.current) {
-          setCurProject(project);
+
+      if (projects.length > 0) {
+        if (curProject) {
+          const updatedProject = projects.find((p) => p.id === curProject.id);
+          if (updatedProject) {
+            if (JSON.stringify(updatedProject) !== JSON.stringify(curProject)) {
+              setCurProject(updatedProject);
+              projectSyncState.current.lastSyncTime = now;
+            }
+          } else {
+            const fallbackProject = lastProjectId
+              ? projects.find((p) => p.id === lastProjectId)
+              : projects[0];
+            if (fallbackProject) {
+              setCurProject(fallbackProject);
+              projectSyncState.current.lastSyncTime = now;
+            }
+          }
+        } else if (lastProjectId) {
+          const savedProject = projects.find((p) => p.id === lastProjectId);
+          if (savedProject) {
+            setCurProject(savedProject);
+            projectSyncState.current.lastSyncTime = now;
+          }
+        }
+
+        // Persist current project id if valid
+        if (curProject?.id && projects.some((p) => p.id === curProject.id)) {
+          localStorage.setItem('lastProjectId', curProject.id);
         }
       }
+    } catch (error) {
+      projectSyncState.current.lastError = error as Error;
+      console.error('Error syncing project state:', error);
+    } finally {
+      projectSyncState.current.syncInProgress = false;
     }
   }, [projects, curProject]);
 
-  // Effect to save current project id
+  // Initialization and update effects
   useEffect(() => {
-    if (curProject?.id) {
+    const syncInterval = setInterval(() => {
+      if (isMounted.current && !projectSyncState.current.syncInProgress) {
+        syncProjectState();
+      }
+    }, 30000); // Sync every 30 seconds
+
+    return () => clearInterval(syncInterval);
+  }, [syncProjectState]);
+
+  // Persist current project id with validation
+  useEffect(() => {
+    if (curProject?.id && projects.some((p) => p.id === curProject.id)) {
       localStorage.setItem('lastProjectId', curProject.id);
     }
-  }, [curProject?.id]);
+  }, [curProject?.id, projects]);
 
-  // Define refetch function for projects
-  const { loading, error, refetch } = useQuery(GET_USER_PROJECTS, {
+  // Project data fetching with sync
+  const { refetch } = useQuery(GET_USER_PROJECTS, {
     fetchPolicy: 'network-only',
     skip: !isAuthorized,
     onCompleted: (data) => {
@@ -166,39 +232,78 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
       setProjects(data.getUserProjects);
 
-      // If we have a current project in the list, update it
-      if (curProject) {
-        const updatedProject = data.getUserProjects.find(
-          (p) => p.id === curProject.id
-        );
-        if (
-          updatedProject &&
-          JSON.stringify(updatedProject) !== JSON.stringify(curProject)
-        ) {
-          setCurProject(updatedProject);
-        }
+      // Trigger state sync after data update
+      const now = Date.now();
+      if (now - projectSyncState.current.lastSyncTime >= SYNC_DEBOUNCE_TIME) {
+        syncProjectState().catch((error) => {
+          console.error('Error during project sync:', error);
+          projectSyncState.current.lastError = error as Error;
+        });
       }
     },
     onError: (error) => {
       console.error('Error fetching projects:', error);
+      projectSyncState.current.lastError = error;
+
       if (isMounted.current) {
         toast.error('Failed to fetch projects. Retrying...');
-        // Retry after 5 seconds on error
-        setTimeout(() => {
-          if (isMounted.current) refetch();
+        setTimeout(async () => {
+          if (isMounted.current && !projectSyncState.current.syncInProgress) {
+            try {
+              await refetch();
+            } catch (retryError) {
+              console.error('Retry failed:', retryError);
+            }
+          }
         }, 5000);
       }
     },
   });
 
-  // Explicit refresh function
+  // Enhanced refresh function with sync and error handling
   const refreshProjects = useCallback(async () => {
+    if (projectSyncState.current.syncInProgress) {
+      console.debug('Refresh skipped - sync in progress');
+      return;
+    }
+
     try {
+      projectSyncState.current.syncInProgress = true;
       await refetch();
+
+      // Reset error state on successful refresh
+      projectSyncState.current.lastError = undefined;
+
+      // Trigger state sync if enough time has passed
+      const now = Date.now();
+      if (now - projectSyncState.current.lastSyncTime >= SYNC_DEBOUNCE_TIME) {
+        await syncProjectState();
+      }
     } catch (error) {
       console.error('Error refreshing projects:', error);
+      if (isMounted.current) {
+        projectSyncState.current.lastError = error as Error;
+        toast.error('Failed to refresh projects');
+      }
+    } finally {
+      projectSyncState.current.syncInProgress = false;
     }
-  }, [refetch]);
+  }, [refetch, syncProjectState, SYNC_DEBOUNCE_TIME]);
+
+  // Auto-refresh setup
+  useEffect(() => {
+    if (!isAuthorized) return;
+
+    const refreshInterval = setInterval(() => {
+      if (isMounted.current && !projectSyncState.current.syncInProgress) {
+        refreshProjects().catch((error) => {
+          console.error('Auto-refresh failed:', error);
+        });
+      }
+    }, 60000); // Auto-refresh every minute
+
+    return () => clearInterval(refreshInterval);
+  }, [refreshProjects, isAuthorized]);
 
   // Create project mutation
   const [createProject] = useMutation(CREATE_PROJECT, {
@@ -617,16 +722,21 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           retries++;
         }
 
-        // Check cache again after waiting
+        const currentTime = Date.now();
         const updatedCache = chatProjectCache.current.get(chatId);
-        if (updatedCache) {
+        if (updatedCache && currentTime - updatedCache.timestamp < CACHE_TTL) {
           return updatedCache.project;
         }
       }
 
-      pendingOperations.current.set(operationKey, true);
+      if (projectSyncState.current.syncInProgress) {
+        console.debug('Poll skipped - sync in progress');
+        return cachedData?.project ?? null;
+      }
 
+      pendingOperations.current.set(operationKey, true);
       let retries = 0;
+
       try {
         while (retries < MAX_RETRIES) {
           try {
@@ -634,14 +744,26 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
             if (data?.getChatDetails?.project) {
               const project = data.getChatDetails.project;
+              const now = Date.now();
 
-              // Update cache with timestamp
+              // Update cache with timestamp and retry count
               chatProjectCache.current.set(chatId, {
                 project,
-                timestamp: Date.now(),
+                timestamp: now,
+                retryCount: retries,
               });
 
-              // Try to get web URL in background without blocking
+              // Trigger state sync if needed
+              if (
+                now - projectSyncState.current.lastSyncTime >=
+                SYNC_DEBOUNCE_TIME
+              ) {
+                syncProjectState().catch((error) => {
+                  console.warn('Background sync failed:', error);
+                });
+              }
+
+              // Try to get web URL in background
               if (isMounted.current && project.projectPath) {
                 getWebUrl(project.projectPath).catch((error) => {
                   console.warn('Background web URL fetch failed:', error);
@@ -655,28 +777,34 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
               `Error polling chat (attempt ${retries + 1}/${MAX_RETRIES}):`,
               error
             );
+            projectSyncState.current.lastError = error as Error;
           }
 
+          if (!isMounted.current) return null;
           await new Promise((resolve) => setTimeout(resolve, 6000));
           retries++;
-
-          // If component unmounted during polling, stop
-          if (!isMounted.current) {
-            return null;
-          }
         }
 
-        // Cache the null result to prevent repeated polling
+        // Cache the null result with retry info
         chatProjectCache.current.set(chatId, {
           project: null,
           timestamp: Date.now(),
+          retryCount: retries,
         });
+
         return null;
       } finally {
         pendingOperations.current.delete(operationKey);
       }
     },
-    [getChatDetail, getWebUrl, MAX_RETRIES, CACHE_TTL]
+    [
+      getChatDetail,
+      getWebUrl,
+      syncProjectState,
+      MAX_RETRIES,
+      CACHE_TTL,
+      SYNC_DEBOUNCE_TIME,
+    ]
   );
 
   const contextValue = useMemo(

@@ -41,6 +41,7 @@ export function CodeEngine({
   const [fileStructureData, setFileStructureData] = useState<
     Record<TreeItemIndex, TreeItem<any>>
   >({});
+  console.log(fileStructureData);
   const theme = useTheme();
 
   const [activeTab, setActiveTab] = useState<'preview' | 'code' | 'console'>(
