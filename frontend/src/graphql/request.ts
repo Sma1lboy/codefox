@@ -101,6 +101,7 @@ export const GET_USER_INFO = gql`
     me {
       username
       email
+      avatarUrl
     }
   }
 `;

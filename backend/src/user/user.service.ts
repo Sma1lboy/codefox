@@ -57,7 +57,7 @@ export class UserService {
     const result = await this.uploadService.upload(buffer, mimetype, 'avatars');
 
     // Update the user's avatar URL
-    user.avartarUrl = result.url;
+    user.avatarUrl = result.url;
     return this.userRepository.save(user);
   }
 }

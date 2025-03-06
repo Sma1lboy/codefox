@@ -30,7 +30,7 @@ export class User extends SystemBaseModel {
 
   @Field()
   @Column({ nullable: true })
-  avartarUrl?: string;
+  avatarUrl?: string;
 
   @Field()
   @Column({ unique: true })

@@ -97,7 +97,7 @@ export class UserResolver {
       const updatedUser = await this.userService.updateAvatar(userId, file);
       return {
         success: true,
-        avatarUrl: updatedUser.avartarUrl,
+        avatarUrl: updatedUser.avatarUrl,
       };
     } catch (error) {
       // Log the error
@@ -118,6 +118,6 @@ export class UserResolver {
   @Query(() => String, { nullable: true })
   async getUserAvatar(@Args('userId') userId: string): Promise<string | null> {
     const user = await this.userService.getUser(userId);
-    return user ? user.avartarUrl : null;
+    return user ? user.avatarUrl : null;
   }
 }
