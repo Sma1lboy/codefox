@@ -250,3 +250,20 @@ export const GET_SUBSCRIBED_PROJECTS = gql`
     }
   }
 `;
+
+// mutation to upload a user avatar
+export const UPLOAD_AVATAR = gql`
+  mutation UploadAvatar($file: Upload!) {
+    uploadAvatar(file: $file) {
+      success
+      avatarUrl
+    }
+  }
+`;
+
+//query to get user avatar
+export const GET_USER_AVATAR = gql`
+  query GetUserAvatar($userId: String!) {
+    getUserAvatar(userId: $userId)
+  }
+`;
