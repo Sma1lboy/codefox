@@ -6,6 +6,7 @@ import { UPLOAD_AVATAR } from '../graphql/request';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
+import { useAuthContext } from '@/providers/AuthProvider';
 
 interface AvatarUploaderProps {
   currentAvatarUrl: string;
@@ -21,6 +22,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
   const [uploadAvatar, { loading }] = useMutation(UPLOAD_AVATAR);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const { refreshUserInfo } = useAuthContext();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,6 +62,9 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
       if (data?.uploadAvatar?.success) {
         onAvatarChange(data.uploadAvatar.avatarUrl);
         toast.success('Avatar updated successfully');
+
+        // Refresh the user information in the auth context
+        await refreshUserInfo();
       }
     } catch (error) {
       console.error('Error uploading avatar:', error);

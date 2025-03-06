@@ -69,7 +69,11 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
       >
         <SmallAvatar className="flex items-center justify-center">
           {/* Use empty string fallback instead of undefined to avoid React warnings */}
-          <AvatarImage src={user?.avatarUrl || ''} alt="User" />
+          <AvatarImage
+            src={user?.avatarUrl || ''}
+            alt="User"
+            key={user?.avatarUrl}
+          />
           <AvatarFallback>{avatarFallback}</AvatarFallback>
         </SmallAvatar>
         {!isSimple && <span className="truncate">{displayUsername}</span>}
