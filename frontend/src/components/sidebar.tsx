@@ -9,6 +9,7 @@ import { SideBarItem } from './sidebar-item';
 import { Chat } from '@/graphql/type';
 import { EventEnum } from '../const/EventEnum';
 import { useRouter } from 'next/navigation';
+import { FixedSizeList } from 'react-window';
 
 import {
   SidebarContent,
@@ -38,7 +39,44 @@ interface SidebarProps {
   onRefetch: () => void;
 }
 
-export function ChatSideBar({
+// Row renderer for react-window
+const ChatRow = memo(
+  ({ index, style, data }: any) => {
+    const { chats, currentChatId, setCurProject, pollChatProject } = data;
+    const chat = chats[index];
+
+    const handleSelect = useCallback(() => {
+      setCurProject(null);
+      pollChatProject(chat.id).then((p) => {
+        setCurProject(p);
+      });
+    }, [chat.id, setCurProject, pollChatProject]);
+
+    return (
+      <div style={style}>
+        <SideBarItem
+          key={chat.id}
+          id={chat.id}
+          currentChatId={currentChatId}
+          title={chat.title}
+          onSelect={handleSelect}
+          refetchChats={data.onRefetch}
+        />
+      </div>
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.data.chats[prevProps.index].id ===
+        nextProps.data.chats[nextProps.index].id &&
+      prevProps.data.currentChatId === nextProps.data.currentChatId
+    );
+  }
+);
+
+ChatRow.displayName = 'ChatRow';
+
+function ChatSideBarComponent({
   setIsModalOpen,
   isCollapsed,
   setIsCollapsed,
@@ -57,6 +95,15 @@ export function ChatSideBar({
     const event = new Event(EventEnum.NEW_CHAT);
     window.dispatchEvent(event);
   }, []);
+
+  const handleChatSelect = useCallback(
+    (chatId: string) => {
+      router.push(`/chat?id=${chatId}`);
+      setCurrentChatid(chatId);
+    },
+    [router]
+  );
+
   if (loading) return <SidebarSkeleton />;
   if (error) {
     console.error('Error loading chats:', error);
@@ -78,8 +125,7 @@ export function ChatSideBar({
               <Button
                 onClick={() => router.push('/')}
                 variant="ghost"
-                className="inline-flex items-center gap-2 pl-0 
-          rounded-md  ease-in-out"
+                className="inline-flex items-center gap-2 pl-0 rounded-md ease-in-out"
               >
                 <Image
                   src="/codefox.svg"
@@ -93,9 +139,8 @@ export function ChatSideBar({
                 </span>
               </Button>
 
-              {/* SidebarTrigger 保证在 CodeFox 按钮的中间 */}
               <SidebarTrigger
-                className="flex items-center justify-center w-12 h-12 "
+                className="flex items-center justify-center w-12 h-12"
                 onClick={() => setIsCollapsed(!isCollapsed)}
               />
             </div>
@@ -112,7 +157,7 @@ export function ChatSideBar({
         {/* Divider Line */}
         <div className="border-t border-dotted border-gray-300 my-2 w-full mx-auto" />
 
-        {/* New Project 按钮 - 依然占据整行 */}
+        {/* New Project Button */}
         <div
           className={`flex ${isCollapsed ? 'justify-center items-center w-full px-0' : ''} w-full mt-4`}
         >
@@ -156,35 +201,33 @@ export function ChatSideBar({
           </Button>
         </div>
 
-        {/* 聊天列表 */}
+        {/* Chat List with Virtualization */}
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupContent>
-              {loading
-                ? 'Loading...'
-                : !isCollapsed &&
-                  chats.map((chat) => (
-                    <SideBarItem
-                      key={chat.id}
-                      id={chat.id}
-                      currentChatId={currentChatid}
-                      title={chat.title}
-                      onSelect={() => {
-                        setCurProject(null);
-                        pollChatProject(chat.id).then((p) => {
-                          setCurProject(p);
-                        });
-                        router.push(`/chat?id=${chat.id}`);
-                        setCurrentChatid(chat.id);
-                      }}
-                      refetchChats={onRefetch}
-                    />
-                  ))}
+              {!isCollapsed && chats.length > 0 && (
+                <FixedSizeList
+                  height={Math.min(window.innerHeight - 300, chats.length * 56)} // 56px is the height of each chat item
+                  width="100%"
+                  itemCount={chats.length}
+                  itemSize={56}
+                  itemData={{
+                    chats,
+                    currentChatId: currentChatid,
+                    setCurProject,
+                    pollChatProject,
+                    onRefetch,
+                    onSelect: handleChatSelect,
+                  }}
+                >
+                  {ChatRow}
+                </FixedSizeList>
+              )}
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
 
-        {/* 底部设置 */}
+        {/* Footer Settings */}
         <SidebarFooter
           className={`mt-auto ${isCollapsed ? 'flex justify-center px-0' : ''}`}
         >
@@ -200,16 +243,23 @@ export function ChatSideBar({
   );
 }
 
-export default memo(ChatSideBar, (prevProps, nextProps) => {
-  return (
-    prevProps.isCollapsed === nextProps.isCollapsed &&
-    prevProps.isMobile === nextProps.isMobile &&
-    prevProps.chatListUpdated === nextProps.chatListUpdated &&
-    prevProps.loading === nextProps.loading &&
-    prevProps.error === nextProps.error &&
-    JSON.stringify(prevProps.chats) === JSON.stringify(nextProps.chats)
-  );
-});
+// Optimized memo comparison
+export const ChatSideBar = memo(
+  ChatSideBarComponent,
+  (prevProps, nextProps) => {
+    if (prevProps.isCollapsed !== nextProps.isCollapsed) return false;
+    if (prevProps.loading !== nextProps.loading) return false;
+    if (prevProps.error !== nextProps.error) return false;
+    if (prevProps.chats.length !== nextProps.chats.length) return false;
+
+    // Only compare chat IDs instead of full objects
+    const prevIds = prevProps.chats.map((chat) => chat.id).join(',');
+    const nextIds = nextProps.chats.map((chat) => chat.id).join(',');
+    return prevIds === nextIds;
+  }
+);
+
+ChatSideBar.displayName = 'ChatSideBar';
 
 export function SidebarWrapper({
   children,
@@ -230,10 +280,13 @@ export function SidebarWrapper({
   } = useChatList();
 
   // When user collapses or expands the sidebar, update both local state and Sidebar context
-  const handleCollapsedChange = (collapsed: boolean) => {
-    setIsCollapsed(collapsed);
-    setOpen(!collapsed);
-  };
+  const handleCollapsedChange = useCallback(
+    (collapsed: boolean) => {
+      setIsCollapsed(collapsed);
+      setOpen(!collapsed);
+    },
+    [setOpen]
+  );
 
   return (
     <div className="min-h-screen flex">
