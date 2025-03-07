@@ -11,7 +11,6 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
-import puppeteer from 'puppeteer';
 import { URL_PROTOCOL_PREFIX } from '@/utils/const';
 
 function PreviewContent({
@@ -132,6 +131,10 @@ function PreviewContent({
     setScale((prevScale) => Math.max(prevScale - 0.1, 0.5)); // 最小缩放比例为 0.5
   };
 
+  // print all stat
+  console.log('baseUrl outside:', baseUrl);
+  console.log('current project: ', curProject);
+
   return (
     <div className="flex flex-col w-full h-full">
       {/* URL Bar */}
@@ -246,9 +249,9 @@ function PreviewContent({
 }
 
 export default function WebPreview() {
-  const context = useContext(ProjectContext);
+  const { curProject, getWebUrl } = useContext(ProjectContext);
 
-  if (!context) {
+  if (!curProject || !getWebUrl) {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-sm text-muted-foreground">Loading project...</p>
@@ -256,10 +259,5 @@ export default function WebPreview() {
     );
   }
 
-  return (
-    <PreviewContent
-      curProject={context.curProject}
-      getWebUrl={context.getWebUrl}
-    />
-  );
+  return <PreviewContent curProject={curProject} getWebUrl={getWebUrl} />;
 }

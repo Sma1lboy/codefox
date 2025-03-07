@@ -18,9 +18,8 @@ import { DELETE_CHAT } from '@/graphql/request';
 import { cn } from '@/lib/utils';
 import { useMutation } from '@apollo/client';
 import { MoreHorizontal, Trash2 } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { memo, useState } from 'react';
 import { toast } from 'sonner';
 import { EventEnum } from '../const/EventEnum';
 
@@ -32,7 +31,7 @@ interface SideBarItemProps {
   refetchChats: () => void;
 }
 
-export function SideBarItem({
+function SideBarItemComponent({
   id,
   currentChatId,
   title,
@@ -41,27 +40,13 @@ export function SideBarItem({
 }: SideBarItemProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isSelected, setIsSelected] = useState(false);
-  const [variant, setVariant] = useState<
-    'ghost' | 'link' | 'secondary' | 'default' | 'destructive' | 'outline'
-  >('ghost');
 
-  useEffect(() => {
-    const selected = currentChatId === id;
-    setIsSelected(selected);
-    if (selected) {
-      setVariant('secondary'); // 类型安全
-    } else {
-      setVariant('ghost'); // 类型安全
-    }
-    refetchChats();
-    console.log(`update sidebar ${currentChatId}`);
-  }, [currentChatId]);
+  const isSelected = currentChatId === id;
+  const variant = isSelected ? 'secondary' : 'ghost';
 
   const [deleteChat] = useMutation(DELETE_CHAT, {
     onCompleted: () => {
       toast.success('Chat deleted successfully');
-      console.log(`${id} ${isSelected}`);
       if (isSelected) {
         window.history.replaceState({}, '', '/');
         const event = new Event(EventEnum.NEW_CHAT);
@@ -119,7 +104,7 @@ export function SideBarItem({
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 w-10 h-10 rounded-md hover:bg-gray-200"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 w-10 h-10 rounded-md hover:bg-gray-200 dropdown-trigger"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -178,3 +163,14 @@ export function SideBarItem({
     </div>
   );
 }
+
+export const SideBarItem = memo(
+  SideBarItemComponent,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.currentChatId === nextProps.currentChatId &&
+      prevProps.id === nextProps.id &&
+      prevProps.title === nextProps.title
+    );
+  }
+);

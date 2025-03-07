@@ -24,7 +24,7 @@ export function BaseProviders({ children }: ProvidersProps) {
         <AuthProvider>
           <ProjectProvider>
             {children}
-            <Toaster position="top-right" />
+            <Toaster position="bottom-right" />
           </ProjectProvider>
         </AuthProvider>
       </DynamicApolloProvider>

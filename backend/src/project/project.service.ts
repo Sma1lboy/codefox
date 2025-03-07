@@ -190,8 +190,9 @@ export class ProjectService {
       }
 
       // Create chat with proper title
-      const defaultChat = await this.chatService.createChat(userId, {
+      const defaultChat = await this.chatService.createChatWithMessage(userId, {
         title: projectName || 'New Project Chat',
+        message: input.description,
       });
 
       // Perform the rest of project creation asynchronously
@@ -550,6 +551,7 @@ export class ProjectService {
       }
 
       // Create default chat for the new project
+      // FIXME(Sma1lboy): this is not correct, we should copy chat as well
       const defaultChat = await this.chatService.createChat(userId, {
         title: `Fork of ${sourceProject.projectName}`,
       });

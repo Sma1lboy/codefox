@@ -110,8 +110,8 @@ export default function Chat() {
       key="with-chat"
     >
       <ResizablePanel
-        defaultSize={50}
-        minSize={20}
+        defaultSize={15}
+        minSize={15}
         maxSize={80}
         className="h-full"
       >
@@ -131,7 +131,7 @@ export default function Chat() {
       </ResizablePanel>
       <ResizableHandle withHandle className="hidden md:flex" />
       <ResizablePanel
-        defaultSize={50}
+        defaultSize={80}
         minSize={20}
         maxSize={80}
         className="h-full overflow-auto"
