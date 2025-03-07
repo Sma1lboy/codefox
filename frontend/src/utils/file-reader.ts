@@ -45,6 +45,7 @@ export class FileReader {
       const items = await fs.readdir(dir, { withFileTypes: true });
 
       for (const item of items) {
+        if (item.name.includes('node_modules')) continue;
         const fullPath = path.join(dir, item.name);
         const relativePath = path.relative(this.basePath, fullPath);
 
