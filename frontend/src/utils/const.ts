@@ -1,10 +1,4 @@
 /**
- * @description: API URL
- * @type {string}
- * @example 'https://api.example.com'
- */
-
-/**
  * Validate if the current environment is using TLS
  */
 export const TLS =

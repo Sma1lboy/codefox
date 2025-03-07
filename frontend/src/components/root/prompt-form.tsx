@@ -149,7 +149,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               placeholder=""
-              className="w-full min-h-[200px] py-6 px-6 pr-12 text-lg border border-transparent rounded-lg focus:outline-none focus:ring-0 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 resize-none font-normal"
+              className="w-full min-h-[200px] py-6 px-6 pr-12 text-lg border border-transparent rounded-lg focus:outline-none focus:ring-0 bg-white dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 resize-none font-normal"
               disabled={isLoading || isRegenerating}
               rows={4}
               style={{ paddingBottom: '48px' }} // Extra padding at bottom to avoid text touching buttons
