@@ -20,6 +20,8 @@ interface CodeTabProps {
   newCode: string;
   isFileStructureLoading: boolean;
   updateSavingStatus: (value: string) => void;
+  filePath: string | null;
+  setFilePath: (path: string | null) => void;
 }
 
 const CodeTab = ({
@@ -28,46 +30,51 @@ const CodeTab = ({
   newCode,
   isFileStructureLoading,
   updateSavingStatus,
+  filePath,
+  setFilePath,
 }: CodeTabProps) => {
   const theme = useTheme();
-  const { filePath, curProject } = useContext(ProjectContext);
   const [isExplorerCollapsed, setIsExplorerCollapsed] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const [type, setType] = useState('javascript');
+
+  useEffect(() => {
+    if (filePath) {
+      const extension = filePath.split('.').pop()?.toLowerCase();
+      switch (extension) {
+        case 'js':
+          setType('javascript');
+          break;
+        case 'ts':
+          setType('typescript');
+          break;
+        case 'jsx':
+        case 'tsx':
+          setType('typescriptreact');
+          break;
+        case 'html':
+          setType('html');
+          break;
+        case 'css':
+          setType('css');
+          break;
+        case 'json':
+          setType('json');
+          break;
+        case 'md':
+          setType('markdown');
+          break;
+        default:
+          setType('plaintext');
+      }
+    }
+  }, [filePath]);
 
   // Handle editor mount
   const handleEditorMount = (editorInstance) => {
     editorRef.current = editorInstance;
     editorInstance.getDomNode().style.position = 'absolute';
   };
-
-  // Effect: Fetch file content when filePath or projectId changes
-  useEffect(() => {
-    async function getCode() {
-      if (!curProject || !filePath) return;
-
-      const file_node = fileStructureData[`root/${filePath}`];
-      if (filePath == '' || !file_node) return;
-      const isFolder = file_node.isFolder;
-      if (isFolder) return;
-
-      try {
-        setIsLoading(true);
-        const res = await fetch(
-          `/api/file?path=${encodeURIComponent(`${curProject.projectPath}/${filePath}`)}`
-        ).then((res) => res.json());
-
-        // We use callback prop to update parent state
-        updateSavingStatus(res.content);
-        setType(res.type);
-        setIsLoading(false);
-      } catch (error: any) {
-        console.error(error.message);
-      }
-    }
-
-    getCode();
-  }, [filePath, curProject, fileStructureData, updateSavingStatus]);
 
   return (
     <>
@@ -82,8 +89,9 @@ const CodeTab = ({
       >
         <FileStructure
           data={fileStructureData}
-          filePath={filePath}
+          filePath={filePath || ''}
           isLoading={isFileStructureLoading}
+          onFileSelect={setFilePath}
         />
       </motion.div>
 

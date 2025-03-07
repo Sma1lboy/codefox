@@ -1,5 +1,5 @@
 'use client';
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   StaticTreeDataProvider,
   Tree,
@@ -9,7 +9,6 @@ import {
 } from 'react-complex-tree';
 import 'react-complex-tree/lib/style-modern.css';
 import { Loader } from 'lucide-react';
-import { ProjectContext } from './project-context';
 
 export interface FileNodeType {
   name: string;
@@ -21,28 +20,30 @@ interface FileStructureProps {
   filePath: string;
   data: Record<TreeItemIndex, TreeItem<string>>;
   isLoading?: boolean;
+  onFileSelect?: (path: string | null) => void;
 }
 
 export default function FileStructure({
   filePath,
   data,
   isLoading = false,
+  onFileSelect,
 }: FileStructureProps) {
-  const { setFilePath } = useContext(ProjectContext);
-  const [dataProvider, setDataprovider] = useState(
+  const [dataProvider, setDataProvider] = useState(
     new StaticTreeDataProvider(data, (item, newName) => ({
       ...item,
       data: newName,
     }))
   );
 
-  // Determine if we're in a loading state (either from prop or empty data)
+  // 判断是否显示加载状态
   const isEmpty = Object.keys(data).length === 0;
   const showLoading = isLoading || isEmpty;
 
+  // 当数据变化时更新数据提供者
   useEffect(() => {
     if (!isEmpty) {
-      setDataprovider(
+      setDataProvider(
         new StaticTreeDataProvider(data, (item, newName) => ({
           ...item,
           data: newName,
@@ -51,10 +52,43 @@ export default function FileStructure({
     }
   }, [data, isEmpty]);
 
+  // 处理选择文件事件
+  const handleSelectItems = (items) => {
+    if (items.length > 0) {
+      const newPath = items[0].toString().replace(/^root\//, '');
+      const selectedItem = data[items[0]];
+
+      // 只有当选择的是文件时才设置文件路径
+      if (selectedItem && !selectedItem.isFolder) {
+        onFileSelect?.(newPath);
+      }
+    }
+  };
+
+  // 根据文件路径获取要展开的文件夹
+  const getExpandedFolders = () => {
+    if (!filePath) return ['root'];
+
+    const parts = filePath.split('/');
+    const expandedFolders = ['root'];
+
+    // 逐级构建路径
+    for (let i = 0; i < parts.length - 1; i++) {
+      const folderPath = parts.slice(0, i + 1).join('/');
+      expandedFolders.push(`root/${folderPath}`);
+    }
+
+    return expandedFolders;
+  };
+
   return (
     <div className="relative p-4 prose dark:prose-invert">
       <h3 className="mb-2 font-bold">File Explorer</h3>
-      {filePath && <div className="mt-4 p-2 text-sm break-all">{filePath}</div>}
+      {filePath && (
+        <div className="mt-4 p-2 text-sm break-all bg-muted/20 rounded-md">
+          <span className="font-medium">Current file:</span> {filePath}
+        </div>
+      )}
 
       {showLoading ? (
         <div className="flex flex-col items-center justify-center h-48 space-y-3">
@@ -65,12 +99,13 @@ export default function FileStructure({
         <UncontrolledTreeEnvironment
           dataProvider={dataProvider}
           getItemTitle={(item) => item.data}
-          viewState={{}}
-          onSelectItems={(items) => {
-            if (items.length > 0) {
-              setFilePath(items[0].toString().replace(/^root\//, ''));
-            }
+          viewState={{
+            // 展开包含当前文件的目录
+            ['fileTree']: {
+              expandedItems: getExpandedFolders(),
+            },
           }}
+          onSelectItems={handleSelectItems}
           renderItem={({ item, depth, children, title, context, arrow }) => {
             const InteractiveComponent = context.isRenaming ? 'div' : 'button';
             const type = context.isRenaming ? undefined : 'button';

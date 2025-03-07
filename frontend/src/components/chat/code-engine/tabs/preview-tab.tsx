@@ -1,7 +1,12 @@
 'use client';
+import WebPreview from '../web-view';
 
-const ConsoleTab = () => {
-  return <div className="flex-1 p-4 text-sm">Console Content (Mock)</div>;
+const PreviewTab = () => {
+  return (
+    <div className="w-full h-full">
+      <WebPreview />
+    </div>
+  );
 };
 
-export default ConsoleTab;
+export default PreviewTab;
