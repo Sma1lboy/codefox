@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, forwardRef, useImperativeHandle } from 'react';
+import { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import {
   SendIcon,
   FileUp,
@@ -9,6 +9,7 @@ import {
   Lock,
   Loader2,
   Cpu,
+  Command,
 } from 'lucide-react';
 import Typewriter from 'typewriter-effect';
 import { AnimatedInputBorder } from '@/components/ui/moving-border';
@@ -91,6 +92,16 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
       }
     );
 
+    // Handle form submission
+    const handleSubmit = () => {
+      if (isLoading || isRegenerating) return;
+      if (!isAuthorized) {
+        onAuthRequired();
+      } else {
+        onSubmit();
+      }
+    };
+
     // Handle magic enhance button click
     const handleMagicEnhance = () => {
       // Don't do anything if already loading
@@ -117,6 +128,35 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
       // Toggle the enhanced state regardless
       setIsEnhanced(!isEnhanced);
     };
+
+    // Set up keyboard shortcut for submission
+    useEffect(() => {
+      const handleKeyDown = (e) => {
+        // Skip if currently loading, regenerating, or enhancing
+        if (isLoading || isRegenerating) {
+          return;
+        }
+
+        // Check for Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux)
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+          e.preventDefault();
+          handleSubmit();
+        }
+        // Also support Alt+Enter as an alternative shortcut
+        if (e.altKey && e.key === 'Enter') {
+          e.preventDefault();
+          handleSubmit();
+        }
+      };
+
+      // Add event listener
+      document.addEventListener('keydown', handleKeyDown);
+
+      // Clean up
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+      };
+    }, [isAuthorized, isLoading, isRegenerating]);
 
     // Expose methods to parent component
     useImperativeHandle(ref, () => ({
@@ -279,14 +319,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
                   (isLoading || isRegenerating) &&
                     'opacity-80 cursor-not-allowed'
                 )}
-                onClick={() => {
-                  if (isLoading || isRegenerating) return;
-                  if (!isAuthorized) {
-                    onAuthRequired();
-                  } else {
-                    onSubmit();
-                  }
-                }}
+                onClick={handleSubmit}
                 disabled={isLoading || isRegenerating}
               >
                 {isLoading ? (
@@ -298,6 +331,9 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
                   <>
                     <SendIcon size={18} className="mr-2" />
                     <span>Create</span>
+                    <span className="ml-2 text-xs opacity-80 border-l border-white pl-2">
+                      Alt+↵
+                    </span>
                   </>
                 )}
               </Button>
