@@ -6,7 +6,7 @@ import { TreeItem, TreeItemIndex } from 'react-complex-tree';
 import { ProjectContext } from './project-context';
 import CodeTab from './tabs/code-tab';
 import PreviewTab from './tabs/preview-tab';
-import ConsoleTab from './tabs/preview-tab';
+import ConsoleTab from './tabs/console-tab';
 import ResponsiveToolbar from './responsive-toolbar';
 import SaveChangesBar from './save-changes-bar';
 
@@ -19,14 +19,14 @@ export function CodeEngine({
   isProjectReady?: boolean;
   projectId?: string;
 }) {
-  // Initialize state and context
-  const { curProject, filePath } = useContext(ProjectContext);
-  console.log('filepath', filePath);
-  console.log('chatid', chatId);
-  console.log('projectid', projectId);
+  const { curProject, projectLoading, pollChatProject } =
+    useContext(ProjectContext);
+  const [localProject, setLocalProject] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filePath, setFilePath] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [preCode, setPrecode] = useState('// some comment');
-  const [newCode, setCode] = useState('// some comment');
+  const [preCode, setPrecode] = useState('// Loading...');
+  const [newCode, setCode] = useState('// Loading...');
   const [activeTab, setActiveTab] = useState<'preview' | 'code' | 'console'>(
     'code'
   );
@@ -35,22 +35,60 @@ export function CodeEngine({
     Record<TreeItemIndex, TreeItem<any>>
   >({});
 
-  // Reference to the editor instance
   const editorRef = useRef(null);
+  const projectPathRef = useRef(null);
 
-  // Fetch file structure function (only for code tab)
+  // Poll for project if needed using chatId
+  useEffect(() => {
+    if (!curProject && chatId && !projectLoading) {
+      const loadProjectFromChat = async () => {
+        try {
+          setIsLoading(true);
+          const project = await pollChatProject(chatId);
+          if (project) {
+            setLocalProject(project);
+          }
+        } catch (error) {
+          console.error('Failed to load project from chat:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      loadProjectFromChat();
+    } else {
+      setIsLoading(projectLoading);
+    }
+  }, [chatId, curProject, projectLoading, pollChatProject]);
+
+  // Use either curProject from context or locally polled project
+  const activeProject = curProject || localProject;
+
+  // Update projectPathRef when project changes
+  useEffect(() => {
+    if (activeProject?.projectPath) {
+      projectPathRef.current = activeProject.projectPath;
+    }
+  }, [activeProject]);
+
   async function fetchFiles() {
-    if (!curProject?.projectPath) {
+    const projectPath = activeProject?.projectPath || projectPathRef.current;
+    if (!projectPath) {
       return;
     }
 
     try {
       setIsFileStructureLoading(true);
-      const response = await fetch(
-        `/api/project?path=${curProject.projectPath}`
-      );
+      const response = await fetch(`/api/project?path=${projectPath}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file structure: ${response.status}`);
+      }
       const data = await response.json();
-      setFileStructureData(data.res || {});
+      if (data && data.res) {
+        setFileStructureData(data.res);
+      } else {
+        console.warn('Empty or invalid file structure data received');
+      }
     } catch (error) {
       console.error('Error fetching file structure:', error);
     } finally {
@@ -58,27 +96,99 @@ export function CodeEngine({
     }
   }
 
-  // Effect: Fetch file structure when needed for code tab
+  // Effect for loading file structure when project is ready
   useEffect(() => {
-    if (
-      activeTab === 'code' &&
+    const shouldFetchFiles =
+      isProjectReady &&
+      (activeProject?.projectPath || projectPathRef.current) &&
       Object.keys(fileStructureData).length === 0 &&
-      curProject?.projectPath
-    ) {
+      !isFileStructureLoading;
+
+    if (shouldFetchFiles) {
       fetchFiles();
     }
-  }, [activeTab, fileStructureData, curProject?.projectPath]);
+  }, [
+    isProjectReady,
+    activeProject,
+    isFileStructureLoading,
+    fileStructureData,
+  ]);
 
-  // Reset code to previous state
+  // Effect for selecting default file once structure is loaded
+  useEffect(() => {
+    if (
+      !isFileStructureLoading &&
+      Object.keys(fileStructureData).length > 0 &&
+      !filePath
+    ) {
+      selectDefaultFile();
+    }
+  }, [isFileStructureLoading, fileStructureData, filePath]);
+
+  // Retry mechanism for fetching files if needed
+  useEffect(() => {
+    let retryTimeout;
+
+    if (
+      isProjectReady &&
+      activeProject?.projectPath &&
+      Object.keys(fileStructureData).length === 0 &&
+      !isFileStructureLoading
+    ) {
+      retryTimeout = setTimeout(() => {
+        console.log('Retrying file structure fetch...');
+        fetchFiles();
+      }, 3000);
+    }
+
+    return () => {
+      if (retryTimeout) clearTimeout(retryTimeout);
+    };
+  }, [
+    isProjectReady,
+    activeProject,
+    fileStructureData,
+    isFileStructureLoading,
+  ]);
+
+  function selectDefaultFile() {
+    const defaultFiles = [
+      'src/App.tsx',
+      'src/App.js',
+      'src/index.tsx',
+      'src/index.js',
+      'app/page.tsx',
+      'pages/index.tsx',
+      'index.html',
+      'README.md',
+    ];
+
+    for (const defaultFile of defaultFiles) {
+      if (fileStructureData[`root/${defaultFile}`]) {
+        setFilePath(defaultFile);
+        return;
+      }
+    }
+
+    const firstFile = Object.entries(fileStructureData).find(
+      ([key, item]) =>
+        key.startsWith('root/') && !item.isFolder && key !== 'root/'
+    );
+
+    if (firstFile) {
+      setFilePath(firstFile[0].replace('root/', ''));
+    }
+  }
+
   const handleReset = () => {
     setCode(preCode);
     editorRef.current?.setValue(preCode);
     setSaving(false);
   };
 
-  // Update file content on the server
   const updateCode = async (value) => {
-    if (!curProject) return;
+    const projectPath = activeProject?.projectPath || projectPathRef.current;
+    if (!projectPath || !filePath) return;
 
     try {
       const response = await fetch('/api/file', {
@@ -86,30 +196,32 @@ export function CodeEngine({
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          filePath: `${curProject.projectPath}/${filePath}`,
+          filePath: `${projectPath}/${filePath}`,
           newContent: JSON.stringify(value),
         }),
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update file: ${response.status}`);
+      }
+
       await response.json();
     } catch (error) {
-      console.error(error);
+      console.error('Error updating file:', error);
     }
   };
 
-  // Save the new code and update the previous state
   const handleSave = () => {
     setSaving(false);
     setPrecode(newCode);
     updateCode(newCode);
   };
 
-  // Track unsaved changes
   const updateSavingStatus = (value) => {
     setCode(value);
     setSaving(true);
   };
 
-  // Render appropriate content based on active tab
   const renderTabContent = () => {
     switch (activeTab) {
       case 'code':
@@ -120,6 +232,8 @@ export function CodeEngine({
             newCode={newCode}
             isFileStructureLoading={isFileStructureLoading}
             updateSavingStatus={updateSavingStatus}
+            filePath={filePath}
+            setFilePath={setFilePath}
           />
         );
       case 'preview':
@@ -131,20 +245,54 @@ export function CodeEngine({
     }
   };
 
-  // Render the CodeEngine layout
+  useEffect(() => {
+    async function getCode() {
+      const projectPath = activeProject?.projectPath || projectPathRef.current;
+      if (!projectPath || !filePath) return;
+
+      const file_node = fileStructureData[`root/${filePath}`];
+      if (!file_node) return;
+
+      const isFolder = file_node.isFolder;
+      if (isFolder) return;
+
+      try {
+        const res = await fetch(
+          `/api/file?path=${encodeURIComponent(`${projectPath}/${filePath}`)}`
+        );
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch file content: ${res.status}`);
+        }
+
+        const data = await res.json();
+        setCode(data.content);
+        setPrecode(data.content);
+      } catch (error) {
+        console.error('Error loading file content:', error);
+      }
+    }
+
+    getCode();
+  }, [filePath, activeProject, fileStructureData]);
+
+  // Determine if we're truly ready to render
+  const showLoader =
+    !isProjectReady ||
+    isLoading ||
+    (!activeProject?.projectPath && !projectPathRef.current && !localProject);
+
   return (
     <div className="rounded-lg border shadow-sm overflow-scroll h-full">
-      {/* Header Bar */}
       <ResponsiveToolbar
-        isLoading={!isProjectReady}
+        isLoading={showLoader}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />
 
-      {/* Main Content Area with Loading */}
       <div className="relative h-[calc(100vh-48px-4rem)]">
         <AnimatePresence>
-          {!isProjectReady && (
+          {showLoader && (
             <motion.div
               key="loader"
               initial={{ opacity: 0 }}
@@ -154,7 +302,9 @@ export function CodeEngine({
             >
               <Loader className="w-8 h-8 text-primary animate-spin" />
               <p className="text-sm text-muted-foreground">
-                Initializing project...
+                {projectLoading
+                  ? 'Loading project...'
+                  : 'Initializing project...'}
               </p>
             </motion.div>
           )}
@@ -162,7 +312,6 @@ export function CodeEngine({
 
         <div className="flex h-full">{renderTabContent()}</div>
 
-        {/* Save Changes Bar */}
         {saving && <SaveChangesBar onSave={handleSave} onReset={handleReset} />}
       </div>
     </div>

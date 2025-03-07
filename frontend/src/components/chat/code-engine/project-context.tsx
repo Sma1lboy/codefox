@@ -27,6 +27,7 @@ export interface ProjectContextType {
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   curProject: Project | undefined;
   setCurProject: React.Dispatch<React.SetStateAction<Project | undefined>>;
+  projectLoading: boolean; // 新增字段
   filePath: string | null;
   setFilePath: React.Dispatch<React.SetStateAction<string | null>>;
   createNewProject: (projectName: string, description: string) => Promise<void>;
@@ -98,6 +99,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const { isAuthorized } = useAuthContext();
   const [projects, setProjects] = useState<Project[]>([]);
   const [curProject, setCurProject] = useState<Project | undefined>(undefined);
+  const [projectLoading, setProjectLoading] = useState<boolean>(true);
   const [filePath, setFilePath] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -205,6 +207,67 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     }
   }, [projects, curProject]);
 
+  // Enhanced initial loading for projects and curProject
+  useEffect(() => {
+    if (!isAuthorized) {
+      setProjectLoading(false);
+      return;
+    }
+
+    // Try to get last project ID from localStorage
+    const lastProjectId = localStorage.getItem('lastProjectId');
+
+    // Load initial project data
+    const loadInitialData = async () => {
+      try {
+        setProjectLoading(true);
+        const result = await refetch();
+
+        if (result.data?.getUserProjects) {
+          const projectsList = result.data.getUserProjects;
+          setProjects(projectsList);
+
+          // Find last active project if exists
+          if (lastProjectId) {
+            const savedProject = projectsList.find(
+              (p) => p.id === lastProjectId
+            );
+            if (savedProject) {
+              setCurProject(savedProject);
+              // If we're on a specific project page, ensure localStorage is updated
+              const urlParams = new URLSearchParams(window.location.search);
+              const urlProjectId = urlParams.get('id');
+              if (urlProjectId && urlProjectId !== lastProjectId) {
+                const urlProject = projectsList.find(
+                  (p) => p.id === urlProjectId
+                );
+                if (urlProject) {
+                  setCurProject(urlProject);
+                  localStorage.setItem('lastProjectId', urlProjectId);
+                }
+              }
+            } else if (projectsList.length > 0) {
+              // Fallback to first project if saved project not found
+              setCurProject(projectsList[0]);
+              localStorage.setItem('lastProjectId', projectsList[0].id);
+            }
+          } else if (projectsList.length > 0) {
+            // No last project, set to first if available
+            setCurProject(projectsList[0]);
+            localStorage.setItem('lastProjectId', projectsList[0].id);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading initial project data:', error);
+        toast.error('Failed to load projects. Please refresh the page.');
+      } finally {
+        setProjectLoading(false);
+      }
+    };
+
+    loadInitialData();
+  }, [isAuthorized]);
+
   // Initialization and update effects
   useEffect(() => {
     const syncInterval = setInterval(() => {
@@ -215,6 +278,37 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
     return () => clearInterval(syncInterval);
   }, [syncProjectState]);
+
+  // Check URL for project ID on navigation/initial load
+  useEffect(() => {
+    if (!isAuthorized || projectLoading || projects.length === 0) return;
+
+    const checkUrlForProject = () => {
+      try {
+        // Get project ID from URL if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlProjectId = urlParams.get('id');
+
+        if (urlProjectId) {
+          const urlProject = projects.find((p) => p.id === urlProjectId);
+          if (urlProject && (!curProject || curProject.id !== urlProjectId)) {
+            setCurProject(urlProject);
+            localStorage.setItem('lastProjectId', urlProjectId);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking URL for project:', error);
+      }
+    };
+
+    checkUrlForProject();
+    // Listen for route changes
+    window.addEventListener('popstate', checkUrlForProject);
+
+    return () => {
+      window.removeEventListener('popstate', checkUrlForProject);
+    };
+  }, [isAuthorized, projectLoading, projects, curProject]);
 
   // Persist current project id with validation
   useEffect(() => {
@@ -813,6 +907,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       setProjects,
       curProject,
       setCurProject,
+      projectLoading,
       filePath,
       setFilePath,
       createNewProject,
@@ -828,6 +923,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     [
       projects,
       curProject,
+      projectLoading,
       filePath,
       createNewProject,
       createProjectFromPrompt,
