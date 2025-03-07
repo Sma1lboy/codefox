@@ -41,7 +41,7 @@ importers:
         version: 3.758.0
       '@huggingface/hub':
         specifier: latest
-        version: 1.0.1
+        version: 1.0.2
       '@huggingface/transformers':
         specifier: latest
         version: 3.3.3
@@ -140,7 +140,7 @@ importers:
         version: 3.0.0
       openai:
         specifier: ^4.77.0
-        version: 4.86.1(ws@8.18.1)(zod@3.24.2)
+        version: 4.86.2(ws@8.18.1)(zod@3.24.2)
       p-queue-es5:
         specifier: ^6.0.2
         version: 6.0.2
@@ -244,7 +244,7 @@ importers:
     dependencies:
       openai:
         specifier: ^4.0.0
-        version: 4.86.1(ws@8.18.1)(zod@3.24.2)
+        version: 4.86.2(ws@8.18.1)(zod@3.24.2)
     devDependencies:
       '@nestjs/common':
         specifier: 10.4.15
@@ -330,7 +330,7 @@ importers:
     dependencies:
       '@apollo/client':
         specifier: ^3.11.8
-        version: 3.13.1(@types/react@18.3.18)(graphql-ws@5.16.2)(graphql@16.10.0)(react-dom@18.3.1)(react@18.3.1)(subscriptions-transport-ws@0.11.0)
+        version: 3.13.2(@types/react@18.3.18)(graphql-ws@5.16.2)(graphql@16.10.0)(react-dom@18.3.1)(react@18.3.1)(subscriptions-transport-ws@0.11.0)
       '@emoji-mart/data':
         specifier: ^1.2.1
         version: 1.2.1
@@ -342,10 +342,10 @@ importers:
         version: 3.10.0(react-hook-form@7.54.2)
       '@langchain/community':
         specifier: ^0.3.1
-        version: 0.3.34(@browserbasehq/stagehand@1.14.0)(@ibm-cloud/watsonx-ai@1.5.1)(@langchain/core@0.3.42)(axios@1.7.9)(ibm-cloud-sdk-core@5.1.3)(openai@4.86.1)(puppeteer@24.3.1)(ws@8.18.1)
+        version: 0.3.34(@browserbasehq/stagehand@1.14.0)(@ibm-cloud/watsonx-ai@1.5.1)(@langchain/core@0.3.42)(axios@1.7.9)(ibm-cloud-sdk-core@5.2.0)(openai@4.86.2)(puppeteer@24.4.0)(ws@8.18.1)
       '@langchain/core':
         specifier: ^0.3.3
-        version: 0.3.42(openai@4.86.1)
+        version: 0.3.42(openai@4.86.2)
       '@monaco-editor/react':
         specifier: ^4.6.0
         version: 4.7.0(monaco-editor@0.52.2)(react-dom@18.3.1)(react@18.3.1)
@@ -397,9 +397,12 @@ importers:
       '@types/dom-speech-recognition':
         specifier: ^0.0.4
         version: 0.0.4
+      '@types/react-window':
+        specifier: ^1.8.8
+        version: 1.8.8
       apollo-upload-client:
         specifier: ^18.0.0
-        version: 18.0.1(@apollo/client@3.13.1)(graphql@16.10.0)
+        version: 18.0.1(@apollo/client@3.13.2)(graphql@16.10.0)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -429,13 +432,13 @@ importers:
         version: 12.4.10(react-dom@18.3.1)(react@18.3.1)
       next:
         specifier: ^14.2.13
-        version: 14.2.24(@babel/core@7.26.9)(@playwright/test@1.50.1)(react-dom@18.3.1)(react@18.3.1)
+        version: 14.2.24(@babel/core@7.26.9)(@playwright/test@1.51.0)(react-dom@18.3.1)(react@18.3.1)
       next-themes:
         specifier: ^0.3.0
         version: 0.3.0(react-dom@18.3.1)(react@18.3.1)
       puppeteer:
         specifier: ^24.3.1
-        version: 24.3.1(typescript@5.6.3)
+        version: 24.4.0(typescript@5.6.3)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -466,6 +469,9 @@ importers:
       react-textarea-autosize:
         specifier: ^8.5.3
         version: 8.5.7(@types/react@18.3.18)(react@18.3.1)
+      react-window:
+        specifier: ^1.8.11
+        version: 1.8.11(react-dom@18.3.1)(react@18.3.1)
       remark-gfm:
         specifier: ^4.0.0
         version: 4.0.1
@@ -659,7 +665,7 @@ importers:
         version: 29.7.0
       openai:
         specifier: ^4.78.1
-        version: 4.86.1(ws@8.18.1)(zod@3.24.2)
+        version: 4.86.2(ws@8.18.1)(zod@3.24.2)
       prettier:
         specifier: ^3.0.0
         version: 3.5.3
@@ -1094,8 +1100,8 @@ packages:
       graphql: 16.10.0
     dev: false
 
-  /@apollo/client@3.13.1(@types/react@18.3.18)(graphql-ws@5.16.2)(graphql@16.10.0)(react-dom@18.3.1)(react@18.3.1)(subscriptions-transport-ws@0.11.0):
-    resolution: {integrity: sha512-HaAt62h3jNUXpJ1v5HNgUiCzPP1c5zc2Q/FeTb2cTk/v09YlhoqKKHQFJI7St50VCJ5q8JVIc03I5bRcBrQxsg==}
+  /@apollo/client@3.13.2(@types/react@18.3.18)(graphql-ws@5.16.2)(graphql@16.10.0)(react-dom@18.3.1)(react@18.3.1)(subscriptions-transport-ws@0.11.0):
+    resolution: {integrity: sha512-czLeqQuRB3RqcpEWFTJ/wfT+povpLfGAsprP2i9rsKj5PkH94IrFaI7ETtTMwOrycWFw/MJX9HCFGBslB/MGNg==}
     peerDependencies:
       graphql: ^15.0.0 || ^16.0.0
       graphql-ws: ^5.5.5 || ^6.0.3
@@ -3291,7 +3297,7 @@ packages:
       - encoding
     dev: false
 
-  /@browserbasehq/stagehand@1.14.0(@playwright/test@1.50.1)(deepmerge@4.3.1)(dotenv@16.4.7)(openai@4.86.1)(zod@3.24.2):
+  /@browserbasehq/stagehand@1.14.0(@playwright/test@1.51.0)(deepmerge@4.3.1)(dotenv@16.4.7)(openai@4.86.2)(zod@3.24.2):
     resolution: {integrity: sha512-Hi/EzgMFWz+FKyepxHTrqfTPjpsuBS4zRy3e9sbMpBgLPv+9c0R+YZEvS7Bw4mTS66QtvvURRT6zgDGFotthVQ==}
     peerDependencies:
       '@playwright/test': ^1.42.1
@@ -3302,10 +3308,10 @@ packages:
     dependencies:
       '@anthropic-ai/sdk': 0.27.3
       '@browserbasehq/sdk': 2.3.0
-      '@playwright/test': 1.50.1
+      '@playwright/test': 1.51.0
       deepmerge: 4.3.1
       dotenv: 16.4.7
-      openai: 4.86.1(ws@8.18.1)(zod@3.24.2)
+      openai: 4.86.2(ws@8.18.1)(zod@3.24.2)
       ws: 8.18.1
       zod: 3.24.2
       zod-to-json-schema: 3.24.3(zod@3.24.2)
@@ -3996,7 +4002,7 @@ packages:
       postcss-loader: 7.3.4(postcss@8.5.3)(typescript@5.6.3)(webpack@5.98.0)
       postcss-preset-env: 10.1.5(postcss@8.5.3)
       react-dev-utils: 12.0.1(eslint@8.57.1)(typescript@5.6.3)(webpack@5.98.0)
-      terser-webpack-plugin: 5.3.13(webpack@5.98.0)
+      terser-webpack-plugin: 5.3.14(webpack@5.98.0)
       tslib: 2.8.1
       url-loader: 4.1.1(file-loader@6.2.0)(webpack@5.98.0)
       webpack: 5.98.0(webpack-cli@5.1.4)
@@ -4847,26 +4853,26 @@ packages:
     resolution: {integrity: sha512-KOEGMu6dmJZtpadb476IsZBclKvILjopjUii3V+7MnXIQCYh8W3NgNcgwo21n9LXZX6EDIKvqfjYxXebDwxKmQ==}
     dev: false
 
-  /@envelop/core@5.2.1:
-    resolution: {integrity: sha512-iH/GUc7WNEukD2TKszx+e5MWuCpUuVfc1eS4mSvDpQ2ROA2lCJGqac6PxAC3A171bLqNk7IWlNOXxJ4qUPU1WA==}
+  /@envelop/core@5.2.3:
+    resolution: {integrity: sha512-KfoGlYD/XXQSc3BkM1/k15+JQbkQ4ateHazeZoWl9P71FsLTDXSjGy6j7QqfhpIDSbxNISqhPMfZHYSbDFOofQ==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@envelop/instruments': 1.0.0
-      '@envelop/types': 5.2.0
+      '@envelop/instrumentation': 1.0.0
+      '@envelop/types': 5.2.1
       '@whatwg-node/promise-helpers': 1.2.4
       tslib: 2.8.1
     dev: true
 
-  /@envelop/instruments@1.0.0:
-    resolution: {integrity: sha512-f4lHoti7QgUIluIGTM0mG9Wf9/w6zc1mosYmyFkrApeHSP2PIUC6a8fMoqkdk6pgVOps39kLdIhOPF8pIKS8/A==}
+  /@envelop/instrumentation@1.0.0:
+    resolution: {integrity: sha512-cxgkB66RQB95H3X27jlnxCRNTmPuSTgmBAq6/4n2Dtv4hsk4yz8FadA1ggmd0uZzvKqWD6CR+WFgTjhDqg7eyw==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@whatwg-node/promise-helpers': 1.2.4
       tslib: 2.8.1
     dev: true
 
-  /@envelop/types@5.2.0:
-    resolution: {integrity: sha512-vCJY6URc8bK1O6p4zVRFpv/ASdyXvLM+Iqn2HP44UfTgEUQLyN4buwLawlkAv/KtzAL7VOeefpF2eKPWk7rHjg==}
+  /@envelop/types@5.2.1:
+    resolution: {integrity: sha512-CsFmA3u3c2QoLDTfEpGr4t25fjMU31nyvse7IzWTvb0ZycuPjMjb0fjlheh+PbhBYb9YLugnT2uY6Mwcg1o+Zg==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@whatwg-node/promise-helpers': 1.2.4
@@ -5569,7 +5575,7 @@ packages:
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
     dependencies:
-      '@envelop/core': 5.2.1
+      '@envelop/core': 5.2.3
       '@graphql-tools/utils': 10.8.4(graphql@16.10.0)
       graphql: 16.10.0
     dev: true
@@ -6010,11 +6016,11 @@ packages:
       react-hook-form: 7.54.2(react@18.3.1)
     dev: false
 
-  /@huggingface/hub@1.0.1:
-    resolution: {integrity: sha512-wogGVETaNUV/wYBkny0uQD48L0rK9cttVtbaA1Rw/pGCuSYoZ8YlvTV6zymsGJfXaxQU8zup0aOR2XLIf6HVfg==}
+  /@huggingface/hub@1.0.2:
+    resolution: {integrity: sha512-O1suBM/WKEJ6Ad+Dp7eMtd+C2W6MCL3LTF/EjSKVqG9jTHjjozA/kpcRmd/XJh1ZgtLigx1zMtNeyhXI9B9RWA==}
     engines: {node: '>=18'}
     dependencies:
-      '@huggingface/tasks': 0.15.9
+      '@huggingface/tasks': 0.17.1
     dev: false
 
   /@huggingface/jinja@0.3.3:
@@ -6022,8 +6028,8 @@ packages:
     engines: {node: '>=18'}
     dev: false
 
-  /@huggingface/tasks@0.15.9:
-    resolution: {integrity: sha512-cbnZcpMHKdhURWIplVP4obHxAZcxjyRm0zI7peTPksZN4CtIOMmJC4ZqGEymo0lk+0VNkXD7ULwFJ3JjT/VpkQ==}
+  /@huggingface/tasks@0.17.1:
+    resolution: {integrity: sha512-kN5F/pzwxtmdZ0jORumNyegNKOX/ciU5G/DMZcqK3SJShod4C6yfvBRCMn5sEDzanxtU8VjX+7TaInQFmmU8Nw==}
     dev: false
 
   /@huggingface/transformers@3.3.3:
@@ -6061,7 +6067,7 @@ packages:
       '@langchain/textsplitters': 0.1.0(@langchain/core@0.3.42)
       '@types/node': 18.19.79
       extend: 3.0.2
-      ibm-cloud-sdk-core: 5.1.3
+      ibm-cloud-sdk-core: 5.2.0
     transitivePeerDependencies:
       - '@langchain/core'
       - supports-color
@@ -6542,7 +6548,7 @@ packages:
     resolution: {integrity: sha512-GaHYm+c0O9MjZRu0ongGBRbinu8gVAMd2UZjji6jVmqKtZluZnptXGWhz1E8j8D2HJ3f/yMxKAUC0b+57wncIw==}
     dev: false
 
-  /@langchain/community@0.3.34(@browserbasehq/stagehand@1.14.0)(@ibm-cloud/watsonx-ai@1.5.1)(@langchain/core@0.3.42)(axios@1.7.9)(ibm-cloud-sdk-core@5.1.3)(openai@4.86.1)(puppeteer@24.3.1)(ws@8.18.1):
+  /@langchain/community@0.3.34(@browserbasehq/stagehand@1.14.0)(@ibm-cloud/watsonx-ai@1.5.1)(@langchain/core@0.3.42)(axios@1.7.9)(ibm-cloud-sdk-core@5.2.0)(openai@4.86.2)(puppeteer@24.4.0)(ws@8.18.1):
     resolution: {integrity: sha512-s0KVulgVIPd90s3m6XZtWrCRGQPWsY93uY62seFMmNhzcyF+I65kKnN04Nbiouthrn/YJ9HB4hW8MJAFuX6RRg==}
     engines: {node: '>=18'}
     peerDependencies:
@@ -6916,19 +6922,19 @@ packages:
       youtubei.js:
         optional: true
     dependencies:
-      '@browserbasehq/stagehand': 1.14.0(@playwright/test@1.50.1)(deepmerge@4.3.1)(dotenv@16.4.7)(openai@4.86.1)(zod@3.24.2)
+      '@browserbasehq/stagehand': 1.14.0(@playwright/test@1.51.0)(deepmerge@4.3.1)(dotenv@16.4.7)(openai@4.86.2)(zod@3.24.2)
       '@ibm-cloud/watsonx-ai': 1.5.1(@langchain/core@0.3.42)
-      '@langchain/core': 0.3.42(openai@4.86.1)
+      '@langchain/core': 0.3.42(openai@4.86.2)
       '@langchain/openai': 0.4.4(@langchain/core@0.3.42)(ws@8.18.1)
       binary-extensions: 2.3.0
       expr-eval: 2.0.2
       flat: 5.0.2
-      ibm-cloud-sdk-core: 5.1.3
+      ibm-cloud-sdk-core: 5.2.0
       js-yaml: 4.1.0
-      langchain: 0.3.19(@langchain/core@0.3.42)(axios@1.7.9)(openai@4.86.1)(ws@8.18.1)
-      langsmith: 0.3.12(openai@4.86.1)
-      openai: 4.86.1(ws@8.18.1)(zod@3.24.2)
-      puppeteer: 24.3.1(typescript@5.6.3)
+      langchain: 0.3.19(@langchain/core@0.3.42)(axios@1.7.9)(openai@4.86.2)(ws@8.18.1)
+      langsmith: 0.3.12(openai@4.86.2)
+      openai: 4.86.2(ws@8.18.1)(zod@3.24.2)
+      puppeteer: 24.4.0(typescript@5.6.3)
       uuid: 10.0.0
       ws: 8.18.1
       zod: 3.24.2
@@ -6952,7 +6958,7 @@ packages:
       - peggy
     dev: false
 
-  /@langchain/core@0.3.42(openai@4.86.1):
+  /@langchain/core@0.3.42(openai@4.86.2):
     resolution: {integrity: sha512-pT/jC5lqWK3YGDq8dQwgKoa6anqAhMtG1x5JbnrOj9NdaLeBbCKBDQ+/Ykzk3nZ8o+0UMsaXNZo7IVL83VVjHg==}
     engines: {node: '>=18'}
     dependencies:
@@ -6961,7 +6967,7 @@ packages:
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.19
-      langsmith: 0.3.12(openai@4.86.1)
+      langsmith: 0.3.12(openai@4.86.2)
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -6978,9 +6984,9 @@ packages:
     peerDependencies:
       '@langchain/core': '>=0.3.39 <0.4.0'
     dependencies:
-      '@langchain/core': 0.3.42(openai@4.86.1)
+      '@langchain/core': 0.3.42(openai@4.86.2)
       js-tiktoken: 1.0.19
-      openai: 4.86.1(ws@8.18.1)(zod@3.24.2)
+      openai: 4.86.2(ws@8.18.1)(zod@3.24.2)
       zod: 3.24.2
       zod-to-json-schema: 3.24.3(zod@3.24.2)
     transitivePeerDependencies:
@@ -6994,7 +7000,7 @@ packages:
     peerDependencies:
       '@langchain/core': '>=0.2.21 <0.4.0'
     dependencies:
-      '@langchain/core': 0.3.42(openai@4.86.1)
+      '@langchain/core': 0.3.42(openai@4.86.2)
       js-tiktoken: 1.0.19
     dev: false
 
@@ -8052,12 +8058,12 @@ packages:
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
     dev: true
 
-  /@playwright/test@1.50.1:
-    resolution: {integrity: sha512-Jii3aBg+CEDpgnuDxEp/h7BimHcUTDlpEtce89xEumlJ5ef2hqepZ+PWp1DDpYC/VO9fmWVI1IlEaoI5fK9FXQ==}
+  /@playwright/test@1.51.0:
+    resolution: {integrity: sha512-dJ0dMbZeHhI+wb77+ljx/FeC8VBP6j/rj9OAojO08JI80wTZy6vRk9KvHKiDCUh4iMpEiseMgqRBIeW+eKX6RA==}
     engines: {node: '>=18'}
     hasBin: true
     dependencies:
-      playwright: 1.50.1
+      playwright: 1.51.0
     dev: false
 
   /@pnpm/config.env-replace@1.1.0:
@@ -8128,8 +8134,8 @@ packages:
     resolution: {integrity: sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==}
     dev: false
 
-  /@puppeteer/browsers@2.7.1:
-    resolution: {integrity: sha512-MK7rtm8JjaxPN7Mf1JdZIZKPD2Z+W7osvrC1vjpvfOX1K0awDIHYbNi89f7eotp7eMUn2shWnt03HwVbriXtKQ==}
+  /@puppeteer/browsers@2.8.0:
+    resolution: {integrity: sha512-yTwt2KWRmCQAfhvbCRjebaSX8pV1//I0Y3g+A7f/eS7gf0l4eRJoUCvcYdVtboeU4CTOZQuqYbZNS8aBYb8ROQ==}
     engines: {node: '>=18'}
     hasBin: true
     dependencies:
@@ -9818,7 +9824,7 @@ packages:
   /@types/apollo-upload-client@18.0.0(@types/react@18.3.18)(graphql-ws@5.16.2)(react-dom@18.3.1)(react@18.3.1)(subscriptions-transport-ws@0.11.0):
     resolution: {integrity: sha512-cMgITNemktxasqvp6jiPj15dv84n3FTMvMoYBP1+xonDS+0l6JygIJrj2LJh85rShRzTOOkrElrAsCXXARa3KA==}
     dependencies:
-      '@apollo/client': 3.13.1(@types/react@18.3.18)(graphql-ws@5.16.2)(graphql@16.10.0)(react-dom@18.3.1)(react@18.3.1)(subscriptions-transport-ws@0.11.0)
+      '@apollo/client': 3.13.2(@types/react@18.3.18)(graphql-ws@5.16.2)(graphql@16.10.0)(react-dom@18.3.1)(react@18.3.1)(subscriptions-transport-ws@0.11.0)
       '@types/extract-files': 13.0.1
       graphql: 16.10.0
     transitivePeerDependencies:
@@ -10128,10 +10134,6 @@ packages:
       '@types/node': 20.17.23
     dev: false
 
-  /@types/node@10.14.22:
-    resolution: {integrity: sha512-9taxKC944BqoTVjE+UT3pQH0nHZlTvITwfsOZqyc+R3sfJuxaTtxWjfn1K2UlxyPcKHf0rnaXcVFrS9F9vf0bw==}
-    dev: false
-
   /@types/node@16.18.126:
     resolution: {integrity: sha512-OTcgaiwfGFBKacvfwuHzzn1KLxH/er8mluiy8/uM3sGXHaRe73RrSIj01jow9t4kJEW633Ov+cOexXeiApTyAw==}
     dev: true
@@ -10206,6 +10208,12 @@ packages:
     dependencies:
       '@types/history': 4.7.11
       '@types/react': 18.3.18
+
+  /@types/react-window@1.8.8:
+    resolution: {integrity: sha512-8Ls660bHR1AUA2kuRvVG9D/4XpRC6wjAaPT9dil7Ckc76eP9TKWZwwmgfq8Q1LANX3QNDnoU4Zp48A3w+zK69Q==}
+    dependencies:
+      '@types/react': 18.3.18
+    dev: false
 
   /@types/react@18.3.18:
     resolution: {integrity: sha512-t4yC+vtgnkYjNSKlFx1jkAhH8LgTo2N/7Qvi83kdEaUtMDiwpbLAktKDaAMlRcJ5eSxZkH74eEGt1ky31d7kfQ==}
@@ -11128,14 +11136,14 @@ packages:
       normalize-path: 3.0.0
       picomatch: 2.3.1
 
-  /apollo-upload-client@18.0.1(@apollo/client@3.13.1)(graphql@16.10.0):
+  /apollo-upload-client@18.0.1(@apollo/client@3.13.2)(graphql@16.10.0):
     resolution: {integrity: sha512-OQvZg1rK05VNI79D658FUmMdoI2oB/KJKb6QGMa2Si25QXOaAvLMBFUEwJct7wf+19U8vk9ILhidBOU1ZWv6QA==}
     engines: {node: ^18.15.0 || >=20.4.0}
     peerDependencies:
       '@apollo/client': ^3.8.0
       graphql: 14 - 16
     dependencies:
-      '@apollo/client': 3.13.1(@types/react@18.3.18)(graphql-ws@5.16.2)(graphql@16.10.0)(react-dom@18.3.1)(react@18.3.1)(subscriptions-transport-ws@0.11.0)
+      '@apollo/client': 3.13.2(@types/react@18.3.18)(graphql-ws@5.16.2)(graphql@16.10.0)(react-dom@18.3.1)(react@18.3.1)(subscriptions-transport-ws@0.11.0)
       extract-files: 13.0.0
       graphql: 16.10.0
     dev: false
@@ -11809,7 +11817,7 @@ packages:
     hasBin: true
     dependencies:
       caniuse-lite: 1.0.30001702
-      electron-to-chromium: 1.5.112
+      electron-to-chromium: 1.5.113
       node-releases: 2.0.19
       update-browserslist-db: 1.1.3(browserslist@4.24.4)
 
@@ -12170,12 +12178,12 @@ packages:
     resolution: {integrity: sha512-rNjApaLzuwaOTjCiT8lSDdGN1APCiqkChLMJxJPWLunPAt5fy8xgU9/jNOchV84wfIxrA0lRQB7oCT8jrn/wrQ==}
     engines: {node: '>=6.0'}
 
-  /chromium-bidi@2.1.2(devtools-protocol@0.0.1402036):
+  /chromium-bidi@2.1.2(devtools-protocol@0.0.1413902):
     resolution: {integrity: sha512-vtRWBK2uImo5/W2oG6/cDkkHSm+2t6VHgnj+Rcwhb0pP74OoUb4GipyRX/T/y39gYQPhioP0DPShn+A7P6CHNw==}
     peerDependencies:
       devtools-protocol: '*'
     dependencies:
-      devtools-protocol: 0.0.1402036
+      devtools-protocol: 0.0.1413902
       mitt: 3.0.1
       zod: 3.24.2
     dev: false
@@ -13360,8 +13368,8 @@ packages:
     dependencies:
       dequal: 2.0.3
 
-  /devtools-protocol@0.0.1402036:
-    resolution: {integrity: sha512-JwAYQgEvm3yD45CHB+RmF5kMbWtXBaOGwuxa87sZogHcLCv8c/IqnThaoQ1y60d7pXWjSKWQphPEc+1rAScVdg==}
+  /devtools-protocol@0.0.1413902:
+    resolution: {integrity: sha512-yRtvFD8Oyk7C9Os3GmnFZLu53yAfsnyw1s+mLmHHUK0GQEc9zthHWvS1r67Zqzm5t7v56PILHIVZ7kmFMaL2yQ==}
     dev: false
 
   /dezalgo@1.0.4:
@@ -13584,8 +13592,8 @@ packages:
     dependencies:
       jake: 10.9.2
 
-  /electron-to-chromium@1.5.112:
-    resolution: {integrity: sha512-oen93kVyqSb3l+ziUgzIOlWt/oOuy4zRmpwestMn4rhFWAoFJeFuCVte9F2fASjeZZo7l/Cif9TiyrdW4CwEMA==}
+  /electron-to-chromium@1.5.113:
+    resolution: {integrity: sha512-wjT2O4hX+wdWPJ76gWSkMhcHAV2PTMX+QetUCPYEdCIe+cxmgzzSSiGRCKW8nuh4mwKZlpv0xvoW7OF2X+wmHg==}
 
   /emittery@0.13.1:
     resolution: {integrity: sha512-DeWwawk6r5yR9jFgnDKYt4sLS0LmHJJi3ZOnb5/JdbYwj3nW+FxQnHIjhBKz8YLC7oRNPVM9NQ47I3CVx34eqQ==}
@@ -16025,12 +16033,12 @@ packages:
     dependencies:
       ms: 2.1.3
 
-  /ibm-cloud-sdk-core@5.1.3:
-    resolution: {integrity: sha512-FCJSK4Gf5zdmR3yEM2DDlaYDrkfhSwP3hscKzPrQEfc4/qMnFn6bZuOOw5ulr3bB/iAbfeoGF0CkIe+dWdpC7Q==}
+  /ibm-cloud-sdk-core@5.2.0:
+    resolution: {integrity: sha512-urz3bArghYe4AgTpxPBm1ohrzyeRRlekBN9kQAeQn39ixjoHo0qhN9zL6iCayvcZITA2zpuk/FnzP2gEiz8PZg==}
     engines: {node: '>=18'}
     dependencies:
       '@types/debug': 4.1.12
-      '@types/node': 10.14.22
+      '@types/node': 22.13.9
       '@types/tough-cookie': 4.0.5
       axios: 1.7.9(debug@4.4.0)
       camelcase: 6.3.0
@@ -17782,7 +17790,7 @@ packages:
     resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}
     engines: {node: '>=6'}
 
-  /langchain@0.3.19(@langchain/core@0.3.42)(axios@1.7.9)(openai@4.86.1)(ws@8.18.1):
+  /langchain@0.3.19(@langchain/core@0.3.42)(axios@1.7.9)(openai@4.86.2)(ws@8.18.1):
     resolution: {integrity: sha512-aGhoTvTBS5ulatA67RHbJ4bcV5zcYRYdm5IH+hpX99RYSFXG24XF3ghSjhYi6sxW+SUnEQ99fJhA5kroVpKNhw==}
     engines: {node: '>=18'}
     peerDependencies:
@@ -17840,14 +17848,14 @@ packages:
       typeorm:
         optional: true
     dependencies:
-      '@langchain/core': 0.3.42(openai@4.86.1)
+      '@langchain/core': 0.3.42(openai@4.86.2)
       '@langchain/openai': 0.4.4(@langchain/core@0.3.42)(ws@8.18.1)
       '@langchain/textsplitters': 0.1.0(@langchain/core@0.3.42)
       axios: 1.7.9(debug@4.4.0)
       js-tiktoken: 1.0.19
       js-yaml: 4.1.0
       jsonpointer: 5.0.1
-      langsmith: 0.3.12(openai@4.86.1)
+      langsmith: 0.3.12(openai@4.86.2)
       openapi-types: 12.1.3
       p-retry: 4.6.2
       uuid: 10.0.0
@@ -17860,7 +17868,7 @@ packages:
       - ws
     dev: false
 
-  /langsmith@0.3.12(openai@4.86.1):
+  /langsmith@0.3.12(openai@4.86.2):
     resolution: {integrity: sha512-e4qWM27hxEr8GfO6dgXrc3W8La+wxkX1zEtMhxhqS/Th2ujTt5OH7x0uXfXFDqCv9WaC3nquo1Y2s4vpYmLLtg==}
     peerDependencies:
       openai: '*'
@@ -17871,7 +17879,7 @@ packages:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
       console-table-printer: 2.12.1
-      openai: 4.86.1(ws@8.18.1)(zod@3.24.2)
+      openai: 4.86.2(ws@8.18.1)(zod@3.24.2)
       p-queue: 6.6.2
       p-retry: 4.6.2
       semver: 7.7.1
@@ -18583,6 +18591,10 @@ packages:
     engines: {node: '>= 4.0.0'}
     dependencies:
       fs-monkey: 1.0.6
+
+  /memoize-one@5.2.1:
+    resolution: {integrity: sha512-zYiwtZUcYyXKo/np96AGZAckk+FWWsUdJ3cHGGmld7+AhvcWmQyGCYUh1hc4Q/pkOhb65dQR/pqCyK0cOaHz4Q==}
+    dev: false
 
   /memory-stream@1.0.0:
     resolution: {integrity: sha512-Wm13VcsPIMdG96dzILfij09PvuS3APtcKNh7M28FsCA/w6+1mjR7hhPmfFNoilX9xU7wTdhsH5lJAm6XNzdtww==}
@@ -19766,7 +19778,7 @@ packages:
       react-dom: 18.3.1(react@18.3.1)
     dev: false
 
-  /next@14.2.24(@babel/core@7.26.9)(@playwright/test@1.50.1)(react-dom@18.3.1)(react@18.3.1):
+  /next@14.2.24(@babel/core@7.26.9)(@playwright/test@1.51.0)(react-dom@18.3.1)(react@18.3.1):
     resolution: {integrity: sha512-En8VEexSJ0Py2FfVnRRh8gtERwDRaJGNvsvad47ShkC2Yi8AXQPXEA2vKoDJlGFSj5WE5SyF21zNi4M5gyi+SQ==}
     engines: {node: '>=18.17.0'}
     hasBin: true
@@ -19785,7 +19797,7 @@ packages:
         optional: true
     dependencies:
       '@next/env': 14.2.24
-      '@playwright/test': 1.50.1
+      '@playwright/test': 1.51.0
       '@swc/helpers': 0.5.5
       busboy: 1.6.0
       caniuse-lite: 1.0.30001702
@@ -20290,8 +20302,8 @@ packages:
       is-wsl: 2.2.0
     dev: false
 
-  /openai@4.86.1(ws@8.18.1)(zod@3.24.2):
-    resolution: {integrity: sha512-x3iCLyaC3yegFVZaxOmrYJjitKxZ9hpVbLi+ZlT5UHuHTMlEQEbKXkGOM78z9qm2T5GF+XRUZCP2/aV4UPFPJQ==}
+  /openai@4.86.2(ws@8.18.1)(zod@3.24.2):
+    resolution: {integrity: sha512-nvYeFjmjdSu6/msld+22JoUlCICNk/lUFpSMmc6KNhpeNLpqL70TqbD/8Vura/tFmYqHKW0trcjgPwUpKSPwaA==}
     hasBin: true
     peerDependencies:
       ws: ^8.18.0
@@ -20426,7 +20438,7 @@ packages:
     resolution: {integrity: sha512-5b0R4txpzjPWVw/cXXUResoD4hb6U/x9BH08L7nw+GN1sezDzPdxeRvpc9c433fZhBan/wusjbCsqwqm4EIBIQ==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
     dependencies:
-      yocto-queue: 1.1.1
+      yocto-queue: 1.2.0
     dev: false
 
   /p-locate@3.0.0:
@@ -20810,18 +20822,18 @@ packages:
     resolution: {integrity: sha512-fnWVljUchTro6RiCFvCXBbNhJc2NijN7oIQxbwsyL0buWJPG85v81ehlHI9fXrJsMNgTofEoWIQeClKpgxFLrg==}
     dev: false
 
-  /playwright-core@1.50.1:
-    resolution: {integrity: sha512-ra9fsNWayuYumt+NiM069M6OkcRb1FZSK8bgi66AtpFoWkg2+y0bJSNmkFrWhMbEBbVKC/EruAHH3g0zmtwGmQ==}
+  /playwright-core@1.51.0:
+    resolution: {integrity: sha512-x47yPE3Zwhlil7wlNU/iktF7t2r/URR3VLbH6EknJd/04Qc/PSJ0EY3CMXipmglLG+zyRxW6HNo2EGbKLHPWMg==}
     engines: {node: '>=18'}
     hasBin: true
     dev: false
 
-  /playwright@1.50.1:
-    resolution: {integrity: sha512-G8rwsOQJ63XG6BbKj2w5rHeavFjy5zynBA9zsJMMtBoe/Uf757oG12NXz6e6OirF7RCrTVAKFXbLmn1RbL7Qaw==}
+  /playwright@1.51.0:
+    resolution: {integrity: sha512-442pTfGM0xxfCYxuBa/Pu6B2OqxqqaYq39JS8QDMGThUvIOCd6s0ANDog3uwA0cHavVlnTQzGCN7Id2YekDSXA==}
     engines: {node: '>=18'}
     hasBin: true
     dependencies:
-      playwright-core: 1.50.1
+      playwright-core: 1.51.0
     optionalDependencies:
       fsevents: 2.3.2
     dev: false
@@ -22050,14 +22062,14 @@ packages:
       escape-goat: 4.0.0
     dev: false
 
-  /puppeteer-core@24.3.1:
-    resolution: {integrity: sha512-585ccfcTav4KmlSmYbwwOSeC8VdutQHn2Fuk0id/y/9OoeO7Gg5PK1aUGdZjEmos0TAq+pCpChqFurFbpNd3wA==}
+  /puppeteer-core@24.4.0:
+    resolution: {integrity: sha512-eFw66gCnWo0X8Hyf9KxxJtms7a61NJVMiSaWfItsFPzFBsjsWdmcNlBdsA1WVwln6neoHhsG+uTVesKmTREn/g==}
     engines: {node: '>=18'}
     dependencies:
-      '@puppeteer/browsers': 2.7.1
-      chromium-bidi: 2.1.2(devtools-protocol@0.0.1402036)
+      '@puppeteer/browsers': 2.8.0
+      chromium-bidi: 2.1.2(devtools-protocol@0.0.1413902)
       debug: 4.4.0(supports-color@5.5.0)
-      devtools-protocol: 0.0.1402036
+      devtools-protocol: 0.0.1413902
       typed-query-selector: 2.12.0
       ws: 8.18.1
     transitivePeerDependencies:
@@ -22067,17 +22079,17 @@ packages:
       - utf-8-validate
     dev: false
 
-  /puppeteer@24.3.1(typescript@5.6.3):
-    resolution: {integrity: sha512-k0OJ7itRwkr06owp0CP3f/PsRD7Pdw4DjoCUZvjGr+aNgS1z6n/61VajIp0uBjl+V5XAQO1v/3k9bzeZLWs9OQ==}
+  /puppeteer@24.4.0(typescript@5.6.3):
+    resolution: {integrity: sha512-E4JhJzjS8AAI+6N/b+Utwarhz6zWl3+MR725fal+s3UlOlX2eWdsvYYU+Q5bXMjs9eZEGkNQroLkn7j11s2k1Q==}
     engines: {node: '>=18'}
     hasBin: true
     requiresBuild: true
     dependencies:
-      '@puppeteer/browsers': 2.7.1
-      chromium-bidi: 2.1.2(devtools-protocol@0.0.1402036)
+      '@puppeteer/browsers': 2.8.0
+      chromium-bidi: 2.1.2(devtools-protocol@0.0.1413902)
       cosmiconfig: 9.0.0(typescript@5.6.3)
-      devtools-protocol: 0.0.1402036
-      puppeteer-core: 24.3.1
+      devtools-protocol: 0.0.1413902
+      puppeteer-core: 24.4.0
       typed-query-selector: 2.12.0
     transitivePeerDependencies:
       - bare-buffer
@@ -22480,6 +22492,19 @@ packages:
       use-latest: 1.3.0(@types/react@18.3.18)(react@18.3.1)
     transitivePeerDependencies:
       - '@types/react'
+    dev: false
+
+  /react-window@1.8.11(react-dom@18.3.1)(react@18.3.1):
+    resolution: {integrity: sha512-+SRbUVT2scadgFSWx+R1P754xHPEqvcfSfVX10QYg6POOz+WNgkN48pS+BtZNIMGiL1HYrSEiCkwsMS15QogEQ==}
+    engines: {node: '>8.0.0'}
+    peerDependencies:
+      react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+    dependencies:
+      '@babel/runtime': 7.26.9
+      memoize-one: 5.2.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
     dev: false
 
   /react@18.3.1:
@@ -24280,8 +24305,8 @@ packages:
       yallist: 5.0.0
     dev: false
 
-  /terser-webpack-plugin@5.3.13(webpack@5.97.1):
-    resolution: {integrity: sha512-JG3pBixF6kx2o0Yfz2K6pqh72DpwTI08nooHd06tcj5WyIt5SsSiUYqRT+kemrGUNSuSzVhwfZ28aO8gogajNQ==}
+  /terser-webpack-plugin@5.3.14(webpack@5.97.1):
+    resolution: {integrity: sha512-vkZjpUjb6OMS7dhV+tILUW6BhpDR7P2L/aQSAv+Uwk+m8KATX9EccViHTJR2qDtACKPIYndLGCyl3FMo+r2LMw==}
     engines: {node: '>= 10.13.0'}
     peerDependencies:
       '@swc/core': '*'
@@ -24304,8 +24329,8 @@ packages:
       webpack: 5.97.1
     dev: true
 
-  /terser-webpack-plugin@5.3.13(webpack@5.98.0):
-    resolution: {integrity: sha512-JG3pBixF6kx2o0Yfz2K6pqh72DpwTI08nooHd06tcj5WyIt5SsSiUYqRT+kemrGUNSuSzVhwfZ28aO8gogajNQ==}
+  /terser-webpack-plugin@5.3.14(webpack@5.98.0):
+    resolution: {integrity: sha512-vkZjpUjb6OMS7dhV+tILUW6BhpDR7P2L/aQSAv+Uwk+m8KATX9EccViHTJR2qDtACKPIYndLGCyl3FMo+r2LMw==}
     engines: {node: '>= 10.13.0'}
     peerDependencies:
       '@swc/core': '*'
@@ -25669,7 +25694,7 @@ packages:
       neo-async: 2.6.2
       schema-utils: 3.3.0
       tapable: 2.2.1
-      terser-webpack-plugin: 5.3.13(webpack@5.97.1)
+      terser-webpack-plugin: 5.3.14(webpack@5.97.1)
       watchpack: 2.4.2
       webpack-sources: 3.2.3
     transitivePeerDependencies:
@@ -25708,7 +25733,7 @@ packages:
       neo-async: 2.6.2
       schema-utils: 4.3.0
       tapable: 2.2.1
-      terser-webpack-plugin: 5.3.13(webpack@5.98.0)
+      terser-webpack-plugin: 5.3.14(webpack@5.98.0)
       watchpack: 2.4.2
       webpack-cli: 5.1.4(webpack@5.98.0)
       webpack-sources: 3.2.3
@@ -26100,8 +26125,8 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  /yocto-queue@1.1.1:
-    resolution: {integrity: sha512-b4JR1PFR10y1mKjhHY9LaGo6tmrgjit7hxVIeAmyMw3jegXR4dhYqLaQF5zMXZxY7tLpMyJeLjr1C4rLmkVe8g==}
+  /yocto-queue@1.2.0:
+    resolution: {integrity: sha512-KHBC7z61OJeaMGnF3wqNZj+GGNXOyypZviiKpQeiHirG5Ib1ImwcLBH70rbMSkKfSmUNBsdf2PwaEJtKvgmkNw==}
     engines: {node: '>=12.20'}
     dev: false
 

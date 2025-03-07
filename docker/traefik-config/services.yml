@@ -63,5 +63,6 @@ http:
           - DELETE
           - OPTIONS
         accessControlAllowHeaders:
-          - Content-Type
-          - Authorization
+          - '*'
+        accessControlAllowOriginList:
+          - '*'
