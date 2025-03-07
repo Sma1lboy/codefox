@@ -40,6 +40,12 @@ export type Scalars = {
   Upload: { input: any; output: any };
 };
 
+export type AvatarUploadResponse = {
+  __typename: 'AvatarUploadResponse';
+  avatarUrl: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type Chat = {
   __typename: 'Chat';
   createdAt: Scalars['Date']['output'];
@@ -166,6 +172,7 @@ export type Mutation = {
   updateChatTitle?: Maybe<Chat>;
   updateProjectPhoto: Project;
   updateProjectPublicStatus: Project;
+  uploadAvatar: AvatarUploadResponse;
 };
 
 export type MutationClearChatHistoryArgs = {
@@ -237,6 +244,10 @@ export type MutationUpdateProjectPublicStatusArgs = {
   projectId: Scalars['ID']['input'];
 };
 
+export type MutationUploadAvatarArgs = {
+  file: Scalars['Upload']['input'];
+};
+
 export type NewChatInput = {
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -293,6 +304,7 @@ export type Query = {
   getProject: Project;
   getRemainingProjectLimit: Scalars['Int']['output'];
   getSubscribedProjects: Array<Project>;
+  getUserAvatar?: Maybe<Scalars['String']['output']>;
   getUserChats?: Maybe<Array<Chat>>;
   getUserProjects: Array<Project>;
   isValidateProject: Scalars['Boolean']['output'];
@@ -318,6 +330,10 @@ export type QueryGetChatHistoryArgs = {
 
 export type QueryGetProjectArgs = {
   projectId: Scalars['String']['input'];
+};
+
+export type QueryGetUserAvatarArgs = {
+  userId: Scalars['String']['input'];
 };
 
 export type QueryIsValidateProjectArgs = {
@@ -364,8 +380,8 @@ export type UpdateProjectPhotoInput = {
 };
 
 export type User = {
-  avatarUrl: string;
   __typename: 'User';
+  avatarUrl?: Maybe<Scalars['String']['output']>;
   chats: Array<Chat>;
   createdAt: Scalars['Date']['output'];
   email: Scalars['String']['output'];
@@ -491,6 +507,7 @@ export type DirectiveResolverFn<
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
+  AvatarUploadResponse: ResolverTypeWrapper<AvatarUploadResponse>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   Chat: ResolverTypeWrapper<Chat>;
   ChatCompletionChoiceType: ResolverTypeWrapper<ChatCompletionChoiceType>;
@@ -531,6 +548,7 @@ export type ResolversTypes = ResolversObject<{
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = ResolversObject<{
+  AvatarUploadResponse: AvatarUploadResponse;
   Boolean: Scalars['Boolean']['output'];
   Chat: Chat;
   ChatCompletionChoiceType: ChatCompletionChoiceType;
@@ -565,6 +583,16 @@ export type ResolversParentTypes = ResolversObject<{
   UpdateProjectPhotoInput: UpdateProjectPhotoInput;
   Upload: Scalars['Upload']['output'];
   User: User;
+}>;
+
+export type AvatarUploadResponseResolvers<
+  ContextType = any,
+  ParentType extends
+    ResolversParentTypes['AvatarUploadResponse'] = ResolversParentTypes['AvatarUploadResponse'],
+> = ResolversObject<{
+  avatarUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
 export type ChatResolvers<
@@ -807,6 +835,12 @@ export type MutationResolvers<
       'isPublic' | 'projectId'
     >
   >;
+  uploadAvatar?: Resolver<
+    ResolversTypes['AvatarUploadResponse'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationUploadAvatarArgs, 'file'>
+  >;
 }>;
 
 export type ProjectResolvers<
@@ -923,6 +957,12 @@ export type QueryResolvers<
     ParentType,
     ContextType
   >;
+  getUserAvatar?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryGetUserAvatarArgs, 'userId'>
+  >;
   getUserChats?: Resolver<
     Maybe<Array<ResolversTypes['Chat']>>,
     ParentType,
@@ -977,6 +1017,11 @@ export type UserResolvers<
   ParentType extends
     ResolversParentTypes['User'] = ResolversParentTypes['User'],
 > = ResolversObject<{
+  avatarUrl?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
   chats?: Resolver<Array<ResolversTypes['Chat']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -1005,6 +1050,7 @@ export type UserResolvers<
 }>;
 
 export type Resolvers<ContextType = any> = ResolversObject<{
+  AvatarUploadResponse?: AvatarUploadResponseResolvers<ContextType>;
   Chat?: ChatResolvers<ContextType>;
   ChatCompletionChoiceType?: ChatCompletionChoiceTypeResolvers<ContextType>;
   ChatCompletionChunkType?: ChatCompletionChunkTypeResolvers<ContextType>;

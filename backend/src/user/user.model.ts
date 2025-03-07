@@ -28,7 +28,7 @@ export class User extends SystemBaseModel {
   @Column()
   password: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   avatarUrl?: string;
 
