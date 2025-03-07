@@ -96,7 +96,7 @@ export default function Chat() {
   // Render the settings view if chatId indicates settings mode
   if (chatId === EventEnum.SETTING) {
     return (
-      <div className="h-full w-full flex items-center justify-center">
+      <div className="h-full w-full overflow-auto">
         <EditUsernameForm />
       </div>
     );

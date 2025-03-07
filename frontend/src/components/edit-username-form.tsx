@@ -15,10 +15,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ModeToggle } from './mode-toggle';
 import { toast } from 'sonner';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import Image from 'next/image';
 import { ActivityCalendar } from 'react-activity-calendar';
 import { TeamSelector } from './team-selector';
+import { useQuery } from '@apollo/client';
+import { AvatarUploader } from './avatar-uploader';
+import { useAuthContext } from '@/providers/AuthProvider';
 
 const data = [
   {
@@ -56,6 +57,8 @@ const formSchema = z.object({
 
 export default function EditUsernameForm() {
   const [name, setName] = useState('');
+  const { user, isLoading } = useAuthContext();
+  const [avatarUrl, setAvatarUrl] = useState('');
 
   const avatarFallback = useMemo(() => {
     if (!name) return 'US';
@@ -63,8 +66,11 @@ export default function EditUsernameForm() {
   }, [name]);
 
   useEffect(() => {
-    setName(localStorage.getItem('ollama_user') || 'Anonymous');
-  }, []);
+    if (user) {
+      setName(user.username || 'Anonymous');
+      setAvatarUrl(user.avatarUrl || '');
+    }
+  }, [user]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -84,22 +90,29 @@ export default function EditUsernameForm() {
     form.setValue('username', e.currentTarget.value);
     setName(e.currentTarget.value);
   };
+
+  const handleAvatarChange = (newUrl: string) => {
+    setAvatarUrl(newUrl);
+  };
+
   return (
-    <div className="w-[60%] pt-10 mb-24">
-      <h1 className="text-3xl font-semibold mb-8">User Settings</h1>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="space-y-8">
+        <h1 className="text-3xl font-semibold mb-8">User Settings</h1>
         <div className="w-[100%] flex justify-center">
           <ActivityCalendar data={data} blockSize={12} blockMargin={5} />
         </div>
         {/* Profile Picture Section */}
-        <div className="space-y-2">
+        <div className="space-y-4">
           <h2 className="text-lg font-medium">Profile Picture</h2>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col items-center justify-center gap-4">
             <p className="text-muted-foreground">You look good today!</p>
-            <Avatar className="flex items-center justify-center">
-              <AvatarImage src="" alt="User" />
-              <AvatarFallback>{avatarFallback}</AvatarFallback>
-            </Avatar>
+
+            <AvatarUploader
+              currentAvatarUrl={avatarUrl}
+              avatarFallback={avatarFallback}
+              onAvatarChange={handleAvatarChange}
+            />
           </div>
         </div>
         <div className="bg-border h-px" />

@@ -23,6 +23,7 @@ interface AuthContextValue {
   logout: () => void;
   refreshAccessToken: () => Promise<string | boolean | void>;
   validateToken: () => Promise<boolean>;
+  refreshUserInfo: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -34,6 +35,7 @@ const AuthContext = createContext<AuthContextValue>({
   logout: () => {},
   refreshAccessToken: async () => {},
   validateToken: async () => false,
+  refreshUserInfo: async () => false,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -81,6 +83,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false;
     }
   }, [getUserInfo]);
+
+  const refreshUserInfo = useCallback(async () => {
+    return await fetchUserInfo();
+  }, [fetchUserInfo]);
 
   const refreshAccessToken = useCallback(async () => {
     try {
@@ -187,6 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         refreshAccessToken,
         validateToken,
+        refreshUserInfo,
       }}
     >
       {children}
