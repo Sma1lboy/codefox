@@ -20,6 +20,31 @@ import { useMemo, useState, memo, useEffect } from 'react';
 import { EventEnum } from '../const/EventEnum';
 import { useAuthContext } from '@/providers/AuthProvider';
 
+// Avatar URL normalization helper
+function normalizeAvatarUrl(avatarUrl: string | null | undefined): string {
+  if (!avatarUrl) return '';
+
+  // Check if it's already an absolute URL (S3 case)
+  if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
+    return avatarUrl;
+  }
+
+  // Check if it's a relative media path
+  if (avatarUrl.startsWith('media/')) {
+    // Convert to API route path
+    return `/api/${avatarUrl}`;
+  }
+
+  // Handle paths that might not have the media/ prefix
+  if (avatarUrl.includes('avatars/')) {
+    const parts = avatarUrl.split('avatars/');
+    return `/api/media/avatars/${parts[parts.length - 1]}`;
+  }
+
+  // Return as is for other cases
+  return avatarUrl;
+}
+
 interface UserSettingsProps {
   isSimple: boolean;
 }
@@ -47,6 +72,11 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
     return user?.username || 'Anonymous';
   }, [isLoading, user?.username]);
 
+  // Normalize the avatar URL
+  const normalizedAvatarUrl = useMemo(() => {
+    return normalizeAvatarUrl(user?.avatarUrl);
+  }, [user?.avatarUrl]);
+
   const handleSettingsClick = () => {
     // First navigate using Next.js router
     router.push('/chat?id=setting');
@@ -68,9 +98,9 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
         }`}
       >
         <SmallAvatar className="flex items-center justify-center">
-          {/* Use empty string fallback instead of undefined to avoid React warnings */}
+          {/* Use normalized avatar URL */}
           <AvatarImage
-            src={user?.avatarUrl || ''}
+            src={normalizedAvatarUrl}
             alt="User"
             key={user?.avatarUrl}
           />
@@ -79,7 +109,13 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
         {!isSimple && <span className="truncate">{displayUsername}</span>}
       </Button>
     );
-  }, [avatarFallback, displayUsername, isSimple, user?.avatarUrl]);
+  }, [
+    avatarFallback,
+    displayUsername,
+    isSimple,
+    normalizedAvatarUrl,
+    user?.avatarUrl,
+  ]);
 
   return (
     <DropdownMenu>

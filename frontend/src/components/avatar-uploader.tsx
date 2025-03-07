@@ -8,6 +8,31 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { useAuthContext } from '@/providers/AuthProvider';
 
+// Avatar URL normalization helper
+function normalizeAvatarUrl(avatarUrl: string | null | undefined): string {
+  if (!avatarUrl) return '';
+
+  // Check if it's already an absolute URL (S3 case)
+  if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
+    return avatarUrl;
+  }
+
+  // Check if it's a relative media path
+  if (avatarUrl.startsWith('media/')) {
+    // Convert to API route path
+    return `/api/${avatarUrl}`;
+  }
+
+  // Handle paths that might not have the media/ prefix
+  if (avatarUrl.includes('avatars/')) {
+    const parts = avatarUrl.split('avatars/');
+    return `/api/media/avatars/${parts[parts.length - 1]}`;
+  }
+
+  // Return as is for other cases
+  return avatarUrl;
+}
+
 interface AvatarUploaderProps {
   currentAvatarUrl: string;
   avatarFallback: string;
@@ -60,7 +85,9 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
       });
 
       if (data?.uploadAvatar?.success) {
-        onAvatarChange(data.uploadAvatar.avatarUrl);
+        // Store the original URL from backend
+        const avatarUrl = data.uploadAvatar.avatarUrl;
+        onAvatarChange(avatarUrl);
         toast.success('Avatar updated successfully');
 
         // Refresh the user information in the auth context
@@ -84,8 +111,8 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
     fileInputRef.current?.click();
   };
 
-  // Use preview URL if available, otherwise use the current avatar URL
-  const displayUrl = previewUrl || currentAvatarUrl;
+  // Use preview URL if available, otherwise use the normalized current avatar URL
+  const displayUrl = previewUrl || normalizeAvatarUrl(currentAvatarUrl);
 
   return (
     <div className="flex flex-col items-center gap-4">
