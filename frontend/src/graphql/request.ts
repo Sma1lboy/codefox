@@ -182,7 +182,7 @@ export const GET_CUR_PROJECT = gql`
   }
 `;
 export const SAVE_MESSAGE = gql`
-  mutation SaveMessage($input: ChatInput!) {
+  mutation SaveMessage($input: ChatInputType!) {
     saveMessage(input: $input)
   }
 `;

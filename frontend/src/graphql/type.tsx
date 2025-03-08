@@ -162,6 +162,7 @@ export type Mutation = {
   regenerateDescription: Scalars['String']['output'];
   registerUser: User;
   resendConfirmationEmail: EmailConfirmationResponse;
+  saveMessage: Scalars['Boolean']['output'];
   subscribeToProject: Project;
   triggerChatStream: Scalars['Boolean']['output'];
   updateChatTitle?: Maybe<Chat>;
@@ -215,6 +216,10 @@ export type MutationRegisterUserArgs = {
 
 export type MutationResendConfirmationEmailArgs = {
   input: ResendEmailInput;
+};
+
+export type MutationSaveMessageArgs = {
+  input: ChatInputType;
 };
 
 export type MutationSubscribeToProjectArgs = {
@@ -778,6 +783,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationResendConfirmationEmailArgs, 'input'>
+  >;
+  saveMessage?: Resolver<
+    ResolversTypes['Boolean'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationSaveMessageArgs, 'input'>
   >;
   subscribeToProject?: Resolver<
     ResolversTypes['Project'],

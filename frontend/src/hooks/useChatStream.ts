@@ -5,27 +5,25 @@ import {
   CREATE_CHAT,
   GET_CUR_PROJECT,
   TRIGGER_CHAT,
+  SAVE_MESSAGE,
 } from '@/graphql/request';
 import { Message } from '@/const/MessageType';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import {
-  bugReasonPrompt,
-  findbugPrompt,
-  leaderPrompt,
-  refactorPrompt,
-  optimizePrompt,
-  readFilePrompt,
-  editFilePrompt,
-  applyChangesPrompt,
-  codeReviewPrompt,
-  commitChangesPrompt,
-} from './agentPrompt';
 import { set } from 'react-hook-form';
 import { debug } from 'console';
 import { parseXmlToJson } from '@/utils/parser';
 import { Chat, ChatInputType, Project } from '@/graphql/type';
 import path from 'path';
+import {
+  leaderPrompt,
+  findbugPrompt,
+  refactorPrompt,
+  optimizePrompt,
+  editFilePrompt,
+  codeReviewPrompt,
+  commitChangesPrompt,
+} from './agentPrompt';
 
 export enum StreamStatus {
   IDLE = 'IDLE',
@@ -88,7 +86,7 @@ export function useChatStream({
     refetch,
   } = useQuery<{ getCurProject: Project }>(GET_CUR_PROJECT, {
     variables: { chatId: currentChatId },
-    skip: !currentChatId, // 如果 chatId 为空，跳过查询
+    skip: !currentChatId,
   });
 
   useEffect(() => {
@@ -109,27 +107,13 @@ export function useChatStream({
             console.log('getCurProject', result.data.getCurProject);
             setCurProject(result.data.getCurProject);
           }
-        })
-        .catch((error) => {
-          console.error('Refetch error:', error);
-
-          // 如果是 ApolloError，可以获取详细信息
-          if (error.networkError) {
-            console.error('Network error:', error.networkError);
-          }
-          if (error.graphQLErrors) {
-            console.error('GraphQL errors:', error.graphQLErrors);
-          }
-          if (error.clientErrors) {
-            console.error('Client errors:', error.clientErrors);
-          }
         });
     }
   }, [chatId]);
   // 依赖 chatId 变化
   useEffect(() => {
     if (projectError) {
-      console.error('❌ useQuery Error:', projectError);
+      console.error('useQuery Error:', projectError);
     }
   }, [projectError]);
   const updateChatId = () => {
@@ -147,6 +131,8 @@ export function useChatStream({
       finishChatResponse();
     },
   });
+
+  const [saveMessage] = useMutation(SAVE_MESSAGE);
 
   const [createChat] = useMutation(CREATE_CHAT, {
     onCompleted: async (data) => {
@@ -166,7 +152,7 @@ export function useChatStream({
   useSubscription(CHAT_STREAM, {
     skip: !subscription.enabled || !subscription.variables,
     variables: subscription.variables,
-    onSubscriptionData: ({ subscriptionData }) => {
+    onSubscriptionData: async ({ subscriptionData }) => {
       const chatStream = subscriptionData?.data?.chatStream;
 
       if (!chatStream) return;
@@ -178,49 +164,69 @@ export function useChatStream({
       const content = chatStream.choices?.[0]?.delta?.content;
 
       if (content) {
-        setMessages((prev) => {
-          const lastMsg = prev[prev.length - 1];
-
-          let filteredContent = content;
-
-          if (filteredContent.includes('<jsonResponse>')) {
-            setIsInsideJsonResponse(true);
-            filteredContent = filteredContent.split('<jsonResponse>')[0];
-          }
-
-          if (isInsideJsonResponse) {
-            if (filteredContent.includes('</jsonResponse>')) {
-              setIsInsideJsonResponse(false);
-              filteredContent =
-                filteredContent.split('</jsonResponse>')[1] || '';
-            } else {
-              return prev;
-            }
-          }
-
-          if (lastMsg?.role === 'assistant') {
-            return [
-              ...prev.slice(0, -1),
-              { ...lastMsg, content: lastMsg.content + filteredContent },
-            ];
-          } else {
-            return [
-              ...prev,
-              {
-                id: chatStream.id,
-                role: 'assistant',
-                content: filteredContent,
-                createdAt: new Date(chatStream.created * 1000).toISOString(),
-              },
-            ];
-          }
-        });
         setCumulatedContent((prev) => prev + content);
       }
       if (chatStream.status == StreamStatus.DONE) {
         setStreamStatus(StreamStatus.DONE);
         finishChatResponse();
         const parsedContent = parseXmlToJson(cumulatedContent);
+        const process = parsedContent.thinking_process;
+        saveMessage({
+          variables: {
+            input: {
+              chatId: subscription.variables.input.chatId,
+              message: process,
+              model: subscription.variables.input.model,
+              role: 'assistant',
+            } as ChatInputType,
+          },
+        });
+
+        const typewriterEffect = async (textArray: string[], delay: number) => {
+          let index = 0;
+
+          // implement typewriter effect
+          const updateMessage = async () => {
+            if (index < textArray.length) {
+              setMessages((prev) => {
+                const lastMsg = prev[prev.length - 1];
+                return lastMsg?.role === 'assistant'
+                  ? [
+                      ...prev.slice(0, -1),
+                      {
+                        ...lastMsg,
+                        content: lastMsg.content + textArray[index],
+                      },
+                    ]
+                  : [
+                      ...prev,
+                      {
+                        id: chatStream.id,
+                        role: 'assistant',
+                        content: textArray[index],
+                        createdAt: new Date(
+                          chatStream.created * 1000
+                        ).toISOString(),
+                      },
+                    ];
+              });
+
+              index++;
+              setTimeout(updateMessage, delay);
+            }
+          };
+
+          await updateMessage();
+        };
+
+        // break text into chunks of 3 characters
+        const breakText = (text: string) => {
+          return text.match(/(\S{1,3}|\s+)/g) || [];
+        };
+
+        const brokenText = breakText(process);
+        await typewriterEffect(brokenText, 100);
+
         setCumulatedContent('');
         console.log(parsedContent);
         console.log('response json');
@@ -280,7 +286,18 @@ export function useChatStream({
   const startChatStream = async (targetChatId: string, message: string) => {
     try {
       const prompt = leaderPrompt(message);
-      const input: ChatInputType = {
+      const userInput: ChatInputType = {
+        chatId: targetChatId,
+        message: message,
+        model: selectedModel,
+        role: 'user',
+      };
+      saveMessage({
+        variables: {
+          input: userInput as ChatInputType,
+        },
+      });
+      const assistantInput: ChatInputType = {
         chatId: targetChatId,
         message: prompt,
         model: selectedModel,
@@ -294,11 +311,27 @@ export function useChatStream({
       setStreamStatus(StreamStatus.STREAMING);
       setSubscription({
         enabled: true,
-        variables: { input },
+        variables: {
+          input: {
+            chatId: targetChatId,
+            message: prompt,
+            model: selectedModel,
+            role: 'assistant',
+          },
+        },
       });
 
       await new Promise((resolve) => setTimeout(resolve, 100));
-      await triggerChat({ variables: { input } });
+      await triggerChat({
+        variables: {
+          input: {
+            chatId: targetChatId,
+            message: prompt,
+            model: selectedModel,
+            role: 'assistant',
+          },
+        },
+      });
     } catch (err) {
       toast.error('Failed to start chat');
       setStreamStatus(StreamStatus.IDLE);
@@ -378,7 +411,7 @@ export function useChatStream({
     async (input: ChatInputType) => {
       console.log('taskAgent called with input:', input);
       const res = JSON.parse(input.message);
-      const assignedTask = res.task;
+      const assignedTask = res.task_type;
       const description = res.description;
       setTaskStep(assignedTask);
       setTaskDescription(description);
@@ -458,7 +491,6 @@ export function useChatStream({
         ...fileContents,
       };
 
-      // Fetch file content for each filePath if not already present
       await Promise.all(
         filePaths.map(async (filePath: string) => {
           if (!currentFileContents[filePath]) {
@@ -481,7 +513,6 @@ export function useChatStream({
         })
       );
 
-      // Update state with the latest file contents object
       setFileContents(currentFileContents);
       setOriginalFileContents((prev) => ({ ...prev, ...currentFileContents }));
 
@@ -510,7 +541,6 @@ export function useChatStream({
   const applyChangesAgent = useCallback(
     async (input: ChatInputType) => {
       console.log('applyChangesAgent called with input:', input);
-      // 遍历 newFileContents 中的所有文件，发送更新请求
       const updatePromises = Object.keys(newFileContents).map(
         async (filePath) => {
           const newContent = newFileContents[filePath];
@@ -545,22 +575,28 @@ export function useChatStream({
     let parsedMessage: { [key: string]: string } = {};
 
     try {
-      // ✅ 尝试解析 JSON 格式的代码
       if (typeof input.message === 'string') {
-        parsedMessage = JSON.parse(input.message);
-      } else if (typeof input.message === 'object') {
-        parsedMessage = input.message;
+        const parsedObject = JSON.parse(input.message);
+
+        if (
+          parsedObject.modified_files &&
+          typeof parsedObject.modified_files === 'object'
+        ) {
+          parsedMessage = parsedObject.modified_files;
+        } else {
+          console.error('modified_files is missing or not an object');
+        }
       }
     } catch (error) {
       console.error('Failed to parse input.message:', error);
     }
 
+    console.log('Parsed modified_files:', parsedMessage);
+
     console.log('Parsed Message:', parsedMessage);
 
-    // ✅ 更新 newFileContents
     setNewFileContents((prev) => ({ ...prev, ...parsedMessage }));
 
-    // ✅ 格式化消息为 prompt
     const formattedMessage = Object.entries(parsedMessage)
       .map(
         ([filePath, content]) =>

@@ -56,12 +56,6 @@ export class ChatResolver {
   @JWTAuth()
   async triggerChatStream(@Args('input') input: ChatInput): Promise<boolean> {
     try {
-      await this.chatService.saveMessage(
-        input.chatId,
-        input.message,
-        MessageRole.User,
-      );
-
       const iterator = this.chatProxyService.streamChat(input);
       let accumulatedContent = '';
 
@@ -96,12 +90,6 @@ export class ChatResolver {
           });
         }
       }
-
-      await this.chatService.saveMessage(
-        input.chatId,
-        accumulatedContent,
-        MessageRole.Assistant,
-      );
 
       return true;
     } catch (error) {
