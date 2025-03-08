@@ -39,6 +39,7 @@ input ChatInputType {
   chatId: String!
   message: String!
   model: String!
+  role: String!
 }
 
 input CheckTokenInput {
@@ -54,7 +55,9 @@ input CreateProjectInput {
   public: Boolean
 }
 
-"""Date custom scalar type"""
+"""
+Date custom scalar type
+"""
 scalar Date
 
 type EmailConfirmationResponse {
@@ -118,6 +121,8 @@ type Mutation {
   registerUser(input: RegisterUserInput!): User!
   resendConfirmationEmail(input: ResendEmailInput!): EmailConfirmationResponse!
   subscribeToProject(projectId: ID!): Project!
+  saveMessage(input: ChatInputType!): Boolean!
+  triggerAgentChatStream(input: ChatInputType!): String!
   triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
   updateProjectPhoto(input: UpdateProjectPhotoInput!): Project!
@@ -144,7 +149,9 @@ type Project {
   projectPath: String!
   subNumber: Float!
 
-  """Projects that are copies of this project"""
+  """
+  Projects that are copies of this project
+  """
   subscribers: [Project!]
   uniqueProjectId: String!
   updatedAt: Date!
@@ -174,6 +181,7 @@ type Query {
   getAvailableModelTags: [String!]
   getChatDetails(chatId: String!): Chat
   getChatHistory(chatId: String!): [Message!]!
+  getCurProject(chatId: String!): Project
   getHello: String!
   getProject(projectId: String!): Project!
   getRemainingProjectLimit: Int!
@@ -225,7 +233,9 @@ input UpdateProjectPhotoInput {
   projectId: ID!
 }
 
-"""The `Upload` scalar type represents a file upload."""
+"""
+The `Upload` scalar type represents a file upload.
+"""
 scalar Upload
 
 type User {
@@ -238,7 +248,8 @@ type User {
   isEmailConfirmed: Boolean!
   lastEmailSendTime: Date!
   projects: [Project!]!
-  subscribedProjects: [Project!] @deprecated(reason: "Use projects with forkedFromId instead")
+  subscribedProjects: [Project!]
+    @deprecated(reason: "Use projects with forkedFromId instead")
   updatedAt: Date!
   username: String!
 }

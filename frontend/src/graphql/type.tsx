@@ -81,6 +81,7 @@ export type ChatInputType = {
   chatId: Scalars['String']['input'];
   message: Scalars['String']['input'];
   model: Scalars['String']['input'];
+  role: Role;
 };
 
 export type CheckTokenInput = {
