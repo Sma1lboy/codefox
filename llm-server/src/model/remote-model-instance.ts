@@ -73,7 +73,6 @@ export class RemoteOpenAIModelEngine implements ModelInstance {
         return await this.client.chat.completions.create({
           model: this.config.model,
           messages,
-          temperature: 1, // Default to 0.7 if not specified
         });
       });
 
