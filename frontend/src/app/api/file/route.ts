@@ -59,6 +59,8 @@ function getFileType(filePath: string): string {
   const extension = filePath.split('.').pop()?.toLowerCase() || '';
 
   const typeMap: { [key: string]: string } = {
+    //TODO: Add more file types
+    tsx: 'typescriptreact',
     txt: 'text',
     md: 'markdown',
     json: 'json',

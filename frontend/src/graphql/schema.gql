@@ -60,6 +60,11 @@ Date custom scalar type
 """
 scalar Date
 
+type EmailConfirmationResponse {
+  message: String!
+  success: Boolean
+}
+
 input FetchPublicProjectsInputs {
   size: Float!
   strategy: String!
@@ -104,6 +109,7 @@ type Message {
 
 type Mutation {
   clearChatHistory(chatId: String!): Boolean!
+  confirmEmail(token: String!): EmailConfirmationResponse!
   createChat(newChatInput: NewChatInput!): Chat!
   createProject(createProjectInput: CreateProjectInput!): Chat!
   deleteChat(chatId: String!): Boolean!
@@ -113,11 +119,12 @@ type Mutation {
   refreshToken(refreshToken: String!): RefreshTokenResponse!
   regenerateDescription(input: String!): String!
   registerUser(input: RegisterUserInput!): User!
+  resendConfirmationEmail(input: ResendEmailInput!): EmailConfirmationResponse!
   saveMessage(input: ChatInputType!): Boolean!
   subscribeToProject(projectId: ID!): Project!
   triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
-  updateProjectPhotoUrl(photoUrl: String!, projectId: ID!): Project!
+  updateProjectPhoto(input: UpdateProjectPhotoInput!): Project!
   updateProjectPublicStatus(isPublic: Boolean!, projectId: ID!): Project!
 }
 
@@ -176,6 +183,7 @@ type Query {
   getCurProject(chatId: String!): Project
   getHello: String!
   getProject(projectId: String!): Project!
+  getRemainingProjectLimit: Int!
   getSubscribedProjects: [Project!]!
   getUserChats: [Chat!]
   getUserProjects: [Project!]!
@@ -193,6 +201,10 @@ input RegisterUserInput {
   email: String!
   password: String!
   username: String!
+}
+
+input ResendEmailInput {
+  email: String!
 }
 
 enum Role {
@@ -215,6 +227,16 @@ input UpdateChatTitleInput {
   title: String
 }
 
+input UpdateProjectPhotoInput {
+  file: Upload!
+  projectId: ID!
+}
+
+"""
+The `Upload` scalar type represents a file upload.
+"""
+scalar Upload
+
 type User {
   chats: [Chat!]!
   createdAt: Date!
@@ -222,6 +244,8 @@ type User {
   id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
+  isEmailConfirmed: Boolean!
+  lastEmailSendTime: Date!
   projects: [Project!]!
   subscribedProjects: [Project!]
     @deprecated(reason: "Use projects with forkedFromId instead")

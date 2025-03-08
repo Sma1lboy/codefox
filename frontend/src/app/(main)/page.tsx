@@ -8,9 +8,15 @@ import { useAuthContext } from '@/providers/AuthProvider';
 import { ProjectsSection } from '@/components/root/projects-section';
 import { PromptForm, PromptFormRef } from '@/components/root/prompt-form';
 import { ProjectContext } from '@/components/chat/code-engine/project-context';
-
+import { SignInModal } from '@/components/sign-in-modal';
+import { SignUpModal } from '@/components/sign-up-modal';
+import { useRouter } from 'next/navigation';
 export default function HomePage() {
+  // States for AuthChoiceModal
   const [showAuthChoice, setShowAuthChoice] = useState(false);
+  const router = useRouter();
+  const [showSignIn, setShowSignIn] = useState(false);
+  const [showSignUp, setShowSignUp] = useState(false);
 
   const promptFormRef = useRef<PromptFormRef>(null);
   const { isAuthorized } = useAuthContext();
@@ -19,30 +25,19 @@ export default function HomePage() {
   const handleSubmit = async () => {
     if (!promptFormRef.current) return;
 
-    // Get form data from the prompt form
     const { message, isPublic, model } = promptFormRef.current.getPromptData();
-
     if (!message.trim()) return;
 
     try {
-      // Create the project
-      const result = await createProjectFromPrompt(message, isPublic, model);
-
-      // If successful, clear the input
-      if (result) {
-        promptFormRef.current.clearMessage();
-
-        // Note: No need to navigate here as the ProjectContext's onCompleted handler
-        // in the createProject mutation will handle navigation to the chat page
-      }
+      await createProjectFromPrompt(message, isPublic, model);
+      promptFormRef.current.clearMessage();
     } catch (error) {
       console.error('Error creating project:', error);
-      // Error handling is done via toast in ProjectContext
     }
   };
 
   return (
-    <div className="pt-32 pb-24 px-6 ">
+    <div className="pt-32 pb-24 px-6">
       <motion.div
         className="flex flex-col items-center"
         initial={{ opacity: 0, y: 20 }}
@@ -85,19 +80,28 @@ export default function HomePage() {
         </div>
       </motion.div>
 
-      {/* Modals */}
+      {/* Choice Modal */}
       <AuthChoiceModal
         isOpen={showAuthChoice}
         onClose={() => setShowAuthChoice(false)}
         onSignUpClick={() => {
           setShowAuthChoice(false);
+          setTimeout(() => {
+            setShowSignUp(true);
+          }, 100);
         }}
         onSignInClick={() => {
           setShowAuthChoice(false);
+          setTimeout(() => {
+            setShowSignIn(true);
+          }, 100);
         }}
       />
 
-      {/* Add this to your global CSS for the subtle pulse animation */}
+      {/* SignInModal & SignUpModal */}
+      <SignInModal isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
+      <SignUpModal isOpen={showSignUp} onClose={() => setShowSignUp(false)} />
+
       <style jsx global>{`
         .animate-pulse-subtle {
           animation: pulse-subtle 2s infinite;

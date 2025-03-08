@@ -7,6 +7,7 @@ import {
   ResolveField,
   Parent,
   ID,
+  Int,
 } from '@nestjs/graphql';
 import { ProjectService } from './project.service';
 import { Project } from './project.model';
@@ -14,12 +15,14 @@ import {
   CreateProjectInput,
   FetchPublicProjectsInputs,
   IsValidProjectInput,
+  UpdateProjectPhotoInput,
 } from './dto/project.input';
 import { Logger, UseGuards } from '@nestjs/common';
 import { ProjectGuard } from '../guard/project.guard';
 import { GetUserIdFromToken } from '../decorator/get-auth-token.decorator';
 import { Chat } from 'src/chat/chat.model';
 import { User } from 'src/user/user.model';
+import { validateAndBufferFile } from 'src/common/security/file_check';
 
 @Resolver(() => Project)
 export class ProjectsResolver {
@@ -86,19 +89,25 @@ export class ProjectsResolver {
     return this.projectService.subscribeToProject(userId, projectId);
   }
 
+  @UseGuards(ProjectGuard)
   @Mutation(() => Project)
-  async updateProjectPhotoUrl(
+  async updateProjectPhoto(
     @GetUserIdFromToken() userId: string,
-    @Args('projectId', { type: () => ID }) projectId: string,
-    @Args('photoUrl') photoUrl: string,
+    @Args('input') input: UpdateProjectPhotoInput,
   ): Promise<Project> {
-    this.logger.log(
-      `User ${userId} updating photo URL for project ${projectId}`,
-    );
+    const { projectId, file } = input;
+    this.logger.log(`User ${userId} uploading photo for project ${projectId}`);
+
+    // Extract the file data
+    // Validate file and convert it to buffer
+    const { buffer, mimetype } = await validateAndBufferFile(file);
+
+    // Call the service with the extracted buffer and mimetype
     return this.projectService.updateProjectPhotoUrl(
       userId,
       projectId,
-      photoUrl,
+      buffer,
+      mimetype,
     );
   }
 
@@ -146,5 +155,13 @@ export class ProjectsResolver {
     @Args('input') input: FetchPublicProjectsInputs,
   ): Promise<Project[]> {
     return this.projectService.fetchPublicProjects(input);
+  }
+
+  // In ProjectsResolver:
+  @Query(() => Int)
+  async getRemainingProjectLimit(
+    @GetUserIdFromToken() userId: string,
+  ): Promise<number> {
+    return this.projectService.getRemainingProjectLimit(userId);
   }
 }
