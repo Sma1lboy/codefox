@@ -10,6 +10,9 @@ import { URL_PROTOCOL_PREFIX } from '@/utils/const';
 const CONTAINER_STATE_FILE = path.join(process.cwd(), 'container-state.json');
 const PORT_STATE_FILE = path.join(process.cwd(), 'port-state.json');
 
+// Base image name - this is the single image we'll use for all containers
+const BASE_IMAGE_NAME = 'frontend-base-image';
+
 // In-memory container and port state
 let runningContainers = new Map<
   string,
@@ -22,6 +25,9 @@ const processingRequests = new Set<string>();
 
 // State lock to prevent concurrent reads/writes to state files
 let isUpdatingState = false;
+
+// Flag to track if base image has been built
+let baseImageBuilt = false;
 
 /**
  * Initialize function, loads persisted state when service starts
@@ -74,6 +80,9 @@ async function initializeState() {
 
     // Save cleaned-up state
     await saveState();
+
+    // Check if base image exists
+    baseImageBuilt = await checkBaseImageExists();
 
     console.log(
       'State initialization complete, cleaned up non-running containers and expired port allocations'
@@ -181,6 +190,24 @@ function checkContainerRunning(containerId: string): Promise<boolean> {
 }
 
 /**
+ * Check if base image exists
+ */
+function checkBaseImageExists(): Promise<boolean> {
+  return new Promise((resolve) => {
+    exec(
+      `docker image inspect ${BASE_IMAGE_NAME}`,
+      (err) => {
+        if (err) {
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      }
+    );
+  });
+}
+
+/**
  * Check if there's already a container running with the specified label
  */
 async function checkExistingContainer(
@@ -203,27 +230,36 @@ async function checkExistingContainer(
 }
 
 /**
- * Remove node_modules and lock files
+ * Build base image if it doesn't exist
  */
-async function removeNodeModulesAndLockFiles(directory: string) {
-  return new Promise<void>((resolve, reject) => {
-    const removeCmd = `rm -rf "${path.join(directory, 'node_modules')}" \
-      "${path.join(directory, 'yarn.lock')}" \
-      "${path.join(directory, 'package-lock.json')}" \
-      "${path.join(directory, 'pnpm-lock.yaml')}"`;
-
-    console.log(`Cleaning up node_modules and lock files in: ${directory}`);
-    exec(removeCmd, { timeout: 30000 }, (err, stdout, stderr) => {
-      if (err) {
-        console.error('Error removing node_modules or lock files:', stderr);
-        // Don't block the process, continue even if cleanup fails
-        resolve();
-        return;
-      }
-      console.log(`Cleanup done: ${stdout}`);
-      resolve();
-    });
-  });
+async function ensureBaseImageExists(): Promise<void> {
+  if (baseImageBuilt) {
+    return;
+  }
+  
+  try {
+    // Path to the base image Dockerfile
+    const dockerfilePath = path.join(process.cwd(), '../docker', 'project-base-image');
+    
+    // Check if base Dockerfile exists
+    if (!fs.existsSync(path.join(dockerfilePath, 'Dockerfile'))) {
+      console.error('Base Dockerfile not found at:', dockerfilePath);
+      throw new Error('Base Dockerfile not found');
+    }
+    
+    // Build the base image
+    console.log(`Building base image ${BASE_IMAGE_NAME} from ${dockerfilePath}...`);
+    await execWithTimeout(
+      `docker build -t ${BASE_IMAGE_NAME} ${dockerfilePath}`,
+      { timeout: 300000, retries: 1 } // 5 minutes timeout, 1 retry
+    );
+    
+    baseImageBuilt = true;
+    console.log(`Base image ${BASE_IMAGE_NAME} built successfully`);
+  } catch (error) {
+    console.error('Error building base image:', error);
+    throw new Error('Failed to build base image');
+  }
 }
 
 /**
@@ -265,9 +301,9 @@ function execWithTimeout(
 }
 
 /**
- * Build and run Docker container
+ * Run Docker container using the base image
  */
-async function buildAndRunDocker(
+async function runDockerContainer(
   projectPath: string
 ): Promise<{ domain: string; containerId: string; port: number }> {
   const traefikDomain = process.env.TRAEFIK_DOMAIN || 'docker.localhost';
@@ -307,24 +343,16 @@ async function buildAndRunDocker(
     }
   }
 
+  // Ensure base image exists
+  await ensureBaseImageExists();
+
   const directory = path.join(getProjectPath(projectPath), 'frontend');
   const subdomain = projectPath.replace(/[^\w-]/g, '').toLowerCase();
-  const imageName = subdomain;
   const containerName = `container-${subdomain}`;
   const domain = `${subdomain}.${traefikDomain}`;
 
   // Allocate port
   const exposedPort = await findAvailablePort();
-
-  // Remove node_modules and lock files
-  try {
-    await removeNodeModulesAndLockFiles(directory);
-  } catch (error) {
-    console.error(
-      'Error during cleanup phase, but will continue with build:',
-      error
-    );
-  }
 
   try {
     // Check if a container with the same name already exists, remove it if found
@@ -341,15 +369,6 @@ async function buildAndRunDocker(
     } catch (error) {
       // If container doesn't exist, this will error out which is expected
     }
-
-    // Build Docker image
-    console.log(
-      `Starting Docker build for image: ${imageName} in directory: ${directory}`
-    );
-    await execWithTimeout(
-      `docker build -t ${imageName} ${directory}`,
-      { timeout: 300000, retries: 1 } // 5 minutes timeout, 1 retry
-    );
 
     // Determine whether to use TLS or non-TLS configuration
     const TLS = process.env.TLS === 'true';
@@ -368,7 +387,7 @@ async function buildAndRunDocker(
       -l "traefik.http.routers.${subdomain}.middlewares=${subdomain}-cors" \
       --network=docker_traefik_network -p ${exposedPort}:5173 \
       -v "${directory}:/app" \
-      ${imageName}`;
+      ${BASE_IMAGE_NAME}`;
     } else {
       runCommand = `docker run -d --name ${containerName} -l "traefik.enable=true" \
       -l "traefik.http.routers.${subdomain}.rule=Host(\\"${domain}\\")" \
@@ -380,7 +399,7 @@ async function buildAndRunDocker(
       -l "traefik.http.routers.${subdomain}.middlewares=${subdomain}-cors" \
       --network=docker_traefik_network -p ${exposedPort}:5173 \
       -v "${directory}:/app" \
-      ${imageName}`;
+      ${BASE_IMAGE_NAME}`;
     }
 
     // Run container
@@ -414,7 +433,7 @@ async function buildAndRunDocker(
     );
     return { domain, containerId: containerActualId, port: exposedPort };
   } catch (error: any) {
-    console.error(`Error building or running container:`, error);
+    console.error(`Error running container:`, error);
 
     // Clean up allocated port
     allocatedPorts.delete(exposedPort);
@@ -499,7 +518,7 @@ export async function GET(req: Request) {
   // Prevent duplicate builds
   if (processingRequests.has(projectPath)) {
     return NextResponse.json({
-      message: 'Build in progress',
+      message: 'Container creation in progress',
       status: 'pending',
     });
   }
@@ -507,7 +526,7 @@ export async function GET(req: Request) {
   processingRequests.add(projectPath);
 
   try {
-    const { domain, containerId } = await buildAndRunDocker(projectPath);
+    const { domain, containerId } = await runDockerContainer(projectPath);
 
     return NextResponse.json({
       message: 'Docker container started',
