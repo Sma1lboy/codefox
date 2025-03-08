@@ -2,7 +2,7 @@ import { Resolver, Subscription, Args, Query, Mutation } from '@nestjs/graphql';
 import { Chat, ChatCompletionChunk, StreamStatus } from './chat.model';
 import { ChatProxyService, ChatService } from './chat.service';
 import { UserService } from 'src/user/user.service';
-import { Message, MessageRole } from './message.model';
+import { Message } from './message.model';
 import {
   ChatInput,
   NewChatInput,
