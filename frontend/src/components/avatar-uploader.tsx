@@ -12,7 +12,6 @@ import { useAuthContext } from '@/providers/AuthProvider';
 export function normalizeAvatarUrl(avatarUrl: string | null | undefined): string {
   if (!avatarUrl) return '';
 
-  console.log("Avatar URL " + avatarUrl);
   // Check if it's already an absolute URL (S3 case)
   if (avatarUrl.startsWith('https:') || avatarUrl.startsWith('http:')) {
     return avatarUrl;
