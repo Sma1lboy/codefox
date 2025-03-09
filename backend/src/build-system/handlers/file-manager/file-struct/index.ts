@@ -6,6 +6,7 @@ import {
   removeCodeBlockFences,
   extractJsonFromText,
   formatResponse,
+  mergePaths,
 } from 'src/build-system/utils/strings';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import {
@@ -109,7 +110,7 @@ export const prompts = {
     switch (projectPart.toLowerCase()) {
       case 'frontend':
         roleDescription = 'an expert frontend developer';
-        includeSections = `
+        includeSections = `              
             Non-SPA Folder Structure example:
               src/
                 contexts/ - Global state management
@@ -280,7 +281,23 @@ Output Format:
    - Organize the output in a \`files\` object where keys are file paths, and values are their dependency objects.
    - For the router, remember to include all the page components as dependencies, as the router imports them to define the application routes.
 
-4. **Output Requirements**:
+4. **UI Component Dependencies**:
+   - This project uses the shadcn UI component library. 
+   - Components that likely need UI elements (forms, buttons, inputs, etc.) should include appropriate shadcn component dependencies.
+   - Shadcn components are imported with the syntax @/components/ui/[component-name].tsx
+   - Analyze component purposes carefully to determine which shadcn components they should depend on
+   - Examples:
+     - A login form component should depend on form.tsx, input.tsx, and button.tsx
+     - A data table component should depend on table.tsx
+     - A navigation component with dropdowns should depend on dropdown-menu.tsx
+
+5. **Global Components Usage**:
+   - Consider how global components are used across pages.
+   - Global components (like navigation bars, footers, layouts) should be dependencies for all page components.
+   - For example, a Nav component should be included as a dependency for all page files.
+   - Ensure these global components are properly represented in the dependency tree for all relevant pages.
+
+6. **Output Requirements**:
    - The JSON object must strictly follow this structure:
      \`\`\`json
      <GENERATE>
@@ -306,6 +323,7 @@ Output Format:
 - Use common project patterns to deduce dependencies (e.g., pages depend on components, contexts, hooks, and styles).
 - Include all files in the output, even if they have no dependencies.
 - For context providers, ensure they are included as dependencies in either index.tsx or router.tsx to maintain proper context hierarchy in the React application.
+- Global components like navigation bars should appear as dependencies in all page components.
 - Include all files in the output, even if they have no dependencies.
 
 ### Output
@@ -457,6 +475,22 @@ export class FileStructureAndArchitectureHandler
       };
     }
 
+    let added_structure = '';
+    try {
+      added_structure = mergePaths(fileStructureJsonContent);
+      if (!added_structure) {
+        this.logger.error('Failed to add directory.' + added_structure);
+        throw new ResponseParsingError('Failed to add directory.');
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: new ResponseParsingError(
+          `Failed to add directory. ${error.message}`,
+        ),
+      };
+    }
+
     context.virtualDirectory.getAllFiles().forEach((file) => {
       this.logger.log(file);
     });
@@ -466,7 +500,7 @@ export class FileStructureAndArchitectureHandler
     this.logger.log('Generating File Architecture Document...');
 
     this.virtualDir = context.virtualDirectory;
-    const fileStructure = removeCodeBlockFences(fileStructureContent);
+    const fileStructure = removeCodeBlockFences(added_structure);
     if (!fileStructure || !datamapDoc) {
       return {
         success: false,
@@ -598,10 +632,20 @@ export class FileStructureAndArchitectureHandler
     }
   }
 
+  /**
+   * Validates the structure and content of the JSON data.
+   * @param jsonData The JSON data to validate.
+   * @returns A boolean indicating whether the JSON data is valid.
+   */
   private validateJsonData(jsonData: {
     files: Record<string, { dependsOn: string[] }>;
   }): boolean {
     const validPathRegex = /^[a-zA-Z0-9_\-/.]+$/;
+
+    const shouldIgnore = (filePath: string) => {
+      // this.logger.log(`Checking if should ignore: ${filePath}`);
+      return filePath.startsWith('@/components/ui/');
+    };
 
     for (const [file, details] of Object.entries(jsonData.files)) {
       if (!validPathRegex.test(file)) {
@@ -610,6 +654,10 @@ export class FileStructureAndArchitectureHandler
       }
 
       for (const dependency of details.dependsOn) {
+        if (shouldIgnore(dependency)) {
+          continue;
+        }
+
         if (!validPathRegex.test(dependency)) {
           this.logger.error(
             `Invalid dependency path "${dependency}" in file "${file}".`,
