@@ -9,9 +9,15 @@ import { toast } from 'sonner';
 import { useAuthContext } from '@/providers/AuthProvider';
 
 // Avatar URL normalization helper
-export function normalizeAvatarUrl(avatarUrl: string | null | undefined): string {
+export function normalizeAvatarUrl(
+  avatarUrl: string | null | undefined
+): string {
   if (!avatarUrl) return '';
 
+<<<<<<< HEAD
+=======
+  console.log('Avatar URL ' + avatarUrl);
+>>>>>>> 90f9d529cd6d3c8a6522d5f08744bc8573d68365
   // Check if it's already an absolute URL (S3 case)
   if (avatarUrl.startsWith('https:') || avatarUrl.startsWith('http:')) {
     return avatarUrl;
