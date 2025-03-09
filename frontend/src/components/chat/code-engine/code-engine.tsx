@@ -28,7 +28,7 @@ export function CodeEngine({
   const [preCode, setPrecode] = useState('// Loading...');
   const [newCode, setCode] = useState('// Loading...');
   const [activeTab, setActiveTab] = useState<'preview' | 'code' | 'console'>(
-    'code'
+    'preview'
   );
   const [isFileStructureLoading, setIsFileStructureLoading] = useState(false);
   const [fileStructureData, setFileStructureData] = useState<
