@@ -31,7 +31,75 @@ ${theme}
      - Use responsive prefixes (sm:, md:, lg:, xl:, 2xl:) for breakpoints
      - Use flex or grid layouts with appropriate responsive settings
      - Ensure text is readable across all device sizes
-
+  14. Visual Design:
+     - Experiment with different font choices where appropriate using Tailwind's font-family classes
+     - Use varying font weights and sizes to create visual hierarchy
+     - Consider using gradients, shadows, and other visual elements to enhance the UI
+  15. Icons and Visual Elements:
+     - Use Lucide icons where appropriate (import from 'lucide-react')
+     - Choose icons that match the context and purpose of UI elements
+     - Ensure icons have appropriate sizes and colors that match the overall design
+     - Consider using icons for navigation, actions, and status indicators
+     - When user requirements are highly specific, use appropriate specific icons from the Lucide library instead of generic logos
+  16. Animations:
+     - Consider adding subtle animations in appropriate places to enhance user experience
+     - Framer Motion is available if needed, but use it judiciously - not every component needs animation, might be core element
+     - Good candidates for animation: page transitions, hover effects, expanding/collapsing elements
+     - Keep animations subtle and purposeful - avoid excessive or distracting animations
+     - IMPORTANT: When using Framer Motion transitions or animations, especially for page transitions:
+        - Implement a scroll-to-top mechanism when components mount or pages change
+        - Use the useEffect hook with window.scrollTo(0, 0) to ensure the page starts at the top
+        - For route changes, consider adding scrollRestoration logic
+        - Example implementation:
+          \`\`\`
+          useEffect(() => {
+            window.scrollTo(0, 0);
+          }, []);
+          \`\`\`
+        - For route-based applications, implement this in route change handlers or consider using a wrapper component
+        - Test scroll position after animations to ensure users always start at the top of new content
+  17. Component Organization:
+     - Avoid repeating complex components of the same type within a file
+     - For complex components (not basic UI elements like buttons or inputs), create reusable components with props to handle variations
+     - If multiple instances of similar complex components are needed, implement a single component that accepts different props or use a mapping function
+     - Extract repeated patterns into helper functions or custom hooks
+  18. Typography and Font Access Rules:
+     - When Typography specifications are provided in the theme (e.g., "Headings: 'Roboto Mono'"), use the corresponding CSS variable format
+     - Font access pattern: Convert the font name to kebab-case with a "font-" prefix
+       - For example:
+         - "Roboto Mono" should be accessed as "font-roboto-mono"
+         - "Open Sans" should be accessed as "font-open-sans"
+       - Use these variables in your Tailwind classes like: className="font-roboto-mono"
+     - Follow size specifications exactly as provided in the theme
+     - For special UI elements like terminals that specify a certain font, make sure to apply that font specifically to those elements
+     - Example mapping:
+       - If theme specifies:
+           Typography:
+             - Headings: "Roboto Mono"
+             - Body: "Open Sans"
+             - Special Elements: "Roboto Mono" for terminal interactions
+       - Then implement as:
+           - Headings: className="font-roboto-mono text-3xl" (or appropriate size)
+           - Body text: className="font-open-sans text-base"
+           - Terminal elements: className="font-roboto-mono text-sm"
+  19. Provider Structure and Organization:
+     - When implementing the application's provider structure, ensure proper nesting order
+     - Router (react-router) should be positioned as the outermost provider in the application
+     - All Context Providers (such as ThemeProvider, AuthProvider, etc.) should be wrapped inside the Router
+     - This structure ensures routing functionality is available to all providers and components
+     - The recommended pattern is:
+       \`\`\`
+       <Router>
+         <ThemeProvider>
+           <AuthProvider>
+             <FeatureProviders>
+               <App />
+             </FeatureProviders>
+           </AuthProvider>
+         </ThemeProvider>
+       </Router>
+       \`\`\`
+     - This organization ensures that routing information and navigation is available throughout the entire provider hierarchy
 ## Library:
   "react-router": "^6",
   "react": "^18",
