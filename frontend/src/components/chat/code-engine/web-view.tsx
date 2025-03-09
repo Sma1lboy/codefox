@@ -25,11 +25,144 @@ function PreviewContent({
   const [history, setHistory] = useState<string[]>(['/']);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [scale, setScale] = useState(0.7);
+  const [isServiceReady, setIsServiceReady] = useState(false);
+  const [serviceCheckAttempts, setServiceCheckAttempts] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState('Loading preview...');
+  const [isLoading, setIsLoading] = useState(true);
   const iframeRef = useRef(null);
   const containerRef = useRef<{ projectPath: string; domain: string } | null>(
     null
   );
   const lastProjectPathRef = useRef<string | null>(null);
+  const serviceCheckTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const MAX_CHECK_ATTEMPTS = 15; // Reduced max attempts since we have progressive intervals
+
+  // Function to check if the frontend service is ready
+  const checkServiceReady = async (url: string) => {
+    try {
+      // Create a new AbortController instance
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1500); // Reduced timeout to 1.5 seconds
+
+      const response = await fetch(url, {
+        method: 'HEAD',
+        cache: 'no-store',
+        signal: controller.signal,
+        headers: { 'Cache-Control': 'no-cache' },
+      });
+
+      clearTimeout(timeoutId);
+
+      // Service is ready if we get a successful response (not 404 or 5xx)
+      const isReady =
+        response.ok || (response.status !== 404 && response.status < 500);
+      console.log(
+        `Service check: ${url} - Status: ${response.status} - Ready: ${isReady}`
+      );
+      return isReady;
+    } catch (error) {
+      // Don't log abort errors (expected when timeout occurs)
+      if (!error.toString().includes('abort')) {
+        console.log(`Service check attempt failed: ${error}`);
+      }
+      return false;
+    }
+  };
+
+  // Function to periodically check service readiness
+  const startServiceReadyCheck = async (url: string) => {
+    // Clear any existing timer
+    if (serviceCheckTimerRef.current) {
+      clearInterval(serviceCheckTimerRef.current);
+    }
+
+    setServiceCheckAttempts(0);
+    setIsServiceReady(false);
+    setLoadingMessage('Loading preview...');
+
+    // Try immediately first (don't wait for interval)
+    const initialReady = await checkServiceReady(url);
+    if (initialReady) {
+      console.log('Frontend service is ready immediately!');
+      setIsServiceReady(true);
+      return; // Exit early if service is ready immediately
+    }
+
+    // Progressive check intervals (check more frequently at first)
+    const checkIntervals = [500, 1000, 1000, 1500, 1500]; // First few checks are faster
+    let checkIndex = 0;
+
+    // Set a fallback timer - show preview after 45 seconds no matter what
+    const fallbackTimer = setTimeout(() => {
+      console.log('Fallback timer triggered - showing preview anyway');
+      setIsServiceReady(true);
+      if (serviceCheckTimerRef.current) {
+        clearInterval(serviceCheckTimerRef.current);
+        serviceCheckTimerRef.current = null;
+      }
+    }, 45000);
+
+    const runServiceCheck = async () => {
+      setServiceCheckAttempts((prev) => prev + 1);
+
+      // Update loading message with attempts
+      if (serviceCheckAttempts > 3) {
+        setLoadingMessage(
+          `Starting frontend service... (${serviceCheckAttempts}/${MAX_CHECK_ATTEMPTS})`
+        );
+      }
+
+      const ready = await checkServiceReady(url);
+
+      if (ready) {
+        console.log('Frontend service is ready!');
+        setIsServiceReady(true);
+        clearTimeout(fallbackTimer);
+        if (serviceCheckTimerRef.current) {
+          clearInterval(serviceCheckTimerRef.current);
+          serviceCheckTimerRef.current = null;
+        }
+      } else if (serviceCheckAttempts >= MAX_CHECK_ATTEMPTS) {
+        // Service didn't become ready after max attempts
+        console.log(
+          'Max attempts reached. Service might still be initializing.'
+        );
+        setLoadingMessage(
+          'Preview might not be fully loaded. Click refresh to try again.'
+        );
+
+        // Show the preview anyway after max attempts
+        setIsServiceReady(true);
+        clearTimeout(fallbackTimer);
+
+        if (serviceCheckTimerRef.current) {
+          clearInterval(serviceCheckTimerRef.current);
+          serviceCheckTimerRef.current = null;
+        }
+      } else {
+        // Schedule next check with dynamic interval
+        const nextInterval =
+          checkIndex < checkIntervals.length
+            ? checkIntervals[checkIndex++]
+            : 2000; // Default to 2000ms after initial fast checks
+
+        setTimeout(runServiceCheck, nextInterval);
+      }
+    };
+
+    // Start the first check
+    setTimeout(runServiceCheck, 500);
+  };
+
+  useEffect(() => {
+    // Cleanup interval on component unmount
+    return () => {
+      if (serviceCheckTimerRef.current) {
+        clearInterval(serviceCheckTimerRef.current);
+        serviceCheckTimerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const initWebUrl = async () => {
@@ -42,8 +175,14 @@ function PreviewContent({
 
       lastProjectPathRef.current = projectPath;
 
+      // Reset service ready state for new project
+      setIsServiceReady(false);
+
       if (containerRef.current?.projectPath === projectPath) {
-        setBaseUrl(`${URL_PROTOCOL_PREFIX}://${containerRef.current.domain}`);
+        const url = `${URL_PROTOCOL_PREFIX}://${containerRef.current.domain}`;
+        setBaseUrl(url);
+        setDisplayPath('/');
+        startServiceReadyCheck(url);
         return;
       }
 
@@ -58,8 +197,12 @@ function PreviewContent({
         console.log('baseUrl:', baseUrl);
         setBaseUrl(baseUrl);
         setDisplayPath('/');
+
+        // Start checking if the service is ready
+        startServiceReadyCheck(baseUrl);
       } catch (error) {
         console.error('Error getting web URL:', error);
+        setLoadingMessage('Error initializing preview.');
       }
     };
 
@@ -67,11 +210,11 @@ function PreviewContent({
   }, [curProject, getWebUrl]);
 
   useEffect(() => {
-    if (iframeRef.current && baseUrl) {
+    if (iframeRef.current && baseUrl && isServiceReady) {
       const fullUrl = `${baseUrl}${displayPath}`;
       iframeRef.current.src = fullUrl;
     }
-  }, [baseUrl, displayPath]);
+  }, [baseUrl, displayPath, isServiceReady]);
 
   const enterFullScreen = () => {
     if (iframeRef.current) {
@@ -112,6 +255,12 @@ function PreviewContent({
   };
 
   const reloadIframe = () => {
+    // Reset service ready check when manually reloading
+    if (baseUrl) {
+      setIsServiceReady(false);
+      startServiceReadyCheck(baseUrl);
+    }
+
     const iframe = document.getElementById('myIframe') as HTMLIFrameElement;
     if (iframe) {
       const src = iframe.src;
@@ -131,10 +280,6 @@ function PreviewContent({
     setScale((prevScale) => Math.max(prevScale - 0.1, 0.5)); // 最小缩放比例为 0.5
   };
 
-  // print all stat
-  console.log('baseUrl outside:', baseUrl);
-  console.log('current project: ', curProject);
-
   return (
     <div className="flex flex-col w-full h-full">
       {/* URL Bar */}
@@ -146,7 +291,7 @@ function PreviewContent({
             size="icon"
             className="h-6 w-6"
             onClick={goBack}
-            disabled={!baseUrl || currentIndex === 0}
+            disabled={!baseUrl || currentIndex === 0 || !isServiceReady}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -155,7 +300,9 @@ function PreviewContent({
             size="icon"
             className="h-6 w-6"
             onClick={goForward}
-            disabled={!baseUrl || currentIndex >= history.length - 1}
+            disabled={
+              !baseUrl || currentIndex >= history.length - 1 || !isServiceReady
+            }
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -164,6 +311,7 @@ function PreviewContent({
             size="icon"
             className="h-6 w-6"
             onClick={reloadIframe}
+            disabled={!baseUrl}
           >
             <RefreshCcw />
           </Button>
@@ -177,7 +325,7 @@ function PreviewContent({
             onChange={(e) => handlePathChange(e.target.value)}
             className="h-8 bg-secondary"
             placeholder="/"
-            disabled={!baseUrl}
+            disabled={!baseUrl || !isServiceReady}
           />
         </div>
 
@@ -188,7 +336,7 @@ function PreviewContent({
             size="icon"
             onClick={zoomOut}
             className="h-8 w-8"
-            disabled={!baseUrl}
+            disabled={!baseUrl || !isServiceReady}
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
@@ -197,7 +345,7 @@ function PreviewContent({
             size="icon"
             onClick={zoomIn}
             className="h-8 w-8"
-            disabled={!baseUrl}
+            disabled={!baseUrl || !isServiceReady}
           >
             <ZoomIn className="h-4 w-4" />
           </Button>
@@ -206,7 +354,7 @@ function PreviewContent({
             size="icon"
             onClick={openInNewTab}
             className="h-8 w-8"
-            disabled={!baseUrl}
+            disabled={!baseUrl || !isServiceReady}
           >
             <ExternalLink className="h-4 w-4" />
           </Button>
@@ -215,7 +363,7 @@ function PreviewContent({
             size="icon"
             onClick={enterFullScreen}
             className="h-8 w-8"
-            disabled={!baseUrl}
+            disabled={!baseUrl || !isServiceReady}
           >
             <Maximize className="h-4 w-4" />
           </Button>
@@ -224,7 +372,7 @@ function PreviewContent({
 
       {/* Preview Container */}
       <div className="relative flex-1 w-full h-full">
-        {baseUrl ? (
+        {baseUrl && isServiceReady ? (
           <iframe
             id="myIframe"
             ref={iframeRef}
@@ -240,7 +388,27 @@ function PreviewContent({
           />
         ) : (
           <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-background">
-            <p className="text-sm text-muted-foreground">Loading preview...</p>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center gap-2">
+                <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"></div>
+                <p className="text-sm text-muted-foreground">
+                  {loadingMessage}
+                </p>
+              </div>
+              {serviceCheckAttempts > 5 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (baseUrl) {
+                      startServiceReadyCheck(baseUrl);
+                    }
+                  }}
+                >
+                  <RefreshCcw className="h-3 w-3 mr-1" /> Retry Check
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </div>
