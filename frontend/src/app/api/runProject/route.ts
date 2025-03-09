@@ -29,6 +29,12 @@ let isUpdatingState = false;
 // Flag to track if base image has been built
 let baseImageBuilt = false;
 
+// limit memory usage for a container
+const memoryLimit = '400m';
+
+// limit cpu usage for a container
+const cpusLimit = 1;
+
 /**
  * Initialize function, loads persisted state when service starts
  */
@@ -377,6 +383,8 @@ async function runDockerContainer(
     let runCommand;
     if (TLS) {
       runCommand = `docker run -d --name ${containerName} -l "traefik.enable=true" \
+      --memory=${memoryLimit} --memory-swap=${memoryLimit} \
+      --cpus=${cpusLimit} \
       -l "traefik.http.routers.${subdomain}.rule=Host(\\"${domain}\\")" \
       -l "traefik.http.routers.${subdomain}.entrypoints=websecure" \
       -l "traefik.http.routers.${subdomain}.tls=true" \
@@ -390,6 +398,8 @@ async function runDockerContainer(
       ${BASE_IMAGE_NAME}`;
     } else {
       runCommand = `docker run -d --name ${containerName} -l "traefik.enable=true" \
+      --memory=${memoryLimit} --memory-swap=${memoryLimit} \
+      --cpus=${cpusLimit} \
       -l "traefik.http.routers.${subdomain}.rule=Host(\\"${domain}\\")" \
       -l "traefik.http.routers.${subdomain}.entrypoints=web" \
       -l "traefik.http.services.${subdomain}.loadbalancer.server.port=5173" \
