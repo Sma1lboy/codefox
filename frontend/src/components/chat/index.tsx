@@ -9,7 +9,7 @@ import { GET_CHAT_HISTORY } from '@/graphql/request';
 import { useQuery } from '@apollo/client';
 import { toast } from 'sonner';
 import { EventEnum } from '@/const/EventEnum';
-import EditUsernameForm from '@/components/edit-username-form';
+import UserSetting from '@/components/settings/settings';
 import ChatContent from '@/components/chat/chat-panel';
 import { useModels } from '@/hooks/useModels';
 import { useChatList } from '@/hooks/useChatList';
@@ -18,6 +18,7 @@ import { CodeEngine } from './code-engine/code-engine';
 import { useProjectStatusMonitor } from '@/hooks/useProjectStatusMonitor';
 import { Loader2 } from 'lucide-react';
 import { useAuthContext } from '@/providers/AuthProvider';
+import { useRouter } from 'next/navigation';
 
 export default function Chat() {
   // Initialize state, refs, and custom hooks
@@ -30,6 +31,7 @@ export default function Chat() {
   const { models } = useModels();
   const [selectedModel, setSelectedModel] = useState(models[0] || 'gpt-4o');
   const { refetchChats } = useChatList();
+  const route = useRouter();
 
   // Project status monitoring for the current chat
   const { isReady, projectId, projectName, error } =
@@ -92,15 +94,6 @@ export default function Chat() {
       window.removeEventListener(EventEnum.SETTING, updateSetting);
     };
   }, [updateChatId]);
-
-  // Render the settings view if chatId indicates settings mode
-  if (chatId === EventEnum.SETTING) {
-    return (
-      <div className="h-full w-full flex items-center justify-center">
-        <EditUsernameForm />
-      </div>
-    );
-  }
 
   // Render the main layout
   return chatId ? (

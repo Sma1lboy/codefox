@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { SquarePen } from 'lucide-react';
 import SidebarSkeleton from './sidebar-skeleton';
-import UserSettings from './user-settings';
+import UserSettingsBar from './user-settings-bar';
 import { SideBarItem } from './sidebar-item';
 import { EventEnum } from '../const/EventEnum';
 import {
@@ -85,7 +85,7 @@ export default function FileSidebar({ isCollapsed, isMobile, loading }) {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
-          <UserSettings isSimple={isSimple} />
+          <UserSettingsBar isSimple={isSimple} />
         </SidebarFooter>
 
         <SidebarRail setIsSimple={setIsSimple} isSimple={isSimple} />
