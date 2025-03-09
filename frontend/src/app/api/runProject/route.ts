@@ -200,16 +200,13 @@ function checkContainerRunning(containerId: string): Promise<boolean> {
  */
 function checkBaseImageExists(): Promise<boolean> {
   return new Promise((resolve) => {
-    exec(
-      `docker image inspect ${BASE_IMAGE_NAME}`,
-      (err) => {
-        if (err) {
-          resolve(false);
-        } else {
-          resolve(true);
-        }
+    exec(`docker image inspect ${BASE_IMAGE_NAME}`, (err) => {
+      if (err) {
+        resolve(false);
+      } else {
+        resolve(true);
       }
-    );
+    });
   });
 }
 
@@ -242,24 +239,30 @@ async function ensureBaseImageExists(): Promise<void> {
   if (baseImageBuilt) {
     return;
   }
-  
+
   try {
     // Path to the base image Dockerfile
-    const dockerfilePath = path.join(process.cwd(), '../docker', 'project-base-image');
-    
+    const dockerfilePath = path.join(
+      process.cwd(),
+      '../docker',
+      'project-base-image'
+    );
+
     // Check if base Dockerfile exists
     if (!fs.existsSync(path.join(dockerfilePath, 'Dockerfile'))) {
       console.error('Base Dockerfile not found at:', dockerfilePath);
       throw new Error('Base Dockerfile not found');
     }
-    
+
     // Build the base image
-    console.log(`Building base image ${BASE_IMAGE_NAME} from ${dockerfilePath}...`);
+    console.log(
+      `Building base image ${BASE_IMAGE_NAME} from ${dockerfilePath}...`
+    );
     await execWithTimeout(
       `docker build -t ${BASE_IMAGE_NAME} ${dockerfilePath}`,
       { timeout: 300000, retries: 1 } // 5 minutes timeout, 1 retry
     );
-    
+
     baseImageBuilt = true;
     console.log(`Base image ${BASE_IMAGE_NAME} built successfully`);
   } catch (error) {
