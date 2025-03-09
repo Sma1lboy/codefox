@@ -48,14 +48,17 @@ function PreviewContent({
         method: 'HEAD',
         cache: 'no-store',
         signal: controller.signal,
-        headers: { 'Cache-Control': 'no-cache' }
+        headers: { 'Cache-Control': 'no-cache' },
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       // Service is ready if we get a successful response (not 404 or 5xx)
-      const isReady = response.ok || (response.status !== 404 && response.status < 500);
-      console.log(`Service check: ${url} - Status: ${response.status} - Ready: ${isReady}`);
+      const isReady =
+        response.ok || (response.status !== 404 && response.status < 500);
+      console.log(
+        `Service check: ${url} - Status: ${response.status} - Ready: ${isReady}`
+      );
       return isReady;
     } catch (error) {
       // Don't log abort errors (expected when timeout occurs)
@@ -76,7 +79,7 @@ function PreviewContent({
     setServiceCheckAttempts(0);
     setIsServiceReady(false);
     setLoadingMessage('Loading preview...');
-    
+
     // Try immediately first (don't wait for interval)
     const initialReady = await checkServiceReady(url);
     if (initialReady) {
@@ -84,11 +87,11 @@ function PreviewContent({
       setIsServiceReady(true);
       return; // Exit early if service is ready immediately
     }
-    
+
     // Progressive check intervals (check more frequently at first)
     const checkIntervals = [500, 1000, 1000, 1500, 1500]; // First few checks are faster
     let checkIndex = 0;
-    
+
     // Set a fallback timer - show preview after 45 seconds no matter what
     const fallbackTimer = setTimeout(() => {
       console.log('Fallback timer triggered - showing preview anyway');
@@ -98,17 +101,19 @@ function PreviewContent({
         serviceCheckTimerRef.current = null;
       }
     }, 45000);
-    
+
     const runServiceCheck = async () => {
-      setServiceCheckAttempts(prev => prev + 1);
-      
+      setServiceCheckAttempts((prev) => prev + 1);
+
       // Update loading message with attempts
       if (serviceCheckAttempts > 3) {
-        setLoadingMessage(`Starting frontend service... (${serviceCheckAttempts}/${MAX_CHECK_ATTEMPTS})`);
+        setLoadingMessage(
+          `Starting frontend service... (${serviceCheckAttempts}/${MAX_CHECK_ATTEMPTS})`
+        );
       }
-      
+
       const ready = await checkServiceReady(url);
-      
+
       if (ready) {
         console.log('Frontend service is ready!');
         setIsServiceReady(true);
@@ -119,27 +124,32 @@ function PreviewContent({
         }
       } else if (serviceCheckAttempts >= MAX_CHECK_ATTEMPTS) {
         // Service didn't become ready after max attempts
-        console.log('Max attempts reached. Service might still be initializing.');
-        setLoadingMessage('Preview might not be fully loaded. Click refresh to try again.');
-        
+        console.log(
+          'Max attempts reached. Service might still be initializing.'
+        );
+        setLoadingMessage(
+          'Preview might not be fully loaded. Click refresh to try again.'
+        );
+
         // Show the preview anyway after max attempts
         setIsServiceReady(true);
         clearTimeout(fallbackTimer);
-        
+
         if (serviceCheckTimerRef.current) {
           clearInterval(serviceCheckTimerRef.current);
           serviceCheckTimerRef.current = null;
         }
       } else {
         // Schedule next check with dynamic interval
-        const nextInterval = checkIndex < checkIntervals.length 
-          ? checkIntervals[checkIndex++] 
-          : 2000; // Default to 2000ms after initial fast checks
-          
+        const nextInterval =
+          checkIndex < checkIntervals.length
+            ? checkIntervals[checkIndex++]
+            : 2000; // Default to 2000ms after initial fast checks
+
         setTimeout(runServiceCheck, nextInterval);
       }
     };
-    
+
     // Start the first check
     setTimeout(runServiceCheck, 500);
   };
@@ -164,7 +174,7 @@ function PreviewContent({
       }
 
       lastProjectPathRef.current = projectPath;
-      
+
       // Reset service ready state for new project
       setIsServiceReady(false);
 
@@ -187,7 +197,7 @@ function PreviewContent({
         console.log('baseUrl:', baseUrl);
         setBaseUrl(baseUrl);
         setDisplayPath('/');
-        
+
         // Start checking if the service is ready
         startServiceReadyCheck(baseUrl);
       } catch (error) {
@@ -250,7 +260,7 @@ function PreviewContent({
       setIsServiceReady(false);
       startServiceReadyCheck(baseUrl);
     }
-    
+
     const iframe = document.getElementById('myIframe') as HTMLIFrameElement;
     if (iframe) {
       const src = iframe.src;
@@ -290,7 +300,9 @@ function PreviewContent({
             size="icon"
             className="h-6 w-6"
             onClick={goForward}
-            disabled={!baseUrl || currentIndex >= history.length - 1 || !isServiceReady}
+            disabled={
+              !baseUrl || currentIndex >= history.length - 1 || !isServiceReady
+            }
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -379,11 +391,13 @@ function PreviewContent({
             <div className="flex flex-col items-center gap-2">
               <div className="flex items-center gap-2">
                 <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"></div>
-                <p className="text-sm text-muted-foreground">{loadingMessage}</p>
+                <p className="text-sm text-muted-foreground">
+                  {loadingMessage}
+                </p>
               </div>
               {serviceCheckAttempts > 5 && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => {
                     if (baseUrl) {
