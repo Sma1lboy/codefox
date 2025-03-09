@@ -152,8 +152,8 @@ export function useChatStream({
   useSubscription(CHAT_STREAM, {
     skip: !subscription.enabled || !subscription.variables,
     variables: subscription.variables,
-    onSubscriptionData: async ({ subscriptionData }) => {
-      const chatStream = subscriptionData?.data?.chatStream;
+    onData: async ({ data }) => {
+      const chatStream = data?.data?.chatStream;
 
       if (!chatStream) return;
 
@@ -166,6 +166,7 @@ export function useChatStream({
       if (content) {
         setCumulatedContent((prev) => prev + content);
       }
+
       if (chatStream.status == StreamStatus.DONE) {
         setStreamStatus(StreamStatus.DONE);
         finishChatResponse();
@@ -193,25 +194,33 @@ export function useChatStream({
               if (index < textArray.length) {
                 setMessages((prev) => {
                   const lastMsg = prev[prev.length - 1];
-                  return lastMsg?.role === 'assistant'
-                    ? [
-                        ...prev.slice(0, -1),
-                        {
-                          ...lastMsg,
-                          content: lastMsg.content + textArray[index],
-                        },
-                      ]
-                    : [
-                        ...prev,
-                        {
-                          id: chatStream.id,
-                          role: 'assistant',
-                          content: textArray[index],
-                          createdAt: new Date(
-                            chatStream.created * 1000
-                          ).toISOString(),
-                        },
-                      ];
+
+                  if (
+                    lastMsg?.role === 'assistant' &&
+                    lastMsg.id === chatStream.id
+                  ) {
+                    // **如果当前段落还在继续，就拼接内容**
+                    return [
+                      ...prev.slice(0, -1),
+                      {
+                        ...lastMsg,
+                        content: lastMsg.content + textArray[index], // 继续拼接
+                      },
+                    ];
+                  } else {
+                    // **如果 `id` 变化（即进入新段落），新建一条消息**
+                    return [
+                      ...prev,
+                      {
+                        id: chatStream.id,
+                        role: 'assistant',
+                        content: textArray[index], // 这个是新段落的第一句
+                        createdAt: new Date(
+                          chatStream.created * 1000
+                        ).toISOString(),
+                      },
+                    ];
+                  }
                 });
 
                 index++;
