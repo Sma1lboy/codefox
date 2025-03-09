@@ -182,41 +182,47 @@ export function useChatStream({
           },
         });
 
-        const typewriterEffect = async (textArray: string[], delay: number) => {
-          let index = 0;
+        const typewriterEffect = async (
+          textArray: string[],
+          delay: number
+        ): Promise<void> => {
+          return new Promise((resolve) => {
+            let index = 0;
 
-          // implement typewriter effect
-          const updateMessage = async () => {
-            if (index < textArray.length) {
-              setMessages((prev) => {
-                const lastMsg = prev[prev.length - 1];
-                return lastMsg?.role === 'assistant'
-                  ? [
-                      ...prev.slice(0, -1),
-                      {
-                        ...lastMsg,
-                        content: lastMsg.content + textArray[index],
-                      },
-                    ]
-                  : [
-                      ...prev,
-                      {
-                        id: chatStream.id,
-                        role: 'assistant',
-                        content: textArray[index],
-                        createdAt: new Date(
-                          chatStream.created * 1000
-                        ).toISOString(),
-                      },
-                    ];
-              });
+            const updateMessage = () => {
+              if (index < textArray.length) {
+                setMessages((prev) => {
+                  const lastMsg = prev[prev.length - 1];
+                  return lastMsg?.role === 'assistant'
+                    ? [
+                        ...prev.slice(0, -1),
+                        {
+                          ...lastMsg,
+                          content: lastMsg.content + textArray[index],
+                        },
+                      ]
+                    : [
+                        ...prev,
+                        {
+                          id: chatStream.id,
+                          role: 'assistant',
+                          content: textArray[index],
+                          createdAt: new Date(
+                            chatStream.created * 1000
+                          ).toISOString(),
+                        },
+                      ];
+                });
 
-              index++;
-              setTimeout(updateMessage, delay);
-            }
-          };
+                index++;
+                setTimeout(updateMessage, delay);
+              } else {
+                resolve();
+              }
+            };
 
-          await updateMessage();
+            updateMessage();
+          });
         };
 
         // break text into chunks of 3 characters
