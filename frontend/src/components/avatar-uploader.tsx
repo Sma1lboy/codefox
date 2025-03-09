@@ -115,7 +115,11 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
   const displayUrl = previewUrl || normalizeAvatarUrl(currentAvatarUrl);
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <button
+      onClick={triggerFileInput}
+      disabled={loading}
+      className="flex justify-end"
+    >
       <input
         type="file"
         ref={fileInputRef}
@@ -123,18 +127,23 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
         accept="image/*"
         className="hidden"
       />
-      <Avatar className="w-24 h-24 cursor-pointer" onClick={triggerFileInput}>
-        <AvatarImage src={displayUrl} alt="User Avatar" />
-        <AvatarFallback>{avatarFallback}</AvatarFallback>
-      </Avatar>
-      <Button
-        onClick={triggerFileInput}
-        disabled={loading}
-        size="sm"
-        variant="outline"
-      >
-        {loading ? 'Uploading...' : 'Change Avatar'}
-      </Button>
-    </div>
+      <div className="relative group">
+        <Avatar
+          className="w-24 h-24 cursor-pointer transition-opacity hover:opacity-80"
+          onClick={triggerFileInput}
+        >
+          <AvatarImage src={displayUrl} alt="User Avatar" />
+          <AvatarFallback>{avatarFallback}</AvatarFallback>
+        </Avatar>
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black bg-opacity-50 rounded-full transition-opacity">
+          <span className="text-white text-sm">Upload</span>
+        </div>
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+      </div>
+    </button>
   );
 };

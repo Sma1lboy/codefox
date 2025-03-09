@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { SquarePen } from 'lucide-react';
 import SidebarSkeleton from './sidebar-skeleton';
-import UserSettings from './user-settings';
+import UserSettings from './user-settings-bar';
 import { SideBarItem } from './sidebar-item';
 import { EventEnum } from '../const/EventEnum';
 import {

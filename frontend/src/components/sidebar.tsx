@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { memo, useCallback, useContext, useState } from 'react';
 import SidebarSkeleton from './sidebar-skeleton';
-import UserSettings from './user-settings';
+import UserSettings from './user-settings-bar';
 import { SideBarItem } from './sidebar-item';
 import { Chat } from '@/graphql/type';
 import { EventEnum } from '../const/EventEnum';

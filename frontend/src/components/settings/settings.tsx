@@ -13,12 +13,12 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useEffect, useMemo, useState } from 'react';
-import { ModeToggle } from './mode-toggle';
+import { ModeToggle } from '../mode-toggle';
 import { toast } from 'sonner';
 import { ActivityCalendar } from 'react-activity-calendar';
-import { TeamSelector } from './team-selector';
+import { TeamSelector } from '../team-selector';
 import { useQuery } from '@apollo/client';
-import { AvatarUploader } from './avatar-uploader';
+import { AvatarUploader } from '../avatar-uploader';
 import { useAuthContext } from '@/providers/AuthProvider';
 
 const data = [
@@ -55,7 +55,7 @@ const formSchema = z.object({
   }),
 });
 
-export default function EditUsernameForm() {
+export default function UserSetting() {
   const [name, setName] = useState('');
   const { user, isLoading } = useAuthContext();
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -105,9 +105,7 @@ export default function EditUsernameForm() {
         {/* Profile Picture Section */}
         <div className="space-y-4">
           <h2 className="text-lg font-medium">Profile Picture</h2>
-          <div className="flex flex-col items-center justify-center gap-4">
-            <p className="text-muted-foreground">You look good today!</p>
-
+          <div className="flex justify-center gap-4 px-2">
             <AvatarUploader
               currentAvatarUrl={avatarUrl}
               avatarFallback={avatarFallback}

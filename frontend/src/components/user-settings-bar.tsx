@@ -49,6 +49,12 @@ interface UserSettingsProps {
   isSimple: boolean;
 }
 
+/**
+ * UserSettingsBar component for managing user settings and actions.
+ *
+ * @param param0 - Props for UserSettings, including isSimple flag.
+ * @returns UserSettings JSX element.
+ */
 export const UserSettings = ({ isSimple }: UserSettingsProps) => {
   const { user, isLoading, logout } = useAuthContext();
   const [open, setOpen] = useState(false);

@@ -9,7 +9,7 @@ import { GET_CHAT_HISTORY } from '@/graphql/request';
 import { useQuery } from '@apollo/client';
 import { toast } from 'sonner';
 import { EventEnum } from '@/const/EventEnum';
-import EditUsernameForm from '@/components/edit-username-form';
+import UserSetting from '@/components/settings/settings';
 import ChatContent from '@/components/chat/chat-panel';
 import { useModels } from '@/hooks/useModels';
 import { useChatList } from '@/hooks/useChatList';
@@ -97,7 +97,7 @@ export default function Chat() {
   if (chatId === EventEnum.SETTING) {
     return (
       <div className="h-full w-full overflow-auto">
-        <EditUsernameForm />
+        <UserSetting />
       </div>
     );
   }
