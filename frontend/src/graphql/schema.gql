@@ -16,17 +16,17 @@ type Chat {
 }
 
 type ChatCompletionChoiceType {
-  delta: ChatCompletionDeltaType!
+  delta: ChatCompletionDeltaType
   finishReason: String
-  index: Float!
+  index: Float
 }
 
 type ChatCompletionChunkType {
   choices: [ChatCompletionChoiceType!]!
-  created: Float!
+  created: Float
   id: String!
-  model: String!
-  object: String!
+  model: String
+  object: String
   status: StreamStatus!
   systemFingerprint: String
 }
@@ -120,9 +120,8 @@ type Mutation {
   regenerateDescription(input: String!): String!
   registerUser(input: RegisterUserInput!): User!
   resendConfirmationEmail(input: ResendEmailInput!): EmailConfirmationResponse!
-  subscribeToProject(projectId: ID!): Project!
   saveMessage(input: ChatInputType!): Boolean!
-  triggerAgentChatStream(input: ChatInputType!): String!
+  subscribeToProject(projectId: ID!): Project!
   triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
   updateProjectPhoto(input: UpdateProjectPhotoInput!): Project!

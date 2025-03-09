@@ -5,7 +5,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from 'src/user/user.model';
 import {
-  AgentInput,
   ChatInput,
   NewChatInput,
   UpdateChatTitleInput,
@@ -23,7 +22,7 @@ export class ChatProxyService {
   constructor() {}
 
   streamChat(
-    input: ChatInput | AgentInput,
+    input: ChatInput,
   ): CustomAsyncIterableIterator<ChatCompletionChunk> {
     return this.models.chat(
       {

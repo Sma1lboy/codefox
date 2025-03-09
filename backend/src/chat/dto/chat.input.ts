@@ -30,12 +30,3 @@ export class ChatInput {
   @Field()
   role: MessageRole;
 }
-
-@InputType('ChatInputType')
-export class AgentInput {
-  @Field()
-  message: string;
-
-  @Field()
-  model: string;
-}
