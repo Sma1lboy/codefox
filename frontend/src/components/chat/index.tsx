@@ -18,6 +18,7 @@ import { CodeEngine } from './code-engine/code-engine';
 import { useProjectStatusMonitor } from '@/hooks/useProjectStatusMonitor';
 import { Loader2 } from 'lucide-react';
 import { useAuthContext } from '@/providers/AuthProvider';
+import { useRouter } from 'next/navigation';
 
 export default function Chat() {
   // Initialize state, refs, and custom hooks
@@ -30,6 +31,7 @@ export default function Chat() {
   const { models } = useModels();
   const [selectedModel, setSelectedModel] = useState(models[0] || 'gpt-4o');
   const { refetchChats } = useChatList();
+  const route = useRouter();
 
   // Project status monitoring for the current chat
   const { isReady, projectId, projectName, error } =
@@ -92,15 +94,6 @@ export default function Chat() {
       window.removeEventListener(EventEnum.SETTING, updateSetting);
     };
   }, [updateChatId]);
-
-  // Render the settings view if chatId indicates settings mode
-  if (chatId === EventEnum.SETTING) {
-    return (
-      <div className="h-full w-full overflow-auto">
-        <UserSetting />
-      </div>
-    );
-  }
 
   // Render the main layout
   return chatId ? (

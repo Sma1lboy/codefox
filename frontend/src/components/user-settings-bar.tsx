@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState, memo, useEffect } from 'react';
 import { EventEnum } from '../const/EventEnum';
 import { useAuthContext } from '@/providers/AuthProvider';
+import { LogOut } from 'lucide-react';
 
 // Avatar URL normalization helper
 function normalizeAvatarUrl(avatarUrl: string | null | undefined): string {
@@ -55,7 +56,7 @@ interface UserSettingsProps {
  * @param param0 - Props for UserSettings, including isSimple flag.
  * @returns UserSettings JSX element.
  */
-export const UserSettings = ({ isSimple }: UserSettingsProps) => {
+export const UserSettingsBar = ({ isSimple }: UserSettingsProps) => {
   const { user, isLoading, logout } = useAuthContext();
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -85,7 +86,7 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
 
   const handleSettingsClick = () => {
     // First navigate using Next.js router
-    router.push('/chat?id=setting');
+    router.push('/settings');
 
     // Then dispatch the event
     setTimeout(() => {
@@ -126,7 +127,7 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{avatarButton}</DropdownMenuTrigger>
-      <DropdownMenuContent className="w-48">
+      <DropdownMenuContent className="w-60">
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
           <div
             className="flex w-full gap-2 p-1 items-center cursor-pointer"
@@ -137,15 +138,18 @@ export const UserSettings = ({ isSimple }: UserSettingsProps) => {
           </div>
         </DropdownMenuItem>
 
-        <DropdownMenuItem
-          onSelect={handleLogout}
-          className="text-red-500 hover:text-red-600"
-        >
-          Logout
+        <DropdownMenuItem className="">
+          <div
+            className="flex w-full gap-2 p-1 items-center cursor-pointer"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-4 h-4" strokeWidth={1.4} />
+            <span>Logout</span>
+          </div>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
 
-export default memo(UserSettings);
+export default memo(UserSettingsBar);
