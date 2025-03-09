@@ -172,7 +172,20 @@ export const GET_CHAT_DETAILS = gql`
     }
   }
 `;
-
+export const GET_CUR_PROJECT = gql`
+  query GetCurProject($chatId: String!) {
+    getCurProject(chatId: $chatId) {
+      id
+      projectName
+      projectPath
+    }
+  }
+`;
+export const SAVE_MESSAGE = gql`
+  mutation SaveMessage($input: ChatInputType!) {
+    saveMessage(input: $input)
+  }
+`;
 // Mutation to create a new project
 export const CREATE_PROJECT = gql`
   mutation CreateProject($createProjectInput: CreateProjectInput!) {
@@ -220,7 +233,11 @@ export const UPDATE_PROJECT_PUBLIC_STATUS = gql`
     updateProjectPublicStatus(projectId: $projectId, isPublic: $isPublic) {
       id
       projectName
-      isPublic
+      path
+      projectPackages {
+        id
+        content
+      }
     }
   }
 `;
