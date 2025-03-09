@@ -20,31 +20,7 @@ import { useMemo, useState, memo, useEffect } from 'react';
 import { EventEnum } from '../const/EventEnum';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { LogOut } from 'lucide-react';
-
-// Avatar URL normalization helper
-function normalizeAvatarUrl(avatarUrl: string | null | undefined): string {
-  if (!avatarUrl) return '';
-
-  // Check if it's already an absolute URL (S3 case)
-  if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
-    return avatarUrl;
-  }
-
-  // Check if it's a relative media path
-  if (avatarUrl.startsWith('media/')) {
-    // Convert to API route path
-    return `/api/${avatarUrl}`;
-  }
-
-  // Handle paths that might not have the media/ prefix
-  if (avatarUrl.includes('avatars/')) {
-    const parts = avatarUrl.split('avatars/');
-    return `/api/media/avatars/${parts[parts.length - 1]}`;
-  }
-
-  // Return as is for other cases
-  return avatarUrl;
-}
+import { normalizeAvatarUrl } from './avatar-uploader';
 
 interface UserSettingsProps {
   isSimple: boolean;
