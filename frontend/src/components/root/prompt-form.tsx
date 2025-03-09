@@ -283,14 +283,14 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
               </Select>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               {/* Magic enhance tooltip */}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div
                       onClick={
-                        !isLoading && !isRegenerating
+                        !isLoading && !isRegenerating && message.trim()
                           ? handleMagicEnhance
                           : undefined
                       }
@@ -300,10 +300,10 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
                         'active:outline-none active:ring-0 active:border-0',
                         isEnhanced
                           ? isDarkMode
-                            ? 'text-blue-700 hover:text-blue-700'
+                            ? 'text-primary-100 hover:text-primary-100'
                             : 'text-yellow-300 hover:text-yellow-300'
                           : 'text-gray-500 hover:text-gray-500',
-                        (isLoading || isRegenerating) &&
+                        (isLoading || isRegenerating || !message.trim()) &&
                           'opacity-50 cursor-not-allowed'
                       )}
                       style={{
@@ -321,9 +321,9 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
                       onMouseUp={(e) => e.preventDefault()}
                     >
                       <Sparkles
-                        size={36}
+                        size={24}
                         className={cn(
-                          'w-6 h-6',
+                          'w-5 h-5',
                           isRegenerating && 'animate-spin'
                         )}
                       />
@@ -343,11 +343,11 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
               <Button
                 className={cn(
                   'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-md hover:shadow-lg transition-all px-5 py-3 h-10 rounded-full',
-                  (isLoading || isRegenerating) &&
+                  (isLoading || isRegenerating || !message.trim()) &&
                     'opacity-80 cursor-not-allowed'
                 )}
                 onClick={handleSubmit}
-                disabled={isLoading || isRegenerating}
+                disabled={isLoading || isRegenerating || !message.trim()}
               >
                 {isLoading ? (
                   <>
