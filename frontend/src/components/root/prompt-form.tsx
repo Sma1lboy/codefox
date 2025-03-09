@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useModels } from '@/hooks/useModels';
 import { gql, useMutation } from '@apollo/client';
+import { useTheme } from 'next-themes'; // 导入 useTheme
 
 export interface PromptFormRef {
   getPromptData: () => {
@@ -68,6 +69,11 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
     const [isFocused, setIsFocused] = useState(false);
     // State for regeneration loading
     const [isRegenerating, setIsRegenerating] = useState(false);
+
+    // 使用 useTheme 钩子获取当前主题
+    const { theme } = useTheme();
+    // 检查是否为暗色模式
+    const isDarkMode = theme === 'dark';
 
     const {
       selectedModel,
@@ -176,7 +182,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
         .pauseFor(10)
         .deleteAll()
         .start();
-    }
+    };
 
     return (
       <div className="relative w-full max-w-2xl mx-auto">
@@ -282,25 +288,46 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                    <div
+                      onClick={
+                        !isLoading && !isRegenerating
+                          ? handleMagicEnhance
+                          : undefined
+                      }
                       className={cn(
-                        'rounded-full p-6 transition-all',
+                        'flex items-center justify-center w-12 h-12 rounded-full p-2 cursor-pointer transition-all',
+                        'focus:outline-none focus:ring-0 focus:border-0',
+                        'active:outline-none active:ring-0 active:border-0',
                         isEnhanced
-                          ? 'bg-amber-500/20 text-amber-500 hover:bg-amber-500/30 hover:text-amber-600'
-                          : 'text-gray-500 hover:text-amber-500',
+                          ? isDarkMode
+                            ? 'text-blue-700 hover:text-blue-700'
+                            : 'text-yellow-300 hover:text-yellow-300'
+                          : 'text-gray-500 hover:text-gray-500',
                         (isLoading || isRegenerating) &&
                           'opacity-50 cursor-not-allowed'
                       )}
-                      onClick={handleMagicEnhance}
-                      disabled={isLoading || isRegenerating}
+                      style={{
+                        border: 'none',
+                        outline: 'none',
+                        boxShadow: 'none',
+                        WebkitTapHighlightColor: 'transparent',
+                        WebkitAppearance: 'none',
+                        MozAppearance: 'none',
+                        WebkitUserSelect: 'none',
+                        userSelect: 'none',
+                      }}
+                      tabIndex={-1}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onMouseUp={(e) => e.preventDefault()}
                     >
                       <Sparkles
                         size={36}
-                        className={cn("!w-6 !h-6", isRegenerating && 'animate-spin')}
+                        className={cn(
+                          'w-6 h-6',
+                          isRegenerating && 'animate-spin'
+                        )}
                       />
-                    </Button>
+                    </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
                     <p>
