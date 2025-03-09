@@ -14,10 +14,6 @@ export function normalizeAvatarUrl(
 ): string {
   if (!avatarUrl) return '';
 
-<<<<<<< HEAD
-=======
-  console.log('Avatar URL ' + avatarUrl);
->>>>>>> 90f9d529cd6d3c8a6522d5f08744bc8573d68365
   // Check if it's already an absolute URL (S3 case)
   if (avatarUrl.startsWith('https:') || avatarUrl.startsWith('http:')) {
     return avatarUrl;
