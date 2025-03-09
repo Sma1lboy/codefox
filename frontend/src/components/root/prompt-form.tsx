@@ -176,7 +176,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
         .pauseFor(10)
         .deleteAll()
         .start();
-    };
+    }
 
     return (
       <div className="relative w-full max-w-2xl mx-auto">
@@ -277,7 +277,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
               </Select>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
               {/* Magic enhance tooltip */}
               <TooltipProvider>
                 <Tooltip>
@@ -286,7 +286,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
                       variant="ghost"
                       size="icon"
                       className={cn(
-                        'rounded-full p-2 transition-all',
+                        'rounded-full p-6 transition-all',
                         isEnhanced
                           ? 'bg-amber-500/20 text-amber-500 hover:bg-amber-500/30 hover:text-amber-600'
                           : 'text-gray-500 hover:text-amber-500',
@@ -297,8 +297,8 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
                       disabled={isLoading || isRegenerating}
                     >
                       <Sparkles
-                        size={20}
-                        className={cn(isRegenerating && 'animate-spin')}
+                        size={36}
+                        className={cn("!w-6 !h-6", isRegenerating && 'animate-spin')}
                       />
                     </Button>
                   </TooltipTrigger>
