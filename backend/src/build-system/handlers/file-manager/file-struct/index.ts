@@ -616,7 +616,10 @@ export class FileStructureAndArchitectureHandler
       }
 
       if (!this.validateJsonData(jsonData)) {
-        this.logger.error('File architecture JSON validation failed.', fileArchContent);
+        this.logger.error(
+          'File architecture JSON validation failed.',
+          fileArchContent,
+        );
         throw new ResponseParsingError(
           'File architecture JSON validation failed.',
         );
