@@ -34,7 +34,7 @@ export const prompts = {
   
   Output Format:
   Return a JSON object in the following format:
-  Surround the JSON object with <GENERATE> tags.
+  You must surround the JSON object with <GENERATE> tags.
   
   <GENERATE>
   {
@@ -237,7 +237,7 @@ Output Format:
 
     return `Your task is to analyze the given project directory structure and create a detailed JSON object mapping file dependencies. The output JSON must be precisely formatted and wrapped in <GENERATE></GENERATE> tags.
 
-### Instructions
+# Instructions
 
   ${
     isSPAFlag
@@ -258,9 +258,13 @@ Output Format:
      }
      </GENERATE>
      \`\`\` 
+
+   - IMPORTANT EXCEPTION FOR UI COMPONENTS: 
+     - Even in SPA mode, shadcn UI component dependencies ARE ALLOWED and SHOULD be added
+     - For the Home page, add appropriate shadcn UI dependencies from the available file structure
    - This is MANDATORY: for SPAs, create exactly these two files with exactly these dependencies - no more, no less.
   
-**For non-SPA projects**: `
+## For non-SPA projects: `
       : 'For projects'
   }
    - Analyze the directory structure to identify all files and folders.
@@ -270,7 +274,7 @@ Output Format:
    - Identify direct dependencies for each file by considering typical imports based on roles, naming conventions, and the provided analysis.
    - For context files, ensure they are properly referenced in index.tsx or router.tsx, as contexts typically need to be provided at a high level in the application.
    
-3. **Generate File Dependency JSON**:
+## Generate File Dependency JSON:
    - Each file must be represented using its full path starting from src/.
    - Ensure dependencies are strictly limited to files in the "Paths" array.
    - Use absolute file paths from "Paths" for all "dependsOn" values.
@@ -281,23 +285,45 @@ Output Format:
    - Organize the output in a \`files\` object where keys are file paths, and values are their dependency objects.
    - For the router, remember to include all the page components as dependencies, as the router imports them to define the application routes.
 
-4. **UI Component Dependencies**:
+## UI Component Dependencies:
    - This project uses the shadcn UI component library. 
    - Components that likely need UI elements (forms, buttons, inputs, etc.) should include appropriate shadcn component dependencies.
    - Shadcn components are imported with the syntax @/components/ui/[component-name].tsx
    - Analyze component purposes carefully to determine which shadcn components they should depend on
    - Examples:
-     - A login form component should depend on form.tsx, input.tsx, and button.tsx
      - A data table component should depend on table.tsx
      - A navigation component with dropdowns should depend on dropdown-menu.tsx
 
-5. **Global Components Usage**:
+## Balanced Dependency Approach:
+   - Most components should have 1-3 relevant UI dependencies
+   - Complex components (like forms or tables) may have more
+   - Simple components may have just one or even none
+
+## Global Components Usage:
    - Consider how global components are used across pages.
    - Global components (like navigation bars, footers, layouts) should be dependencies for all page components.
    - For example, a Nav component should be included as a dependency for all page files.
    - Ensure these global components are properly represented in the dependency tree for all relevant pages.
 
-6. **Output Requirements**:
+## CRITICAL: STRICT DEPENDENCY VALIDATION
+
+1. Allowlist-Only Approach:
+   - Create an internal allowlist containing ONLY the exact file paths from the provided file structure
+   - EVERY dependency MUST EXACTLY match one of the paths in this allowlist
+   - NO EXCEPTIONS: If a logical UI component doesn't exist in the allowlist, DO NOT ADD IT
+
+2. Verification Process:
+   - After generating each file's dependencies, VERIFY each dependency against the allowlist
+   - If any dependency is not in the allowlist, REMOVE it immediately
+   - For UI components, ONLY use paths that are EXACTLY as listed in the file structure
+
+3. **Before Generating Output**:
+   - Perform a final validation pass to ensure EVERY dependency exists in the allowlist
+   - Remove ANY dependencies that don't have an exact match in the file structure
+
+This is mission-critical: The system will reject ANY file references that don't exactly match the provided structure.
+
+## Output Requirements:
    - The JSON object must strictly follow this structure:
      \`\`\`json
      <GENERATE>
@@ -318,7 +344,8 @@ Output Format:
      All dependencies must exist in the "Paths" array.
      No inferred or assumed files should be added.
    - Wrap the JSON output with \`<GENERATE></GENERATE>\` tags.
-### Notes
+
+## Notes
 - The \`dependsOn\` field should reflect logical dependencies inferred from both the directory structure and the page-by-page analysis.
 - Use common project patterns to deduce dependencies (e.g., pages depend on components, contexts, hooks, and styles).
 - Include all files in the output, even if they have no dependencies.
@@ -326,7 +353,10 @@ Output Format:
 - Global components like navigation bars should appear as dependencies in all page components.
 - Include all files in the output, even if they have no dependencies.
 
-### Output
+## Validation Step
+Before finalizing, verify each UI component dependency against the complete list of available UI components. Remove any dependency that doesn't have an exact match in the file structure.
+
+## Output
 Return only the JSON object wrapped in \`<GENERATE></GENERATE>\` tags.
 Do not forget <GENERATE></GENERATE> tags.
 `;
@@ -586,11 +616,13 @@ export class FileStructureAndArchitectureHandler
       }
 
       if (!this.validateJsonData(jsonData)) {
-        this.logger.error('File architecture JSON validation failed.');
+        this.logger.error('File architecture JSON validation failed.', fileArchContent);
         throw new ResponseParsingError(
           'File architecture JSON validation failed.',
         );
       }
+
+      this.logger.debug(fileArchContent);
 
       const { nodes } = buildDependencyGraph(jsonData);
       invalidFiles = validateAgainstVirtualDirectory(nodes, this.virtualDir);
