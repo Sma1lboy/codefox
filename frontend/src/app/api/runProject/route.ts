@@ -4,6 +4,13 @@ import * as path from 'path';
 import * as net from 'net';
 import * as fs from 'fs';
 import { getProjectPath } from 'codefox-common';
+import { useMutation } from '@apollo/client/react/hooks/useMutation';
+import { toast } from 'sonner';
+import { UPDATE_PROJECT_PHOTO_URL } from '@/graphql/request';
+import { TLS } from '@/utils/const';
+import os from 'os';
+
+const isWindows = os.platform() === 'win32';
 import { URL_PROTOCOL_PREFIX } from '@/utils/const';
 
 // Persist container state to file system to recover after service restarts
