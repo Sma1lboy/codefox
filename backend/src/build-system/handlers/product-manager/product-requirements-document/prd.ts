@@ -53,18 +53,24 @@ export class PRDHandler implements BuildHandler<string> {
 
       // Extract the "Features" section
       const features = this.extractFeaturesSection(prdContent);
-      
+
       // Set the extracted overview to a global context variable
       if (projectOverview) {
         context.setGlobalContext('projectOverview', projectOverview);
-        this.logger.log('Project Overview extracted and set to global context', projectOverview);
+        this.logger.log(
+          'Project Overview extracted and set to global context',
+          projectOverview,
+        );
       } else {
         this.logger.warn('Could not extract Project Overview section');
       }
 
       if (features) {
         context.setGlobalContext('projectFeatures', features);
-        this.logger.log('Features section extracted and set to global context', features);
+        this.logger.log(
+          'Features section extracted and set to global context',
+          features,
+        );
       } else {
         this.logger.warn('Could not extract Features section');
       }
@@ -109,7 +115,7 @@ export class PRDHandler implements BuildHandler<string> {
     }
   }
 
-   /**
+  /**
    * Extracts a specific section from the PRD content by section title
    * @param prdContent The full PRD content
    * @param sectionNumber The section number (e.g., "1" for "#### 1. Project Overview")
@@ -139,7 +145,7 @@ export class PRDHandler implements BuildHandler<string> {
         `#### (?:${sectionNumber}\\.)?\\s*${sectionTitle}([\\s\\S]*?)(?=####|$)`,
       );
       const simplifiedMatch = prdContent.match(simplifiedPattern);
-      
+
       if (simplifiedMatch && simplifiedMatch[1]) {
         return simplifiedMatch[1].trim();
       }
@@ -151,7 +157,7 @@ export class PRDHandler implements BuildHandler<string> {
       return null;
     }
   }
-  
+
   /**
    * Extracts the "Project Overview" section from the PRD content
    * @param prdContent The full PRD content
@@ -160,7 +166,7 @@ export class PRDHandler implements BuildHandler<string> {
   private extractProjectOverviewSection(prdContent: string): string | null {
     return this.extractSection(prdContent, '1', 'Project Overview');
   }
-  
+
   /**
    * Extracts the "Features" section from the PRD content
    * @param prdContent The full PRD content

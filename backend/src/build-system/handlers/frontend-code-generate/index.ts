@@ -12,7 +12,7 @@ import { BackendRequirementHandler } from '../backend/requirements-document';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import normalizePath from 'normalize-path';
 import path from 'path';
-import { generateCSSPrompt, generateFrontEndCodePrompt, generateSitemapStructAnalysisPrompt } from './prompt';
+import { generateCSSPrompt, generateFrontEndCodePrompt } from './prompt';
 import { formatResponse } from 'src/build-system/utils/strings';
 import { writeFileSync } from 'fs';
 import { MessageInterface } from 'src/common/model-provider/types';
@@ -21,7 +21,6 @@ import { FrontendCodeValidator } from './CodeValidator';
 import { FrontendQueueProcessor, CodeTaskQueue } from './CodeReview';
 // import { FileFAHandler } from '../file-manager/file-arch';
 import { FileStructureAndArchitectureHandler } from '../file-manager/file-struct';
-import { UIUXLayoutHandler } from '../ux/uiux-layout';
 import { PRDHandler } from '../product-manager/product-requirements-document/prd';
 interface FileInfos {
   [fileName: string]: {

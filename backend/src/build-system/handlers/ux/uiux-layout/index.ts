@@ -10,7 +10,6 @@ import {
   ModelUnavailableError,
   ResponseParsingError,
 } from 'src/build-system/errors';
-import { UXSMDHandler } from '../sitemap-document';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import { UXSMSHandler } from '../sitemap-structure';
 
@@ -76,7 +75,6 @@ export class UIUXLayoutHandler implements BuildHandler<string> {
         'generateUIUXLayout',
         UIUXLayoutHandler.name,
       );
-
 
       if (!uxStructureContent || uxStructureContent.trim() === '') {
         this.logger.error('Generated UX Sitemap Structure content is empty.');
