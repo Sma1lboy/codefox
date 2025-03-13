@@ -75,7 +75,7 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="w-full mb-24">
+        <div className="w-full mb-24 mt-24">
           <ProjectsSection />
         </div>
       </motion.div>
