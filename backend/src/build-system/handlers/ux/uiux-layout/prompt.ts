@@ -1,4 +1,5 @@
 export const prompts = {
+  // To do add linking view relation like how each page is been connected
     generateUIUXLayoutPrompt: (): string => {
       return `You are an expert frontend developer and UX designer. Your goal is to produce a comprehensive **UIUX Layout Document** in XML-style format.
   

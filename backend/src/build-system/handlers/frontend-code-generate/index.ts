@@ -12,7 +12,7 @@ import { BackendRequirementHandler } from '../backend/requirements-document';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import normalizePath from 'normalize-path';
 import path from 'path';
-import { generateCSSPrompt, generateFrontEndCodePrompt } from './prompt';
+import { generateCSSPrompt, generateFrontEndCodePrompt, generateSitemapStructAnalysisPrompt } from './prompt';
 import { formatResponse } from 'src/build-system/utils/strings';
 import { writeFileSync } from 'fs';
 import { MessageInterface } from 'src/common/model-provider/types';
@@ -21,6 +21,8 @@ import { FrontendCodeValidator } from './CodeValidator';
 import { FrontendQueueProcessor, CodeTaskQueue } from './CodeReview';
 // import { FileFAHandler } from '../file-manager/file-arch';
 import { FileStructureAndArchitectureHandler } from '../file-manager/file-struct';
+import { UIUXLayoutHandler } from '../ux/uiux-layout';
+import { PRDHandler } from '../product-manager/product-requirements-document/prd';
 interface FileInfos {
   [fileName: string]: {
     dependsOn: string[];
@@ -35,6 +37,7 @@ interface FileInfos {
 @BuildNodeRequire([
   UXSMSHandler,
   UXDMDHandler,
+  PRDHandler,
   BackendRequirementHandler,
   FileStructureAndArchitectureHandler,
 ])
@@ -55,6 +58,9 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     // 1. Retrieve the necessary input from context
     const sitemapStruct = context.getNodeData(UXSMSHandler);
     const uxDataMapDoc = context.getNodeData(UXDMDHandler);
+    const prdHandler = context.getNodeData(PRDHandler);
+    // const prdHandler = context.getGlobalContext('projectOverview');
+    const projectFeatures = context.getGlobalContext('projectFeatures');
     const backendRequirementDoc = context.getNodeData(
       BackendRequirementHandler,
     );
@@ -82,6 +88,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     const renameMap = new Map<string, string>();
 
     // 3. Prepare for Dependency
+    // have bug
     const { concurrencyLayers, fileInfos } =
       await generateFilesDependencyWithLayers(fileArchDoc, this.virtualDir);
 
@@ -169,7 +176,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
                 dependenciesText,
                 directDepsPathString,
                 sitemapStruct,
-                uxDataMapDoc,
+                projectFeatures,
+                prdHandler,
                 failedFiles,
               );
             }
@@ -270,7 +278,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     dependenciesText: string,
     directDepsPathString: string,
     sitemapStruct: string,
-    uxDataMapDoc: string,
+    projectFeatures: string,
+    productRe: string,
     failedFiles: any[],
   ): Promise<string> {
     let generatedCode = '';
@@ -299,6 +308,12 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         {
           role: 'system' as const,
           content: frontendCodePrompt,
+        },
+        {
+          role: 'user' as const,
+          content: `## product requirement
+              ${productRe}
+              `,
         },
         {
           role: 'user' as const,
