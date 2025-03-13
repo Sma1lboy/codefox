@@ -314,12 +314,6 @@ export class FrontendCodeHandler implements BuildHandler<string> {
               ${productRe}
               `,
         },
-        {
-          role: 'user' as const,
-          content: `## Sitemap Structure
-              ${sitemapStruct}
-              `,
-        },
         // To DO need to dynamically add the UX Datamap Documentation and Backend Requirement Documentation based on the file generate
         // {
         //   role: 'user' as const,
@@ -365,7 +359,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       modelResponse = await chatSyncWithClocker(
         context,
         {
-          // model: context.defaultModel || 'gpt-4o',
+        //  model: context.defaultModel || 'gpt-4o-mini',
           model: 'o3-mini-high',
           messages,
         },
