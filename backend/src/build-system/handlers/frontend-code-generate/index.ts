@@ -21,7 +21,6 @@ import { FrontendCodeValidator } from './CodeValidator';
 import { FrontendQueueProcessor, CodeTaskQueue } from './CodeReview';
 // import { FileFAHandler } from '../file-manager/file-arch';
 import { FileStructureAndArchitectureHandler } from '../file-manager/file-struct';
-import { UIUXLayoutHandler } from '../ux/uiux-layout';
 import { PRDHandler } from '../product-manager/product-requirements-document/prd';
 interface FileInfos {
   [fileName: string]: {
