@@ -12,7 +12,7 @@ import { BackendRequirementHandler } from '../backend/requirements-document';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import normalizePath from 'normalize-path';
 import path from 'path';
-import { generateCSSPrompt, generateFrontEndCodePrompt, generateSitemapStructAnalysisPrompt } from './prompt';
+import { generateCSSPrompt, generateFrontEndCodePrompt } from './prompt';
 import { formatResponse } from 'src/build-system/utils/strings';
 import { writeFileSync } from 'fs';
 import { MessageInterface } from 'src/common/model-provider/types';
