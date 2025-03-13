@@ -17,7 +17,7 @@ import { BackendRequirementHandler } from '../handlers/backend/requirements-docu
       id: 'test-backend-sequence',
       version: '1.0.0',
       name: 'Wrtie a Cool cybersecurity personal website',
-      description: `A single page personal blog website. I am a cybersecurity engineer so i want it to show i am a really cool hacker, with cool terminal functionality`,
+      description: `A personal blog website. I am a cybersecurity engineer so i want it to show i am a really cool hacker, with cool terminal functionality`,
       databaseType: 'SQLite',
       model: 'gpt-4o-mini',
       projectSize: 'medium', // limit for fun
