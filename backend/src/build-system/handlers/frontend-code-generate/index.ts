@@ -13,7 +13,7 @@ import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import normalizePath from 'normalize-path';
 import path from 'path';
 import { generateCSSPrompt, generateFrontEndCodePrompt } from './prompt';
-import { formatResponse } from 'src/build-system/utils/strings';
+import { formatResponse, removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { writeFileSync } from 'fs';
 import { MessageInterface } from 'src/common/model-provider/types';
 
@@ -22,6 +22,7 @@ import { FrontendQueueProcessor, CodeTaskQueue } from './CodeReview';
 // import { FileFAHandler } from '../file-manager/file-arch';
 import { FileStructureAndArchitectureHandler } from '../file-manager/file-struct';
 import { PRDHandler } from '../product-manager/product-requirements-document/prd';
+import { UIUXLayoutHandler } from '../ux/uiux-layout';
 interface FileInfos {
   [fileName: string]: {
     dependsOn: string[];
@@ -58,6 +59,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     const sitemapStruct = context.getNodeData(UXSMSHandler);
     const uxDataMapDoc = context.getNodeData(UXDMDHandler);
     const prdHandler = context.getNodeData(PRDHandler);
+    const uiUXLayoutHandler = context.getNodeData(UIUXLayoutHandler);
     // const prdHandler = context.getGlobalContext('projectOverview');
     const projectFeatures = context.getGlobalContext('projectFeatures');
     const backendRequirementDoc = context.getNodeData(
@@ -174,7 +176,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
                 file,
                 dependenciesText,
                 directDepsPathString,
-                sitemapStruct,
+                uiUXLayoutHandler,
                 projectFeatures,
                 prdHandler,
                 failedFiles,
@@ -312,6 +314,10 @@ export class FrontendCodeHandler implements BuildHandler<string> {
           role: 'user' as const,
           content: `## product requirement
               ${productRe}
+
+              ## project layout
+              ${sitemapStruct}
+
               `,
         },
         // To DO need to dynamically add the UX Datamap Documentation and Backend Requirement Documentation based on the file generate
@@ -347,7 +353,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         },
         {
           role: 'user',
-          content: `Now you can provide the code, don't forget the <GENERATE></GENERATE> tags. Do not be lazy.`,
+          content: `Now you can provide the code. Do not be lazy.`,
         },
         // {
         //   role: 'assistant',
@@ -360,6 +366,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         context,
         {
         //  model: context.defaultModel || 'gpt-4o-mini',
+          // model: 'claude-3.7-sonnet',
+          // model: 'claude-3.5-sonnet',
           model: 'o3-mini-high',
           messages,
         },
@@ -368,7 +376,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       );
 
       this.logger.debug('generated code: ', modelResponse);
-      generatedCode = formatResponse(modelResponse);
+      generatedCode = removeCodeBlockFences(modelResponse);
 
       return generatedCode;
     } catch (err) {

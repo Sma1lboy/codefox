@@ -12,13 +12,14 @@ import {
 } from 'src/build-system/errors';
 import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import { UXSMSHandler } from '../sitemap-structure';
+import { PRDHandler } from '../../product-manager/product-requirements-document/prd';
 
 /**
  * UXSMS: UX Sitemap Structure
  **/
 
 @BuildNode()
-@BuildNodeRequire([UXSMSHandler])
+@BuildNodeRequire([UXSMSHandler, PRDHandler])
 export class UIUXLayoutHandler implements BuildHandler<string> {
   private readonly logger = new Logger('UIUXLayoutHandler');
 
@@ -28,7 +29,9 @@ export class UIUXLayoutHandler implements BuildHandler<string> {
     // Extract relevant data from the context
     const projectName =
       context.getGlobalContext('projectName') || 'Default Project Name';
+
     const sitemapDoc = context.getNodeData(UXSMSHandler);
+    const prd = context.getNodeData(PRDHandler);
 
     const platform = context.getGlobalContext('platform') || 'Default Platform';
 
@@ -52,16 +55,18 @@ export class UIUXLayoutHandler implements BuildHandler<string> {
       {
         role: 'user',
         content: `
+              here is the product requirement Doc:
+              ${prd}
+              
               Here is the UX Sitemap Documentation (SMD):
     
               ${sitemapDoc}
     
-              Please generate the Full UX Sitemap Structre now, focusing on MVP features but ensuring each page has enough detail to be functional. You Must Provide all the page_view`,
+              Please generate the layout now`,
       },
       {
         role: 'user',
-        content: `Check if you covered all major pages, user flows, and any global components mentioned in the SMD.
-      If anything is missing, please add it now. Also, expand on how each <global_comp> is used across pages.`,
+        content: `Check if you covered all major pages, user flows.`,
       },
     ];
 
@@ -69,7 +74,8 @@ export class UIUXLayoutHandler implements BuildHandler<string> {
       const uxStructureContent = await chatSyncWithClocker(
         context,
         {
-          model: context.defaultModel || 'gpt-4o-mini',
+          // model: context.defaultModel || 'gpt-4o-mini',
+          model: 'claude-3.7-sonnet',
           messages,
         },
         'generateUIUXLayout',
