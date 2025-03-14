@@ -2,6 +2,11 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type AvatarUploadResponse {
+  avatarUrl: String!
+  success: Boolean!
+}
+
 type Chat {
   createdAt: Date!
   id: ID!
@@ -124,6 +129,7 @@ type Mutation {
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
   updateProjectPhoto(input: UpdateProjectPhotoInput!): Project!
   updateProjectPublicStatus(isPublic: Boolean!, projectId: ID!): Project!
+  uploadAvatar(file: Upload!): AvatarUploadResponse!
 }
 
 input NewChatInput {
@@ -181,6 +187,7 @@ type Query {
   getProject(projectId: String!): Project!
   getRemainingProjectLimit: Int!
   getSubscribedProjects: [Project!]!
+  getUserAvatar(userId: String!): String
   getUserChats: [Chat!]
   getUserProjects: [Project!]!
   isValidateProject(isValidProject: IsValidProjectInput!): Boolean!
@@ -232,6 +239,7 @@ input UpdateProjectPhotoInput {
 scalar Upload
 
 type User {
+  avatarUrl: String
   chats: [Chat!]!
   createdAt: Date!
   email: String!

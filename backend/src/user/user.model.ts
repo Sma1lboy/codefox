@@ -28,6 +28,10 @@ export class User extends SystemBaseModel {
   @Column()
   password: string;
 
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  avatarUrl?: string;
+
   @Field()
   @Column({ unique: true })
   @IsEmail()
