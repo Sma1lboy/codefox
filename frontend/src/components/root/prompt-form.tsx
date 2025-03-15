@@ -179,7 +179,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
     };
 
     return (
-      <div className="relative w-full max-w-2xl mx-auto">
+      <div className="relative w-full max-w-4xl mx-auto">
         {/* Main content area with textarea */}
         <AnimatedInputBorder borderWidth={200} borderHeight={30}>
           <div className="flex flex-col">
@@ -191,7 +191,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
               placeholder=""
               className="w-full min-h-[200px] py-6 px-6 pr-12 text-lg border border-transparent rounded-lg focus:outline-none focus:ring-0 bg-white dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 resize-none font-normal"
               disabled={isLoading || isRegenerating}
-              rows={4}
+              rows={3}
               style={{ paddingBottom: '48px' }} // Extra padding at bottom to avoid text touching buttons
             />
 
@@ -315,7 +315,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
               {/* Submit button */}
               <Button
                 className={cn(
-                  'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-md hover:shadow-lg transition-all px-5 py-3 h-10 rounded-full',
+                  'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-md hover:shadow-lg transition-all px-5 py-3 h-10 rounded-sm',
                   (isLoading || isRegenerating) &&
                     'opacity-80 cursor-not-allowed'
                 )}
