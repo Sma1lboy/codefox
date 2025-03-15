@@ -122,7 +122,7 @@ export const prompts = {
                 ? `SPA Folder Structure (MANDATORY for all SPAs):
               src/
                 index.tsx - Main entry point that imports Home page
-                Layout.tsx - Global Layout
+                layout.tsx - Global Layout
                 pages/
                   Home/
                    
@@ -149,7 +149,7 @@ export const prompts = {
             ${
               isSPAFlag
                 ? `For SPAs:
-              - Only create the exact files specified: src/index.tsx, Layout.tsx and src/pages/Home/index.tsx
+              - Only create the exact files specified: src/index.tsx, layout.tsx and src/pages/Home/index.tsx
               - Do not create any additional files or folders`
                 : ''
             }
@@ -244,19 +244,19 @@ Output Format:
   ${
     isSPAFlag
       ? `**SPA Special Case**:
-   - If the structure only contains src/index.tsx and src/pages/Home/index.tsx, src/Layout.tsx this is a Single Page Application (SPA) with the mandatory minimal structure.
+   - If the structure only contains src/index.tsx and src/pages/Home/index.tsx, src/layout.tsx this is a Single Page Application (SPA) with the mandatory minimal structure.
    - For SPAs with this exact structure, the JSON must look like this:
      \`\`\`json
      <GENERATE>
      {
        "files": {
          "src/index.tsx": {
-           "dependsOn": ["src/pages/Home/index.tsx", "src/Layout.tsx"]
+           "dependsOn": ["src/pages/Home/index.tsx", "src/layout.tsx"]
          },
          "src/pages/Home/index.tsx": {
            "dependsOn": []
          },
-         "src/Layout.tsx": {
+         "src/layout.tsx": {
            "dependsOn": []
          },
        }
@@ -334,10 +334,10 @@ This is mission-critical: The system will reject ANY file references that don't 
      <GENERATE>
      {
        "files": {
-         "src/path/to/file1": {
+         "src/index.tsx": {
            "dependsOn": ["src/path/to/dependency1", "src/path/to/dependency2"]
          },
-         "src/path/to/file2": {
+         "src/path/to/file1": {
            "dependsOn": []
          }
        }
