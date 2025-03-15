@@ -122,7 +122,6 @@ export const prompts = {
                 ? `SPA Folder Structure (MANDATORY for all SPAs):
               src/
                 index.tsx - Main entry point that imports Home page
-                layout.tsx - Global Layout
                 pages/
                   Home/
                    
@@ -149,7 +148,7 @@ export const prompts = {
             ${
               isSPAFlag
                 ? `For SPAs:
-              - Only create the exact files specified: src/index.tsx, layout.tsx and src/pages/Home/index.tsx
+              - Only create the exact files specified: src/index.tsx and src/pages/Home/index.tsx
               - Do not create any additional files or folders`
                 : ''
             }
@@ -244,21 +243,18 @@ Output Format:
   ${
     isSPAFlag
       ? `**SPA Special Case**:
-   - If the structure only contains src/index.tsx and src/pages/Home/index.tsx, src/layout.tsx this is a Single Page Application (SPA) with the mandatory minimal structure.
+   - If the structure only contains src/index.tsx and src/pages/Home/index.tsx this is a Single Page Application (SPA) with the mandatory minimal structure.
    - For SPAs with this exact structure, the JSON must look like this:
      \`\`\`json
      <GENERATE>
      {
        "files": {
          "src/index.tsx": {
-           "dependsOn": ["src/pages/Home/index.tsx", "src/layout.tsx"]
+           "dependsOn": ["src/pages/Home/index.tsx"]
          },
          "src/pages/Home/index.tsx": {
            "dependsOn": []
-         },
-         "src/layout.tsx": {
-           "dependsOn": []
-         },
+         }
        }
      }
      </GENERATE>
