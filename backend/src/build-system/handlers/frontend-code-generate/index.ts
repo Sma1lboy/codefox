@@ -13,7 +13,7 @@ import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import normalizePath from 'normalize-path';
 import path from 'path';
 import { generateCSSPrompt, generateFrontEndCodePrompt } from './prompt';
-import { formatResponse, removeCodeBlockFences } from 'src/build-system/utils/strings';
+import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { writeFileSync } from 'fs';
 import { MessageInterface } from 'src/common/model-provider/types';
 
@@ -365,7 +365,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       modelResponse = await chatSyncWithClocker(
         context,
         {
-        //  model: context.defaultModel || 'gpt-4o-mini',
+          //  model: context.defaultModel || 'gpt-4o-mini',
           // model: 'claude-3.7-sonnet',
           // model: 'claude-3.5-sonnet',
           model: 'o3-mini-high',
