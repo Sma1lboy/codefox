@@ -38,6 +38,7 @@ interface FileInfos {
   UXSMSHandler,
   UXDMDHandler,
   PRDHandler,
+  UIUXLayoutHandler,
   BackendRequirementHandler,
   FileStructureAndArchitectureHandler,
 ])
@@ -61,7 +62,6 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     const prdHandler = context.getNodeData(PRDHandler);
     const uiUXLayoutHandler = context.getNodeData(UIUXLayoutHandler);
     // const prdHandler = context.getGlobalContext('projectOverview');
-    const projectFeatures = context.getGlobalContext('projectFeatures');
     const backendRequirementDoc = context.getNodeData(
       BackendRequirementHandler,
     );
@@ -177,7 +177,6 @@ export class FrontendCodeHandler implements BuildHandler<string> {
                 dependenciesText,
                 directDepsPathString,
                 uiUXLayoutHandler,
-                projectFeatures,
                 prdHandler,
                 failedFiles,
               );
@@ -278,8 +277,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     file: string,
     dependenciesText: string,
     directDepsPathString: string,
-    sitemapStruct: string,
-    projectFeatures: string,
+    uiUXLayoutHandler: string,
     productRe: string,
     failedFiles: any[],
   ): Promise<string> {
@@ -288,6 +286,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     let messages = [];
     try {
       const fileExtension = path.extname(file);
+
+      const isSPAFlag = context.getGlobalContext('isSPAFlag');
 
       let frontendCodePrompt = '';
       if (fileExtension === '.css') {
@@ -316,7 +316,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
               ${productRe}
 
               ## project layout
-              ${sitemapStruct}
+              ${uiUXLayoutHandler}
 
               `,
         },
@@ -365,10 +365,9 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       modelResponse = await chatSyncWithClocker(
         context,
         {
-          //  model: context.defaultModel || 'gpt-4o-mini',
-          // model: 'claude-3.7-sonnet',
-          // model: 'claude-3.5-sonnet',
-          model: 'o3-mini-high',
+          model: isSPAFlag 
+            ? 'claude-3.7-sonnet'  // Use Claude for SPAs
+            : 'o3-mini-high',  // Use default or fallback for non-SPAs
           messages,
         },
         'generate frontend code',
