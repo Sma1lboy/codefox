@@ -3,7 +3,7 @@ export function generateFrontEndCodePrompt(
   dependencyFilePath: string,
   theme: string,
 ): string {
-  return `Role: You are a senior UI/UX designer and React + TypeScript developer. You create clean, modern, and user-friendly interfaces
+  return `Role: You are an expert frontend developer specializing in building scalable, maintainable, and production-ready React applications using TypeScript.
 Task: Generate complete, type-safe, and maintainable React code.
 Current File: ${currentFile}.
 
@@ -110,7 +110,7 @@ ${theme}
 ## Library:
   "react-router": "^6",
   "react": "^18",
-  "@tailwindcss/vite": "^4.0.0"
+  "@tailwindcss": "^4.0.0"
   shadcn/ui components
   Lucide React icons
   Framer Motion
