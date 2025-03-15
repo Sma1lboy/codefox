@@ -77,9 +77,12 @@ export default function Chat() {
 
   // Effect to initialize chat ID and refresh the chat list based on URL parameters
   useEffect(() => {
-    setChatId(urlParams.get('id') || '');
-    refetchChats();
-  }, [urlParams, refetchChats]);
+    const newChatId = urlParams.get('id') || '';
+    if (newChatId !== chatId) {
+      setChatId(newChatId);
+      refetchChats();
+    }
+  }, [urlParams, chatId, refetchChats]);
 
   // Effect to add and remove global event listeners
   useEffect(() => {
