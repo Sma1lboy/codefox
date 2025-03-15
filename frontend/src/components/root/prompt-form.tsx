@@ -343,7 +343,6 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
                 className={cn(
                   'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-md hover:shadow-lg transition-all px-5 py-3 h-10 rounded-full',
                   (isLoading || isRegenerating || !message.trim()) &&
-
                     'opacity-80 cursor-not-allowed'
                 )}
                 onClick={handleSubmit}
