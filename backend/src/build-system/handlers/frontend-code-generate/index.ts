@@ -365,9 +365,9 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       modelResponse = await chatSyncWithClocker(
         context,
         {
-          model: isSPAFlag 
-            ? 'claude-3.7-sonnet'  // Use Claude for SPAs
-            : 'o3-mini-high',  // Use default or fallback for non-SPAs
+          model: isSPAFlag
+            ? 'claude-3.7-sonnet' // Use Claude for SPAs
+            : 'o3-mini-high', // Use default or fallback for non-SPAs
           messages,
         },
         'generate frontend code',

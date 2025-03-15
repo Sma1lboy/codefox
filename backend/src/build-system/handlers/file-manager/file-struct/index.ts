@@ -405,7 +405,7 @@ export class FileStructureAndArchitectureHandler
     // Calculate isSPA flag based on sitemap
     const pageViewCount = (sitemapDoc.match(/page_view_/g) || []).length;
     const isSPAFlag = pageViewCount === 1;
-    
+
     this.logger.log(`Is SPA: ${isSPAFlag}`);
 
     context.setGlobalContext('isSPAFlag', isSPAFlag);
