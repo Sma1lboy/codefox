@@ -26,6 +26,7 @@ import { useRouter } from 'next/navigation';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { AlertCircle, CheckCircle, Mail, Clock } from 'lucide-react';
 import { useEffect } from 'react';
+import { logger } from '@/app/log/logger';
 
 export function SignUpModal({
   isOpen,
@@ -76,7 +77,7 @@ export function SignUpModal({
         },
       });
     } catch (error) {
-      console.error('Registration failed:', error);
+      logger.error('Registration failed:', error);
     }
   };
 

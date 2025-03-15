@@ -12,6 +12,7 @@ import os from 'os';
 
 const isWindows = os.platform() === 'win32';
 import { URL_PROTOCOL_PREFIX } from '@/utils/const';
+import { logger } from '../../log/logger';
 
 // Persist container state to file system to recover after service restarts
 const CONTAINER_STATE_FILE = path.join(process.cwd(), 'container-state.json');
@@ -97,11 +98,11 @@ async function initializeState() {
     // Check if base image exists
     baseImageBuilt = await checkBaseImageExists();
 
-    console.log(
+    logger.info(
       'State initialization complete, cleaned up non-running containers and expired port allocations'
     );
   } catch (error) {
-    console.error('Error initializing state:', error);
+    logger.error('Error initializing state:', error);
     // If loading fails, continue with empty state
     runningContainers = new Map();
     allocatedPorts = new Set();
@@ -134,7 +135,7 @@ async function saveState() {
       JSON.stringify(portsArray, null, 2)
     );
   } catch (error) {
-    console.error('Error saving state:', error);
+    logger.error('Error saving state:', error);
   } finally {
     isUpdatingState = false;
   }
@@ -257,12 +258,12 @@ async function ensureBaseImageExists(): Promise<void> {
 
     // Check if base Dockerfile exists
     if (!fs.existsSync(path.join(dockerfilePath, 'Dockerfile'))) {
-      console.error('Base Dockerfile not found at:', dockerfilePath);
+      logger.error('Base Dockerfile not found at:', dockerfilePath);
       throw new Error('Base Dockerfile not found');
     }
 
     // Build the base image
-    console.log(
+    logger.info(
       `Building base image ${BASE_IMAGE_NAME} from ${dockerfilePath}...`
     );
     await execWithTimeout(
@@ -271,9 +272,9 @@ async function ensureBaseImageExists(): Promise<void> {
     );
 
     baseImageBuilt = true;
-    console.log(`Base image ${BASE_IMAGE_NAME} built successfully`);
+    logger.info(`Base image ${BASE_IMAGE_NAME} built successfully`);
   } catch (error) {
-    console.error('Error building base image:', error);
+    logger.error('Error building base image:', error);
     throw new Error('Failed to build base image');
   }
 }
@@ -293,13 +294,13 @@ function execWithTimeout(
 
   const executeWithRetry = (): Promise<string> => {
     return new Promise((resolve, reject) => {
-      console.log(`Executing command: ${command}`);
+      logger.info(`Executing command: ${command}`);
       exec(command, { timeout: options.timeout }, (error, stdout, stderr) => {
         if (error) {
-          console.error(`Command execution error: ${stderr}`);
+          logger.error(`Command execution error: ${stderr}`);
           if (retryCount < maxRetries) {
             retryCount++;
-            console.log(`Retry ${retryCount}/${maxRetries}`);
+            logger.info(`Retry ${retryCount}/${maxRetries}`);
             setTimeout(() => {
               executeWithRetry().then(resolve).catch(reject);
             }, 2000); // Wait 2 seconds before retry
@@ -352,9 +353,9 @@ async function runDockerContainer(
       await execWithTimeout(`docker rm -f ${existingContainerId}`, {
         timeout: 30000,
       });
-      console.log(`Removed non-running container: ${existingContainerId}`);
+      logger.info(`Removed non-running container: ${existingContainerId}`);
     } catch (error) {
-      console.error(`Error removing non-running container:`, error);
+      logger.error(`Error removing non-running container:`, error);
       // Continue processing even if removal fails
     }
   }
@@ -376,7 +377,7 @@ async function runDockerContainer(
       await execWithTimeout(`docker inspect ${containerName}`, {
         timeout: 10000,
       });
-      console.log(
+      logger.info(
         `Found container with same name ${containerName}, removing it first`
       );
       await execWithTimeout(`docker rm -f ${containerName}`, {
@@ -423,7 +424,7 @@ async function runDockerContainer(
     }
 
     // Run container
-    console.log(`Executing run command: ${runCommand}`);
+    logger.info(`Executing run command: ${runCommand}`);
     const containerActualId = await execWithTimeout(
       runCommand,
       { timeout: 60000, retries: 2 } // 1 minute timeout, 2 retries
@@ -448,12 +449,12 @@ async function runDockerContainer(
     });
     await saveState();
 
-    console.log(
+    logger.info(
       `Container ${containerName} is now running at ${URL_PROTOCOL_PREFIX}://${domain} (port: ${exposedPort})`
     );
     return { domain, containerId: containerActualId, port: exposedPort };
   } catch (error: any) {
-    console.error(`Error running container:`, error);
+    logger.error(`Error running container:`, error);
 
     // Clean up allocated port
     allocatedPorts.delete(exposedPort);
@@ -465,7 +466,7 @@ async function runDockerContainer(
 
 // Initialize state when service starts
 initializeState().catch((error) => {
-  console.error('Error initializing state:', error);
+  logger.error('Error initializing state:', error);
 });
 
 // Periodically check container status (hourly)
@@ -479,7 +480,7 @@ setInterval(
 
       const isRunning = await checkContainerRunning(container.containerId);
       if (!isRunning) {
-        console.log(
+        logger.info(
           `Container ${container.containerId} is no longer running, removing from state`
         );
         runningContainers.delete(projectPath);
@@ -529,7 +530,7 @@ export async function GET(req: Request) {
       }
       await saveState();
 
-      console.log(
+      logger.info(
         `Container ${existingContainer.containerId} is no longer running, will create a new one`
       );
     }
@@ -554,7 +555,7 @@ export async function GET(req: Request) {
       containerId,
     });
   } catch (error: any) {
-    console.error(`Failed to start Docker container:`, error);
+    logger.error(`Failed to start Docker container:`, error);
     return NextResponse.json(
       { error: error.message || 'Failed to start Docker container' },
       { status: 500 }

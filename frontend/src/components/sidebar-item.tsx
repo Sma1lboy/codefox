@@ -22,6 +22,7 @@ import { useRouter } from 'next/navigation';
 import { memo, useState } from 'react';
 import { toast } from 'sonner';
 import { EventEnum } from '../const/EventEnum';
+import { logger } from '@/app/log/logger';
 
 interface SideBarItemProps {
   id: string;
@@ -55,7 +56,7 @@ function SideBarItemComponent({
       refetchChats();
     },
     onError: (error) => {
-      console.error('Error deleting chat:', error);
+      logger.error('Error deleting chat:', error);
       toast.error('Failed to delete chat');
     },
   });
@@ -69,7 +70,7 @@ function SideBarItemComponent({
       });
       setIsDialogOpen(false);
     } catch (error) {
-      console.error('Error deleting chat:', error);
+      logger.error('Error deleting chat:', error);
       toast.error('Failed to delete chat');
     }
   };

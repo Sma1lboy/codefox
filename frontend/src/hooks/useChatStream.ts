@@ -4,6 +4,7 @@ import { CHAT_STREAM, CREATE_CHAT, TRIGGER_CHAT } from '@/graphql/request';
 import { Message } from '@/const/MessageType';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { logger } from '@/app/log/logger';
 enum StreamStatus {
   IDLE = 'IDLE',
   STREAMING = 'STREAMING',
@@ -71,7 +72,7 @@ export function useChatStream({
       setCurrentChatId(newChatId);
       await startChatStream(newChatId, input);
       window.history.pushState({}, '', `/chat?id=${newChatId}`);
-      console.log(`new chat: ${newChatId}`);
+      logger.info(`new chat: ${newChatId}`);
     },
     onError: () => {
       toast.error('Failed to create chat');
@@ -127,7 +128,7 @@ export function useChatStream({
       }
     },
     onError: (error) => {
-      console.log(error);
+      logger.info(error);
       toast.error('Connection error. Please try again.');
       setStreamStatus(StreamStatus.IDLE);
       finishChatResponse();
@@ -141,7 +142,7 @@ export function useChatStream({
         message,
         model: selectedModel,
       };
-      console.log(input);
+      logger.info(input);
 
       setInput('');
       setStreamStatus(StreamStatus.STREAMING);

@@ -9,6 +9,7 @@ import PreviewTab from './tabs/preview-tab';
 import ConsoleTab from './tabs/console-tab';
 import ResponsiveToolbar from './responsive-toolbar';
 import SaveChangesBar from './save-changes-bar';
+import { logger } from '@/app/log/logger';
 
 export function CodeEngine({
   chatId,
@@ -49,7 +50,7 @@ export function CodeEngine({
             setLocalProject(project);
           }
         } catch (error) {
-          console.error('Failed to load project from chat:', error);
+          logger.error('Failed to load project from chat:', error);
         } finally {
           setIsLoading(false);
         }
@@ -87,10 +88,10 @@ export function CodeEngine({
       if (data && data.res) {
         setFileStructureData(data.res);
       } else {
-        console.warn('Empty or invalid file structure data received');
+        logger.warn('Empty or invalid file structure data received');
       }
     } catch (error) {
-      console.error('Error fetching file structure:', error);
+      logger.error('Error fetching file structure:', error);
     } finally {
       setIsFileStructureLoading(false);
     }
@@ -136,7 +137,7 @@ export function CodeEngine({
       !isFileStructureLoading
     ) {
       retryTimeout = setTimeout(() => {
-        console.log('Retrying file structure fetch...');
+        logger.info('Retrying file structure fetch...');
         fetchFiles();
       }, 3000);
     }
@@ -207,7 +208,7 @@ export function CodeEngine({
 
       await response.json();
     } catch (error) {
-      console.error('Error updating file:', error);
+      logger.error('Error updating file:', error);
     }
   };
 
@@ -269,7 +270,7 @@ export function CodeEngine({
         setCode(data.content);
         setPrecode(data.content);
       } catch (error) {
-        console.error('Error loading file content:', error);
+        logger.error('Error loading file content:', error);
       }
     }
 

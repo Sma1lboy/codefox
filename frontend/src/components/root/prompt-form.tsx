@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useModels } from '@/hooks/useModels';
 import { gql, useMutation } from '@apollo/client';
+import { logger } from '@/app/log/logger';
 
 export interface PromptFormRef {
   getPromptData: () => {
@@ -86,7 +87,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
           setIsRegenerating(false);
         },
         onError: (error) => {
-          console.error('Error regenerating description:', error);
+          logger.error('Error regenerating description:', error);
           setIsRegenerating(false);
         },
       }

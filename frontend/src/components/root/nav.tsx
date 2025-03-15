@@ -15,6 +15,7 @@ import { AnimatedNumber } from '../ui/animate-number';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { SignUpModal } from '../sign-up-modal';
 import { SignInModal } from '../sign-in-modal';
+import { logger } from '@/app/log/logger';
 
 // Define the ref interface
 export interface NavbarRef {
@@ -85,7 +86,7 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
             setStarCount(data.stargazers_count);
           }
         } catch (error) {
-          console.error('Error fetching GitHub stars:', error);
+          logger.error('Error fetching GitHub stars:', error);
         } finally {
           setIsLoading(false);
         }

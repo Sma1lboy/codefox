@@ -18,6 +18,7 @@ import {
   SidebarFooter,
 } from './ui/sidebar';
 import { cn } from '@/lib/utils';
+import { logger } from '@/app/log/logger';
 
 export default function FileSidebar({ isCollapsed, isMobile, loading }) {
   const [isSimple, setIsSimple] = useState(false);
@@ -30,11 +31,8 @@ export default function FileSidebar({ isCollapsed, isMobile, loading }) {
   }, []);
 
   if (loading) return <SidebarSkeleton />;
-  //   if (error) {
-  //     console.error('Error loading chats:', error);
-  //     return null;
-  //   }
-  console.log(`${isCollapsed}, ${isMobile}, ${isSimple}`);
+
+  logger.info(`${isCollapsed}, ${isMobile}, ${isSimple}`);
 
   return (
     <div

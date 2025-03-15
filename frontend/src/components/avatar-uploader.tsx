@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { useAuthContext } from '@/providers/AuthProvider';
+import { logger } from '@/app/log/logger';
 
 // Avatar URL normalization helper
 export function normalizeAvatarUrl(
@@ -96,7 +97,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
         await refreshUserInfo();
       }
     } catch (error) {
-      console.error('Error uploading avatar:', error);
+      logger.error('Error uploading avatar:', error);
 
       // Extract the error message if available
       let errorMessage = 'Failed to upload avatar';
