@@ -26,16 +26,6 @@ type ChatCompletionChoiceType {
   index: Float!
 }
 
-type ChatCompletionChunkType {
-  choices: [ChatCompletionChoiceType!]!
-  created: Float!
-  id: String!
-  model: String!
-  object: String!
-  status: StreamStatus!
-  systemFingerprint: String
-}
-
 type ChatCompletionDeltaType {
   content: String
 }
@@ -110,6 +100,7 @@ type Message {
 }
 
 type Mutation {
+  chat(input: ChatInputType!): String!
   clearChatHistory(chatId: String!): Boolean!
   confirmEmail(token: String!): EmailConfirmationResponse!
   createChat(newChatInput: NewChatInput!): Chat!
@@ -123,7 +114,6 @@ type Mutation {
   registerUser(input: RegisterUserInput!): User!
   resendConfirmationEmail(input: ResendEmailInput!): EmailConfirmationResponse!
   subscribeToProject(projectId: ID!): Project!
-  triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
   updateProjectPhoto(input: UpdateProjectPhotoInput!): Project!
   updateProjectPublicStatus(isPublic: Boolean!, projectId: ID!): Project!
@@ -211,15 +201,6 @@ enum Role {
   Assistant
   System
   User
-}
-
-enum StreamStatus {
-  DONE
-  STREAMING
-}
-
-type Subscription {
-  chatStream(input: ChatInputType!): ChatCompletionChunkType
 }
 
 input UpdateChatTitleInput {

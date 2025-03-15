@@ -67,17 +67,6 @@ export type ChatCompletionChoiceType = {
   index: Scalars['Float']['output'];
 };
 
-export type ChatCompletionChunkType = {
-  __typename: 'ChatCompletionChunkType';
-  choices: Array<ChatCompletionChoiceType>;
-  created: Scalars['Float']['output'];
-  id: Scalars['String']['output'];
-  model: Scalars['String']['output'];
-  object: Scalars['String']['output'];
-  status: StreamStatus;
-  systemFingerprint?: Maybe<Scalars['String']['output']>;
-};
-
 export type ChatCompletionDeltaType = {
   __typename: 'ChatCompletionDeltaType';
   content?: Maybe<Scalars['String']['output']>;
@@ -155,6 +144,7 @@ export type Message = {
 
 export type Mutation = {
   __typename: 'Mutation';
+  chat: Scalars['String']['output'];
   clearChatHistory: Scalars['Boolean']['output'];
   confirmEmail: EmailConfirmationResponse;
   createChat: Chat;
@@ -168,11 +158,14 @@ export type Mutation = {
   registerUser: User;
   resendConfirmationEmail: EmailConfirmationResponse;
   subscribeToProject: Project;
-  triggerChatStream: Scalars['Boolean']['output'];
   updateChatTitle?: Maybe<Chat>;
   updateProjectPhoto: Project;
   updateProjectPublicStatus: Project;
   uploadAvatar: AvatarUploadResponse;
+};
+
+export type MutationChatArgs = {
+  input: ChatInputType;
 };
 
 export type MutationClearChatHistoryArgs = {
@@ -225,10 +218,6 @@ export type MutationResendConfirmationEmailArgs = {
 
 export type MutationSubscribeToProjectArgs = {
   projectId: Scalars['ID']['input'];
-};
-
-export type MutationTriggerChatStreamArgs = {
-  input: ChatInputType;
 };
 
 export type MutationUpdateChatTitleArgs = {
@@ -357,17 +346,6 @@ export type ResendEmailInput = {
 };
 
 export type Role = 'Assistant' | 'System' | 'User';
-
-export type StreamStatus = 'DONE' | 'STREAMING';
-
-export type Subscription = {
-  __typename: 'Subscription';
-  chatStream?: Maybe<ChatCompletionChunkType>;
-};
-
-export type SubscriptionChatStreamArgs = {
-  input: ChatInputType;
-};
 
 export type UpdateChatTitleInput = {
   chatId: Scalars['String']['input'];
@@ -511,7 +489,6 @@ export type ResolversTypes = ResolversObject<{
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   Chat: ResolverTypeWrapper<Chat>;
   ChatCompletionChoiceType: ResolverTypeWrapper<ChatCompletionChoiceType>;
-  ChatCompletionChunkType: ResolverTypeWrapper<ChatCompletionChunkType>;
   ChatCompletionDeltaType: ResolverTypeWrapper<ChatCompletionDeltaType>;
   ChatInputType: ChatInputType;
   CheckTokenInput: CheckTokenInput;
@@ -537,9 +514,7 @@ export type ResolversTypes = ResolversObject<{
   RegisterUserInput: RegisterUserInput;
   ResendEmailInput: ResendEmailInput;
   Role: Role;
-  StreamStatus: StreamStatus;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
-  Subscription: ResolverTypeWrapper<{}>;
   UpdateChatTitleInput: UpdateChatTitleInput;
   UpdateProjectPhotoInput: UpdateProjectPhotoInput;
   Upload: ResolverTypeWrapper<Scalars['Upload']['output']>;
@@ -552,7 +527,6 @@ export type ResolversParentTypes = ResolversObject<{
   Boolean: Scalars['Boolean']['output'];
   Chat: Chat;
   ChatCompletionChoiceType: ChatCompletionChoiceType;
-  ChatCompletionChunkType: ChatCompletionChunkType;
   ChatCompletionDeltaType: ChatCompletionDeltaType;
   ChatInputType: ChatInputType;
   CheckTokenInput: CheckTokenInput;
@@ -578,7 +552,6 @@ export type ResolversParentTypes = ResolversObject<{
   RegisterUserInput: RegisterUserInput;
   ResendEmailInput: ResendEmailInput;
   String: Scalars['String']['output'];
-  Subscription: {};
   UpdateChatTitleInput: UpdateChatTitleInput;
   UpdateProjectPhotoInput: UpdateProjectPhotoInput;
   Upload: Scalars['Upload']['output'];
@@ -633,29 +606,6 @@ export type ChatCompletionChoiceTypeResolvers<
     ContextType
   >;
   index?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-}>;
-
-export type ChatCompletionChunkTypeResolvers<
-  ContextType = any,
-  ParentType extends
-    ResolversParentTypes['ChatCompletionChunkType'] = ResolversParentTypes['ChatCompletionChunkType'],
-> = ResolversObject<{
-  choices?: Resolver<
-    Array<ResolversTypes['ChatCompletionChoiceType']>,
-    ParentType,
-    ContextType
-  >;
-  created?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  model?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  object?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  status?: Resolver<ResolversTypes['StreamStatus'], ParentType, ContextType>;
-  systemFingerprint?: Resolver<
-    Maybe<ResolversTypes['String']>,
-    ParentType,
-    ContextType
-  >;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
@@ -730,6 +680,12 @@ export type MutationResolvers<
   ParentType extends
     ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation'],
 > = ResolversObject<{
+  chat?: Resolver<
+    ResolversTypes['String'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationChatArgs, 'input'>
+  >;
   clearChatHistory?: Resolver<
     ResolversTypes['Boolean'],
     ParentType,
@@ -807,12 +763,6 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationSubscribeToProjectArgs, 'projectId'>
-  >;
-  triggerChatStream?: Resolver<
-    ResolversTypes['Boolean'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationTriggerChatStreamArgs, 'input'>
   >;
   updateChatTitle?: Resolver<
     Maybe<ResolversTypes['Chat']>,
@@ -993,20 +943,6 @@ export type RefreshTokenResponseResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
-export type SubscriptionResolvers<
-  ContextType = any,
-  ParentType extends
-    ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription'],
-> = ResolversObject<{
-  chatStream?: SubscriptionResolver<
-    Maybe<ResolversTypes['ChatCompletionChunkType']>,
-    'chatStream',
-    ParentType,
-    ContextType,
-    RequireFields<SubscriptionChatStreamArgs, 'input'>
-  >;
-}>;
-
 export interface UploadScalarConfig
   extends GraphQLScalarTypeConfig<ResolversTypes['Upload'], any> {
   name: 'Upload';
@@ -1053,7 +989,6 @@ export type Resolvers<ContextType = any> = ResolversObject<{
   AvatarUploadResponse?: AvatarUploadResponseResolvers<ContextType>;
   Chat?: ChatResolvers<ContextType>;
   ChatCompletionChoiceType?: ChatCompletionChoiceTypeResolvers<ContextType>;
-  ChatCompletionChunkType?: ChatCompletionChunkTypeResolvers<ContextType>;
   ChatCompletionDeltaType?: ChatCompletionDeltaTypeResolvers<ContextType>;
   Date?: GraphQLScalarType;
   EmailConfirmationResponse?: EmailConfirmationResponseResolvers<ContextType>;
@@ -1065,7 +1000,6 @@ export type Resolvers<ContextType = any> = ResolversObject<{
   ProjectPackages?: ProjectPackagesResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   RefreshTokenResponse?: RefreshTokenResponseResolvers<ContextType>;
-  Subscription?: SubscriptionResolvers<ContextType>;
   Upload?: GraphQLScalarType;
   User?: UserResolvers<ContextType>;
 }>;

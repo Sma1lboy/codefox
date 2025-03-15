@@ -1,5 +1,5 @@
-import { Resolver, Subscription, Args, Query, Mutation } from '@nestjs/graphql';
-import { Chat, ChatCompletionChunk } from './chat.model';
+import { Resolver, Args, Query, Mutation } from '@nestjs/graphql';
+import { Chat } from './chat.model';
 import { ChatProxyService, ChatService } from './chat.service';
 import { UserService } from 'src/user/user.service';
 import { Message, MessageRole } from './message.model';
@@ -9,9 +9,9 @@ import {
   UpdateChatTitleInput,
 } from './dto/chat.input';
 import { GetUserIdFromToken } from 'src/decorator/get-auth-token.decorator';
-import { Inject, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { JWTAuth } from 'src/decorator/jwt-auth.decorator';
-import { PubSubEngine } from 'graphql-subscriptions';
+
 @Resolver('Chat')
 export class ChatResolver {
   private readonly logger = new Logger('ChatResolver');
@@ -20,23 +20,11 @@ export class ChatResolver {
     private chatProxyService: ChatProxyService,
     private chatService: ChatService,
     private userService: UserService,
-    @Inject('PUB_SUB') private pubSub: PubSubEngine,
   ) {}
 
-  @Subscription(() => ChatCompletionChunk, {
-    nullable: true,
-    filter: (payload, variables) => {
-      return payload.chatStream.chatId === variables.input.chatId;
-    },
-    resolve: (payload) => payload.chatStream,
-  })
-  async chatStream(@Args('input') input: ChatInput) {
-    return this.pubSub.asyncIterator(`chat_stream_${input.chatId}`);
-  }
-
-  @Mutation(() => Boolean)
+  @Mutation(() => String)
   @JWTAuth()
-  async triggerChatStream(@Args('input') input: ChatInput): Promise<boolean> {
+  async chat(@Args('input') input: ChatInput): Promise<string> {
     try {
       await this.chatService.saveMessage(
         input.chatId,
@@ -44,35 +32,17 @@ export class ChatResolver {
         MessageRole.User,
       );
 
-      const iterator = this.chatProxyService.streamChat(input);
-      let accumulatedContent = '';
-
-      for await (const chunk of iterator) {
-        if (chunk) {
-          const enhancedChunk = {
-            ...chunk,
-            chatId: input.chatId,
-          };
-
-          await this.pubSub.publish(`chat_stream_${input.chatId}`, {
-            chatStream: enhancedChunk,
-          });
-
-          if (chunk.choices[0]?.delta?.content) {
-            accumulatedContent += chunk.choices[0].delta.content;
-          }
-        }
-      }
+      const response = await this.chatProxyService.chat(input);
 
       await this.chatService.saveMessage(
         input.chatId,
-        accumulatedContent,
+        response,
         MessageRole.Assistant,
       );
 
-      return true;
+      return response;
     } catch (error) {
-      this.logger.error('Error in triggerChatStream:', error);
+      this.logger.error('Error in chat:', error);
       throw error;
     }
   }

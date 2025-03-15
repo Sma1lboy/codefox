@@ -13,7 +13,7 @@ import UserSetting from '@/components/settings/settings';
 import ChatContent from '@/components/chat/chat-panel';
 import { useModels } from '@/hooks/useModels';
 import { useChatList } from '@/hooks/useChatList';
-import { useChatStream } from '@/hooks/useChatStream';
+import { useChat } from '@/hooks/useChat';
 import { CodeEngine } from './code-engine/code-engine';
 import { useProjectStatusMonitor } from '@/hooks/useProjectStatusMonitor';
 import { Loader2 } from 'lucide-react';
@@ -51,15 +51,14 @@ export default function Chat() {
     },
   });
 
-  // Custom hook for handling chat streaming
-  const { loadingSubmit, handleSubmit, handleInputChange, stop } =
-    useChatStream({
-      chatId,
-      input,
-      setInput,
-      setMessages,
-      selectedModel,
-    });
+  // Custom hook for handling chat
+  const { loading, handleSubmit, handleInputChange } = useChat({
+    chatId,
+    input,
+    setInput,
+    setMessages,
+    selectedModel,
+  });
 
   // Callback to clear the chat ID
   const cleanChatId = () => setChatId('');
@@ -115,8 +114,7 @@ export default function Chat() {
           input={input}
           handleInputChange={handleInputChange}
           handleSubmit={handleSubmit}
-          loadingSubmit={loadingSubmit}
-          stop={stop}
+          loadingSubmit={loading}
           formRef={formRef}
           setInput={setInput}
           setMessages={setMessages}
@@ -147,8 +145,7 @@ export default function Chat() {
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={handleSubmit}
-        loadingSubmit={loadingSubmit}
-        stop={stop}
+        loadingSubmit={loading}
         formRef={formRef}
         setInput={setInput}
         setMessages={setMessages}

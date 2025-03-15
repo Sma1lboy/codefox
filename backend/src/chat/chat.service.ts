@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { ChatCompletionChunk, Chat } from './chat.model';
+import { Chat } from './chat.model';
 import { MessageRole } from 'src/chat/message.model';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,7 +9,6 @@ import {
   NewChatInput,
   UpdateChatTitleInput,
 } from 'src/chat/dto/chat.input';
-import { CustomAsyncIterableIterator } from 'src/common/model-provider/types';
 import { OpenAIModelProvider } from 'src/common/model-provider/openai-model-provider';
 
 @Injectable()
@@ -20,16 +19,11 @@ export class ChatProxyService {
 
   constructor() {}
 
-  streamChat(
-    input: ChatInput,
-  ): CustomAsyncIterableIterator<ChatCompletionChunk> {
-    return this.models.chat(
-      {
-        messages: [{ role: MessageRole.User, content: input.message }],
-        model: input.model,
-      },
-      input.model,
-    );
+  async chat(input: ChatInput): Promise<string> {
+    return this.models.chatSync({
+      messages: [{ role: MessageRole.User, content: input.message }],
+      model: input.model,
+    });
   }
 
   async fetchModelTags(): Promise<string[]> {

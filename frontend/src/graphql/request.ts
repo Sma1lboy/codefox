@@ -55,25 +55,6 @@ export const GET_CHAT_HISTORY = gql`
   }
 `;
 
-export const CHAT_STREAM = gql`
-  subscription ChatStream($input: ChatInputType!) {
-    chatStream(input: $input) {
-      id
-      created
-      choices {
-        delta {
-          content
-        }
-        finishReason
-        index
-      }
-      model
-      object
-      status
-    }
-  }
-`;
-
 export const GET_USER_CHATS = gql`
   query GetUserChats {
     getUserChats {
@@ -106,9 +87,9 @@ export const GET_USER_INFO = gql`
   }
 `;
 
-export const TRIGGER_CHAT = gql`
-  mutation TriggerChatStream($input: ChatInputType!) {
-    triggerChatStream(input: $input)
+export const CHAT = gql`
+  mutation Chat($input: ChatInputType!) {
+    chat(input: $input)
   }
 `;
 

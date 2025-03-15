@@ -24,7 +24,6 @@ export default function ChatBottombar({
   input,
   handleInputChange,
   handleSubmit,
-  stop,
   formRef,
   setInput,
 }: ChatProps) {

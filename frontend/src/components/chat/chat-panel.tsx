@@ -15,7 +15,6 @@ export interface ChatProps {
     chatRequestOptions?: ChatRequestOptions
   ) => void;
   loadingSubmit?: boolean;
-  stop: () => void;
   formRef: React.RefObject<HTMLFormElement>;
   isMobile?: boolean;
   setInput?: React.Dispatch<React.SetStateAction<string>>;
@@ -27,7 +26,6 @@ export default function ChatContent({
   input,
   handleInputChange,
   handleSubmit,
-  stop,
   setSelectedModel,
   chatId,
   loadingSubmit,
@@ -48,7 +46,6 @@ export default function ChatContent({
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={handleSubmit}
-        stop={stop}
         formRef={formRef}
         setInput={setInput}
         setMessages={setMessages}
