@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { URL_PROTOCOL_PREFIX } from '@/utils/const';
+import { logger } from '@/app/log/logger';
 
 export interface ProjectContextType {
   projects: Project[];
@@ -79,13 +80,13 @@ const checkUrlStatus = async (
         return true;
       }
 
-      console.log(
+      logger.info(
         `URL status: ${res.status}. Retry ${retries + 1}/${maxRetries}...`
       );
       retries++;
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     } catch (err) {
-      console.error('Error checking URL status:', err);
+      logger.error('Error checking URL status:', err);
       retries++;
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
@@ -201,7 +202,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       projectSyncState.current.lastError = error as Error;
-      console.error('Error syncing project state:', error);
+      logger.error('Error syncing project state:', error);
     } finally {
       projectSyncState.current.syncInProgress = false;
     }
@@ -258,7 +259,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           }
         }
       } catch (error) {
-        console.error('Error loading initial project data:', error);
+        logger.error('Error loading initial project data:', error);
         toast.error('Failed to load projects. Please refresh the page.');
       } finally {
         setProjectLoading(false);
@@ -297,7 +298,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           }
         }
       } catch (error) {
-        console.error('Error checking URL for project:', error);
+        logger.error('Error checking URL for project:', error);
       }
     };
 
@@ -330,13 +331,13 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       const now = Date.now();
       if (now - projectSyncState.current.lastSyncTime >= SYNC_DEBOUNCE_TIME) {
         syncProjectState().catch((error) => {
-          console.error('Error during project sync:', error);
+          logger.error('Error during project sync:', error);
           projectSyncState.current.lastError = error as Error;
         });
       }
     },
     onError: (error) => {
-      console.error('Error fetching projects:', error);
+      logger.error('Error fetching projects:', error);
       projectSyncState.current.lastError = error;
 
       if (isMounted.current) {
@@ -346,7 +347,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
             try {
               await refetch();
             } catch (retryError) {
-              console.error('Retry failed:', retryError);
+              logger.error('Retry failed:', retryError);
             }
           }
         }, 5000);
@@ -357,7 +358,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   // Enhanced refresh function with sync and error handling
   const refreshProjects = useCallback(async () => {
     if (projectSyncState.current.syncInProgress) {
-      console.debug('Refresh skipped - sync in progress');
+      logger.debug('Refresh skipped - sync in progress');
       return;
     }
 
@@ -374,7 +375,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         await syncProjectState();
       }
     } catch (error) {
-      console.error('Error refreshing projects:', error);
+      logger.error('Error refreshing projects:', error);
       if (isMounted.current) {
         projectSyncState.current.lastError = error as Error;
         toast.error('Failed to refresh projects');
@@ -391,7 +392,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     const refreshInterval = setInterval(() => {
       if (isMounted.current && !projectSyncState.current.syncInProgress) {
         refreshProjects().catch((error) => {
-          console.error('Auto-refresh failed:', error);
+          logger.error('Auto-refresh failed:', error);
         });
       }
     }, 60000); // Auto-refresh every minute
@@ -532,7 +533,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         // Check if the URL is accessible
         const isUrlAccessible = await checkUrlStatus(url);
         if (!isUrlAccessible) {
-          console.warn(`URL ${url} is not accessible after multiple retries`);
+          logger.warn(`URL ${url} is not accessible after multiple retries`);
           return;
         }
 
@@ -561,7 +562,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           });
         }
       } catch (error) {
-        console.error('Error taking screenshot:', error);
+        logger.error('Error taking screenshot:', error);
       } finally {
         pendingOperations.current.delete(operationKey);
       }
@@ -621,7 +622,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         if (project) {
           // Don't await this - let it run in background
           takeProjectScreenshot(project.id, baseUrl).catch((err) =>
-            console.error('Background screenshot error:', err)
+            logger.error('Background screenshot error:', err)
           );
         }
 
@@ -630,7 +631,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           containerId: data.containerId,
         };
       } catch (error) {
-        console.error('Error getting web URL:', error);
+        logger.error('Error getting web URL:', error);
         if (isMounted.current) {
           toast.error('Failed to prepare web preview');
         }
@@ -673,7 +674,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           },
         });
       } catch (err) {
-        console.error('Failed to create project:', err);
+        logger.error('Failed to create project:', err);
         if (isMounted.current) {
           toast.error('An error occurred while creating the project');
         }
@@ -725,7 +726,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
         return !!result.data?.createProject;
       } catch (error) {
-        console.error('Error creating project:', error);
+        logger.error('Error creating project:', error);
         if (isMounted.current) {
           toast.error('Failed to create project from prompt');
         }
@@ -753,7 +754,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           },
         });
       } catch (error) {
-        console.error('Error forking project:', error);
+        logger.error('Error forking project:', error);
         if (isMounted.current) {
           toast.error('Failed to fork project');
         }
@@ -784,7 +785,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           },
         });
       } catch (error) {
-        console.error('Error updating project visibility:', error);
+        logger.error('Error updating project visibility:', error);
         if (isMounted.current) {
           toast.error('Failed to update project visibility');
         }
@@ -824,7 +825,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       }
 
       if (projectSyncState.current.syncInProgress) {
-        console.debug('Poll skipped - sync in progress');
+        logger.debug('Poll skipped - sync in progress');
         return cachedData?.project ?? null;
       }
 
@@ -853,21 +854,21 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
                 SYNC_DEBOUNCE_TIME
               ) {
                 syncProjectState().catch((error) => {
-                  console.warn('Background sync failed:', error);
+                  logger.warn('Background sync failed:', error);
                 });
               }
 
               // Try to get web URL in background
               if (isMounted.current && project.projectPath) {
                 getWebUrl(project.projectPath).catch((error) => {
-                  console.warn('Background web URL fetch failed:', error);
+                  logger.warn('Background web URL fetch failed:', error);
                 });
               }
 
               return project;
             }
           } catch (error) {
-            console.error(
+            logger.error(
               `Error polling chat (attempt ${retries + 1}/${MAX_RETRIES}):`,
               error
             );

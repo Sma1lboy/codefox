@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { ProjectContext } from '../chat/code-engine/project-context';
 import { URL_PROTOCOL_PREFIX } from '@/utils/const';
+import { logger } from '@/app/log/logger';
 
 export function ExpandableCard({ projects }) {
   const [active, setActive] = useState(null);
@@ -42,7 +43,7 @@ export function ExpandableCard({ projects }) {
       cachedUrls.current.set(project.id, url);
       setIframeUrl(url);
     } catch (error) {
-      console.error('Error fetching project URL:', error);
+      logger.error('Error fetching project URL:', error);
     }
   };
   return (
@@ -120,7 +121,7 @@ export function ExpandableCard({ projects }) {
             onClick={async () => {
               const data = await getWebUrl(project.path);
 
-              console.log(project.image);
+              logger.info(project.image);
               const url = `${URL_PROTOCOL_PREFIX}://${data.domain}`;
               setIframeUrl(url);
               handleCardClick(project);

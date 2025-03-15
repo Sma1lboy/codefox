@@ -24,6 +24,7 @@ import {
 import { ProjectContext } from './chat/code-engine/project-context';
 import { useChatList } from '@/hooks/useChatList';
 import { motion } from 'framer-motion';
+import { logger } from '@/app/log/logger';
 
 interface SidebarProps {
   setIsModalOpen: (value: boolean) => void;
@@ -106,7 +107,7 @@ function ChatSideBarComponent({
 
   if (loading) return <SidebarSkeleton />;
   if (error) {
-    console.error('Error loading chats:', error);
+    logger.error('Error loading chats:', error);
     return null;
   }
 

@@ -12,6 +12,7 @@ import {
   ZoomOut,
 } from 'lucide-react';
 import { URL_PROTOCOL_PREFIX } from '@/utils/const';
+import { logger } from '@/app/log/logger';
 
 function PreviewContent({
   curProject,
@@ -56,14 +57,14 @@ function PreviewContent({
       // Service is ready if we get a successful response (not 404 or 5xx)
       const isReady =
         response.ok || (response.status !== 404 && response.status < 500);
-      console.log(
+      logger.info(
         `Service check: ${url} - Status: ${response.status} - Ready: ${isReady}`
       );
       return isReady;
     } catch (error) {
       // Don't log abort errors (expected when timeout occurs)
       if (!error.toString().includes('abort')) {
-        console.log(`Service check attempt failed: ${error}`);
+        logger.info(`Service check attempt failed: ${error}`);
       }
       return false;
     }
@@ -83,7 +84,7 @@ function PreviewContent({
     // Try immediately first (don't wait for interval)
     const initialReady = await checkServiceReady(url);
     if (initialReady) {
-      console.log('Frontend service is ready immediately!');
+      logger.info('Frontend service is ready immediately!');
       setIsServiceReady(true);
       return; // Exit early if service is ready immediately
     }
@@ -94,7 +95,7 @@ function PreviewContent({
 
     // Set a fallback timer - show preview after 45 seconds no matter what
     const fallbackTimer = setTimeout(() => {
-      console.log('Fallback timer triggered - showing preview anyway');
+      logger.info('Fallback timer triggered - showing preview anyway');
       setIsServiceReady(true);
       if (serviceCheckTimerRef.current) {
         clearInterval(serviceCheckTimerRef.current);
@@ -115,7 +116,7 @@ function PreviewContent({
       const ready = await checkServiceReady(url);
 
       if (ready) {
-        console.log('Frontend service is ready!');
+        logger.info('Frontend service is ready!');
         setIsServiceReady(true);
         clearTimeout(fallbackTimer);
         if (serviceCheckTimerRef.current) {
@@ -124,7 +125,7 @@ function PreviewContent({
         }
       } else if (serviceCheckAttempts >= MAX_CHECK_ATTEMPTS) {
         // Service didn't become ready after max attempts
-        console.log(
+        logger.info(
           'Max attempts reached. Service might still be initializing.'
         );
         setLoadingMessage(
@@ -194,14 +195,14 @@ function PreviewContent({
         };
 
         const baseUrl = `${URL_PROTOCOL_PREFIX}://${domain}`;
-        console.log('baseUrl:', baseUrl);
+        logger.info('baseUrl:', baseUrl);
         setBaseUrl(baseUrl);
         setDisplayPath('/');
 
         // Start checking if the service is ready
         startServiceReadyCheck(baseUrl);
       } catch (error) {
-        console.error('Error getting web URL:', error);
+        logger.error('Error getting web URL:', error);
         setLoadingMessage('Error initializing preview.');
       }
     };
