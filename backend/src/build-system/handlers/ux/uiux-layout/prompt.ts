@@ -370,7 +370,8 @@ Navigation and interaction specifications
 Accessibility implementation notes
 Responsive considerations across desktop, tablet, and mobile
 
-[Optional: Include simple wireframe sketches or references to similar successful implementations]
+[Optional: Include simple wireframe sketches or references to similar successful implementations] Link to wireframe/mockup (if generated)
+Figma/XD reference (if applicable)
     
   `;
   },
