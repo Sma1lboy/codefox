@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChatProps } from './chat-panel';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -13,11 +13,12 @@ import {
   PaperPlaneIcon,
   StopIcon,
 } from '@radix-ui/react-icons';
-import { Mic, SendHorizonal } from 'lucide-react';
+import { Mic, SendHorizonal, Inspect } from 'lucide-react';
 import useSpeechToText from '@/hooks/useSpeechRecognition';
 import MultiImagePicker from '../image-embedder';
 import useChatStore from '@/hooks/useChatStore';
 import Image from 'next/image';
+import DOMInspector from 'dom-inspector';
 
 export default function ChatBottombar({
   messages,
@@ -34,6 +35,60 @@ export default function ChatBottombar({
   const base64Images = useChatStore((state) => state.base64Images);
   const setBase64Images = useChatStore((state) => state.setBase64Images);
   const env = process.env.NODE_ENV;
+
+  // Add this state to track inspection mode
+  const [isInspecting, setIsInspecting] = useState(false);
+  const [inspector, setInspector] = useState<any>(null);
+
+  // Initialize the inspector
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const domInspector = new DOMInspector({
+        root: document.documentElement,
+        highlight: true,
+        backgroundColor: 'rgba(0, 162, 255, 0.2)',
+        borderColor: 'rgba(0, 162, 255, 0.8)',
+        textColor: 'rgba(0, 162, 255, 0.8)',
+        zIndex: 10000,
+        // Handle iframes
+        inspectIframe: true,
+        excludeElements: [],
+      });
+
+      setInspector(domInspector);
+    }
+
+    return () => {
+      if (inspector) {
+        inspector.destroy();
+      }
+    };
+  }, []);
+
+  // Toggle inspection mode
+  const toggleInspect = () => {
+    if (inspector) {
+      if (isInspecting) {
+        inspector.disable();
+      } else {
+        inspector.enable({
+          onHover: (element: HTMLElement) => {
+            // Optional: display element info on hover
+            console.log('Hovering:', element.tagName, element.className);
+          },
+          onClick: (element: HTMLElement) => {
+            // Handle element selection
+            console.log('Selected:', element);
+            // Optional: Do something with the selected element
+            // Then disable inspector after selection
+            inspector.disable();
+            setIsInspecting(false);
+          },
+        });
+      }
+      setIsInspecting(!isInspecting);
+    }
+  };
 
   React.useEffect(() => {
     const checkScreenWidth = () => {
@@ -115,6 +170,23 @@ export default function ChatBottombar({
                 />
 
                 <div className="flex absolute right-3 items-center">
+                  {/* Add the inspect button before the other buttons */}
+                  <Button
+                    className={cn(
+                      'shrink-0 rounded-full',
+                      isInspecting && 'bg-blue-500/30 hover:bg-blue-400/30'
+                    )}
+                    variant="ghost"
+                    size="icon"
+                    type="button"
+                    onClick={toggleInspect}
+                  >
+                    <Inspect className="w-5 h-5" />
+                    {isInspecting && (
+                      <span className="animate-pulse absolute h-[120%] w-[120%] rounded-full bg-blue-500/30" />
+                    )}
+                  </Button>
+
                   {isListening ? (
                     <div className="flex">
                       <Button

@@ -6,11 +6,11 @@ WORKDIR /app
 RUN npm install -g npm@latest vite@latest
 
 # Create a non-root user to run the app
-RUN groupadd -r appuser && useradd -r -g appuser -m appuser
-RUN chown -R appuser:appuser /app
+# RUN groupadd -r appuser && useradd -r -g appuser -m appuser
+# RUN chown -R appuser:appuser /app
 
-# Switch to non-root user for security
-USER appuser
+# # Switch to non-root user for security
+# USER appuser
 
 EXPOSE 5173
 
