@@ -13,6 +13,7 @@ import { REFRESH_TOKEN_MUTATION } from '@/graphql/mutations/auth';
 import { LocalStore } from '@/lib/storage';
 import { LoadingPage } from '@/components/global-loading';
 import { User } from '@/graphql/type';
+import { logger } from '@/app/log/logger';
 
 interface AuthContextValue {
   isAuthorized: boolean;
@@ -23,6 +24,7 @@ interface AuthContextValue {
   logout: () => void;
   refreshAccessToken: () => Promise<string | boolean | void>;
   validateToken: () => Promise<boolean>;
+  refreshUserInfo: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -34,6 +36,7 @@ const AuthContext = createContext<AuthContextValue>({
   logout: () => {},
   refreshAccessToken: async () => {},
   validateToken: async () => false,
+  refreshUserInfo: async () => false,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -63,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return false;
     } catch (error) {
-      console.error('Token validation error:', error);
+      logger.error('Token validation error:', error);
       return false;
     }
   }, [checkToken]);
@@ -77,10 +80,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return false;
     } catch (error) {
-      console.error('Failed to fetch user info:', error);
+      logger.error('Failed to fetch user info:', error);
       return false;
     }
   }, [getUserInfo]);
+
+  const refreshUserInfo = useCallback(async () => {
+    return await fetchUserInfo();
+  }, [fetchUserInfo]);
 
   const refreshAccessToken = useCallback(async () => {
     try {
@@ -108,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
     } catch (error) {
-      console.error('Refresh token error:', error);
+      logger.error('Refresh token error:', error);
       logout();
       return false;
     }
@@ -121,7 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setToken(accessToken);
       if (process.env.NODE_ENV !== 'production') {
-        console.log('Token saved successfully');
+        logger.info('Token saved successfully');
       }
       setIsAuthorized(true);
       fetchUserInfo();
@@ -143,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const storedToken = localStorage.getItem(LocalStore.accessToken);
       if (!storedToken) {
-        console.log('No stored token found, skip checkToken');
+        logger.info('No stored token found, skip checkToken');
         setIsAuthorized(false);
         setUser(null);
         setIsLoading(false);
@@ -187,6 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         refreshAccessToken,
         validateToken,
+        refreshUserInfo,
       }}
     >
       {children}

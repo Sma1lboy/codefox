@@ -1,3 +1,4 @@
+import { logger } from '@/app/log/logger';
 import { NextResponse } from 'next/server';
 import puppeteer, { Browser } from 'puppeteer';
 
@@ -7,7 +8,7 @@ let browserInstance: Browser | null = null;
 // Function to get browser instance
 async function getBrowser(): Promise<Browser> {
   if (!browserInstance || !browserInstance.isConnected()) {
-    console.log('Creating new browser instance...');
+    logger.info('Creating new browser instance...');
     browserInstance = await puppeteer.launch({
       headless: true,
       protocolTimeout: 240000,
@@ -67,14 +68,14 @@ export async function GET(req: Request) {
       },
     });
   } catch (error: any) {
-    console.error('Screenshot error:', error);
+    logger.error('Screenshot error:', error);
 
     // Ensure page is closed even if an error occurs
     if (page) {
       try {
         await page.close();
       } catch (closeError) {
-        console.error('Error closing page:', closeError);
+        logger.error('Error closing page:', closeError);
       }
     }
 
@@ -90,7 +91,7 @@ export async function GET(req: Request) {
           browserInstance = null;
         }
       } catch (closeBrowserError) {
-        console.error('Error closing browser:', closeBrowserError);
+        logger.error('Error closing browser:', closeBrowserError);
       }
     }
 
@@ -104,7 +105,7 @@ export async function GET(req: Request) {
 // Handle process termination to close browser
 process.on('SIGINT', async () => {
   if (browserInstance) {
-    console.log('Closing browser instance...');
+    logger.info('Closing browser instance...');
     await browserInstance.close();
     browserInstance = null;
   }

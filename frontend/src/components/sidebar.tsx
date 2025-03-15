@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { memo, useCallback, useContext, useState } from 'react';
 import SidebarSkeleton from './sidebar-skeleton';
-import UserSettings from './user-settings';
+import UserSettingsBar from './user-settings-bar';
 import { SideBarItem } from './sidebar-item';
 import { Chat } from '@/graphql/type';
 import { EventEnum } from '../const/EventEnum';
@@ -24,6 +24,7 @@ import {
 import { ProjectContext } from './chat/code-engine/project-context';
 import { useChatList } from '@/hooks/useChatList';
 import { motion } from 'framer-motion';
+import { logger } from '@/app/log/logger';
 
 interface SidebarProps {
   setIsModalOpen: (value: boolean) => void;
@@ -106,7 +107,7 @@ function ChatSideBarComponent({
 
   if (loading) return <SidebarSkeleton />;
   if (error) {
-    console.error('Error loading chats:', error);
+    logger.error('Error loading chats:', error);
     return null;
   }
 
@@ -231,7 +232,7 @@ function ChatSideBarComponent({
         <SidebarFooter
           className={`mt-auto ${isCollapsed ? 'flex justify-center px-0' : ''}`}
         >
-          <UserSettings isSimple={false} />
+          <UserSettingsBar isSimple={false} />
         </SidebarFooter>
 
         <SidebarRail

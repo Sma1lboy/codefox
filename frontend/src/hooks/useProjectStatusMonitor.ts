@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLazyQuery } from '@apollo/client';
 import { GET_CHAT_DETAILS } from '@/graphql/request';
+import { logger } from '@/app/log/logger';
 
 interface ProjectStatus {
   isReady: boolean;
@@ -50,7 +51,7 @@ export function useProjectStatusMonitor(chatId: string): ProjectStatus {
           variables: { chatId },
         });
       } catch (err) {
-        console.error('Error polling for project:', err);
+        logger.error('Error polling for project:', err);
       }
 
       // Stop polling if project is ready or max attempts reached

@@ -31,6 +31,7 @@ import { cn } from '@/lib/utils';
 import { useModels } from '@/hooks/useModels';
 import { gql, useMutation } from '@apollo/client';
 import { useTheme } from 'next-themes';
+import { logger } from '@/app/log/logger';
 
 export interface PromptFormRef {
   getPromptData: () => {
@@ -90,7 +91,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
           setIsRegenerating(false);
         },
         onError: (error) => {
-          console.error('Error regenerating description:', error);
+          logger.error('Error regenerating description:', error);
           setIsRegenerating(false);
         },
       }
@@ -183,7 +184,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
     };
 
     return (
-      <div className="relative w-full max-w-2xl mx-auto">
+      <div className="relative w-full max-w-4xl mx-auto">
         {/* Main content area with textarea */}
         <AnimatedInputBorder borderWidth={200} borderHeight={30}>
           <div className="flex flex-col">
@@ -195,7 +196,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
               placeholder=""
               className="w-full min-h-[200px] py-6 px-6 pr-12 text-lg border border-transparent rounded-lg focus:outline-none focus:ring-0 bg-white dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 resize-none font-normal"
               disabled={isLoading || isRegenerating}
-              rows={4}
+              rows={3}
               style={{ paddingBottom: '48px' }} // Extra padding at bottom to avoid text touching buttons
             />
 
@@ -342,6 +343,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
                 className={cn(
                   'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-md hover:shadow-lg transition-all px-5 py-3 h-10 rounded-full',
                   (isLoading || isRegenerating || !message.trim()) &&
+
                     'opacity-80 cursor-not-allowed'
                 )}
                 onClick={handleSubmit}

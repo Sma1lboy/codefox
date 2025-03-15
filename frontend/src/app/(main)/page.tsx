@@ -11,6 +11,7 @@ import { ProjectContext } from '@/components/chat/code-engine/project-context';
 import { SignInModal } from '@/components/sign-in-modal';
 import { SignUpModal } from '@/components/sign-up-modal';
 import { useRouter } from 'next/navigation';
+import { logger } from '../log/logger';
 export default function HomePage() {
   // States for AuthChoiceModal
   const [showAuthChoice, setShowAuthChoice] = useState(false);
@@ -32,7 +33,7 @@ export default function HomePage() {
       await createProjectFromPrompt(message, isPublic, model);
       promptFormRef.current.clearMessage();
     } catch (error) {
-      console.error('Error creating project:', error);
+      logger.error('Error creating project:', error);
     }
   };
 
@@ -75,7 +76,7 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="w-full mb-24">
+        <div className="w-full mb-24 mt-24">
           <ProjectsSection />
         </div>
       </motion.div>
