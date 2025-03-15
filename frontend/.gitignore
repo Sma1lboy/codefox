@@ -39,6 +39,5 @@ next-env.d.ts
 .env
 
 *.db
-
-frontend/port-state.json
-frontend/container-state.json
+container-state.json
+port-state.json
