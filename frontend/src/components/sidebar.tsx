@@ -1,5 +1,4 @@
 'use client';
-
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { memo, useCallback, useContext, useState } from 'react';
@@ -9,7 +8,7 @@ import { SideBarItem } from './sidebar-item';
 import { Chat } from '@/graphql/type';
 import { EventEnum } from '../const/EventEnum';
 import { useRouter } from 'next/navigation';
-import { FixedSizeList } from 'react-window';
+import { FixedSizeList, ListChildComponentProps } from 'react-window';
 
 import {
   SidebarContent,
@@ -36,22 +35,26 @@ interface SidebarProps {
   setChatListUpdated: (value: boolean) => void;
   chats: Chat[];
   loading: boolean;
-  error: any;
+  error: unknown;
   onRefetch: () => void;
+}
+
+interface ChatRowData {
+  chats: Chat[];
+  currentChatId: string;
+  onSelect: (chatId: string) => void;
+  onRefetch: () => void;
+}
+
+interface ChatRowProps extends ListChildComponentProps {
+  data: ChatRowData;
 }
 
 // Row renderer for react-window
 const ChatRow = memo(
-  ({ index, style, data }: any) => {
-    const { chats, currentChatId, setCurProject, pollChatProject } = data;
+  ({ index, style, data }: ChatRowProps) => {
+    const { onSelect, chats, currentChatId, onRefetch } = data;
     const chat = chats[index];
-
-    const handleSelect = useCallback(() => {
-      setCurProject(null);
-      pollChatProject(chat.id).then((p) => {
-        setCurProject(p);
-      });
-    }, [chat.id, setCurProject, pollChatProject]);
 
     return (
       <div style={style}>
@@ -60,13 +63,13 @@ const ChatRow = memo(
           id={chat.id}
           currentChatId={currentChatId}
           title={chat.title}
-          onSelect={handleSelect}
-          refetchChats={data.onRefetch}
+          onSelect={() => onSelect(chat.id)}
+          refetchChats={onRefetch}
         />
       </div>
     );
   },
-  (prevProps, nextProps) => {
+  (prevProps: ChatRowProps, nextProps: ChatRowProps) => {
     return (
       prevProps.data.chats[prevProps.index].id ===
         nextProps.data.chats[nextProps.index].id &&
@@ -91,18 +94,24 @@ function ChatSideBarComponent({
   const { setCurProject, pollChatProject } = useContext(ProjectContext);
 
   const handleNewChat = useCallback(() => {
-    window.history.replaceState({}, '', '/');
+    router.push('/');
     setCurrentChatid('');
     const event = new Event(EventEnum.NEW_CHAT);
     window.dispatchEvent(event);
-  }, []);
+  }, [router]);
 
   const handleChatSelect = useCallback(
     (chatId: string) => {
-      router.push(`/chat?id=${chatId}`);
       setCurrentChatid(chatId);
+      router.push(`/chat?id=${chatId}`);
+      setCurProject(null);
+      pollChatProject(chatId).then((p) => {
+        setCurProject(p);
+      });
+      const event = new Event(EventEnum.CHAT);
+      window.dispatchEvent(event);
     },
-    [router]
+    [router, setCurProject, pollChatProject]
   );
 
   if (loading) return <SidebarSkeleton />;
@@ -215,10 +224,8 @@ function ChatSideBarComponent({
                   itemData={{
                     chats,
                     currentChatId: currentChatid,
-                    setCurProject,
-                    pollChatProject,
-                    onRefetch,
                     onSelect: handleChatSelect,
+                    onRefetch,
                   }}
                 >
                   {ChatRow}
@@ -247,7 +254,7 @@ function ChatSideBarComponent({
 // Optimized memo comparison
 export const ChatSideBar = memo(
   ChatSideBarComponent,
-  (prevProps, nextProps) => {
+  (prevProps: SidebarProps, nextProps: SidebarProps) => {
     if (prevProps.isCollapsed !== nextProps.isCollapsed) return false;
     if (prevProps.loading !== nextProps.loading) return false;
     if (prevProps.error !== nextProps.error) return false;

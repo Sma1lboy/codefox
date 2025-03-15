@@ -41,6 +41,7 @@ function SideBarItemComponent({
 }: SideBarItemProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const router = useRouter();
 
   const isSelected = currentChatId === id;
   const variant = isSelected ? 'secondary' : 'ghost';
@@ -49,7 +50,7 @@ function SideBarItemComponent({
     onCompleted: () => {
       toast.success('Chat deleted successfully');
       if (isSelected) {
-        window.history.replaceState({}, '', '/');
+        router.push('/');
         const event = new Event(EventEnum.NEW_CHAT);
         window.dispatchEvent(event);
       }
@@ -77,9 +78,6 @@ function SideBarItemComponent({
 
   const handleChatClick = (e: React.MouseEvent) => {
     if (!(e.target as HTMLElement).closest('.dropdown-trigger')) {
-      window.history.replaceState({}, '', `/chat?id=${id}`);
-      const event = new Event(EventEnum.CHAT);
-      window.dispatchEvent(event);
       onSelect(id);
     }
   };
