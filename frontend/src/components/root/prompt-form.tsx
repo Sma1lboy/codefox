@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useModels } from '@/hooks/useModels';
 import { gql, useMutation } from '@apollo/client';
+import { useTheme } from 'next-themes';
 
 export interface PromptFormRef {
   getPromptData: () => {
@@ -68,6 +69,9 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
     const [isFocused, setIsFocused] = useState(false);
     // State for regeneration loading
     const [isRegenerating, setIsRegenerating] = useState(false);
+
+    const { theme } = useTheme();
+    const isDarkMode = theme === 'dark';
 
     const {
       selectedModel,
@@ -204,7 +208,7 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
           </div>
 
           {/* Controls section - now separated with a background */}
-          <div className="absolute bottom-0 left-0 right-0 pb-3 px-3 flex pt-1 justify-between items-center bg-white dark:bg-gray-600 rounded-b-lg dark:border-gray-600">
+          <div className="absolute bottom-0 left-0 right-0 py-1 px-3 flex items-center justify-between bg-white dark:bg-gray-600 rounded-b-lg dark:border-gray-600">
             <div className="flex items-center gap-2">
               <Select
                 value={visibility}
@@ -282,25 +286,46 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                    <div
+                      onClick={
+                        !isLoading && !isRegenerating && message.trim()
+                          ? handleMagicEnhance
+                          : undefined
+                      }
                       className={cn(
-                        'rounded-full p-2 transition-all',
+                        'flex items-center justify-center w-12 h-12 rounded-full p-2 cursor-pointer transition-all',
+                        'focus:outline-none focus:ring-0 focus:border-0',
+                        'active:outline-none active:ring-0 active:border-0',
                         isEnhanced
-                          ? 'bg-amber-500/20 text-amber-500 hover:bg-amber-500/30 hover:text-amber-600'
-                          : 'text-gray-500 hover:text-amber-500',
-                        (isLoading || isRegenerating) &&
+                          ? isDarkMode
+                            ? 'text-primary-100 hover:text-primary-100'
+                            : 'text-yellow-300 hover:text-yellow-300'
+                          : 'text-gray-500 hover:text-gray-500',
+                        (isLoading || isRegenerating || !message.trim()) &&
                           'opacity-50 cursor-not-allowed'
                       )}
-                      onClick={handleMagicEnhance}
-                      disabled={isLoading || isRegenerating}
+                      style={{
+                        border: 'none',
+                        outline: 'none',
+                        boxShadow: 'none',
+                        WebkitTapHighlightColor: 'transparent',
+                        WebkitAppearance: 'none',
+                        MozAppearance: 'none',
+                        WebkitUserSelect: 'none',
+                        userSelect: 'none',
+                      }}
+                      tabIndex={-1}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onMouseUp={(e) => e.preventDefault()}
                     >
                       <Sparkles
-                        size={20}
-                        className={cn(isRegenerating && 'animate-spin')}
+                        size={24}
+                        className={cn(
+                          'w-5 h-5',
+                          isRegenerating && 'animate-spin'
+                        )}
                       />
-                    </Button>
+                    </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
                     <p>
@@ -316,11 +341,11 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
               <Button
                 className={cn(
                   'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-md hover:shadow-lg transition-all px-5 py-3 h-10 rounded-full',
-                  (isLoading || isRegenerating) &&
+                  (isLoading || isRegenerating || !message.trim()) &&
                     'opacity-80 cursor-not-allowed'
                 )}
                 onClick={handleSubmit}
-                disabled={isLoading || isRegenerating}
+                disabled={isLoading || isRegenerating || !message.trim()}
               >
                 {isLoading ? (
                   <>
