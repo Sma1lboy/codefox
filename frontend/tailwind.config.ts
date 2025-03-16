@@ -19,6 +19,11 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['var(--font-poppins)', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-playfair)', 'Georgia', 'serif'],
+        mono: ['ui-monospace', 'monospace'],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

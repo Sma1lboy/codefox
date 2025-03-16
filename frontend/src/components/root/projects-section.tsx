@@ -31,7 +31,7 @@ export function ProjectsSection() {
         {/* Header and "View All" button always visible */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-semibold dark:text-white">
-            From the Community
+            Featured Projects
           </h2>
           <button className="text-primary-600 dark:text-primary-400 hover:underline">
             View All &rarr;

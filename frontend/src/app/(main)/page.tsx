@@ -150,7 +150,7 @@ export default function HomePage() {
           >
             <div className="absolute -z-10 inset-0 bg-gradient-to-r from-primary-500/5 to-primary-600/5 rounded-2xl blur-xl transform scale-105"></div>
 
-            <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-lg border border-primary/20 dark:border-gray-700/40 shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(120,120,255,0.5)] hover:border-primary-500/60">
+            <div className=" bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-lg border border-primary/20 dark:border-gray-700/40 shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(120,120,255,0.5)] hover:border-primary-500/60">
               <PromptForm
                 ref={promptFormRef}
                 isAuthorized={isAuthorized}
@@ -162,7 +162,7 @@ export default function HomePage() {
           </motion.div>
 
           <motion.div
-            className="w-full mb-24 mt-24"
+            className="w-full mb-24 mt-40"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true, margin: '-100px' }}

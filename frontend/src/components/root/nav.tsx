@@ -7,7 +7,6 @@ import {
   ReactNode,
 } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Github, Star, SunMoon, Home, Info, DollarSign } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -185,7 +184,7 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
       <>
         <div className={` top-5 left-0 right-0 z-50 ${className}`}>
           <motion.div
-            className={`w-full flex justify-around items-center px-6 py-4 ${containerClassName}`}
+            className={`w-full flex justify-around items-center px-8 py-7 ${containerClassName}`}
             initial="hidden"
             animate="visible"
             variants={containerVariants}
@@ -195,9 +194,6 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
               className={`flex items-center space-x-3 ${logoContainerClassName}`}
               variants={itemVariants}
             >
-              {logo && (
-                <div className="h-10 w-auto overflow-hidden">{logo}</div>
-              )}
               <span
                 className={`font-bold text-2xl text-primary-600 dark:text-primary-400 transition-transform hover:scale-105 duration-300 ${nameClassName}`}
               >
@@ -247,7 +243,7 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
                 <div className="flex items-center space-x-4 transition-transform duration-300">
                   <button
                     onClick={() => setShowSignIn(true)}
-                    className="px-4 py-1 rounded-sm border border-primary-500 text-primary-500 dark:text-primary-400
+                    className="px-4 py-2 rounded-sm border border-primary-500 text-primary-500 dark:text-primary-400
                  hover:bg-primary-500 hover:text-white transition-colors"
                   >
                     Sign In
@@ -255,7 +251,7 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
 
                   <button
                     onClick={() => setShowSignUp(true)}
-                    className="px-4 py-1 rounded-sm bg-primary-500 text-white hover:bg-primary-600 transition-colors"
+                    className="px-4 py-2 rounded-sm bg-primary-500 text-white hover:bg-primary-600 transition-colors"
                   >
                     Sign Up
                   </button>
