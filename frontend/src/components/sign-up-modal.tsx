@@ -256,7 +256,7 @@ export function SignUpModal({
                 <TextureCardHeader className="flex flex-col gap-1 items-center justify-center p-4">
                   <TextureCardTitle>Create account</TextureCardTitle>
                   <p className="text-center text-neutral-600 dark:text-neutral-400">
-                  Enter your information to create your account
+                    Enter your information to create your account
                   </p>
                 </TextureCardHeader>
                 <TextureSeparator />
