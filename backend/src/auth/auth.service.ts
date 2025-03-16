@@ -149,7 +149,7 @@ export class AuthService {
       where: { email },
     });
 
-    if(password !== confirmPassword) {
+    if (password !== confirmPassword) {
       throw new ConflictException('Passwords do not match');
     }
 

@@ -45,27 +45,34 @@ export function SignUpModal({
   const [resendMessage, setResendMessage] = useState<string | null>(null);
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [passwordStrength, setPasswordStrength] = useState<'weak' | 'medium' | 'strong' | null>(null);
+  const [passwordStrength, setPasswordStrength] = useState<
+    'weak' | 'medium' | 'strong' | null
+  >(null);
 
   const validatePassword = (value: string) => {
     // Reset errors
     setPasswordError(null);
-    
+
     // Check minimum length
     if (value.length < 6) {
       setPasswordError('Password must be at least 6 characters long');
       setPasswordStrength('weak');
       return false;
     }
-    
+
     // Check for complexity
     const hasUppercase = /[A-Z]/.test(value);
     const hasLowercase = /[a-z]/.test(value);
     const hasNumbers = /\d/.test(value);
     const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value);
-    
-    const strengthScore = [hasUppercase, hasLowercase, hasNumbers, hasSpecialChar].filter(Boolean).length;
-    
+
+    const strengthScore = [
+      hasUppercase,
+      hasLowercase,
+      hasNumbers,
+      hasSpecialChar,
+    ].filter(Boolean).length;
+
     if (strengthScore < 2) {
       setPasswordStrength('weak');
       setPasswordError('Password is too weak');
@@ -345,52 +352,74 @@ export function SignUpModal({
                         className={`w-full ${passwordError ? 'border-red-500' : ''}`}
                       />
                       {password && (
-                      <div className="mt-2 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="text-sm">Password strength:</div>
-                          <div className="flex h-2 w-full max-w-[100px] overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                            <div
-                              className={`h-full ${
-                                passwordStrength === 'weak'
-                                  ? 'w-1/3 bg-red-500'
-                                  : passwordStrength === 'medium'
-                                  ? 'w-2/3 bg-yellow-500'
-                                  : 'w-full bg-green-500'
-                              }`}
-                            />
+                        <div className="mt-2 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm">Password strength:</div>
+                            <div className="flex h-2 w-full max-w-[100px] overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                              <div
+                                className={`h-full ${
+                                  passwordStrength === 'weak'
+                                    ? 'w-1/3 bg-red-500'
+                                    : passwordStrength === 'medium'
+                                      ? 'w-2/3 bg-yellow-500'
+                                      : 'w-full bg-green-500'
+                                }`}
+                              />
+                            </div>
+                            <div className="text-sm">
+                              {passwordStrength === 'weak'
+                                ? 'Weak'
+                                : passwordStrength === 'medium'
+                                  ? 'Medium'
+                                  : 'Strong'}
+                            </div>
                           </div>
-                          <div className="text-sm">
-                            {passwordStrength === 'weak'
-                              ? 'Weak'
-                              : passwordStrength === 'medium'
-                              ? 'Medium'
-                              : 'Strong'}
-                          </div>
-                        </div>
-                        
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          Password must:
-                          <ul className="list-disc pl-5 mt-1 space-y-1">
-                            <li className={password.length >= 6 ? 'text-green-500' : ''}>
-                              Be at least 6 characters long
-                            </li>
-                            <li className={/[A-Z]/.test(password) ? 'text-green-500' : ''}>
-                              Include at least one uppercase letter
-                            </li>
-                            <li className={/\d/.test(password) ? 'text-green-500' : ''}>
-                              Include at least one number
-                            </li>
-                            <li className={/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password) ? 'text-green-500' : ''}>
-                              Include at least one special character
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    )}
 
-                    {passwordError && (
-                      <div className="text-red-500 text-xs mt-1">{passwordError}</div>
-                    )}
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            Password must:
+                            <ul className="list-disc pl-5 mt-1 space-y-1">
+                              <li
+                                className={
+                                  password.length >= 6 ? 'text-green-500' : ''
+                                }
+                              >
+                                Be at least 6 characters long
+                              </li>
+                              <li
+                                className={
+                                  /[A-Z]/.test(password) ? 'text-green-500' : ''
+                                }
+                              >
+                                Include at least one uppercase letter
+                              </li>
+                              <li
+                                className={
+                                  /\d/.test(password) ? 'text-green-500' : ''
+                                }
+                              >
+                                Include at least one number
+                              </li>
+                              <li
+                                className={
+                                  /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(
+                                    password
+                                  )
+                                    ? 'text-green-500'
+                                    : ''
+                                }
+                              >
+                                Include at least one special character
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+
+                      {passwordError && (
+                        <div className="text-red-500 text-xs mt-1">
+                          {passwordError}
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-1">
