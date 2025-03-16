@@ -714,9 +714,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
             },
           },
         });
-        console.log('creatae a project result:', result);
 
-        return result.data.id;
+        return result.data.createProject.id;
       } catch (error) {
         logger.error('Error creating project:', error);
         if (isMounted.current) {
