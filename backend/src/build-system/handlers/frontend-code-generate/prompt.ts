@@ -106,6 +106,7 @@ ${theme}
       import { Button } from "@/components/ui/button";
       import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
     - Correctly use shadcn component variants and sizes (e.g., variant="outline" or size="sm")
+  21. In TypeScript, when using backticks (\`\`) or quotes, remember to use a backslash (\\) to escape special characters like < or variables.
 
 ## Library:
   "react-router": "^6",
