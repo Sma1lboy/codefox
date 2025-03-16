@@ -219,9 +219,9 @@ export function SignUpModal({
             ) : (
               <>
                 <TextureCardHeader className="flex flex-col gap-1 items-center justify-center p-4">
-                  <TextureCardTitle>Create your account</TextureCardTitle>
+                  <TextureCardTitle>Create account</TextureCardTitle>
                   <p className="text-center text-neutral-600 dark:text-neutral-400">
-                    Welcome! Please fill in the details to get started.
+                  Enter your information to create your account
                   </p>
                 </TextureCardHeader>
                 <TextureSeparator />
@@ -258,7 +258,7 @@ export function SignUpModal({
                     </div>
                     <div className="relative flex justify-center text-sm">
                       <span className="px-2 bg-white dark:bg-zinc-900 text-gray-500">
-                        or continue with email
+                        Or continue with
                       </span>
                     </div>
                   </div>
