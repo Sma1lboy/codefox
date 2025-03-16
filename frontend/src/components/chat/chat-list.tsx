@@ -9,7 +9,7 @@ import remarkGfm from 'remark-gfm';
 import CodeDisplayBlock from '../code-display-block';
 import { Message } from '../../const/MessageType';
 import { Button } from '../ui/button';
-import { Check, Pencil, X } from 'lucide-react';
+import { Check, Pencil, X, Code, Terminal } from 'lucide-react';
 import { useAuthContext } from '@/providers/AuthProvider';
 
 interface ChatListProps {
@@ -19,6 +19,8 @@ interface ChatListProps {
 }
 
 const isUserMessage = (role: string) => role.toLowerCase() === 'user';
+const isToolCall = (content: string) =>
+  content.includes('```') || content.includes('executing');
 
 export default function ChatList({
   messages,
@@ -104,158 +106,138 @@ export default function ChatList({
   }
 
   return (
-    <div className="w-full overflow-y-auto overflow-x-hidden h-full px-2 py-4">
-      <div className="w-full flex flex-col gap-6 min-h-full pb-4">
+    <div className="w-full overflow-y-auto overflow-x-hidden h-full px-4 py-6">
+      <div className="w-full flex flex-col gap-3 min-h-full pb-4 max-w-3xl mx-auto">
         <AnimatePresence initial={false}>
           {messages.map((message, index) => {
             const isUser = isUserMessage(message.role);
             const isEditing = message.id === editingMessageId;
+            const isTool = !isUser && isToolCall(message.content);
 
             return (
               <motion.div
                 key={`${message.id}-${index}`}
-                layout
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
+                exit={{ opacity: 0, y: 10 }}
                 transition={{
-                  opacity: { duration: 0.2 },
-                  layout: {
-                    type: 'spring',
-                    bounce: 0.2,
-                    duration: 0.4,
-                  },
+                  opacity: { duration: 0.15 },
+                  y: { duration: 0.15 },
                 }}
-                className={cn(
-                  'flex w-full',
-                  isUser ? 'justify-end' : 'justify-start'
-                )}
+                className="flex flex-col gap-1 w-full group"
               >
-                <div
-                  className={cn(
-                    'flex max-w-3xl group relative',
-                    isUser ? 'flex-row-reverse' : 'flex-row'
-                  )}
-                >
-                  <div
+                {/* Sender info - always on the left */}
+                <div className="flex items-center gap-2 ml-1">
+                  <Avatar
                     className={cn(
-                      'flex items-start pt-1',
-                      isUser ? 'ml-3' : 'mr-3'
+                      'h-6 w-6',
+                      isUser ? 'bg-primary/10' : 'bg-secondary/10'
                     )}
                   >
-                    <Avatar
-                      className={cn(
-                        'h-8 w-8 ring-2',
-                        isUser ? 'ring-primary/20' : 'ring-secondary/20'
-                      )}
-                    >
-                      {isUser ? (
-                        <>
-                          <AvatarImage src="/" alt="user" />
-                          <AvatarFallback className="bg-primary/10 text-primary-foreground text-xs">
-                            {user.username?.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </>
-                      ) : (
-                        <>
-                          <AvatarImage
-                            src="/codefox.svg"
-                            alt="AI"
-                            className="p-1 dark:invert"
-                          />
-                          <AvatarFallback className="bg-secondary/10 text-secondary-foreground">
-                            AI
-                          </AvatarFallback>
-                        </>
-                      )}
-                    </Avatar>
-                  </div>
-
-                  <div
-                    className={cn(
-                      'flex flex-col',
-                      isUser ? 'items-end' : 'items-start',
-                      'w-full'
+                    {isUser ? (
+                      <>
+                        <AvatarImage src="/" alt="user" />
+                        <AvatarFallback className="text-primary-foreground text-xs">
+                          {user.username?.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </>
+                    ) : (
+                      <>
+                        <AvatarImage
+                          src="/codefox.svg"
+                          alt="AI"
+                          className="p-1 dark:invert"
+                        />
+                        <AvatarFallback className="text-secondary-foreground">
+                          AI
+                        </AvatarFallback>
+                      </>
                     )}
-                  >
-                    <div
-                      className={cn(
-                        'px-4 py-3 rounded-lg',
-                        isUser
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted',
-                        isEditing ? 'w-full' : 'max-w-full'
-                      )}
-                    >
-                      {isEditing ? (
-                        <div className="flex flex-col gap-2 w-full">
-                          <textarea
-                            value={editContent}
-                            onChange={(e) => setEditContent(e.target.value)}
-                            className="min-h-[100px] w-full p-2 rounded bg-background border resize-none text-foreground"
-                            autoFocus
-                          />
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={handleEditCancel}
-                              className="h-8 px-2"
-                            >
-                              <X className="h-4 w-4 mr-1" />
-                              Cancel
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => handleEditSubmit(message.id)}
-                              className="h-8 px-2"
-                            >
-                              <Check className="h-4 w-4 mr-1" />
-                              Save
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div
-                          className={cn(
-                            'whitespace-pre-wrap',
-                            isUser
-                              ? 'text-primary-foreground'
-                              : 'text-foreground'
-                          )}
-                        >
-                          {isUser ? (
-                            message.content
-                          ) : (
-                            <div className="prose dark:prose-invert prose-sm max-w-none">
-                              {renderMessageContent(message.content)}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                  </Avatar>
+                  <span className="text-xs text-muted-foreground">
+                    {isUser ? user.username || 'You' : 'CodeFox'}
+                  </span>
+                </div>
 
-                    <div className="text-xs text-muted-foreground mt-1 px-1">
-                      {message.createdAt && (
-                        <span>
-                          {new Date(message.createdAt).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
+                {/* Message content */}
+                <div className="flex flex-col gap-1 pl-8 relative">
+                  {/* Edit buttons for user messages */}
                   {isUser && !isEditing && onMessageEdit && (
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="absolute -left-10 top-0 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
+                      className="absolute -left-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6"
                       onClick={() => handleEditStart(message)}
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <Pencil className="h-3 w-3" />
                     </Button>
+                  )}
+
+                  {/* Message bubble */}
+                  {isEditing ? (
+                    <div className="flex flex-col gap-2 w-full pl-0">
+                      <textarea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        className="min-h-[100px] w-full p-2 rounded bg-background border resize-none text-foreground"
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleEditCancel}
+                          className="h-7 px-2 text-xs"
+                        >
+                          <X className="h-3 w-3 mr-1" />
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleEditSubmit(message.id)}
+                          className="h-7 px-2 text-xs"
+                        >
+                          <Check className="h-3 w-3 mr-1" />
+                          Save
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className={cn(
+                        'px-4 py-3 rounded-lg w-auto max-w-full',
+                        isUser
+                          ? 'bg-muted text-foreground border border-border/50'
+                          : isTool
+                            ? 'bg-slate-50 dark:bg-slate-900 border border-border/50'
+                            : 'bg-card text-card-foreground border border-border/50'
+                      )}
+                    >
+                      <div className="whitespace-pre-wrap">
+                        {isUser ? (
+                          message.content
+                        ) : isTool ? (
+                          <div className="prose dark:prose-invert prose-sm max-w-none">
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5">
+                              <Terminal className="h-3.5 w-3.5" />
+                              <span>Tool Execution</span>
+                            </div>
+                            {renderMessageContent(message.content)}
+                          </div>
+                        ) : (
+                          <div className="prose dark:prose-invert prose-sm max-w-none">
+                            {renderMessageContent(message.content)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tool result or additional info could be added here */}
+                  {isTool && (
+                    <div className="text-xs text-muted-foreground mt-1 ml-2">
+                      <span>Tool output</span>
+                    </div>
                   )}
                 </div>
               </motion.div>
@@ -267,26 +249,34 @@ export default function ChatList({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex items-start gap-3 mt-2"
+            className="flex flex-col gap-1 w-full"
           >
-            <Avatar className="h-8 w-8 ring-2 ring-secondary/20">
-              <AvatarImage
-                src="/codefox.svg"
-                alt="AI"
-                className="p-1 dark:invert"
-              />
-              <AvatarFallback>AI</AvatarFallback>
-            </Avatar>
-            <div className="bg-muted px-4 py-3 rounded-lg flex gap-1.5">
-              <span className="size-2 rounded-full bg-foreground/30 animate-bounce"></span>
-              <span
-                className="size-2 rounded-full bg-foreground/30 animate-bounce"
-                style={{ animationDelay: '0.2s' }}
-              ></span>
-              <span
-                className="size-2 rounded-full bg-foreground/30 animate-bounce"
-                style={{ animationDelay: '0.4s' }}
-              ></span>
+            <div className="flex items-center gap-2 ml-1">
+              <Avatar className="h-6 w-6 bg-secondary/10">
+                <AvatarImage
+                  src="/codefox.svg"
+                  alt="AI"
+                  className="p-1 dark:invert"
+                />
+                <AvatarFallback>AI</AvatarFallback>
+              </Avatar>
+              <span className="text-xs text-muted-foreground">CodeFox</span>
+            </div>
+
+            <div className="flex pl-8">
+              <div className="px-3 py-2 flex items-center">
+                <div className="flex gap-1.5">
+                  <span className="size-2 rounded-full bg-foreground/30 animate-bounce"></span>
+                  <span
+                    className="size-2 rounded-full bg-foreground/30 animate-bounce"
+                    style={{ animationDelay: '0.2s' }}
+                  ></span>
+                  <span
+                    className="size-2 rounded-full bg-foreground/30 animate-bounce"
+                    style={{ animationDelay: '0.4s' }}
+                  ></span>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
