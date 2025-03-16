@@ -148,18 +148,19 @@ export class AuthService {
     const existingUser = await this.userRepository.findOne({
       where: { email },
     });
+    const hashedPassword = await hash(password, 10);
 
     // If the user exists but email is not confirmed and mail is enabled
     if (existingUser && !existingUser.isEmailConfirmed && this.isMailEnabled) {
-      // Option 1: Delete the old unconfirmed account and create a new one
-      await this.userRepository.remove(existingUser);
-      
-      // Option 2 (Alternative): Just update the existing user and resend verification email 
+      // Just update the existing user and resend verification email 
+      existingUser.username = username;
+      existingUser.password = hashedPassword;
+      await this.userRepository.save(existingUser);
+      await this.sendVerificationEmail(existingUser);
+      return existingUser;
     } else if (existingUser) {
       throw new ConflictException('Email already exists');
     }
-
-    const hashedPassword = await hash(password, 10);
 
     let newUser;
     if (this.isMailEnabled) {
