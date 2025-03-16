@@ -83,7 +83,7 @@ function SideBarItemComponent({
   };
 
   return (
-    <div
+    <button
       className={cn(
         buttonVariants({
           variant,
@@ -159,7 +159,7 @@ function SideBarItemComponent({
           </DialogHeader>
         </DialogContent>
       </Dialog>
-    </div>
+    </button>
   );
 }
 
