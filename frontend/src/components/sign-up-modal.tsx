@@ -61,17 +61,17 @@ export function SignUpModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
-  
+
     if (!name || !email || !password || !passwordConfirm) {
       setErrorMessage('All fields are required.');
       return;
     }
-  
+
     if (password !== passwordConfirm) {
       setErrorMessage('Passwords do not match.');
       return;
     }
-  
+
     try {
       await registerUser({
         variables: {
@@ -296,10 +296,10 @@ export function SignUpModal({
                       </div>
                     )}
 
-                  <div className="h-2"></div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? 'Signing up...' : 'Sign up'}
-                  </Button>
+                    <div className="h-2"></div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? 'Signing up...' : 'Sign up'}
+                    </Button>
                   </form>
                 </TextureCardContent>
               </>
