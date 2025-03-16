@@ -98,13 +98,6 @@ function ChatSideBarComponent({
   const [currentChatid, setCurrentChatid] = useState('');
   const { setCurProject, pollChatProject } = useContext(ProjectContext);
 
-  const handleNewChat = useCallback(() => {
-    router.push('/');
-    setCurrentChatid('');
-    const event = new Event(EventEnum.NEW_CHAT);
-    window.dispatchEvent(event);
-  }, [router]);
-
   const handleChatSelect = useCallback(
     (chatId: string) => {
       setCurrentChatid(chatId);
@@ -238,8 +231,8 @@ function ChatSideBarComponent({
 
         {/* Footer Settings */}
         <SidebarFooter
-          className={`mt-auto border-t border-gray-200 dark:border-gray-700 ${
-            isCollapsed ? 'flex justify-center px-0' : 'px-3'
+          className={`mt-auto border-t border-gray-200  dark:border-gray-700 ${
+            isCollapsed ? 'flex justify-center items-center  px-0' : 'px-3'
           }`}
         >
           <UserSettingsBar isSimple={false} />
