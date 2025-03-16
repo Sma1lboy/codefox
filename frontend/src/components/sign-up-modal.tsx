@@ -43,6 +43,7 @@ export function SignUpModal({
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
+  const [passwordConfirm, setPasswordConfirm] = useState('');
 
   const [registerUser, { loading }] = useMutation(REGISTER_USER, {
     onError: (error) => {
@@ -60,12 +61,17 @@ export function SignUpModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
-
-    if (!name || !email || !password) {
+  
+    if (!name || !email || !password || !passwordConfirm) {
       setErrorMessage('All fields are required.');
       return;
     }
-
+  
+    if (password !== passwordConfirm) {
+      setErrorMessage('Passwords do not match.');
+      return;
+    }
+  
     try {
       await registerUser({
         variables: {
@@ -267,6 +273,22 @@ export function SignUpModal({
                       />
                     </div>
 
+                    <div className="space-y-1">
+                      <Label htmlFor="passwordConfirm">Confirm Password</Label>
+                      <Input
+                        id="passwordConfirm"
+                        placeholder="Confirm Password"
+                        type="password"
+                        value={passwordConfirm}
+                        onChange={(e) => {
+                          setPasswordConfirm(e.target.value);
+                          setErrorMessage(null);
+                        }}
+                        required
+                        className="w-full"
+                      />
+                    </div>
+
                     {errorMessage && (
                       <div className="flex items-center gap-2 text-primary-700 dark:text-primary-400 text-sm p-2 rounded-md bg-primary-50 dark:bg-zinc-800 border border-primary-200 dark:border-primary-800">
                         <AlertCircle className="h-4 w-4" />
@@ -274,9 +296,10 @@ export function SignUpModal({
                       </div>
                     )}
 
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? 'Signing up...' : 'Sign up'}
-                    </Button>
+                  <div className="h-2"></div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? 'Signing up...' : 'Sign up'}
+                  </Button>
                   </form>
                 </TextureCardContent>
               </>
