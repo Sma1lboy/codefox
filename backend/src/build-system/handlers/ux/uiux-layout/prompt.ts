@@ -210,8 +210,6 @@ Layout Pattern Library:
   Navigation and interaction specifications
   Accessibility implementation notes
   Responsive considerations across desktop, tablet, and mobile
-
-  [Optional: Include simple wireframe sketches or references to similar successful implementations]
     
   `;
   },
