@@ -114,7 +114,7 @@ export async function readFileWithRetries(
   }
 
   // If we exhausted all retries, re-throw the last error
-  throw lastError;
+  return null;
 }
 
 /**

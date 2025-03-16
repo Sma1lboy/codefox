@@ -13,7 +13,7 @@ import { BuildNode, BuildNodeRequire } from 'src/build-system/hanlder-manager';
 import normalizePath from 'normalize-path';
 import path from 'path';
 import { generateCSSPrompt, generateFrontEndCodePrompt } from './prompt';
-import { formatResponse } from 'src/build-system/utils/strings';
+import { removeCodeBlockFences } from 'src/build-system/utils/strings';
 import { writeFileSync } from 'fs';
 import { MessageInterface } from 'src/common/model-provider/types';
 
@@ -21,7 +21,8 @@ import { FrontendCodeValidator } from './CodeValidator';
 import { FrontendQueueProcessor, CodeTaskQueue } from './CodeReview';
 // import { FileFAHandler } from '../file-manager/file-arch';
 import { FileStructureAndArchitectureHandler } from '../file-manager/file-struct';
-
+import { PRDHandler } from '../product-manager/product-requirements-document/prd';
+import { UIUXLayoutHandler } from '../ux/uiux-layout';
 interface FileInfos {
   [fileName: string]: {
     dependsOn: string[];
@@ -36,6 +37,8 @@ interface FileInfos {
 @BuildNodeRequire([
   UXSMSHandler,
   UXDMDHandler,
+  PRDHandler,
+  UIUXLayoutHandler,
   BackendRequirementHandler,
   FileStructureAndArchitectureHandler,
 ])
@@ -56,6 +59,9 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     // 1. Retrieve the necessary input from context
     const sitemapStruct = context.getNodeData(UXSMSHandler);
     const uxDataMapDoc = context.getNodeData(UXDMDHandler);
+    const prdHandler = context.getNodeData(PRDHandler);
+    const uiUXLayoutHandler = context.getNodeData(UIUXLayoutHandler);
+    // const prdHandler = context.getGlobalContext('projectOverview');
     const backendRequirementDoc = context.getNodeData(
       BackendRequirementHandler,
     );
@@ -83,8 +89,18 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     const renameMap = new Map<string, string>();
 
     // 3. Prepare for Dependency
+    // have bug
     const { concurrencyLayers, fileInfos } =
       await generateFilesDependencyWithLayers(fileArchDoc, this.virtualDir);
+
+    // concurrencyLayers.forEach((layer, index) => {
+    //   console.log(`Layer #${index + 1} has ${layer.length} file(s):`, layer);
+    // });
+
+    // Object.entries(fileInfos).forEach(([filePath, info]) => {
+    //   this.logger.debug(`File: ${filePath}`);
+    //   this.logger.debug(`Depends On: ${info.dependsOn.join(', ')}`);
+    // });
 
     const validator = new FrontendCodeValidator(frontendPath);
     // validator.installDependencies();
@@ -160,8 +176,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
                 file,
                 dependenciesText,
                 directDepsPathString,
-                sitemapStruct,
-                uxDataMapDoc,
+                uiUXLayoutHandler,
+                prdHandler,
                 failedFiles,
               );
             }
@@ -229,7 +245,19 @@ export class FrontendCodeHandler implements BuildHandler<string> {
 
     for (const dep of directDepsArray) {
       try {
-        const resolvedDepPath = normalizePath(path.resolve(frontendPath, dep));
+        let resolvedDepPath = dep;
+
+        // Resolve alias-based paths (assuming `@/` maps to `frontendPath/src/`)
+        if (dep.startsWith('@/')) {
+          resolvedDepPath = path.join(
+            frontendPath,
+            'src',
+            dep.replace(/^@\//, ''),
+          );
+        } else {
+          resolvedDepPath = normalizePath(path.resolve(frontendPath, dep));
+        }
+
         const depContent = await readFileWithRetries(resolvedDepPath, 3, 200);
         dependenciesText += `\n\n<dependency>  File path: ${dep}\n\`\`\`typescript\n${depContent}\n\`\`\`\n</dependency>`;
       } catch (err) {
@@ -249,8 +277,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     file: string,
     dependenciesText: string,
     directDepsPathString: string,
-    sitemapStruct: string,
-    uxDataMapDoc: string,
+    uiUXLayoutHandler: string,
+    productRe: string,
     failedFiles: any[],
   ): Promise<string> {
     let generatedCode = '';
@@ -258,6 +286,8 @@ export class FrontendCodeHandler implements BuildHandler<string> {
     let messages = [];
     try {
       const fileExtension = path.extname(file);
+
+      const isSPAFlag = context.getGlobalContext('isSPAFlag');
 
       let frontendCodePrompt = '';
       if (fileExtension === '.css') {
@@ -282,8 +312,12 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         },
         {
           role: 'user' as const,
-          content: `## Sitemap Structure
-              ${sitemapStruct}
+          content: `## product requirement
+              ${productRe}
+
+              ## project layout
+              ${uiUXLayoutHandler}
+
               `,
         },
         // To DO need to dynamically add the UX Datamap Documentation and Backend Requirement Documentation based on the file generate
@@ -319,7 +353,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
         },
         {
           role: 'user',
-          content: `Now you can provide the code, don't forget the <GENERATE></GENERATE> tags. Do not be lazy.`,
+          content: `Now you can provide the code. Do not be lazy.`,
         },
         // {
         //   role: 'assistant',
@@ -331,8 +365,9 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       modelResponse = await chatSyncWithClocker(
         context,
         {
-          // model: context.defaultModel || 'gpt-4o',
-          model: 'o3-mini-high',
+          model: isSPAFlag
+            ? 'claude-3.7-sonnet' // Use Claude for SPAs
+            : 'o3-mini-high', // Use default or fallback for non-SPAs
           messages,
         },
         'generate frontend code',
@@ -340,7 +375,7 @@ export class FrontendCodeHandler implements BuildHandler<string> {
       );
 
       this.logger.debug('generated code: ', modelResponse);
-      generatedCode = formatResponse(modelResponse);
+      generatedCode = removeCodeBlockFences(modelResponse);
 
       return generatedCode;
     } catch (err) {

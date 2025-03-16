@@ -10,15 +10,15 @@ import { BuilderContext } from '../context';
 import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
 import { FileStructureAndArchitectureHandler } from '../handlers/file-manager/file-struct';
 import { BackendRequirementHandler } from '../handlers/backend/requirements-document';
+import { UIUXLayoutHandler } from '../handlers/ux/uiux-layout';
 
 (isIntegrationTest ? describe : describe.skip)('Build Sequence Test', () => {
   it('should execute build sequence successfully', async () => {
     const sequence: BuildSequence = {
       id: 'test-backend-sequence',
       version: '1.0.0',
-      name: 'Wrtie a Cool personal website',
-      description:
-        'A personal blog website. I am a cybersecurity engineer so i want it to show i am a really cool hacker, with cool terminal functionality',
+      name: 'Wrtie a Single page Cool cybersecurity personal website',
+      description: `A Single page personal blog website. I am a cybersecurity engineer so i want it to show i am a really cool hacker, with cool terminal functionality`,
       databaseType: 'SQLite',
       model: 'gpt-4o-mini',
       projectSize: 'medium', // limit for fun
@@ -38,6 +38,11 @@ import { BackendRequirementHandler } from '../handlers/backend/requirements-docu
         {
           handler: UXSMSHandler,
           name: 'UX Sitemap Structure Node',
+          // requires: ['op:UX:SMD'],
+        },
+        {
+          handler: UIUXLayoutHandler,
+          name: 'UIUX Layout Handler',
           // requires: ['op:UX:SMD'],
         },
         {
