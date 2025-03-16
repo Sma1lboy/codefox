@@ -1,13 +1,11 @@
-import { LocalStore } from '@/lib/storage';
-
-export async function startChatStream(
+// This file contains the logic for starting a chat stream with the backend.
+export const startChatStream = async (
   targetChatId: string,
   message: string,
   model: string,
+  token: string,
   stream: boolean = false // Default to non-streaming for better performance
-): Promise<string> {
-  const token = localStorage.getItem(LocalStore.accessToken);
-
+): Promise<string> => {
   if (!token) {
     throw new Error('Not authenticated');
   }
@@ -31,41 +29,44 @@ export async function startChatStream(
       `Network response was not ok: ${response.status} ${response.statusText}`
     );
   }
+  // TODO: Handle streaming responses properly
+  // if (stream) {
+  //   // For streaming responses, aggregate the streamed content
+  //   let fullContent = '';
+  //   const reader = response.body?.getReader();
+  //   if (!reader) {
+  //     throw new Error('No reader available');
+  //   }
 
-  if (stream) {
-    // For streaming responses, aggregate the streamed content
-    let fullContent = '';
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error('No reader available');
-    }
+  //   while (true) {
+  //     const { done, value } = await reader.read();
+  //     if (done) break;
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+  //     const text = new TextDecoder().decode(value);
+  //     const lines = text.split('\n\n');
 
-      const text = new TextDecoder().decode(value);
-      const lines = text.split('\n\n');
+  //     for (const line of lines) {
+  //       if (line.startsWith('data: ')) {
+  //         const data = line.slice(5);
+  //         if (data === '[DONE]') break;
+  //         try {
+  //           const { content } = JSON.parse(data);
+  //           if (content) {
+  //             fullContent += content;
+  //           }
+  //         } catch (e) {
+  //           console.error('Error parsing SSE data:', e);
+  //         }
+  //       }
+  //     }
+  //   }
+  //   return fullContent;
+  // } else {
+  //   // For non-streaming responses, return the content directly
+  //   const data = await response.json();
+  //   return data.content;
+  // }
 
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(5);
-          if (data === '[DONE]') break;
-          try {
-            const { content } = JSON.parse(data);
-            if (content) {
-              fullContent += content;
-            }
-          } catch (e) {
-            console.error('Error parsing SSE data:', e);
-          }
-        }
-      }
-    }
-    return fullContent;
-  } else {
-    // For non-streaming responses, return the content directly
-    const data = await response.json();
-    return data.content;
-  }
-}
+  const data = await response.json();
+  return data.content;
+};

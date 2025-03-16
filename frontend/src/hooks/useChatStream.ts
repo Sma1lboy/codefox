@@ -5,6 +5,7 @@ import { Message } from '@/const/MessageType';
 import { toast } from 'sonner';
 import { logger } from '@/app/log/logger';
 import { startChatStream } from '@/utils/chatStream';
+import { useAuthContext } from '@/providers/AuthProvider';
 
 interface UseChatStreamProps {
   chatId: string;
@@ -14,15 +15,16 @@ interface UseChatStreamProps {
   selectedModel: string;
 }
 
-export function useChatStream({
+export const useChatStream = ({
   chatId,
   input,
   setInput,
   setMessages,
   selectedModel,
-}: UseChatStreamProps) {
+}: UseChatStreamProps) => {
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string>(chatId);
+  const { token } = useAuthContext();
 
   // Use useEffect to handle new chat event and cleanup
   useEffect(() => {
@@ -67,7 +69,8 @@ export function useChatStream({
       const response = await startChatStream(
         targetChatId,
         message,
-        selectedModel
+        selectedModel,
+        token
       );
 
       setMessages((prev) => [
@@ -82,7 +85,7 @@ export function useChatStream({
 
       setLoadingSubmit(false);
     } catch (err) {
-      toast.error('Failed to get chat response');
+      toast.error('Failed to get chat response' + err);
       setLoadingSubmit(false);
     }
   };
@@ -145,4 +148,4 @@ export function useChatStream({
     isStreaming: loadingSubmit,
     currentChatId,
   };
-}
+};
