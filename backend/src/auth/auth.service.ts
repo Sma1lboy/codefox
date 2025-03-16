@@ -149,7 +149,13 @@ export class AuthService {
       where: { email },
     });
 
-    if (existingUser) {
+    // If the user exists but email is not confirmed and mail is enabled
+    if (existingUser && !existingUser.isEmailConfirmed && this.isMailEnabled) {
+      // Option 1: Delete the old unconfirmed account and create a new one
+      await this.userRepository.remove(existingUser);
+      
+      // Option 2 (Alternative): Just update the existing user and resend verification email 
+    } else if (existingUser) {
       throw new ConflictException('Email already exists');
     }
 
