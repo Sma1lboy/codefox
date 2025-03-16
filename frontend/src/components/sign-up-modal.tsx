@@ -185,7 +185,7 @@ export function SignUpModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] fixed top-[50%] left-[50%] transform -translate-x-[50%] -translate-y-[50%] p-0">
+      <DialogContent className="sm:max-w-[425px] fixed top-[50%] left-[50%] transform -translate-x-[50%] -translate-y-[50%] p-0 max-h-[90vh] overflow-y-auto">
         <VisuallyHidden>
           <DialogTitle>Sign Up</DialogTitle>
           <DialogDescription>
@@ -193,7 +193,7 @@ export function SignUpModal({
           </DialogDescription>
         </VisuallyHidden>
 
-        <BackgroundGradient className="rounded-[22px] p-4 bg-white dark:bg-zinc-900">
+        <BackgroundGradient className="rounded-[22px] p-4 bg-white dark:bg-zinc-900 overflow-hidden">
           <div className="w-full">
             {registrationSuccess ? (
               <>
