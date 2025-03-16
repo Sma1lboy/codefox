@@ -28,7 +28,7 @@ export interface ProjectContextType {
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   curProject: Project | undefined;
   setCurProject: React.Dispatch<React.SetStateAction<Project | undefined>>;
-  projectLoading: boolean; // 新增字段
+  projectLoading: boolean;
   filePath: string | null;
   setFilePath: React.Dispatch<React.SetStateAction<string | null>>;
   createNewProject: (projectName: string, description: string) => Promise<void>;
@@ -404,15 +404,6 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [createProject] = useMutation(CREATE_PROJECT, {
     onCompleted: (data) => {
       if (!isMounted.current) return;
-
-      // Navigate to chat page after project creation
-      if (data?.createProject?.id) {
-        toast.success('Project created successfully!');
-        router.push(`/chat?id=${data.createProject.id}`);
-
-        // Refresh the projects list
-        refreshProjects();
-      }
     },
     onError: (error) => {
       if (isMounted.current) {
@@ -723,8 +714,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
             },
           },
         });
+        console.log('creatae a project result:', result);
 
-        return !!result.data?.createProject;
+        return result.data.id;
       } catch (error) {
         logger.error('Error creating project:', error);
         if (isMounted.current) {
