@@ -12,8 +12,8 @@ import { ChatService } from '../chat/chat.service';
 @Injectable()
 export class ChatGuard implements CanActivate {
   constructor(
-    private readonly chatService: ChatService,
-    private readonly jwtService: JwtService,
+    private readonly chatService: ChatService, // Inject ChatService to fetch chat details
+    private readonly jwtService: JwtService, // JWT Service to verify tokens
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
