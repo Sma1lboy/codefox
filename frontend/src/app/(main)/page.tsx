@@ -12,6 +12,7 @@ import { SignInModal } from '@/components/sign-in-modal';
 import { SignUpModal } from '@/components/sign-up-modal';
 import { useRouter } from 'next/navigation';
 import { logger } from '../log/logger';
+import { AuroraText } from '@/components/magicui/aurora-text';
 export default function HomePage() {
   // States for AuthChoiceModal
   const [showAuthChoice, setShowAuthChoice] = useState(false);
@@ -77,24 +78,8 @@ export default function HomePage() {
                   ease: [0.22, 1, 0.36, 1],
                 }}
               >
-                <span className="bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-400 dark:to-primary-500 text-transparent bg-clip-text">
-                  Sentence to a project in seconds.
-                </span>
+                From Idea to <AuroraText>Full-Stack</AuroraText> in Seconds
               </motion.h1>
-
-              <motion.div
-                className="relative w-20 h-1 mb-8"
-                initial={{ scaleX: 0, opacity: 0 }}
-                animate={{ scaleX: 1, opacity: 1 }}
-                transition={{
-                  duration: 0.6,
-                  delay: 0.3,
-                  ease: 'easeOut',
-                }}
-              >
-                <div className="absolute inset-0 bg-primary-500 rounded-full"></div>
-                <div className="absolute inset-0 bg-primary-400 rounded-full animate-pulse-slow blur-sm"></div>
-              </motion.div>
 
               <motion.p
                 className="text-xl sm:text-2xl text-gray-600 dark:text-gray-400 max-w-2xl text-center"
@@ -106,7 +91,8 @@ export default function HomePage() {
                   ease: 'easeOut',
                 }}
               >
-                Codefox built AI agents crew for you to create your next project
+                CodeFox provides an AI-driven multi-agent crew to help you
+                create your next project instantly
               </motion.p>
             </div>
 
