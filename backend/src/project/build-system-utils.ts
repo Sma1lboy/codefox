@@ -14,6 +14,7 @@ import { BuildSequence } from 'src/build-system/types';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateProjectInput } from './dto/project.input';
 import { FileStructureAndArchitectureHandler } from 'src/build-system/handlers/file-manager/file-struct';
+import { UIUXLayoutHandler } from 'src/build-system/handlers/ux/uiux-layout';
 
 export function buildProjectSequenceByProject(
   input: CreateProjectInput,
@@ -41,6 +42,10 @@ export function buildProjectSequenceByProject(
       {
         handler: UXSMSHandler,
         name: 'UX Sitemap Structure Node',
+      },
+      {
+        handler: UIUXLayoutHandler,
+        name: 'UI UX layout Node',
       },
       {
         handler: UXDMDHandler,
