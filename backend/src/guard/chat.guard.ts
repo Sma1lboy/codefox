@@ -27,15 +27,6 @@ export class ChatGuard implements CanActivate {
       const request = context.switchToHttp().getRequest();
       user = request.user;
       chatId = request.body?.chatId;
-
-      // Handle chat stream request
-      if (request.path === '/api/chat' && request.method === 'POST') {
-        if (!chatId) {
-          throw new UnauthorizedException(
-            'Chat ID is required for chat stream',
-          );
-        }
-      }
     } else if (contextType === ('graphql' as ContextType)) {
       // GraphQL request (for all other chat operations)
       const gqlContext = GqlExecutionContext.create(context);
