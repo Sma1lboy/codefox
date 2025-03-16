@@ -4,18 +4,19 @@ import { ChatProxyService, ChatService } from './chat.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/user/user.model';
 import { Chat } from './chat.model';
-import { Message } from 'src/chat/message.model';
 import { ChatGuard } from '../guard/chat.guard';
 import { AuthModule } from '../auth/auth.module';
 import { UserService } from 'src/user/user.service';
 import { PubSub } from 'graphql-subscriptions';
 import { JwtCacheModule } from 'src/jwt-cache/jwt-cache.module';
+import { UploadModule } from 'src/upload/upload.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Chat, User, Message]),
+    TypeOrmModule.forFeature([Chat, User]),
     AuthModule,
     JwtCacheModule,
+    UploadModule,
   ],
   providers: [
     ChatResolver,

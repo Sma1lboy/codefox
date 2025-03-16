@@ -36,21 +36,6 @@ export default function ChatContent({
   setInput,
   setMessages,
 }: ChatProps) {
-  // TODO(Sma1lboy): on message edit
-  // onMessageEdit?: (messageId: string, newContent: string) => void;
-  // const [editingMessageId, setEditingMessageId] = React.useState<string | null>(null);
-  // const [editContent, setEditContent] = React.useState('');
-  // const handleEditStart = (message: Message) => {
-  //   setEditingMessageId(message.id);
-  //   setEditContent(message.content);
-  // };
-  // const handleEditSubmit = (messageId: string) => {
-  //   if (onMessageEdit) {
-  //     onMessageEdit(messageId, editContent);
-  //   }
-  //   setEditingMessageId(null);
-  //   setEditContent('');
-  // };
   return (
     <div className="flex flex-col justify-between w-full h-full">
       <ChatTopbar />

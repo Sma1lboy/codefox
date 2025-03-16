@@ -2,6 +2,11 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type AvatarUploadResponse {
+  avatarUrl: String!
+  success: Boolean!
+}
+
 type Chat {
   createdAt: Date!
   id: ID!
@@ -12,6 +17,7 @@ type Chat {
   title: String
   updatedAt: Date!
   user: User!
+  userId: ID!
 }
 
 type ChatCompletionChoiceType {
@@ -47,14 +53,24 @@ input CheckTokenInput {
 input CreateProjectInput {
   databaseType: String
   description: String!
+  model: String = "gpt-4o-mini"
   packages: [ProjectPackage!]!
   projectName: String
+  public: Boolean
 }
 
-"""
-Date custom scalar type
-"""
+"""Date custom scalar type"""
 scalar Date
+
+type EmailConfirmationResponse {
+  message: String!
+  success: Boolean
+}
+
+input FetchPublicProjectsInputs {
+  size: Float!
+  strategy: String!
+}
 
 input IsValidProjectInput {
   projectId: ID!
@@ -95,15 +111,23 @@ type Message {
 
 type Mutation {
   clearChatHistory(chatId: String!): Boolean!
+  confirmEmail(token: String!): EmailConfirmationResponse!
   createChat(newChatInput: NewChatInput!): Chat!
   createProject(createProjectInput: CreateProjectInput!): Chat!
   deleteChat(chatId: String!): Boolean!
   deleteProject(projectId: String!): Boolean!
+  forkProject(projectId: ID!): Chat!
   login(input: LoginUserInput!): LoginResponse!
   refreshToken(refreshToken: String!): RefreshTokenResponse!
+  regenerateDescription(input: String!): String!
   registerUser(input: RegisterUserInput!): User!
+  resendConfirmationEmail(input: ResendEmailInput!): EmailConfirmationResponse!
+  subscribeToProject(projectId: ID!): Project!
   triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
+  updateProjectPhoto(input: UpdateProjectPhotoInput!): Project!
+  updateProjectPublicStatus(isPublic: Boolean!, projectId: ID!): Project!
+  uploadAvatar(file: Upload!): AvatarUploadResponse!
 }
 
 input NewChatInput {
@@ -113,12 +137,22 @@ input NewChatInput {
 type Project {
   chats: [Chat!]!
   createdAt: Date!
+  forkedFrom: Project
+  forkedFromId: String
+  forks: [Project!]
   id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
+  isPublic: Boolean!
+  photoUrl: String
   projectName: String!
   projectPackages: [ProjectPackages!]
   projectPath: String!
+  subNumber: Float!
+
+  """Projects that are copies of this project"""
+  subscribers: [Project!]
+  uniqueProjectId: String!
   updatedAt: Date!
   user: User!
   userId: ID!
@@ -142,11 +176,15 @@ type ProjectPackages {
 
 type Query {
   checkToken(input: CheckTokenInput!): Boolean!
+  fetchPublicProjects(input: FetchPublicProjectsInputs!): [Project!]!
   getAvailableModelTags: [String!]
   getChatDetails(chatId: String!): Chat
   getChatHistory(chatId: String!): [Message!]!
   getHello: String!
   getProject(projectId: String!): Project!
+  getRemainingProjectLimit: Int!
+  getSubscribedProjects: [Project!]!
+  getUserAvatar(userId: String!): String
   getUserChats: [Chat!]
   getUserProjects: [Project!]!
   isValidateProject(isValidProject: IsValidProjectInput!): Boolean!
@@ -163,6 +201,10 @@ input RegisterUserInput {
   email: String!
   password: String!
   username: String!
+}
+
+input ResendEmailInput {
+  email: String!
 }
 
 enum Role {
@@ -185,14 +227,26 @@ input UpdateChatTitleInput {
   title: String
 }
 
+input UpdateProjectPhotoInput {
+  file: Upload!
+  projectId: ID!
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
 type User {
+  avatarUrl: String
   chats: [Chat!]!
   createdAt: Date!
   email: String!
   id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
+  isEmailConfirmed: Boolean!
+  lastEmailSendTime: Date!
   projects: [Project!]!
+  subscribedProjects: [Project!] @deprecated(reason: "Use projects with forkedFromId instead")
   updatedAt: Date!
   username: String!
 }
