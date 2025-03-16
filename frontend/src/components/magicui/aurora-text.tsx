@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import type { CSSProperties } from "react";
-import React, { useEffect, useId, useRef } from "react";
+import type { CSSProperties } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 
 interface AuroraTextProps {
   children: React.ReactNode;
@@ -12,8 +12,8 @@ interface AuroraTextProps {
 
 export function AuroraText({
   children,
-  className = "",
-  colors = ["#FF0080", "#7928CA", "#0070F3", "#38bdf8", "#a855f7", "#2dd4bf"],
+  className = '',
+  colors = ['#FF0080', '#7928CA', '#0070F3', '#38bdf8', '#a855f7', '#2dd4bf'],
   speed = 1,
 }: AuroraTextProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -66,9 +66,9 @@ export function AuroraText({
     };
 
     updateFontSize();
-    window.addEventListener("resize", updateFontSize);
+    window.addEventListener('resize', updateFontSize);
 
-    return () => window.removeEventListener("resize", updateFontSize);
+    return () => window.removeEventListener('resize', updateFontSize);
   }, [className]);
 
   // Update effect to set ready state after dimensions are computed
@@ -85,16 +85,16 @@ export function AuroraText({
     };
 
     updateDimensions();
-    window.addEventListener("resize", updateDimensions);
+    window.addEventListener('resize', updateDimensions);
 
-    return () => window.removeEventListener("resize", updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
   }, [children, fontSize]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     // Set canvas size
@@ -128,12 +128,12 @@ export function AuroraText({
           0,
           x,
           y,
-          canvas.width * 0.4,
+          canvas.width * 0.4
         );
 
         gradient.addColorStop(0, `${color}99`);
         gradient.addColorStop(0.5, `${color}33`);
-        gradient.addColorStop(1, "#00000000");
+        gradient.addColorStop(1, '#00000000');
 
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -149,8 +149,8 @@ export function AuroraText({
       ref={containerRef}
       className={`relative inline-block align-middle ${className}`}
       style={{
-        width: dimensions.width || "auto",
-        height: dimensions.height || "auto",
+        width: dimensions.width || 'auto',
+        height: dimensions.height || 'auto',
       }}
     >
       {/* Hidden text for SEO */}
@@ -160,10 +160,10 @@ export function AuroraText({
       <span
         style={{
           opacity: isReady ? 0 : 1,
-          transition: "opacity 0.2s ease-in",
-          position: isReady ? "absolute" : "relative",
-          display: "inline-block",
-          whiteSpace: "nowrap",
+          transition: 'opacity 0.2s ease-in',
+          position: isReady ? 'absolute' : 'relative',
+          display: 'inline-block',
+          whiteSpace: 'nowrap',
         }}
         aria-hidden="true"
       >
@@ -174,7 +174,7 @@ export function AuroraText({
         className="absolute inset-0"
         style={{
           opacity: isReady ? 1 : 0,
-          transition: "opacity 0.2s ease-in",
+          transition: 'opacity 0.2s ease-in',
         }}
         aria-hidden="true"
       >
