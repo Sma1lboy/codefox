@@ -152,7 +152,7 @@ export class AuthService {
 
     // If the user exists but email is not confirmed and mail is enabled
     if (existingUser && !existingUser.isEmailConfirmed && this.isMailEnabled) {
-      // Just update the existing user and resend verification email 
+      // Just update the existing user and resend verification email
       existingUser.username = username;
       existingUser.password = hashedPassword;
       await this.userRepository.save(existingUser);
