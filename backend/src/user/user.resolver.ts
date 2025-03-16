@@ -63,11 +63,10 @@ export class UserResolver {
   async registerUser(
     @Args('input') registerUserInput: RegisterUserInput,
   ): Promise<User> {
-
-    if(registerUserInput.password.length < 6) {
+    if (registerUserInput.password.length < 6) {
       throw new Error('Password must be at least 6 characters');
     }
-    
+
     return this.authService.register(registerUserInput);
   }
 
