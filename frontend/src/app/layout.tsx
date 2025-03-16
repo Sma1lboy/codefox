@@ -27,7 +27,7 @@ export const viewport: Viewport = {
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${playfair.variable} font-sans`}>
+      <body className={`${inter.variable} ${playfair.variable}  font-sans`}>
         <BaseProviders>
           <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900 transition-colors">
             <RootLayout>{children}</RootLayout>

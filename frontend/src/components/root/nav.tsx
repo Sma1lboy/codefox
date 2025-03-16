@@ -195,7 +195,7 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
               variants={itemVariants}
             >
               <span
-                className={`font-bold text-2xl text-primary-600 dark:text-primary-400 transition-transform hover:scale-105 duration-300 ${nameClassName}`}
+                className={` font-bold text-3xl text-primary-600 dark:text-primary-400 transition-transform hover:scale-105 duration-300 ${nameClassName}`}
               >
                 {name}
               </span>
