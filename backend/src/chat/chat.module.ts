@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ChatResolver } from './chat.resolver';
+import { ChatController } from './chat.controller';
 import { ChatProxyService, ChatService } from './chat.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/user/user.model';
@@ -18,6 +19,7 @@ import { UploadModule } from 'src/upload/upload.module';
     JwtCacheModule,
     UploadModule,
   ],
+  controllers: [ChatController],
   providers: [
     ChatResolver,
     ChatProxyService,
