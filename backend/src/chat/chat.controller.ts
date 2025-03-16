@@ -30,7 +30,7 @@ export class ChatController {
       );
 
       if (chatDto.stream) {
-        // Set up SSE headers
+        // Streaming response
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
@@ -61,28 +61,21 @@ export class ChatController {
         res.write('data: [DONE]\n\n');
         res.end();
       } else {
-        // Non-streaming response
-        let fullResponse = '';
-        const stream = this.chatProxyService.streamChat({
+        // Non-streaming response using chatSync
+        const response = await this.chatProxyService.chatSync({
           chatId: chatDto.chatId,
           message: chatDto.message,
           model: chatDto.model,
         });
 
-        for await (const chunk of stream) {
-          if (chunk.choices[0]?.delta?.content) {
-            fullResponse += chunk.choices[0].delta.content;
-          }
-        }
-
         // Save the complete message
         await this.chatService.saveMessage(
           chatDto.chatId,
-          fullResponse,
+          response,
           MessageRole.Assistant,
         );
 
-        res.json({ content: fullResponse });
+        res.json({ content: response });
       }
     } catch (error) {
       console.error('Chat error:', error);

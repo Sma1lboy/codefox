@@ -32,6 +32,13 @@ export class ChatProxyService {
     );
   }
 
+  async chatSync(input: ChatInput): Promise<string> {
+    return await this.models.chatSync({
+      messages: [{ role: MessageRole.User, content: input.message }],
+      model: input.model,
+    });
+  }
+
   async fetchModelTags(): Promise<string[]> {
     return await this.models.fetchModelsName();
   }
@@ -173,14 +180,14 @@ export class ChatService {
   }
 
   async updateChatTitle(
-    upateChatTitleInput: UpdateChatTitleInput,
+    updateChatTitleInput: UpdateChatTitleInput,
   ): Promise<Chat> {
     const chat = await this.chatRepository.findOne({
-      where: { id: upateChatTitleInput.chatId, isDeleted: false },
+      where: { id: updateChatTitleInput.chatId, isDeleted: false },
     });
     new Logger('chat').log('chat', chat);
     if (chat) {
-      chat.title = upateChatTitleInput.title;
+      chat.title = updateChatTitleInput.title;
       chat.updatedAt = new Date();
       return await this.chatRepository.save(chat);
     }
