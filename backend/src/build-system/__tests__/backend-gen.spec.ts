@@ -8,10 +8,7 @@ import { UXDMDHandler } from '../handlers/ux/datamap';
 import { BuilderContext } from '../context';
 import { DBSchemaHandler } from '../handlers/database/schemas/schemas';
 import { BackendRequirementHandler } from '../handlers/backend/requirements-document';
-import { FileStructureAndArchitectureHandler } from '../handlers/file-manager/file-struct';
-import { UXSMSHandler } from '../handlers/ux/sitemap-structure';
 import { BackendCodeHandler } from '../handlers/backend/code-generate';
-import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
 
 (isIntegrationTest ? describe : describe.skip)('Build Sequence Test', () => {
   it('should execute build sequence successfully', async () => {
@@ -19,7 +16,8 @@ import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
       id: 'test-backend-sequence',
       version: '1.0.0',
       name: 'Wrtie a Cool personal website',
-      description: `A personal blog website. I am a cybersecurity engineer so i want it to show i am a really cool hacker, with cool terminal functionality`,
+      description:
+        'A personal blog website. I am a cybersecurity engineer so i want it to show i am a really cool hacker, with cool terminal functionality',
       databaseType: 'SQLite',
       model: 'gpt-4o-mini',
       projectSize: 'medium', // limit for fun
@@ -37,16 +35,8 @@ import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
           name: 'UX Sitemap Document Node',
         },
         {
-          handler: UXSMSHandler,
-          name: 'UX Sitemap Structure Node',
-        },
-        {
           handler: UXDMDHandler,
           name: 'UX DataMap Document Node',
-        },
-        {
-          handler: FileStructureAndArchitectureHandler,
-          name: 'File Structure and Architecture',
         },
         {
           handler: DBRequirementHandler,
@@ -63,22 +53,21 @@ import { FrontendCodeHandler } from '../handlers/frontend-code-generate';
           name: 'Backend Requirements Node',
           // requires: ['op:DATABASE_REQ', 'op:UX:DATAMAP:DOC', 'op:UX:SMD'],
         },
-        {
-          handler: BackendCodeHandler,
-          name: 'Backend Code Generator Node',
-        },
-        {
-          handler: FrontendCodeHandler,
-          name: 'Frontend Code Generator Node',
-        },
-
         // // {
         // //   handler: BackendFileStructureAndArchitectureHandler,
         // //   name: 'Backend File Structure and Architecture',
         // // },
+        {
+          handler: BackendCodeHandler,
+          name: 'Backend Code Generator Node',
+        },
         // {
         //   handler: BackendFileReviewHandler,
         //   name: 'Backend File review Node',
+        // },
+        // {
+        //   handler: FrontendCodeHandler,
+        //   name: 'Frontend Code Generator Node',
         // },
       ],
       packages: [],

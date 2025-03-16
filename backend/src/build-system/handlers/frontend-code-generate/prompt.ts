@@ -26,6 +26,10 @@ ${theme}
   10. Mock the response if the API returns an empty or undefined value, and you don't need to explicitly show that it is mock data.
   11. Write EVERY CODE DETAIL, DON'T LEAVE TODO.
   12. Image Assets: If your implementation requires any images except some button logo, you can use placeholder image URLs from https://picsum.photos/<width>/<height>. Note that the width and height values (e.g., 500/300) are adjustable as needed.
+  13. API Documentation:
+      If user provided, read carfully details in Api Document remeber to use correct request format then use the api.
+      Use the correct method (GET, POST, PUT, DELETE) and endpoint. Do not use Options.
+      The backend address is "localhost:3000". 
 
 ## Library:
   "react-router": "^6",
