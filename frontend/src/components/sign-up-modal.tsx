@@ -101,6 +101,10 @@ export function SignUpModal({
       return;
     }
 
+    if (!validatePassword(password)) {
+      return;
+    }
+
     if (password !== passwordConfirm) {
       setErrorMessage('Passwords do not match.');
       return;
