@@ -1,4 +1,7 @@
+'use client';
+
 import React from 'react';
+import { motion } from 'framer-motion';
 import ChatBottombar from './chat-bottombar';
 import ChatTopbar from './chat-topbar';
 import { ChatRequestOptions, Message } from '../../const/MessageType';
@@ -37,22 +40,42 @@ export default function ChatContent({
   setMessages,
 }: ChatProps) {
   return (
-    <div className="flex flex-col justify-between w-full h-full">
-      <ChatTopbar />
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="flex flex-col justify-between w-full h-full p-2 rounded-lg shadow-sm  border"
+    >
+      <div className="sticky top-0 z-10">
+        <ChatTopbar />
+      </div>
 
-      <ChatList messages={messages} loadingSubmit={loadingSubmit} />
+      <div className="flex-grow overflow-hidden">
+        <ChatList
+          messages={messages}
+          loadingSubmit={loadingSubmit}
+          onMessageEdit={(messageId, newContent) => {
+            const updatedMessages = messages.map((msg) =>
+              msg.id === messageId ? { ...msg, content: newContent } : msg
+            );
+            setMessages(updatedMessages);
+          }}
+        />
+      </div>
 
-      <ChatBottombar
-        setSelectedModel={setSelectedModel}
-        messages={messages}
-        input={input}
-        handleInputChange={handleInputChange}
-        handleSubmit={handleSubmit}
-        stop={stop}
-        formRef={formRef}
-        setInput={setInput}
-        setMessages={setMessages}
-      />
-    </div>
+      <div className="sticky bottom-0 z-10 bg-gradient-to-t from-background to-transparent pt-2">
+        <ChatBottombar
+          setSelectedModel={setSelectedModel}
+          messages={messages}
+          input={input}
+          handleInputChange={handleInputChange}
+          handleSubmit={handleSubmit}
+          stop={stop}
+          formRef={formRef}
+          setInput={setInput}
+          setMessages={setMessages}
+        />
+      </div>
+    </motion.div>
   );
 }

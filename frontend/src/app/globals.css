@@ -168,8 +168,8 @@
 .button-no-border {
   @apply !border-none !outline-none !shadow-none;
 }
-.button-no-border:hover, 
-.button-no-border:focus, 
+.button-no-border:hover,
+.button-no-border:focus,
 .button-no-border:active {
   @apply !border-none !outline-none !shadow-none !ring-0;
 }

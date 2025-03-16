@@ -290,8 +290,8 @@ const SidebarRail = React.forwardRef<
 >(({ className, setIsSimple, isSimple, ...props }, ref) => {
   const { toggleSidebar } = useSidebar();
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    toggleSidebar(); // 保留原有的逻辑
-    setIsSimple(!isSimple); // 更新 isSimple 状态
+    toggleSidebar();
+    setIsSimple(!isSimple);
   };
 
   return (
