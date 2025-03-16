@@ -24,7 +24,7 @@ import {
 } from '@/graphql/mutations/auth';
 import { useRouter } from 'next/navigation';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { AlertCircle, CheckCircle, Mail, Clock } from 'lucide-react';
+import { AlertCircle, CheckCircle, Mail, Clock, Github } from 'lucide-react';
 import { useEffect } from 'react';
 import { logger } from '@/app/log/logger';
 
@@ -226,6 +226,43 @@ export function SignUpModal({
                 </TextureCardHeader>
                 <TextureSeparator />
                 <TextureCardContent>
+                  <Button
+                    variant="outline"
+                    className="flex items-center justify-center gap-2 w-full"
+                    type="button"
+                  >
+                    <img
+                      src="/images/google.svg"
+                      alt="Google"
+                      className="w-5 h-5"
+                    />
+                    <span>Continue with Google</span>
+                  </Button>
+
+                  {/* GitHub Sign Up Button - added below Google */}
+                  <div className="mt-4">
+                    <Button
+                      variant="outline"
+                      className="flex items-center justify-center gap-2 w-full"
+                      type="button"
+                    >
+                      <Github className="w-5 h-5 text-black dark:text-white" />
+                      <span>Continue with GitHub</span>
+                    </Button>
+                  </div>
+
+                  {/* Divider with "or" text */}
+                  <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-white dark:bg-zinc-900 text-gray-500">
+                        or continue with email
+                      </span>
+                    </div>
+                  </div>
+
                   <form onSubmit={handleSubmit} className="space-y-2">
                     <div className="space-y-1">
                       <Label htmlFor="name">Name</Label>
