@@ -79,7 +79,6 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
       }
     );
 
-    // 提交处理
     const handleSubmit = () => {
       if (isLoading || isRegenerating) return;
       if (!isAuthorized) {
@@ -89,7 +88,6 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
       }
     };
 
-    // “魔法增强”功能
     const handleMagicEnhance = () => {
       if (isLoading || isRegenerating) return;
       if (!isAuthorized) {
@@ -103,7 +101,6 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
       setIsEnhanced(!isEnhanced);
     };
 
-    // 键盘快捷键 (Alt+Enter / Ctrl+Enter / Command+Enter)
     useEffect(() => {
       const handleKeyDown = (e: KeyboardEvent) => {
         if (isLoading || isRegenerating) return;
@@ -116,9 +113,8 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
       return () => {
         document.removeEventListener('keydown', handleKeyDown);
       };
-    }, [isAuthorized, isLoading, isRegenerating]);
+    }, [handleSubmit, isAuthorized, isLoading, isRegenerating]);
 
-    // 暴露给父组件的方法
     useImperativeHandle(ref, () => ({
       getPromptData: () => ({
         message,
@@ -128,7 +124,6 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
       clearMessage: () => setMessage(''),
     }));
 
-    // Typewriter 初始化
     const handleTypewriterInit = (typewriter: any) => {
       typewriter
         .typeString("Create a personal website for me, I'm an engineer...")
@@ -141,12 +136,11 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
     return (
       <div
         className={cn(
-          // 大容器，包裹文本输入与底部按钮
           'w-full border border-gray-300 dark:border-gray-700',
           'bg-white dark:bg-gray-700 rounded-md'
         )}
       >
-        {/* 文本输入区域 + Typewriter */}
+        {/* Typewriter */}
         <div className="relative">
           <textarea
             value={message}
@@ -162,7 +156,6 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
             )}
             disabled={isLoading || isRegenerating}
           />
-          {/* Typewriter 占位：当文本为空且未聚焦时显示 */}
           {message === '' && !isLoading && !isRegenerating && !isFocused && (
             <div className="pointer-events-none text-gray-500 dark:text-gray-400 text-base font-normal absolute top-4 left-4 right-4 overflow-hidden">
               <Typewriter onInit={handleTypewriterInit} />
@@ -170,14 +163,11 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
           )}
         </div>
 
-        {/* 分割线（可选） */}
         <div className="border-t border-gray-300 dark:border-gray-600" />
 
-        {/* 底部按钮区：Public/Private, Model, Enhance, Create */}
         <div className="flex items-center justify-between px-4 py-3">
-          {/* 左侧：选择可见性 & 模型 */}
           <div className="flex items-center gap-2">
-            {/* Visibility */}
+            {/* visibility */}
             <Select
               value={visibility}
               onValueChange={(value) =>
@@ -196,20 +186,44 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
                     'opacity-50 cursor-not-allowed'
                 )}
               >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="public">
-                  <div className="flex items-center gap-2">
+                {visibility === 'public' ? (
+                  <div className="flex items-center gap-2 font-semibold">
                     <Globe size={16} />
                     <span>Public</span>
                   </div>
-                </SelectItem>
-                <SelectItem value="private">
-                  <div className="flex items-center gap-2">
+                ) : (
+                  <div className="flex items-center gap-2 font-semibold">
                     <Lock size={16} />
                     <span>Private</span>
                   </div>
+                )}
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem
+                  value="public"
+                  className="p-3 rounded-md transition hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  <div className="flex items-center gap-2 font-semibold">
+                    <Globe size={16} />
+                    <span>Public</span>
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Anyone can view this project
+                  </p>
+                </SelectItem>
+
+                <SelectItem
+                  value="private"
+                  className="p-3 rounded-md transition hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  <div className="flex items-center gap-2 font-semibold">
+                    <Lock size={16} />
+                    <span>Private</span>
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Only you can access this project
+                  </p>
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -250,17 +264,18 @@ export const PromptForm = forwardRef<PromptFormRef, PromptFormProps>(
             </Select>
           </div>
 
-          {/* 右侧：Enhance & Create */}
           <div className="flex items-center gap-2">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     className={cn(
-                      'h-9 px-3 text-sm font-medium border border-gray-300 dark:border-gray-600',
-                      'bg-white dark:bg-gray-800 dark:text-gray-100',
-                      'text-black dark:text-white',
-                      'rounded-md focus:outline-none hover:bg-gray-50 dark:hover:bg-gray-700',
+                      'h-9 px-3 text-sm font-medium',
+                      'bg-white hover:bg-gray-50 text-gray-900',
+                      'dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100',
+                      'border border-gray-200 dark:border-gray-700',
+                      'rounded-md focus:outline-none',
+                      'transform-gpu transition-[background-color,border-color] duration-200',
                       (isLoading || isRegenerating) &&
                         'opacity-50 cursor-not-allowed'
                     )}
