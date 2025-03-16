@@ -32,6 +32,8 @@ export default function HomePage() {
 
     try {
       const chatId = await createProjectFromPrompt(message, isPublic, model);
+
+      console.log('Project created with ID:', chatId);
       promptFormRef.current.clearMessage();
       router.push(`/chat?id=${chatId}`);
     } catch (error) {
