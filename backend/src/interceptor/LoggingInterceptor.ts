@@ -4,6 +4,7 @@ import {
   ExecutionContext,
   CallHandler,
   Logger,
+  ContextType,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -11,69 +12,66 @@ import { GqlExecutionContext } from '@nestjs/graphql';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
-  private readonly logger = new Logger(LoggingInterceptor.name);
+  private readonly logger = new Logger('RequestLogger');
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const now = Date.now();
-    let requestInfo: string;
+    const contextType = context.getType();
+    this.logger.debug(`Intercepting request, Context Type: ${contextType}`);
 
-    // Check if we can create a GraphQL context from this request
-    try {
-      // Attempt to create a GraphQL context
-      const gqlContext = GqlExecutionContext.create(context);
-      const info = gqlContext.getInfo();
-      
-      if (info && info.operation) {
-        // This is a GraphQL request
-        const operation = info.operation.operation;
-        const fieldName = info.fieldName;
-        requestInfo = `GraphQL: ${operation} ${fieldName}`;
-      } else {
-        // If we got here but can't get operation info, fall back to HTTP request info
-        const httpContext = context.switchToHttp();
-        const request = httpContext.getRequest();
-        
-        if (request) {
-          const method = request.method;
-          const url = request.url;
-          requestInfo = `REST: ${method} ${url}`;
-        } else {
-          // Default if neither context is fully available
-          requestInfo = 'Unknown request type';
-        }
-      }
-    } catch (error) {
-      // If creating a GraphQL context fails, it's probably a REST request
-      try {
-        const httpContext = context.switchToHttp();
-        const request = httpContext.getRequest();
-        
-        if (request) {
-          const method = request.method;
-          const url = request.url;
-          requestInfo = `REST: ${method} ${url}`;
-        } else {
-          requestInfo = 'Unknown request type';
-        }
-      } catch (httpError) {
-        requestInfo = 'Failed to determine request type';
-        this.logger.error('Error determining request type', httpError.stack);
-      }
+    if (contextType === ('graphql' as ContextType)) {
+      return this.handleGraphQLRequest(context, next);
+    } else if (contextType === 'http') {
+      return this.handleRestRequest(context, next);
+    } else {
+      this.logger.warn('Unknown request type, skipping logging.');
+      return next.handle();
+    }
+  }
+
+  private handleGraphQLRequest(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Observable<any> {
+    const ctx = GqlExecutionContext.create(context);
+    const info = ctx.getInfo();
+    if (!info) {
+      this.logger.warn(
+        'GraphQL request detected, but ctx.getInfo() is undefined.',
+      );
+      return next.handle();
     }
 
-    this.logger.log(`Request started: ${requestInfo}`);
+    const { operation, fieldName } = info;
+    let variables = '';
 
-    return next.handle().pipe(
-      tap({
-        next: () => {
-          const timeSpent = Date.now() - now;
-          this.logger.log(`Request completed: ${requestInfo} (${timeSpent}ms)`);
-        },
-        error: (error) => {
-          const timeSpent = Date.now() - now;
-          this.logger.error(`Request failed: ${requestInfo} (${timeSpent}ms)`, error.stack);
-        }
-      }),
+    try {
+      variables = JSON.stringify(ctx.getContext()?.req?.body?.variables ?? {});
+    } catch (error) {
+      variables = '{}';
+    }
+
+    this.logger.log(
+      `[GraphQL] ${operation.operation.toUpperCase()} \x1B[33m${fieldName}\x1B[39m${
+        variables ? ` Variables: ${variables}` : ''
+      }`,
     );
+
+    return next.handle();
+  }
+
+  private handleRestRequest(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Observable<any> {
+    const httpContext = context.switchToHttp();
+    const request = httpContext.getRequest();
+
+    const { method, url, body } = request;
+
+    this.logger.log(
+      `[REST] ${method.toUpperCase()} ${url} Body: ${JSON.stringify(body)}`,
+    );
+
+    return next.handle();
   }
 }

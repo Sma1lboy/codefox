@@ -120,17 +120,22 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      // Use flex + justify-between so the text is on the left
+      // and the check indicator is on the right
+      'relative flex w-full items-center justify-between cursor-default select-none rounded-sm py-1.5 px-2 text-sm outline-none',
+      'focus:bg-accent focus:text-accent-foreground',
+      'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className
     )}
     {...props}
   >
-    <span className="absolute right-2 flex h-3.5 w-3.5 items-center justify-center">
-      <SelectPrimitive.ItemIndicator>
-        <CheckIcon className="h-4 w-4" />
-      </SelectPrimitive.ItemIndicator>
-    </span>
+    {/* The main text on the left */}
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+
+    {/* The check icon on the right */}
+    <SelectPrimitive.ItemIndicator>
+      <CheckIcon className="h-4 w-4" />
+    </SelectPrimitive.ItemIndicator>
   </SelectPrimitive.Item>
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;

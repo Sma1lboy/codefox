@@ -9,9 +9,8 @@ const nextConfig = {
     // Fixes npm packages that depend on `fs` module
     if (!isServer) {
       config.resolve.fallback = {
-        ...config.resolve.fallback, // if you miss it, all the other options in fallback, specified
-        // by next.js will be dropped. Doesn't make much sense, but how it is
-        fs: false, // the solution
+        ...config.resolve.fallback,
+        fs: false,
         module: false,
         perf_hooks: false,
       };
@@ -35,6 +34,16 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+  },
+
+  // Add proxy configuration for API
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:8080/api/:path*',
+      },
+    ];
   },
 };
 

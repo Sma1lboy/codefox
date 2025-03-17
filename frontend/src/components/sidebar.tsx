@@ -1,4 +1,5 @@
 'use client';
+
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { memo, useCallback, useContext, useState } from 'react';
@@ -21,9 +22,12 @@ import {
   useSidebar,
 } from './ui/sidebar';
 import { ProjectContext } from './chat/code-engine/project-context';
-import { useChatList } from '@/hooks/useChatList';
 import { motion } from 'framer-motion';
 import { logger } from '@/app/log/logger';
+import { useChatList } from '@/hooks/useChatList';
+import { cn } from '@/lib/utils';
+import { PlusIcon } from 'lucide-react';
+import { HomeIcon } from '@radix-ui/react-icons';
 
 interface SidebarProps {
   setIsModalOpen: (value: boolean) => void;
@@ -70,6 +74,7 @@ const ChatRow = memo(
     );
   },
   (prevProps: ChatRowProps, nextProps: ChatRowProps) => {
+    // Only re-render if chatId or currentChatId changes
     return (
       prevProps.data.chats[prevProps.index].id ===
         nextProps.data.chats[nextProps.index].id &&
@@ -92,13 +97,6 @@ function ChatSideBarComponent({
   const router = useRouter();
   const [currentChatid, setCurrentChatid] = useState('');
   const { setCurProject, pollChatProject } = useContext(ProjectContext);
-
-  const handleNewChat = useCallback(() => {
-    router.push('/');
-    setCurrentChatid('');
-    const event = new Event(EventEnum.NEW_CHAT);
-    window.dispatchEvent(event);
-  }, [router]);
 
   const handleChatSelect = useCallback(
     (chatId: string) => {
@@ -123,25 +121,34 @@ function ChatSideBarComponent({
   return (
     <div
       data-collapsed={isCollapsed}
-      className="relative flex flex-col h-full justify-between group lg:bg-accent/0 lg:dark:bg-card/0"
+      // Unified text & background style:
+      className="relative flex flex-col h-full justify-between bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 font-sans"
     >
-      <Sidebar collapsible="icon" side="left">
-        {/* Header Row: Fox Logo (clickable) on the left, SidebarTrigger on the right */}
+      <Sidebar
+        collapsible="icon"
+        side="left"
+        // Give the sidebar a border on the right to match the rest of the layout
+        className="border-r flex-col  border-gray-200 dark:border-gray-700"
+      >
+        {/* Header Row */}
         <div
-          className={`flex items-center ${isCollapsed ? 'justify-center w-full px-0' : 'justify-between px-3'} pt-3`}
+          className={`flex items-center ${
+            isCollapsed ? 'justify-center w-full px-0' : 'justify-between px-3'
+          } pt-3`}
         >
           {!isCollapsed && (
             <div className="flex flex-1 items-center justify-between">
+              {/* Logo + Title */}
               <Button
                 onClick={() => router.push('/')}
                 variant="ghost"
-                className="inline-flex items-center gap-2 pl-0 rounded-md ease-in-out"
+                className="inline-flex items-center gap-2 pl-0 rounded-md"
               >
                 <Image
                   src="/codefox.svg"
                   alt="CodeFox Logo"
-                  width={40}
-                  height={40}
+                  width={36}
+                  height={36}
                   className="dark:invert"
                 />
                 <span className="text-primary-500 font-semibold text-base">
@@ -149,8 +156,9 @@ function ChatSideBarComponent({
                 </span>
               </Button>
 
+              {/* Collapse Trigger */}
               <SidebarTrigger
-                className="flex items-center justify-center w-12 h-12"
+                className="flex items-center justify-center w-10 h-10 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 onClick={() => setIsCollapsed(!isCollapsed)}
               />
             </div>
@@ -158,66 +166,52 @@ function ChatSideBarComponent({
 
           {isCollapsed && (
             <SidebarTrigger
-              className="flex items-center justify-center w-full p-2 mt"
+              className="flex items-center justify-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               onClick={() => setIsCollapsed(!isCollapsed)}
             />
           )}
         </div>
 
         {/* Divider Line */}
-        <div className="border-t border-dotted border-gray-300 my-2 w-full mx-auto" />
+        <div className="border-t border-gray-200 dark:border-gray-700 my-2 w-full" />
 
         {/* New Project Button */}
         <div
-          className={`flex ${isCollapsed ? 'justify-center items-center w-full px-0' : ''} w-full mt-4`}
+          className={`flex ${
+            isCollapsed ? 'justify-center items-center w-full px-0' : ''
+          } w-full mt-3`}
         >
           <Button
             onClick={() => {
-              if (isCollapsed) {
-                router.push('/');
-              } else {
-                setIsModalOpen(true);
-              }
+              router.push('/');
+              // if (isCollapsed) {
+              //   router.push('/');
+              // } else {
+              //   setIsModalOpen(true);
+              // }
             }}
             variant="ghost"
-            className={`h-7 w-7 flex items-center justify-center rounded-md ease-in-out ${
-              !isCollapsed && 'w-full gap-2 pl-4 justify-start'
-            }`}
-          >
-            <svg
-              data-name="Layer 1"
-              viewBox="0 0 32 32"
-              preserveAspectRatio="xMidYMid meet"
-              xmlns="http://www.w3.org/2000/svg"
-              className={
-                isCollapsed
-                  ? 'w-8 h-8 min-w-[32px] min-h-[32px] ml-[-5px] mt-[-10px]'
-                  : 'w-10 h-10 min-w-[32px] min-h-[32px] mr-1'
-              }
-              strokeWidth="0.1"
-            >
-              <g transform="scale(-1,1) translate(-32,0)">
-                <path
-                  d="M5,8A1,1,0,0,0,7,8V7H8A1,1,0,0,0,8,5H7V4A1,1,0,0,0,5,4V5H4A1,1,0,0,0,4,7H5ZM18,5H12a1,1,0,0,0,0,2h6a1,1,0,0,1,1,1v9.72l-1.57-1.45a1,1,0,0,0-.68-.27H8a1,1,0,0,1-1-1V12a1,1,0,0,0-2,0v3a3,3,0,0,0,3,3h8.36l3,2.73A1,1,0,0,0,20,21a1.1,1.1,0,0,0,.4-.08A1,1,0,0,0,21,20V8A3,3,0,0,0,18,5Z"
-                  fill="#808080"
-                />
-              </g>
-            </svg>
-            {!isCollapsed && (
-              <span className="text-gray-600 hover:text-gray-800 font-semibold text-sm relative -top-0.5">
-                New Project
-              </span>
+            className={cn(
+              'h-9 px-5 text-sm font-medium flex justify-start items-center gap-2 rounded-sm transition-colors  w-full',
+              isCollapsed &&
+                'justify-center w-11 h-11 px-0 bg-white border-gray-700/30 border dark:bg-gray-800 dark:border-gray-700'
             )}
+          >
+            <HomeIcon className="h-4 w-4" />
+            {!isCollapsed && <span>Home</span>}
           </Button>
         </div>
-
         {/* Chat List with Virtualization */}
-        <SidebarContent>
+        <SidebarContent className="">
           <SidebarGroup>
             <SidebarGroupContent>
               {!isCollapsed && chats.length > 0 && (
                 <FixedSizeList
-                  height={Math.min(window.innerHeight - 300, chats.length * 56)} // 56px is the height of each chat item
+                  height={Math.min(
+                    // Adjust the max height for your layout
+                    window.innerHeight - 300,
+                    chats.length * 56
+                  )}
                   width="100%"
                   itemCount={chats.length}
                   itemSize={56}
@@ -237,7 +231,9 @@ function ChatSideBarComponent({
 
         {/* Footer Settings */}
         <SidebarFooter
-          className={`mt-auto ${isCollapsed ? 'flex justify-center px-0' : ''}`}
+          className={`mt-auto border-t border-gray-200  dark:border-gray-700 ${
+            isCollapsed ? 'flex justify-center items-center  px-0' : 'px-3'
+          }`}
         >
           <UserSettingsBar isSimple={false} />
         </SidebarFooter>
@@ -251,7 +247,6 @@ function ChatSideBarComponent({
   );
 }
 
-// Optimized memo comparison
 export const ChatSideBar = memo(
   ChatSideBarComponent,
   (prevProps: SidebarProps, nextProps: SidebarProps) => {
@@ -260,7 +255,7 @@ export const ChatSideBar = memo(
     if (prevProps.error !== nextProps.error) return false;
     if (prevProps.chats.length !== nextProps.chats.length) return false;
 
-    // Only compare chat IDs instead of full objects
+    // Compare chat IDs only
     const prevIds = prevProps.chats.map((chat) => chat.id).join(',');
     const nextIds = nextProps.chats.map((chat) => chat.id).join(',');
     return prevIds === nextIds;
@@ -287,7 +282,7 @@ export function SidebarWrapper({
     refetchChats,
   } = useChatList();
 
-  // When user collapses or expands the sidebar, update both local state and Sidebar context
+  // Toggle sidebar collapsed
   const handleCollapsedChange = useCallback(
     (collapsed: boolean) => {
       setIsCollapsed(collapsed);
@@ -297,15 +292,15 @@ export function SidebarWrapper({
   );
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 font-sans">
       {isAuthorized && (
         <motion.div
-          initial={{ x: isCollapsed ? -80 : -250, opacity: 0 }}
+          initial={{ x: isCollapsed ? -55 : -250, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          exit={{ x: isCollapsed ? -80 : -250, opacity: 0 }}
+          exit={{ x: isCollapsed ? -55 : -250, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 80, damping: 20 }}
           className="fixed left-0 top-0 h-full z-50"
-          style={{ width: isCollapsed ? '80px' : '250px' }}
+          style={{ width: isCollapsed ? '55px' : '250px' }}
         >
           <ChatSideBar
             setIsModalOpen={() => {}}
@@ -325,7 +320,7 @@ export function SidebarWrapper({
       <div
         className="transition-all duration-300 flex justify-center w-full"
         style={{
-          marginLeft: isAuthorized ? (isCollapsed ? '80px' : '250px') : '0px',
+          marginLeft: isAuthorized ? (isCollapsed ? '55px' : '250px') : '0px',
         }}
       >
         <div className="w-full">{children}</div>

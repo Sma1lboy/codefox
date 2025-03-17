@@ -43,14 +43,12 @@ const CodeTab = ({
       const extension = filePath.split('.').pop()?.toLowerCase();
       switch (extension) {
         case 'js':
+        case 'jsx':
           setType('javascript');
           break;
         case 'ts':
-          setType('typescript');
-          break;
-        case 'jsx':
         case 'tsx':
-          setType('typescriptreact');
+          setType('typescript');
           break;
         case 'html':
           setType('html');
@@ -100,7 +98,7 @@ const CodeTab = ({
         <Editor
           height="100%"
           width="100%"
-          defaultLanguage="typescriptreact"
+          defaultLanguage="typescript"
           value={newCode}
           language={type}
           loading={isLoading}
@@ -111,12 +109,15 @@ const CodeTab = ({
             minimap: { enabled: false },
             wordWrap: 'on',
             wrappingStrategy: 'advanced',
+            folding: true,
+            foldingHighlight: true,
+            foldingStrategy: 'indentation',
             scrollbar: {
               useShadows: false,
-              vertical: 'visible',
-              horizontal: 'visible',
-              verticalScrollbarSize: 10,
-              horizontalScrollbarSize: 10,
+              vertical: 'hidden',
+              horizontal: 'hidden',
+              verticalScrollbarSize: 0,
+              horizontalScrollbarSize: 0,
             },
           }}
           theme={theme.theme === 'dark' ? 'vs-dark' : 'vs'}

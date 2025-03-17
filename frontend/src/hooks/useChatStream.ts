@@ -1,28 +1,10 @@
-import { useState, useCallback } from 'react';
-import { useMutation, useSubscription } from '@apollo/client';
-import { CHAT_STREAM, CREATE_CHAT, TRIGGER_CHAT } from '@/graphql/request';
+import { useState, useCallback, useEffect } from 'react';
+import { useMutation } from '@apollo/client';
+import { CREATE_CHAT } from '@/graphql/request';
 import { Message } from '@/const/MessageType';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 import { logger } from '@/app/log/logger';
-enum StreamStatus {
-  IDLE = 'IDLE',
-  STREAMING = 'STREAMING',
-  DONE = 'DONE',
-}
-
-interface ChatInput {
-  chatId: string;
-  message: string;
-  model: string;
-}
-
-interface SubscriptionState {
-  enabled: boolean;
-  variables: {
-    input: ChatInput;
-  } | null;
-}
+import { useAuthContext } from '@/providers/AuthProvider';
 
 interface UseChatStreamProps {
   chatId: string;
@@ -32,131 +14,148 @@ interface UseChatStreamProps {
   selectedModel: string;
 }
 
-export function useChatStream({
+export const useChatStream = ({
   chatId,
   input,
   setInput,
   setMessages,
   selectedModel,
-}: UseChatStreamProps) {
+}: UseChatStreamProps) => {
   const [loadingSubmit, setLoadingSubmit] = useState(false);
-  const [streamStatus, setStreamStatus] = useState<StreamStatus>(
-    StreamStatus.IDLE
-  );
   const [currentChatId, setCurrentChatId] = useState<string>(chatId);
+  const { token } = useAuthContext();
 
-  const [subscription, setSubscription] = useState<SubscriptionState>({
-    enabled: false,
-    variables: null,
-  });
+  // Use useEffect to handle new chat event and cleanup
+  useEffect(() => {
+    const updateChatId = () => {
+      setCurrentChatId('');
+      setMessages([]); // Clear messages for new chat
+    };
 
-  const updateChatId = () => {
-    setCurrentChatId('');
-  };
+    // Only add event listener when we want to create a new chat
+    if (!chatId) {
+      window.addEventListener('newchat', updateChatId);
+    }
 
-  window.addEventListener('newchat', updateChatId);
+    // Cleanup
+    return () => {
+      window.removeEventListener('newchat', updateChatId);
+    };
+  }, [chatId, setMessages]);
 
-  const [triggerChat] = useMutation(TRIGGER_CHAT, {
-    onCompleted: () => {
-      setStreamStatus(StreamStatus.STREAMING);
-    },
-    onError: () => {
-      setStreamStatus(StreamStatus.IDLE);
-      finishChatResponse();
-    },
-  });
+  // Update currentChatId when chatId prop changes
+  useEffect(() => {
+    setCurrentChatId(chatId);
+  }, [chatId]);
 
   const [createChat] = useMutation(CREATE_CHAT, {
     onCompleted: async (data) => {
       const newChatId = data.createChat.id;
       setCurrentChatId(newChatId);
-      await startChatStream(newChatId, input);
+      await handleChatResponse(newChatId, input);
       window.history.pushState({}, '', `/chat?id=${newChatId}`);
       logger.info(`new chat: ${newChatId}`);
     },
     onError: () => {
       toast.error('Failed to create chat');
-      setStreamStatus(StreamStatus.IDLE);
       setLoadingSubmit(false);
     },
   });
 
-  useSubscription(CHAT_STREAM, {
-    skip: !subscription.enabled || !subscription.variables,
-    variables: subscription.variables,
-    onSubscriptionData: ({ subscriptionData }) => {
-      const chatStream = subscriptionData?.data?.chatStream;
-      if (!chatStream) return;
+  const startChatStream = async (
+    targetChatId: string,
+    message: string,
+    model: string,
+    stream: boolean = false // Default to non-streaming for better performance
+  ): Promise<string> => {
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
 
-      if (streamStatus === StreamStatus.STREAMING && loadingSubmit) {
-        setLoadingSubmit(false);
-      }
-
-      if (chatStream.status === StreamStatus.DONE) {
-        setStreamStatus(StreamStatus.DONE);
-        finishChatResponse();
-        return;
-      }
-
-      const content = chatStream.choices?.[0]?.delta?.content;
-
-      if (content) {
-        setMessages((prev) => {
-          const lastMsg = prev[prev.length - 1];
-          if (lastMsg?.role === 'assistant') {
-            return [
-              ...prev.slice(0, -1),
-              { ...lastMsg, content: lastMsg.content + content },
-            ];
-          } else {
-            return [
-              ...prev,
-              {
-                id: chatStream.id,
-                role: 'assistant',
-                content,
-                createdAt: new Date(chatStream.created * 1000).toISOString(),
-              },
-            ];
-          }
-        });
-      }
-
-      if (chatStream.choices?.[0]?.finishReason === 'stop') {
-        setStreamStatus(StreamStatus.DONE);
-        finishChatResponse();
-      }
-    },
-    onError: (error) => {
-      logger.info(error);
-      toast.error('Connection error. Please try again.');
-      setStreamStatus(StreamStatus.IDLE);
-      finishChatResponse();
-    },
-  });
-
-  const startChatStream = async (targetChatId: string, message: string) => {
-    try {
-      const input: ChatInput = {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
         chatId: targetChatId,
         message,
-        model: selectedModel,
-      };
-      logger.info(input);
+        model,
+        stream,
+      }),
+    });
 
+    if (!response.ok) {
+      throw new Error(
+        `Network response was not ok: ${response.status} ${response.statusText}`
+      );
+    }
+    // TODO: Handle streaming responses properly
+    // if (stream) {
+    //   // For streaming responses, aggregate the streamed content
+    //   let fullContent = '';
+    //   const reader = response.body?.getReader();
+    //   if (!reader) {
+    //     throw new Error('No reader available');
+    //   }
+
+    //   while (true) {
+    //     const { done, value } = await reader.read();
+    //     if (done) break;
+
+    //     const text = new TextDecoder().decode(value);
+    //     const lines = text.split('\n\n');
+
+    //     for (const line of lines) {
+    //       if (line.startsWith('data: ')) {
+    //         const data = line.slice(5);
+    //         if (data === '[DONE]') break;
+    //         try {
+    //           const { content } = JSON.parse(data);
+    //           if (content) {
+    //             fullContent += content;
+    //           }
+    //         } catch (e) {
+    //           console.error('Error parsing SSE data:', e);
+    //         }
+    //       }
+    //     }
+    //   }
+    //   return fullContent;
+    // } else {
+    //   // For non-streaming responses, return the content directly
+    //   const data = await response.json();
+    //   return data.content;
+    // }
+
+    const data = await response.json();
+    return data.content;
+  };
+
+  const handleChatResponse = async (targetChatId: string, message: string) => {
+    try {
       setInput('');
-      setStreamStatus(StreamStatus.STREAMING);
-      setSubscription({
-        enabled: true,
-        variables: { input },
-      });
+      const response = await startChatStream(
+        targetChatId,
+        message,
+        selectedModel
+      );
 
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      await triggerChat({ variables: { input } });
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `${targetChatId}/${prev.length}`,
+          role: 'assistant',
+          content: response,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+
+      setLoadingSubmit(false);
     } catch (err) {
-      toast.error('Failed to start chat');
-      setStreamStatus(StreamStatus.IDLE);
-      finishChatResponse();
+      toast.error('Failed to get chat response' + err);
+      setLoadingSubmit(false);
     }
   };
 
@@ -192,20 +191,9 @@ export function useChatStream({
         return;
       }
     } else {
-      await startChatStream(currentChatId, content);
+      await handleChatResponse(currentChatId, content);
     }
   };
-
-  const finishChatResponse = useCallback(() => {
-    setLoadingSubmit(false);
-    setSubscription({
-      enabled: false,
-      variables: null,
-    });
-    if (streamStatus === StreamStatus.DONE) {
-      setStreamStatus(StreamStatus.IDLE);
-    }
-  }, [streamStatus]);
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -215,23 +203,19 @@ export function useChatStream({
   );
 
   const stop = useCallback(() => {
-    if (streamStatus === StreamStatus.STREAMING) {
-      setSubscription({
-        enabled: false,
-        variables: null,
-      });
-      setStreamStatus(StreamStatus.IDLE);
+    if (loadingSubmit) {
       setLoadingSubmit(false);
       toast.info('Message generation stopped');
     }
-  }, [streamStatus]);
+  }, [loadingSubmit]);
 
   return {
     loadingSubmit,
     handleSubmit,
     handleInputChange,
     stop,
-    isStreaming: streamStatus === StreamStatus.STREAMING,
+    isStreaming: loadingSubmit,
     currentChatId,
+    startChatStream,
   };
-}
+};

@@ -24,7 +24,7 @@ import {
 } from '@/graphql/mutations/auth';
 import { useRouter } from 'next/navigation';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { AlertCircle, CheckCircle, Mail, Clock } from 'lucide-react';
+import { AlertCircle, CheckCircle, Mail, Clock, Github } from 'lucide-react';
 import { useEffect } from 'react';
 import { logger } from '@/app/log/logger';
 
@@ -43,6 +43,48 @@ export function SignUpModal({
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordStrength, setPasswordStrength] = useState<
+    'weak' | 'medium' | 'strong' | null
+  >(null);
+
+  const validatePassword = (value: string) => {
+    // Reset errors
+    setPasswordError(null);
+
+    // Check minimum length
+    if (value.length < 6) {
+      setPasswordError('Password must be at least 6 characters long');
+      setPasswordStrength('weak');
+      return false;
+    }
+
+    // Check for complexity
+    const hasUppercase = /[A-Z]/.test(value);
+    const hasLowercase = /[a-z]/.test(value);
+    const hasNumbers = /\d/.test(value);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value);
+
+    const strengthScore = [
+      hasUppercase,
+      hasLowercase,
+      hasNumbers,
+      hasSpecialChar,
+    ].filter(Boolean).length;
+
+    if (strengthScore < 2) {
+      setPasswordStrength('weak');
+      setPasswordError('Password is too weak');
+      return false;
+    } else if (strengthScore < 4) {
+      setPasswordStrength('medium');
+      return true;
+    } else {
+      setPasswordStrength('strong');
+      return true;
+    }
+  };
 
   const [registerUser, { loading }] = useMutation(REGISTER_USER, {
     onError: (error) => {
@@ -61,8 +103,17 @@ export function SignUpModal({
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !passwordConfirm) {
       setErrorMessage('All fields are required.');
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      return;
+    }
+
+    if (password !== passwordConfirm) {
+      setErrorMessage('Passwords do not match.');
       return;
     }
 
@@ -73,6 +124,7 @@ export function SignUpModal({
             username: name,
             email,
             password,
+            confirmPassword: passwordConfirm,
           },
         },
       });
@@ -133,7 +185,7 @@ export function SignUpModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] fixed top-[50%] left-[50%] transform -translate-x-[50%] -translate-y-[50%] p-0">
+      <DialogContent className="sm:max-w-[425px] fixed top-[50%] left-[50%] transform -translate-x-[50%] -translate-y-[50%] p-0 max-h-[90vh] overflow-y-auto">
         <VisuallyHidden>
           <DialogTitle>Sign Up</DialogTitle>
           <DialogDescription>
@@ -141,7 +193,7 @@ export function SignUpModal({
           </DialogDescription>
         </VisuallyHidden>
 
-        <BackgroundGradient className="rounded-[22px] p-4 bg-white dark:bg-zinc-900">
+        <BackgroundGradient className="rounded-[22px] p-4 bg-white dark:bg-zinc-900 overflow-hidden">
           <div className="w-full">
             {registrationSuccess ? (
               <>
@@ -213,13 +265,50 @@ export function SignUpModal({
             ) : (
               <>
                 <TextureCardHeader className="flex flex-col gap-1 items-center justify-center p-4">
-                  <TextureCardTitle>Create your account</TextureCardTitle>
+                  <TextureCardTitle>Create account</TextureCardTitle>
                   <p className="text-center text-neutral-600 dark:text-neutral-400">
-                    Welcome! Please fill in the details to get started.
+                    Enter your information to create your account
                   </p>
                 </TextureCardHeader>
                 <TextureSeparator />
                 <TextureCardContent>
+                  <Button
+                    variant="outline"
+                    className="flex items-center justify-center gap-2 w-full"
+                    type="button"
+                  >
+                    <img
+                      src="/images/google.svg"
+                      alt="Google"
+                      className="w-5 h-5"
+                    />
+                    <span>Continue with Google</span>
+                  </Button>
+
+                  {/* GitHub Sign Up Button - added below Google */}
+                  <div className="mt-4">
+                    <Button
+                      variant="outline"
+                      className="flex items-center justify-center gap-2 w-full"
+                      type="button"
+                    >
+                      <Github className="w-5 h-5 text-black dark:text-white" />
+                      <span>Continue with GitHub</span>
+                    </Button>
+                  </div>
+
+                  {/* Divider with "or" text */}
+                  <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-white dark:bg-zinc-900 text-gray-500">
+                        Or continue with
+                      </span>
+                    </div>
+                  </div>
+
                   <form onSubmit={handleSubmit} className="space-y-2">
                     <div className="space-y-1">
                       <Label htmlFor="name">Name</Label>
@@ -260,6 +349,92 @@ export function SignUpModal({
                         value={password}
                         onChange={(e) => {
                           setPassword(e.target.value);
+                          validatePassword(e.target.value);
+                          setErrorMessage(null);
+                        }}
+                        required
+                        className={`w-full ${passwordError ? 'border-red-500' : ''}`}
+                      />
+                      {password && (
+                        <div className="mt-2 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm">Password strength:</div>
+                            <div className="flex h-2 w-full max-w-[100px] overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                              <div
+                                className={`h-full ${
+                                  passwordStrength === 'weak'
+                                    ? 'w-1/3 bg-red-500'
+                                    : passwordStrength === 'medium'
+                                      ? 'w-2/3 bg-yellow-500'
+                                      : 'w-full bg-green-500'
+                                }`}
+                              />
+                            </div>
+                            <div className="text-sm">
+                              {passwordStrength === 'weak'
+                                ? 'Weak'
+                                : passwordStrength === 'medium'
+                                  ? 'Medium'
+                                  : 'Strong'}
+                            </div>
+                          </div>
+
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            Password must:
+                            <ul className="list-disc pl-5 mt-1 space-y-1">
+                              <li
+                                className={
+                                  password.length >= 6 ? 'text-green-500' : ''
+                                }
+                              >
+                                Be at least 6 characters long
+                              </li>
+                              <li
+                                className={
+                                  /[A-Z]/.test(password) ? 'text-green-500' : ''
+                                }
+                              >
+                                Include at least one uppercase letter
+                              </li>
+                              <li
+                                className={
+                                  /\d/.test(password) ? 'text-green-500' : ''
+                                }
+                              >
+                                Include at least one number
+                              </li>
+                              <li
+                                className={
+                                  /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(
+                                    password
+                                  )
+                                    ? 'text-green-500'
+                                    : ''
+                                }
+                              >
+                                Include at least one special character
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+
+                      {passwordError && (
+                        <div className="text-red-500 text-xs mt-1">
+                          {passwordError}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label htmlFor="passwordConfirm">Confirm Password</Label>
+                      <Input
+                        id="passwordConfirm"
+                        placeholder="Confirm Password"
+                        type="password"
+                        value={passwordConfirm}
+                        onChange={(e) => {
+                          setPasswordConfirm(e.target.value);
                           setErrorMessage(null);
                         }}
                         required
@@ -274,6 +449,7 @@ export function SignUpModal({
                       </div>
                     )}
 
+                    <div className="h-2"></div>
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading ? 'Signing up...' : 'Sign up'}
                     </Button>
