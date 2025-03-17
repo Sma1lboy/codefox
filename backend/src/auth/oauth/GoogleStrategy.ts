@@ -10,14 +10,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     private configService: ConfigService,
     private authService: AuthService,
   ) {
-    Logger.log('Google Client ID:', configService.get<string>('GOOGLE_CLIENT_ID'));
-    Logger.log('Google Secret:', configService.get<string>('GOOGLE_SECRET'));
-
     super({
       clientID: configService.get<string>('GOOGLE_CLIENT_ID'),
       clientSecret: configService.get<string>('GOOGLE_SECRET'),
       callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL'),
       scope: ['email', 'profile'],
+      prompt: 'select_account',
     });
   }
 
