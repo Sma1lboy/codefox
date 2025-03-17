@@ -89,7 +89,6 @@ export const UserSettingsBar = ({ isSimple }: UserSettingsProps) => {
           />
           <AvatarFallback>{avatarFallback}</AvatarFallback>
         </SmallAvatar>
-        {!isSimple && <span className="truncate">{displayUsername}</span>}
       </Button>
     );
   }, [

@@ -13,13 +13,7 @@ export default function NavLayout({ children }: NavLayoutProps) {
   const { isAuthorized } = useAuthContext();
 
   const logoElement = !isAuthorized ? (
-    <Image
-      src="/codefox.svg"
-      alt="CodeFox Logo"
-      width={40}
-      height={40}
-      className="h-10 w-auto"
-    />
+    <Image src="/codefox.svg" alt="CodeFox Logo" width={64} height={64} />
   ) : null;
 
   return (

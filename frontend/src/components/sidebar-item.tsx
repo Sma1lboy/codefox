@@ -22,6 +22,7 @@ import { useRouter } from 'next/navigation';
 import { memo, useState } from 'react';
 import { toast } from 'sonner';
 import { EventEnum } from '../const/EventEnum';
+import { logger } from '@/app/log/logger';
 
 interface SideBarItemProps {
   id: string;
@@ -40,6 +41,7 @@ function SideBarItemComponent({
 }: SideBarItemProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const router = useRouter();
 
   const isSelected = currentChatId === id;
   const variant = isSelected ? 'secondary' : 'ghost';
@@ -48,14 +50,14 @@ function SideBarItemComponent({
     onCompleted: () => {
       toast.success('Chat deleted successfully');
       if (isSelected) {
-        window.history.replaceState({}, '', '/');
+        router.push('/');
         const event = new Event(EventEnum.NEW_CHAT);
         window.dispatchEvent(event);
       }
       refetchChats();
     },
     onError: (error) => {
-      console.error('Error deleting chat:', error);
+      logger.error('Error deleting chat:', error);
       toast.error('Failed to delete chat');
     },
   });
@@ -69,22 +71,19 @@ function SideBarItemComponent({
       });
       setIsDialogOpen(false);
     } catch (error) {
-      console.error('Error deleting chat:', error);
+      logger.error('Error deleting chat:', error);
       toast.error('Failed to delete chat');
     }
   };
 
   const handleChatClick = (e: React.MouseEvent) => {
     if (!(e.target as HTMLElement).closest('.dropdown-trigger')) {
-      window.history.replaceState({}, '', `/chat?id=${id}`);
-      const event = new Event(EventEnum.CHAT);
-      window.dispatchEvent(event);
       onSelect(id);
     }
   };
 
   return (
-    <div
+    <button
       className={cn(
         buttonVariants({
           variant,
@@ -160,7 +159,7 @@ function SideBarItemComponent({
           </DialogHeader>
         </DialogContent>
       </Dialog>
-    </div>
+    </button>
   );
 }
 

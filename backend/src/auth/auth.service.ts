@@ -142,18 +142,30 @@ export class AuthService {
   }
 
   async register(registerUserInput: RegisterUserInput): Promise<User> {
-    const { username, email, password } = registerUserInput;
+    const { username, email, password, confirmPassword } = registerUserInput;
 
     // Check for existing email
     const existingUser = await this.userRepository.findOne({
       where: { email },
     });
 
-    if (existingUser) {
-      throw new ConflictException('Email already exists');
+    if (password !== confirmPassword) {
+      throw new ConflictException('Passwords do not match');
     }
 
     const hashedPassword = await hash(password, 10);
+
+    // If the user exists but email is not confirmed and mail is enabled
+    if (existingUser && !existingUser.isEmailConfirmed && this.isMailEnabled) {
+      // Just update the existing user and resend verification email
+      existingUser.username = username;
+      existingUser.password = hashedPassword;
+      await this.userRepository.save(existingUser);
+      await this.sendVerificationEmail(existingUser);
+      return existingUser;
+    } else if (existingUser) {
+      throw new ConflictException('Email already exists');
+    }
 
     let newUser;
     if (this.isMailEnabled) {

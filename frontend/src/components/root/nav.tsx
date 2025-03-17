@@ -7,7 +7,6 @@ import {
   ReactNode,
 } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Github, Star, SunMoon, Home, Info, DollarSign } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -15,6 +14,7 @@ import { AnimatedNumber } from '../ui/animate-number';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { SignUpModal } from '../sign-up-modal';
 import { SignInModal } from '../sign-in-modal';
+import { logger } from '@/app/log/logger';
 
 // Define the ref interface
 export interface NavbarRef {
@@ -85,7 +85,7 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
             setStarCount(data.stargazers_count);
           }
         } catch (error) {
-          console.error('Error fetching GitHub stars:', error);
+          logger.error('Error fetching GitHub stars:', error);
         } finally {
           setIsLoading(false);
         }
@@ -100,33 +100,33 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
       return index >= 0 ? index : 0; // Default to first tab if path not found
     };
 
-    const [activeTab, setActiveTab] = useState(findActiveTabIndex());
-    const [isVisible, setIsVisible] = useState(true);
+    // const [activeTab, setActiveTab] = useState(findActiveTabIndex());
+    // const [isVisible, setIsVisible] = useState(true);
 
     // Update active tab when pathname changes
-    useEffect(() => {
-      const newActiveTab = findActiveTabIndex();
-      if (newActiveTab !== activeTab) {
-        setActiveTab(newActiveTab);
-      }
-    }, [pathname]);
+    // useEffect(() => {
+    //   const newActiveTab = findActiveTabIndex();
+    //   if (newActiveTab !== activeTab) {
+    //     setActiveTab(newActiveTab);
+    //   }
+    // }, [pathname]);
 
     // Expose the activeTab value to parent components through the ref
-    useImperativeHandle(ref, () => ({
-      activeTab,
-      setActiveTab: (index) => handleTabChange(index),
-    }));
+    // useImperativeHandle(ref, () => ({
+    //   activeTab,
+    //   setActiveTab: (index) => handleTabChange(index),
+    // }));
 
-    // Handle tab change locally (for animation purposes)
-    const handleTabChange = (index: number) => {
-      if (index !== activeTab) {
-        setIsVisible(false);
-        setTimeout(() => {
-          setActiveTab(index);
-          setIsVisible(true);
-        }, animationDuration);
-      }
-    };
+    // // Handle tab change locally (for animation purposes)
+    // const handleTabChange = (index: number) => {
+    //   if (index !== activeTab) {
+    //     setIsVisible(false);
+    //     setTimeout(() => {
+    //       setActiveTab(index);
+    //       setIsVisible(true);
+    //     }, animationDuration);
+    //   }
+    // };
 
     // Toggle theme function
     const toggleTheme = () => {
@@ -134,9 +134,9 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
     };
 
     // Ensure content is visible on initial render
-    useEffect(() => {
-      setIsVisible(true);
-    }, []);
+    // useEffect(() => {
+    //   setIsVisible(true);
+    // }, []);
 
     // Using the same animation variants as in page.tsx
     const containerVariants = {
@@ -163,28 +163,28 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
       },
     };
 
-    const handleTabClick = (
-      e: React.MouseEvent,
-      index: number,
-      label: string,
-      path: string
-    ) => {
-      if (label === 'Pricing') {
-        e.preventDefault();
-        alert('Coming Soon');
-      } else if (label === 'Codefox Journey') {
-        e.preventDefault();
-        alert('Coming Soon');
-      } else {
-        handleTabChange(index);
-      }
-    };
+    // const handleTabClick = (
+    //   e: React.MouseEvent,
+    //   index: number,
+    //   label: string,
+    //   path: string
+    // ) => {
+    //   if (label === 'Pricing') {
+    //     e.preventDefault();
+    //     alert('Coming Soon');
+    //   } else if (label === 'Codefox Journey') {
+    //     e.preventDefault();
+    //     alert('Coming Soon');
+    //   } else {
+    //     handleTabChange(index);
+    //   }
+    // };
 
     return (
       <>
         <div className={` top-5 left-0 right-0 z-50 ${className}`}>
           <motion.div
-            className={`w-full flex justify-around items-center px-6 py-4 ${containerClassName}`}
+            className={`w-full flex justify-around items-center px-8 py-7 ${containerClassName}`}
             initial="hidden"
             animate="visible"
             variants={containerVariants}
@@ -194,11 +194,8 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
               className={`flex items-center space-x-3 ${logoContainerClassName}`}
               variants={itemVariants}
             >
-              {logo && (
-                <div className="h-10 w-auto overflow-hidden">{logo}</div>
-              )}
               <span
-                className={`font-bold text-2xl text-primary-600 dark:text-primary-400 transition-transform hover:scale-105 duration-300 ${nameClassName}`}
+                className={` font-bold text-3xl text-primary-600 dark:text-primary-400 transition-transform hover:scale-105 duration-300 ${nameClassName}`}
               >
                 {name}
               </span>
@@ -241,61 +238,20 @@ const FloatingNavbar = forwardRef<NavbarRef, FloatingNavbarProps>(
                 <SunMoon size={20} />
               </button>
 
-              <div
-                className={`bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-1 shadow-md ${tabsContainerClassName}`}
-              >
-                <div className="flex relative z-10">
-                  {tabs.map((tab, index) => (
-                    <Link
-                      href={tab.path}
-                      key={index}
-                      onClick={(e) =>
-                        handleTabClick(e, index, tab.label, tab.path)
-                      }
-                      className="focus:outline-none"
-                    >
-                      <div
-                        className={`relative px-4 py-2 font-medium text-sm rounded-full transition-all duration-300 ${
-                          activeTab === index
-                            ? `text-white ${activeTabClassName}`
-                            : `text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white ${inactiveTabClassName}`
-                        }`}
-                      >
-                        {/* Animated background for active tab */}
-                        <AnimatePresence>
-                          {activeTab === index && (
-                            <motion.span
-                              className="absolute inset-0 bg-primary-500 dark:bg-primary-600 rounded-full -z-10"
-                              layoutId="activeTabBackground"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{
-                                duration: animationDuration / 1000,
-                              }}
-                            />
-                          )}
-                        </AnimatePresence>
-                        {tab.label}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
               {/* Authentication Buttons */}
               {!isAuthorized && (
                 <div className="flex items-center space-x-4 transition-transform duration-300">
                   <button
                     onClick={() => setShowSignIn(true)}
-                    className="px-4 py-2 rounded-md border border-primary-500 text-primary-500 dark:text-primary-400
+                    className="px-4 py-2 rounded-sm border border-primary-500 text-primary-500 dark:text-primary-400
                  hover:bg-primary-500 hover:text-white transition-colors"
                   >
                     Sign In
                   </button>
+
                   <button
                     onClick={() => setShowSignUp(true)}
-                    className="px-4 py-2 rounded-md bg-primary-500 text-white hover:bg-primary-600 transition-colors"
+                    className="px-4 py-2 rounded-sm bg-primary-500 text-white hover:bg-primary-600 transition-colors"
                   >
                     Sign Up
                   </button>

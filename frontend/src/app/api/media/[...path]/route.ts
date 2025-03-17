@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import fs from 'fs/promises'; // Use promises API
 import path from 'path';
 import { getMediaDir } from 'codefox-common';
+import { logger } from '@/app/log/logger';
 
 export async function GET(
   request: NextRequest,
@@ -13,7 +14,7 @@ export async function GET(
     const normalizedPath = path.normalize(filePath);
 
     if (!normalizedPath.startsWith(mediaDir)) {
-      console.error('Possible directory traversal attempt:', filePath);
+      logger.error('Possible directory traversal attempt:', filePath);
       return new Response('Access denied', { status: 403 });
     }
 
@@ -53,7 +54,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Error serving media file:', error);
+    logger.error('Error serving media file:', error);
     const errorMessage =
       process.env.NODE_ENV === 'development'
         ? `Error serving file: ${error.message}`

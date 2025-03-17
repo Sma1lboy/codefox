@@ -17,7 +17,10 @@ import { readFileSync } from 'fs';
 import { chatSyncWithClocker } from 'src/build-system/utils/handler-helper';
 import { createFileWithRetries } from 'src/build-system/utils/files';
 import { BuilderContext } from 'src/build-system/context';
-import { removeCodeBlockFences } from 'src/build-system/utils/strings';
+import {
+  parseGenerateTag,
+  removeCodeBlockFences,
+} from 'src/build-system/utils/strings';
 import {
   generateCommonErrorPrompt,
   generateFileOperationPrompt,
@@ -227,7 +230,7 @@ export class FrontendQueueProcessor {
             },
             {
               role: 'assistant',
-              content: `Let me check my result and I must follow the output format.`,
+              content: `Let me check my result and I must follow the output format I shouldn't write explain outside the json.`,
             },
           ],
         },
@@ -238,11 +241,8 @@ export class FrontendQueueProcessor {
       this.logger.debug('Fix Response: ' + fixResponse);
       this.logger.debug('dependency file Paths ' + task.dependenciesPath);
       const parsed_fixResponse = removeCodeBlockFences(fixResponse);
-
-      let operations = fileOperationManager.parse(
-        parsed_fixResponse,
-        task.filePath,
-      );
+      const cleaned_Data = parseGenerateTag(parsed_fixResponse);
+      let operations = fileOperationManager.parse(cleaned_Data, task.filePath);
 
       // **If LLM requested additional files, read them**
       if (operations.some((op) => op.action === 'read')) {
@@ -307,7 +307,7 @@ export class FrontendQueueProcessor {
               },
               {
                 role: 'assistant',
-                content: `Let me check my result and I must follow the output format`,
+                content: `Let me check my result and I must follow the output format I shouldn't write explain outside the json`,
               },
             ],
           },

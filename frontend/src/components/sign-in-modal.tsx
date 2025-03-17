@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { AlertCircle, Github } from 'lucide-react';
+import { logger } from '@/app/log/logger';
 
 interface SignInModalProps {
   isOpen: boolean;
@@ -69,7 +70,7 @@ export function SignInModal({ isOpen, onClose }: SignInModalProps) {
         },
       });
     } catch (error) {
-      console.error('Login failed:', error);
+      logger.error('Login failed:', error);
     }
   };
 

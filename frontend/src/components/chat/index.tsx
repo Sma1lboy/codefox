@@ -9,29 +9,25 @@ import { GET_CHAT_HISTORY } from '@/graphql/request';
 import { useQuery } from '@apollo/client';
 import { toast } from 'sonner';
 import { EventEnum } from '@/const/EventEnum';
-import UserSetting from '@/components/settings/settings';
 import ChatContent from '@/components/chat/chat-panel';
 import { useModels } from '@/hooks/useModels';
 import { useChatList } from '@/hooks/useChatList';
 import { useChatStream } from '@/hooks/useChatStream';
 import { CodeEngine } from './code-engine/code-engine';
 import { useProjectStatusMonitor } from '@/hooks/useProjectStatusMonitor';
-import { Loader2 } from 'lucide-react';
 import { useAuthContext } from '@/providers/AuthProvider';
-import { useRouter } from 'next/navigation';
 
 export default function Chat() {
   // Initialize state, refs, and custom hooks
   const { isAuthorized } = useAuthContext();
   const urlParams = new URLSearchParams(window.location.search);
   const [chatId, setChatId] = useState('');
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
   const { models } = useModels();
   const [selectedModel, setSelectedModel] = useState(models[0] || 'gpt-4o');
   const { refetchChats } = useChatList();
-  const route = useRouter();
 
   // Project status monitoring for the current chat
   const { isReady, projectId, projectName, error } =
@@ -77,9 +73,12 @@ export default function Chat() {
 
   // Effect to initialize chat ID and refresh the chat list based on URL parameters
   useEffect(() => {
-    setChatId(urlParams.get('id') || '');
-    refetchChats();
-  }, [urlParams, refetchChats]);
+    const newChatId = urlParams.get('id') || '';
+    if (newChatId !== chatId) {
+      setChatId(newChatId);
+      refetchChats();
+    }
+  }, [urlParams, chatId, refetchChats]);
 
   // Effect to add and remove global event listeners
   useEffect(() => {
@@ -99,37 +98,41 @@ export default function Chat() {
   return chatId ? (
     <ResizablePanelGroup
       direction="horizontal"
-      className="h-full w-full"
+      className="h-full w-full p-2"
       key="with-chat"
     >
       <ResizablePanel
-        defaultSize={15}
-        minSize={15}
+        defaultSize={40}
+        minSize={20}
+        maxSize={70}
+        className="h-full"
+      >
+        <div className="h-full overflow-hidden">
+          <ChatContent
+            chatId={chatId}
+            setSelectedModel={setSelectedModel}
+            messages={messages}
+            input={input}
+            handleInputChange={handleInputChange}
+            handleSubmit={handleSubmit}
+            loadingSubmit={loadingSubmit}
+            stop={stop}
+            formRef={formRef}
+            setInput={setInput}
+            setMessages={setMessages}
+          />
+        </div>
+      </ResizablePanel>
+
+      <ResizableHandle withHandle className="bg-border/20  w-[3px]" />
+
+      <ResizablePanel
+        defaultSize={60}
+        minSize={30}
         maxSize={80}
         className="h-full"
       >
-        <ChatContent
-          chatId={chatId}
-          setSelectedModel={setSelectedModel}
-          messages={messages}
-          input={input}
-          handleInputChange={handleInputChange}
-          handleSubmit={handleSubmit}
-          loadingSubmit={loadingSubmit}
-          stop={stop}
-          formRef={formRef}
-          setInput={setInput}
-          setMessages={setMessages}
-        />
-      </ResizablePanel>
-      <ResizableHandle withHandle className="hidden md:flex" />
-      <ResizablePanel
-        defaultSize={80}
-        minSize={20}
-        maxSize={80}
-        className="h-full overflow-auto"
-      >
-        <div className="p-4 h-full">
+        <div className="h-full overflow-auto">
           <CodeEngine
             chatId={chatId}
             isProjectReady={isReady}
