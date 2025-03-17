@@ -1,3 +1,6 @@
+/**
+ * Parses AI response wrapped inside <jsonResponse> tags into a JSON object.
+ */
 export const parseXmlToJson = (xmlString: string) => {
   console.log(xmlString);
   const match = xmlString.match(/<jsonResponse>([\s\S]*?)<\/jsonResponse>/);

@@ -358,6 +358,7 @@ export type RefreshTokenResponse = {
 };
 
 export type RegisterUserInput = {
+  confirmPassword: Scalars['String']['input'];
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
   username: Scalars['String']['input'];

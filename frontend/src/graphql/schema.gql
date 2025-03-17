@@ -201,6 +201,7 @@ type RefreshTokenResponse {
 }
 
 input RegisterUserInput {
+  confirmPassword: String!
   email: String!
   password: String!
   username: String!

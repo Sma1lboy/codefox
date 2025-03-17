@@ -39,6 +39,7 @@ export class ChatController {
           chatId: chatDto.chatId,
           message: chatDto.message,
           model: chatDto.model,
+          role: MessageRole.User,
         });
 
         let fullResponse = '';
@@ -66,6 +67,7 @@ export class ChatController {
           chatId: chatDto.chatId,
           message: chatDto.message,
           model: chatDto.model,
+          role: MessageRole.User,
         });
 
         // Save the complete message
