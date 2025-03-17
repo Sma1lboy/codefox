@@ -39,6 +39,14 @@ export function CodeEngine({
   const editorRef = useRef(null);
   const projectPathRef = useRef(null);
 
+  const [progress, setProgress] = useState(0); // 从0%开始
+  const [estimateTime, setEstimateTime] = useState(6 * 60); // 保留估计时间
+  const [timerActive, setTimerActive] = useState(false);
+  const initialTime = 6 * 60; // 初始总时间（6分钟）
+
+  // 添加一个状态来跟踪完成动画
+  const [isCompleting, setIsCompleting] = useState(false);
+
   // Poll for project if needed using chatId
   useEffect(() => {
     if (!curProject && chatId && !projectLoading) {
@@ -283,6 +291,59 @@ export function CodeEngine({
     isLoading ||
     (!activeProject?.projectPath && !projectPathRef.current && !localProject);
 
+  useEffect(() => {
+    if (!showLoader && timerActive) {
+      setIsCompleting(true);
+      setProgress(99);
+      const completionTimer = setTimeout(() => {
+        setProgress(100);
+        setTimeout(() => {
+          setTimerActive(false);
+          setIsCompleting(false);
+        }, 800);
+      }, 500);
+
+      return () => clearTimeout(completionTimer);
+    } else if (showLoader && !timerActive) {
+      setTimerActive(true);
+      setEstimateTime(initialTime);
+      setProgress(0);
+      setIsCompleting(false);
+    }
+  }, [showLoader, timerActive]);
+
+  useEffect(() => {
+    let interval;
+
+    if (timerActive) {
+      interval = setInterval(() => {
+        setEstimateTime((prevTime) => {
+          if (prevTime <= 1) {
+            return initialTime;
+          }
+          const elapsedTime = initialTime - prevTime + 1;
+          const newProgress = Math.min(
+            Math.floor((elapsedTime / initialTime) * 100),
+            99
+          );
+          setProgress(newProgress);
+
+          return prevTime - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timerActive]);
+
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className="rounded-lg border shadow-sm overflow-scroll h-full">
       <ResponsiveToolbar
@@ -293,20 +354,70 @@ export function CodeEngine({
 
       <div className="relative h-[calc(100vh-48px-4rem)]">
         <AnimatePresence>
-          {showLoader && (
+          {(showLoader || isCompleting) && (
             <motion.div
               key="loader"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 z-30"
+              className="absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-30"
             >
-              <Loader className="w-8 h-8 text-primary animate-spin" />
-              <p className="text-sm text-muted-foreground">
-                {projectLoading
-                  ? 'Loading project...'
-                  : 'Initializing project...'}
-              </p>
+              {progress === 100 ? (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+                  className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-10 w-10 text-green-500"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </motion.div>
+              ) : (
+                <Loader className="w-8 h-8 text-primary animate-spin" />
+              )}
+
+              <div className="w-64 flex flex-col items-center">
+                <p className="text-sm text-muted-foreground mb-2">
+                  {progress === 100
+                    ? 'Project ready!'
+                    : projectLoading
+                      ? 'Loading project...'
+                      : `Initializing project (${progress}%)`}
+                </p>
+
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1">
+                  <motion.div
+                    className={`h-2.5 rounded-full ${
+                      progress === 100 ? 'bg-green-500' : 'bg-primary'
+                    }`}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progress}%` }}
+                    transition={{
+                      ease: progress === 100 ? 'easeOut' : 'easeInOut',
+                      duration: progress === 100 ? 0.5 : 0.3,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* 添加不同阶段的消息 */}
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-sm text-center max-w-xs text-muted-foreground"
+              ></motion.p>
             </motion.div>
           )}
         </AnimatePresence>
