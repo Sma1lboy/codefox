@@ -550,7 +550,7 @@ export class AuthService {
     lastName?: string;
   }): Promise<{ accessToken: string; refreshToken?: string }> {
     Logger.log(`handle Google Callback for email: ${googleProfile.email}`);
-    
+
     // First, try to find user by googleId
     let user = await this.userRepository.findOne({
       where: { googleId: googleProfile.googleId },
@@ -564,10 +564,12 @@ export class AuthService {
 
       if (user) {
         // If found by email but not googleId, update the user with googleId
-        Logger.log(`Linking existing email account to Google: ${googleProfile.email}`);
+        Logger.log(
+          `Linking existing email account to Google: ${googleProfile.email}`,
+        );
         user.googleId = googleProfile.googleId;
         user.isEmailConfirmed = true; // Ensure email is confirmed since Google verifies emails
-        
+
         // Update name if it wasn't set before
         if (!user.username || user.username === user.email.split('@')[0]) {
           const fullName = [googleProfile.firstName, googleProfile.lastName]
@@ -577,23 +579,25 @@ export class AuthService {
             user.username = fullName;
           }
         }
-        
+
         user = await this.userRepository.save(user);
       } else {
         // If user not found at all, create a new one
-        Logger.log(`Creating new user from Google account: ${googleProfile.email}`);
+        Logger.log(
+          `Creating new user from Google account: ${googleProfile.email}`,
+        );
         const fullName = [googleProfile.firstName, googleProfile.lastName]
           .filter(Boolean)
           .join(' ');
-          
+
         user = this.userRepository.create({
           googleId: googleProfile.googleId,
           email: googleProfile.email,
           username: fullName || googleProfile.email.split('@')[0],
           isEmailConfirmed: true, // Google has already verified the email
-          password: null // OAuth users don't need a password
+          password: null, // OAuth users don't need a password
         });
-        
+
         user = await this.userRepository.save(user);
       }
     }

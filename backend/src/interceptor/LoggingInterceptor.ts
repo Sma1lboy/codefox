@@ -7,7 +7,6 @@ import {
   ContextType,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
 import { GqlExecutionContext } from '@nestjs/graphql';
 
 @Injectable()

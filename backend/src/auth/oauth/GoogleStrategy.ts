@@ -27,7 +27,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   ): Promise<any> {
     const { name, emails, photos, id } = profile;
     Logger.log(`Google profile ID: ${id}`);
-    
+
     const user = {
       id: id, // Include the profile ID
       googleId: id, // Also map to googleId
@@ -38,7 +38,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       accessToken,
       refreshToken,
     };
-    
+
     done(null, user);
   }
 }

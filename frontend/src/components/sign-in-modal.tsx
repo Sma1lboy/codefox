@@ -156,7 +156,9 @@ export function SignInModal({ isOpen, onClose }: SignInModalProps) {
                     className="flex items-center gap-2 w-full"
                     onClick={() => {
                       // Redirect to your NestJS backend's Google OAuth endpoint
-                      window.location.href = process.env.NEXT_PUBLIC_BACKEND_GOOGLE_OAUTH || 'http://localhost:8080/auth/google';
+                      window.location.href =
+                        process.env.NEXT_PUBLIC_BACKEND_GOOGLE_OAUTH ||
+                        'http://localhost:8080/auth/google';
                     }}
                   >
                     <img

@@ -28,9 +28,7 @@ import { GoogleController } from './google.controller';
     JwtCacheModule,
     MailModule,
   ],
-  controllers: [
-    GoogleController,
-  ],
+  controllers: [GoogleController],
   providers: [AuthService, AuthResolver, GoogleStrategy],
   exports: [AuthService, JwtModule],
 })

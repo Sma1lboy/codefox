@@ -35,10 +35,10 @@ export default function OAuthCallbackPage() {
 
         // Store tokens using the context
         login(accessToken, refreshToken);
-        
+
         // Show success message
         toast.success('Logged in successfully!');
-        
+
         // Redirect to home or dashboard
         router.push('/');
       } catch (error) {
@@ -54,7 +54,9 @@ export default function OAuthCallbackPage() {
   return (
     <div className="flex h-screen w-full items-center justify-center">
       <div className="text-center p-8 max-w-md rounded-xl bg-white dark:bg-zinc-900 shadow-lg">
-        <h1 className="text-2xl font-bold mb-4">Completing authentication...</h1>
+        <h1 className="text-2xl font-bold mb-4">
+          Completing authentication...
+        </h1>
         <p className="text-neutral-600 dark:text-neutral-400 mb-4">
           Please wait while we sign you in.
         </p>

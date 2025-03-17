@@ -22,24 +22,23 @@ export class GoogleController {
   async googleAuthCallback(@Req() req, @Res() res) {
     Logger.log('Google callback');
     const googleProfile = req.user as {
-        googleId: string;
-        email: string;
-        firstName?: string;
-        lastName?: string;
-      };
-  
-      // Call the AuthService method
-      const { accessToken, refreshToken } =
-        await this.authService.handleGoogleCallback(googleProfile);
-  
-      const frontendUrl =
-        this.configService.get<string>('FRONTEND_URL') ||
-        'http://localhost:3000';
+      googleId: string;
+      email: string;
+      firstName?: string;
+      lastName?: string;
+    };
+
+    // Call the AuthService method
+    const { accessToken, refreshToken } =
+      await this.authService.handleGoogleCallback(googleProfile);
+
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
 
     // TO DO IS UNSAFE
     // Redirect to frontend, pass tokens in query params
     return res.redirect(
-        `${frontendUrl}/auth/oauth-callback?accessToken=${accessToken}&refreshToken=${refreshToken}`
+      `${frontendUrl}/auth/oauth-callback?accessToken=${accessToken}&refreshToken=${refreshToken}`,
     );
   }
 }
