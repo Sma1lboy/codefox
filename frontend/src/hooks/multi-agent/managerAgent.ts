@@ -113,6 +113,20 @@ export async function managerAgent(
       try {
         decision = parseXmlToJson(response);
         console.log('Parsed AI Decision:', decision);
+
+        // Save thinking_process as assistant message
+        if (decision.thinking_process) {
+          saveMessage({
+            variables: {
+              input: {
+                chatId: input.chatId,
+                message: decision.thinking_process,
+                model: input.model,
+                role: `assistant`,
+              },
+            },
+          });
+        }
       } catch (error) {
         console.error('Error parsing AI response:', error);
         throw error;

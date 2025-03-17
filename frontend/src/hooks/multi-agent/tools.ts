@@ -1,4 +1,26 @@
 import { ChatInputType } from '@/graphql/type';
+
+/**
+ * Helper function to save thinking process from AI response
+ */
+const saveThinkingProcess = (
+  result: any,
+  input: ChatInputType,
+  context: AgentContext
+) => {
+  if (result.thinking_process) {
+    context.saveMessage({
+      variables: {
+        input: {
+          chatId: input.chatId,
+          message: result.thinking_process,
+          model: input.model,
+          role: 'assistant',
+        },
+      },
+    });
+  }
+};
 import { toast } from 'sonner';
 import {
   taskPrompt,
@@ -66,16 +88,20 @@ export async function taskTool(
 
   // Parse response using `parseXmlToJson`
   const result = parseXmlToJson(response);
+  saveThinkingProcess(result, input, context);
+
   if (!result.files || !Array.isArray(result.files)) {
     throw new Error('Invalid response format: missing files array');
   }
-  // Validate and update required files
-  const validFiles = (result.files || []).filter(
+
+  // Validate and filter file paths
+  const validFiles = result.files.filter(
     (path) => !!path && typeof path === 'string'
   );
   if (validFiles.length === 0) {
     throw new Error('No valid files identified in the response');
   }
+
   context.requiredFiles = validFiles;
   console.log('Valid files to process:', validFiles);
 
@@ -165,6 +191,7 @@ export async function editFileTool(
 
   // Parse response using `parseXmlToJson`
   const result = parseXmlToJson(response);
+  saveThinkingProcess(result, input, context);
 
   // Check for files that need to be read or modified
   if (result.files && Array.isArray(result.files)) {
@@ -252,6 +279,8 @@ export async function codeReviewTool(
 
   // Parse review results using `parseXmlToJson`
   const result = parseXmlToJson(response);
+  saveThinkingProcess(result, input, context);
+
   if (!result.review_result || !result.comments) {
     throw new Error('Invalid response format: missing review details');
   }
@@ -299,6 +328,8 @@ export async function commitChangesTool(
 
   // Parse commit message using `parseXmlToJson`
   const result = parseXmlToJson(response);
+  saveThinkingProcess(result, input, context);
+
   if (!result.commit_message) {
     throw new Error('Invalid response format: missing commit message');
   }
