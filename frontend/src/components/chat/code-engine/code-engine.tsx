@@ -1,5 +1,5 @@
 'use client';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader } from 'lucide-react';
 import { TreeItem, TreeItemIndex } from 'react-complex-tree';
@@ -43,12 +43,35 @@ export function CodeEngine({
   const [estimateTime, setEstimateTime] = useState(6 * 60); // 保留估计时间
   const [timerActive, setTimerActive] = useState(false);
   const initialTime = 6 * 60; // 初始总时间（6分钟）
-
+  const [projectCompleted, setProjectCompleted] = useState(false);
   // 添加一个状态来跟踪完成动画
   const [isCompleting, setIsCompleting] = useState(false);
+  // 添加一个ref来持久跟踪项目状态，避免重新渲染时丢失
+  const isProjectLoadedRef = useRef(false);
+
+  // 在组件挂载时从localStorage检查项目是否已完成
+  useEffect(() => {
+    try {
+      const savedCompletion = localStorage.getItem(
+        `project-completed-${chatId}`
+      );
+      if (savedCompletion === 'true') {
+        setProjectCompleted(true);
+        isProjectLoadedRef.current = true;
+        setProgress(100);
+      }
+    } catch (e) {
+      // 忽略localStorage错误
+    }
+  }, [chatId]);
 
   // Poll for project if needed using chatId
   useEffect(() => {
+    // 如果项目已经完成，跳过轮询
+    if (projectCompleted || isProjectLoadedRef.current) {
+      return;
+    }
+
     if (!curProject && chatId && !projectLoading) {
       const loadProjectFromChat = async () => {
         try {
@@ -56,6 +79,11 @@ export function CodeEngine({
           const project = await pollChatProject(chatId);
           if (project) {
             setLocalProject(project);
+            // 如果成功加载项目，将状态设置为已完成
+            if (project.projectPath) {
+              setProjectCompleted(true);
+              isProjectLoadedRef.current = true;
+            }
           }
         } catch (error) {
           logger.error('Failed to load project from chat:', error);
@@ -68,7 +96,7 @@ export function CodeEngine({
     } else {
       setIsLoading(projectLoading);
     }
-  }, [chatId, curProject, projectLoading, pollChatProject]);
+  }, [chatId, curProject, projectLoading, pollChatProject, projectCompleted]);
 
   // Use either curProject from context or locally polled project
   const activeProject = curProject || localProject;
@@ -286,10 +314,23 @@ export function CodeEngine({
   }, [filePath, activeProject, fileStructureData]);
 
   // Determine if we're truly ready to render
-  const showLoader =
-    !isProjectReady ||
-    isLoading ||
-    (!activeProject?.projectPath && !projectPathRef.current && !localProject);
+  const showLoader = useMemo(() => {
+    // 如果项目已经被标记为完成，不再显示加载器
+    if (projectCompleted || isProjectLoadedRef.current) {
+      return false;
+    }
+    return (
+      !isProjectReady ||
+      isLoading ||
+      (!activeProject?.projectPath && !projectPathRef.current && !localProject)
+    );
+  }, [
+    isProjectReady,
+    isLoading,
+    activeProject,
+    projectCompleted,
+    localProject,
+  ]);
 
   useEffect(() => {
     if (!showLoader && timerActive) {
@@ -300,17 +341,33 @@ export function CodeEngine({
         setTimeout(() => {
           setTimerActive(false);
           setIsCompleting(false);
+          setProjectCompleted(true);
+          // 同时更新ref以持久记住完成状态
+          isProjectLoadedRef.current = true;
+
+          // 可选：在完成时将状态保存到localStorage
+          try {
+            localStorage.setItem(`project-completed-${chatId}`, 'true');
+          } catch (e) {
+            // 忽略localStorage错误
+          }
         }, 800);
       }, 500);
 
       return () => clearTimeout(completionTimer);
-    } else if (showLoader && !timerActive) {
+    } else if (
+      showLoader &&
+      !timerActive &&
+      !projectCompleted &&
+      !isProjectLoadedRef.current
+    ) {
+      // 只有在项目未被标记为完成时才重置
       setTimerActive(true);
       setEstimateTime(initialTime);
       setProgress(0);
       setIsCompleting(false);
     }
-  }, [showLoader, timerActive]);
+  }, [showLoader, timerActive, projectCompleted, chatId]);
 
   useEffect(() => {
     let interval;
