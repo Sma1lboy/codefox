@@ -43,7 +43,8 @@ export async function managerAgent(
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
   projectPath: string,
   saveMessage: any,
-  token: string
+  token: string,
+  refreshProjects: () => Promise<void>
 ): Promise<void> {
   console.log('managerAgent called with input:', input);
 
@@ -190,9 +191,12 @@ export async function managerAgent(
           }
         )
       );
+
+      // Refresh projects to update the code display
+      await refreshProjects();
     }
 
-    console.log('Task completed successfully');
+    console.log('Task completed successfully with updated files');
   } catch (error) {
     console.error('Error in managerAgent:', error);
     throw error;

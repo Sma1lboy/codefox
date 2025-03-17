@@ -28,7 +28,7 @@ export const useChatStream = ({
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string>(chatId);
   const { token } = useAuthContext();
-  const { curProject } = useContext(ProjectContext);
+  const { curProject, refreshProjects } = useContext(ProjectContext);
   const [curProjectPath, setCurProjectPath] = useState('');
   useEffect(() => {
     console.log('curProject:', curProject);
@@ -94,7 +94,8 @@ export const useChatStream = ({
         setMessages,
         curProjectPath,
         saveMessage,
-        token
+        token,
+        refreshProjects
       );
 
       setLoadingSubmit(false);
