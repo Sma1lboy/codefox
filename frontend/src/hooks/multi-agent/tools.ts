@@ -280,8 +280,18 @@ export async function editFileTool(
     context.setFilePath(filePath);
     await new Promise((resolve) => setTimeout(resolve, 500)); // Wait for file to load
 
+    // Parse content if it's a JSON string
+    let realContent = content as string;
+    try {
+      if (realContent.startsWith('"') && realContent.endsWith('"')) {
+        realContent = JSON.parse(realContent);
+      }
+    } catch (error) {
+      console.error('Error parsing code content:', error);
+    }
+
     console.log(`Starting line-by-line changes for ${filePath}`);
-    const lines = (content as string).split('\n');
+    const lines = realContent.split('\n');
     let accumulatedContent = '';
 
     if (context.editorRef?.current) {
@@ -307,9 +317,9 @@ export async function editFileTool(
       context.fileContents[filePath] = content as string;
     }
 
-    // Store final content
-    context.modifiedFiles[filePath] = content as string;
-    context.fileContents[filePath] = content as string;
+    // Store final unescaped content
+    context.modifiedFiles[filePath] = realContent;
+    context.fileContents[filePath] = realContent;
   }
 
   console.log('Updated files with line-by-line animation of changes');

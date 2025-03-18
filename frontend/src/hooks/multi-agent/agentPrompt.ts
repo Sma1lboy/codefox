@@ -55,10 +55,11 @@ You are an AI assistant. When responding, you **must** adhere to the following r
 
 4. **If Asked to Modify Code**
    - The output must be formatted as follows:
+   - IMPORTANT: Code content must be RAW, not JSON-encoded strings!
 <jsonResponse>{
     "modified_files": {
-        "frontend/src/hooks/useChatStream.ts": "Updated code content...",
-        "frontend/src/components/ChatInput.tsx": "Updated code content..."
+        "frontend/src/hooks/useChatStream.ts": "import React from 'react';\n\nexport function Component() {\n  return <div>Content</div>;\n}",
+        "frontend/src/components/ChatInput.tsx": "import { useState } from 'react';\n\nexport function Input() {\n  // Code content...\n}"
     },
     "thinking_process": "After reviewing the bug description, I identified that the issue is caused by an incomplete dependency array in useEffect, preventing state updates. I have modified the code accordingly."
 }</jsonResponse>
@@ -263,8 +264,8 @@ export const editFilePrompt = (
 ### **Output Format**
 <jsonResponse>{
     "modified_files": {
-        "frontend/src/components/file.tsx": "// Complete updated code with ALL original functionality preserved\nimport React from 'react';\n// ... rest of the imports\n\n// All original components and code preserved",
-        "frontend/src/utils/file.ts": "// Complete updated code\n// No removal of existing functionality"
+        "frontend/src/components/file.tsx": "import React from 'react';\nimport { useState } from 'react';\n\nexport function Component() {\n  const [state, setState] = useState(null);\n  return <div>Content</div>;\n}",
+        "frontend/src/utils/file.ts": "export function helperFunction() {\n  // Complete implementation\n  return true;\n}"
     },
     "thinking_process": "After analyzing the code, I identified the specific issue. The fix has been implemented while preserving all existing functionality, including [list specific preserved features]. The changes only affect [describe specific changes], and all other code remains intact."
 }</jsonResponse>
