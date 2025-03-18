@@ -148,7 +148,7 @@ export async function managerAgent(
       const toolInput = {
         ...input,
         role: `assistant`,
-        message: decision.next_step,
+        message: decision.next_step.description,
       };
 
       await toolNode.behavior(toolInput, context);

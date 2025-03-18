@@ -111,6 +111,18 @@ function getPromptByTaskType(
   message: string,
   fileStructure: string[]
 ): string {
+  // Validate inputs
+  if (!task_type) {
+    throw new Error('Task type is required');
+  }
+  if (!message || typeof message !== 'string') {
+    throw new Error('Message is required and must be a string');
+  }
+  if (!Array.isArray(fileStructure)) {
+    throw new Error('File structure must be an array');
+  }
+
+  // Handle task types
   switch (task_type) {
     case TaskType.DEBUG:
       return findbugPrompt(message, fileStructure);
@@ -119,7 +131,7 @@ function getPromptByTaskType(
     case TaskType.OPTIMIZE:
       return optimizePrompt(message, fileStructure);
     case TaskType.UNRELATED:
-      return;
+      throw new Error('Cannot generate prompt for unrelated tasks');
     default:
       throw new Error(`Unsupported task type: ${task_type}`);
   }
@@ -129,94 +141,128 @@ function getPromptByTaskType(
  * Task analysis tool:
  * Analyzes requirements and identifies relevant files.
  */
-export async function taskTool(
+export const taskTool = async (
   input: ChatInputType,
   context: AgentContext
-): Promise<void> {
-  console.log('taskTool called with input:', input);
+): Promise<void> => {
+  if (!input || !context) {
+    throw new Error('Invalid input or context');
+  }
 
-  // First analyze the task
-  const taskAnalysisPrompt = leaderPrompt(input.message);
-  const taskResponse = await startChatStream(
-    {
-      chatId: input.chatId,
-      message: taskAnalysisPrompt,
-      model: input.model,
-      role: input.role,
-    },
-    context.token
-  );
+  try {
+    console.log('Starting task analysis...');
+    console.log('Current input.message:', input.message);
+    const prompt = leaderPrompt(input.message);
 
-  // Parse and validate task analysis response
-  const taskResult = parseXmlToJson(taskResponse);
-  // Display AI's task analysis with typewriter effect
-  await saveThinkingProcess(
-    `Task Analysis: This is a ${taskResult.task_type} task.\n${taskResult.description || ''}`,
-    input,
-    context
-  );
+    // Get task analysis response
+    const taskResponse = await startChatStream(
+      {
+        chatId: input.chatId,
+        message: prompt,
+        model: input.model,
+        role: input.role,
+      },
+      context.token
+    );
 
-  // Update task type based on analysis
-  context.task_type = taskResult.task_type;
+    // Parse task analysis response
+    const result = parseXmlToJson(taskResponse);
+    if (!result || typeof result !== 'object') {
+      throw new Error('Invalid task analysis response format');
+    }
 
-  // Handle unrelated tasks early
-  if (taskResult.task_type === TaskType.UNRELATED) {
-    // Display AI's task analysis with typewriter effect
+    // Validate task type
+    const taskType = result.task_type;
+    if (!taskType || !Object.values(TaskType).includes(taskType)) {
+      throw new Error(`Invalid task type: ${taskType || 'undefined'}`);
+    }
+
+    // Update context and display analysis
+    context.task_type = taskType;
     await saveThinkingProcess(
-      "I apologize, but this question isn't related to code or the project. I'm a code assistant focused on helping with programming tasks.",
+      `Task Analysis: This is a ${taskType} task.\n${result.description || ''}`,
       input,
       context
     );
-    return;
+
+    // Handle unrelated tasks with early return
+    if (taskType === TaskType.UNRELATED) {
+      await saveThinkingProcess(
+        "This question isn't related to code or development. Please ask coding-related questions.",
+        input,
+        context
+      );
+      return;
+    }
+
+    // Get and validate file analysis prompt
+    const fileAnalysisPrompt = getPromptByTaskType(
+      taskType,
+      input.message,
+      context.fileStructure
+    );
+    if (!fileAnalysisPrompt) {
+      throw new Error(
+        `Failed to generate analysis prompt for task type: ${taskType}`
+      );
+    }
+
+    // Get file analysis from AI
+    await saveThinkingProcess('Analyzing project files...', input, context);
+    const fileResponse = await startChatStream(
+      {
+        chatId: input.chatId,
+        message: fileAnalysisPrompt,
+        model: input.model,
+        role: input.role,
+      },
+      context.token
+    );
+
+    // Parse and validate file analysis response
+    const fileResult = parseXmlToJson(fileResponse);
+    if (!fileResult || typeof fileResult !== 'object') {
+      throw new Error('Invalid file analysis response format');
+    }
+
+    // Validate and process identified files
+    const files = fileResult.files;
+    if (!Array.isArray(files)) {
+      throw new Error('Invalid file analysis: missing files array');
+    }
+
+    // Filter and validate file paths
+    const validFiles = files.filter(
+      (path) => typeof path === 'string' && path.length > 0
+    );
+    if (validFiles.length === 0) {
+      throw new Error('No valid files identified in the analysis');
+    }
+
+    // Show analysis results
+    await saveThinkingProcess(
+      `Found ${validFiles.length} relevant files:\n${validFiles.join('\n')}`,
+      input,
+      context
+    );
+
+    // Update context with next steps
+    context.requiredFiles = validFiles;
+    context.currentStep = {
+      tool: 'readFileTool',
+      status: 'pending',
+      description: `Reading ${validFiles.length} identified files`,
+    };
+  } catch (error) {
+    console.error('Task analysis error:', error);
+    await saveThinkingProcess(
+      `Error during task analysis: ${error.message}`,
+      input,
+      context
+    );
+    throw error;
   }
-
-  // For code-related tasks, get the specific prompt
-  const prompt = getPromptByTaskType(
-    taskResult.task_type,
-    input.message,
-    context.fileStructure
-  );
-
-  console.log(context.task_type);
-
-  // Get AI response
-  const response = await startChatStream(
-    {
-      chatId: input.chatId,
-      message: prompt,
-      model: input.model,
-      role: input.role,
-    },
-    context.token
-  );
-
-  // Parse response using `parseXmlToJson`
-  const result = parseXmlToJson(response);
-  await saveThinkingProcess(result.thinking_process, input, context);
-
-  if (!result.files || !Array.isArray(result.files)) {
-    throw new Error('Invalid response format: missing files array');
-  }
-
-  // Validate and filter file paths
-  const validFiles = result.files.filter(
-    (path) => !!path && typeof path === 'string'
-  );
-  if (validFiles.length === 0) {
-    throw new Error('No valid files identified in the response');
-  }
-
-  context.requiredFiles = validFiles;
-  console.log('Valid files to process:', validFiles);
-
-  // Set next step to read file content
-  context.currentStep = {
-    tool: 'readFileTool',
-    status: 'pending',
-    description: `Read ${result.files.length} identified files`,
-  };
-  console.log('Task analysis completed, files identified:', result.files);
-}
+};
 
 /**
  * Read file tool:
@@ -464,7 +510,7 @@ export async function commitChangesTool(
 
   // Generate commit message prompt
   const formattedChanges = Object.entries(context.modifiedFiles)
-    .map(([filePath, content]) => `Modified file: ${filePath}`)
+    .map(([filePath, content]) => `Modified file: ${filePath}: ${content}`)
     .join('\n');
 
   const prompt = commitChangesPrompt(formattedChanges);
@@ -482,7 +528,11 @@ export async function commitChangesTool(
 
   // Parse commit message using `parseXmlToJson`
   const result = parseXmlToJson(response);
-  await saveThinkingProcess(result, input, context);
+  await saveThinkingProcess(
+    `Generated commit message:\n${result.commit_message}`,
+    input,
+    context
+  );
 
   if (!result.commit_message) {
     throw new Error('Invalid response format: missing commit message');
