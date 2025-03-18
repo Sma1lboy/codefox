@@ -196,7 +196,7 @@ export function CodeEngine({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           filePath: `${projectPath}/${filePath}`,
-          newContent: JSON.stringify(value),
+          newContent: value,
         }),
       });
 
