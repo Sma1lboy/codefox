@@ -3,13 +3,71 @@ import { ChatInputType } from '@/graphql/type';
 /**
  * Helper function to save thinking process from AI response
  */
-const saveThinkingProcess = (
+const saveThinkingProcess = async (
   result: any,
   input: ChatInputType,
   context: AgentContext
 ) => {
   if (result.thinking_process) {
+    // Accumulate for final save
     context.accumulatedThoughts.push(result.thinking_process);
+
+    // Break text into chunks for typewriter effect
+    const breakText = (text: string) => {
+      return text.match(/(\S{1,3}|\s+)/g) || [];
+    };
+
+    // Display with typewriter effect
+    const typewriterEffect = async (
+      textArray: string[],
+      delay: number
+    ): Promise<void> => {
+      return new Promise((resolve) => {
+        let index = 0;
+
+        const updateMessage = () => {
+          if (index < textArray.length) {
+            context.setMessages((prev) => {
+              const lastMsg = prev[prev.length - 1];
+
+              if (
+                lastMsg?.role === 'assistant' &&
+                lastMsg.id === input.chatId
+              ) {
+                return [
+                  ...prev.slice(0, -1),
+                  {
+                    ...lastMsg,
+                    content: lastMsg.content + textArray[index],
+                  },
+                ];
+              } else {
+                return [
+                  ...prev,
+                  {
+                    id: input.chatId,
+                    role: 'assistant',
+                    content: textArray[index],
+                    createdAt: new Date().toISOString(),
+                  },
+                ];
+              }
+            });
+
+            index++;
+            setTimeout(updateMessage, delay);
+          } else {
+            resolve();
+          }
+        };
+
+        updateMessage();
+      });
+    };
+
+    // Apply typewriter effect for immediate display
+    const brokenText = breakText(result.thinking_process);
+    await typewriterEffect(brokenText, 10);
   }
 };
 import { toast } from 'sonner';
@@ -79,7 +137,7 @@ export async function taskTool(
 
   // Parse response using `parseXmlToJson`
   const result = parseXmlToJson(response);
-  saveThinkingProcess(result, input, context);
+  await saveThinkingProcess(result, input, context);
 
   if (!result.files || !Array.isArray(result.files)) {
     throw new Error('Invalid response format: missing files array');
@@ -182,7 +240,7 @@ export async function editFileTool(
 
   // Parse response using `parseXmlToJson`
   const result = parseXmlToJson(response);
-  saveThinkingProcess(result, input, context);
+  await saveThinkingProcess(result, input, context);
 
   // Check for files that need to be read or modified
   if (result.files && Array.isArray(result.files)) {
@@ -270,7 +328,7 @@ export async function codeReviewTool(
 
   // Parse review results using `parseXmlToJson`
   const result = parseXmlToJson(response);
-  saveThinkingProcess(result, input, context);
+  await saveThinkingProcess(result, input, context);
 
   if (!result.review_result || !result.comments) {
     throw new Error('Invalid response format: missing review details');
@@ -319,7 +377,7 @@ export async function commitChangesTool(
 
   // Parse commit message using `parseXmlToJson`
   const result = parseXmlToJson(response);
-  saveThinkingProcess(result, input, context);
+  await saveThinkingProcess(result, input, context);
 
   if (!result.commit_message) {
     throw new Error('Invalid response format: missing commit message');

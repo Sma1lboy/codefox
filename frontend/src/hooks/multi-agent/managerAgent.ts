@@ -197,7 +197,7 @@ export async function managerAgent(
       await refreshProjects();
     }
 
-    // Save all accumulated thoughts as one message
+    // Save all accumulated thoughts
     if (context.accumulatedThoughts.length > 0) {
       context.saveMessage({
         variables: {
