@@ -58,6 +58,7 @@ export async function managerAgent(
       fileContents: {},
       modifiedFiles: {},
       requiredFiles: [], // Initialize empty array for required files
+      accumulatedThoughts: [], // Initialize empty array for thoughts
       currentStep: {
         tool: undefined,
         status: 'initializing',
@@ -103,7 +104,7 @@ export async function managerAgent(
           chatId: input.chatId,
           message: confirmationPromptStr,
           model: input.model,
-          role: `assistant-${context.task_type}`,
+          role: `assistant`,
         },
         token
       );
@@ -113,20 +114,6 @@ export async function managerAgent(
       try {
         decision = parseXmlToJson(response);
         console.log('Parsed AI Decision:', decision);
-
-        // Save thinking_process as assistant message
-        if (decision.thinking_process) {
-          saveMessage({
-            variables: {
-              input: {
-                chatId: input.chatId,
-                message: decision.thinking_process,
-                model: input.model,
-                role: `assistant`,
-              },
-            },
-          });
-        }
       } catch (error) {
         console.error('Error parsing AI response:', error);
         throw error;
@@ -161,7 +148,7 @@ export async function managerAgent(
       // Execute the tool
       const toolInput = {
         ...input,
-        role: `assistant-${context.task_type}`,
+        role: `assistant`,
         message: decision.next_step,
       };
 
@@ -208,6 +195,20 @@ export async function managerAgent(
 
       // Refresh projects to update the code display
       await refreshProjects();
+    }
+
+    // Save all accumulated thoughts as one message
+    if (context.accumulatedThoughts.length > 0) {
+      context.saveMessage({
+        variables: {
+          input: {
+            chatId: input.chatId,
+            message: context.accumulatedThoughts.join('\n\n'),
+            model: input.model,
+            role: `assistant`,
+          },
+        },
+      });
     }
 
     console.log('Task completed successfully with updated files');

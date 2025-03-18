@@ -9,16 +9,7 @@ const saveThinkingProcess = (
   context: AgentContext
 ) => {
   if (result.thinking_process) {
-    context.saveMessage({
-      variables: {
-        input: {
-          chatId: input.chatId,
-          message: result.thinking_process,
-          model: input.model,
-          role: 'assistant',
-        },
-      },
-    });
+    context.accumulatedThoughts.push(result.thinking_process);
   }
 };
 import { toast } from 'sonner';

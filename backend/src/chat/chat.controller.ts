@@ -55,14 +55,6 @@ export class ChatController {
           model: chatDto.model,
           role: MessageRole.User,
         });
-
-        // Save the complete message
-        await this.chatService.saveMessage(
-          chatDto.chatId,
-          response,
-          MessageRole.Assistant,
-        );
-
         res.json({ content: response });
       }
     } catch (error) {

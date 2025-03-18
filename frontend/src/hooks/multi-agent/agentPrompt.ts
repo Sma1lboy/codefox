@@ -19,6 +19,7 @@ export interface AgentContext {
   requiredFiles: string[]; // Files that need to be read/modified
   reviewComments?: string[]; // Code review comments
   commitMessage?: string; // Commit message
+  accumulatedThoughts: string[]; // Accumulated thinking processes
   currentStep?: {
     // Current execution step
     tool?: string; // Tool being used
