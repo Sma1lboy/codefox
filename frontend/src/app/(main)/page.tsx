@@ -7,7 +7,10 @@ import { AuthChoiceModal } from '@/components/auth-choice-modal';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { ProjectsSection } from '@/components/root/projects-section';
 import { PromptForm, PromptFormRef } from '@/components/root/prompt-form';
-import { CreateProjectResult, ProjectContext } from '@/components/chat/code-engine/project-context';
+import {
+  CreateProjectResult,
+  ProjectContext,
+} from '@/components/chat/code-engine/project-context';
 import { SignInModal } from '@/components/sign-in-modal';
 import { SignUpModal } from '@/components/sign-up-modal';
 import { useRouter } from 'next/navigation';
@@ -21,7 +24,9 @@ export default function HomePage() {
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
   const [showRateLimitModal, setShowRateLimitModal] = useState(false);
-  const [rateLimiNumber, setRateLimiNumber] = useState<number | undefined>(undefined);;
+  const [rateLimiNumber, setRateLimiNumber] = useState<number | undefined>(
+    undefined
+  );
 
   const promptFormRef = useRef<PromptFormRef>(null);
   const { isAuthorized } = useAuthContext();
@@ -32,7 +37,7 @@ export default function HomePage() {
   ): result is { success: false; rateLimit?: boolean; limitNumber?: number } {
     return result.success === false;
   }
-  
+
   const handleSubmit = async () => {
     if (!promptFormRef.current) return;
 
@@ -50,7 +55,6 @@ export default function HomePage() {
         setRateLimiNumber(result.limitNumber);
         console.log('Rate limit reached ' + result.limitNumber);
       }
-
     } catch (error) {
       logger.error('Error creating project:', error);
     }
@@ -195,8 +199,11 @@ export default function HomePage() {
         <SignInModal isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
         <SignUpModal isOpen={showSignUp} onClose={() => setShowSignUp(false)} />
 
-        <RateLimitModal isOpen={showRateLimitModal} limit={rateLimiNumber ?? 3} onClose={() => setShowRateLimitModal(false)} />
-        
+        <RateLimitModal
+          isOpen={showRateLimitModal}
+          limit={rateLimiNumber ?? 3}
+          onClose={() => setShowRateLimitModal(false)}
+        />
       </div>
     </div>
   );

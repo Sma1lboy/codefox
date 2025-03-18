@@ -219,7 +219,12 @@ export class ProjectService {
       this.logger.debug(`Project created: ${savedProject.id}`);
 
       // Perform the rest of project creation asynchronously
-      this.createProjectInBackground(input, projectName, savedProject, defaultChat);
+      this.createProjectInBackground(
+        input,
+        projectName,
+        savedProject,
+        defaultChat,
+      );
 
       // Return chat immediately so user can start interacting
       return defaultChat;
@@ -257,9 +262,13 @@ export class ProjectService {
       if (projectPath) {
         savedProject.projectPath = projectPath;
         await this.projectsRepository.save(savedProject); // Update the project with path
-        this.logger.debug(`Updated project path: ${savedProject.id} -> ${projectPath}`);
+        this.logger.debug(
+          `Updated project path: ${savedProject.id} -> ${projectPath}`,
+        );
       } else {
-        this.logger.error(`Failed to retrieve project path for: ${savedProject.id}`);
+        this.logger.error(
+          `Failed to retrieve project path for: ${savedProject.id}`,
+        );
       }
 
       // Bind chat to project

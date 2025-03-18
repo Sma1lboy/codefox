@@ -23,7 +23,9 @@ import { useAuthContext } from '@/providers/AuthProvider';
 import { URL_PROTOCOL_PREFIX } from '@/utils/const';
 import { logger } from '@/app/log/logger';
 
-export type CreateProjectResult = { success: true, chatId: string } | { success: false, rateLimit?: boolean, limitNumber?: number };
+export type CreateProjectResult =
+  | { success: true; chatId: string }
+  | { success: false; rateLimit?: boolean; limitNumber?: number };
 
 export interface ProjectContextType {
   projects: Project[];
@@ -420,7 +422,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       if (rateLimitError) {
         rateLimitReachedRef.current = true;
         const limitFromBackend = rateLimitError.extensions?.limit;
-        if(typeof limitFromBackend === 'number'){
+        if (typeof limitFromBackend === 'number') {
           rateLimitValueRef.current = limitFromBackend;
         }
       } else {
@@ -736,14 +738,20 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
         // Rate limit detected
         if (rateLimitReachedRef.current) {
-          return { success: false, rateLimit: true, limitNumber: rateLimitValueRef.current };
+          return {
+            success: false,
+            rateLimit: true,
+            limitNumber: rateLimitValueRef.current,
+          };
         }
 
         // Check if result and result.data exist before accessing properties
         if (result?.data?.createProject?.id) {
           return { success: true, chatId: result.data.createProject.id };
         } else {
-          logger.warn('Project creation response missing expected data structure');
+          logger.warn(
+            'Project creation response missing expected data structure'
+          );
           return { success: false };
         }
       } catch (error) {
