@@ -68,6 +68,20 @@ const saveThinkingProcess = async (
     // Apply typewriter effect for immediate display
     const brokenText = breakText(result.thinking_process);
     await typewriterEffect(brokenText, 10);
+
+    context.setMessages((prev) => {
+      const lastMsg = prev[prev.length - 1];
+      if (lastMsg?.role === 'assistant' && lastMsg.id === input.chatId) {
+        return [
+          ...prev.slice(0, -1),
+          {
+            ...lastMsg,
+            content: lastMsg.content + '\n\n', // 追加两个换行
+          },
+        ];
+      }
+      return prev;
+    });
   }
 };
 import { toast } from 'sonner';
