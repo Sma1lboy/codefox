@@ -2,6 +2,7 @@ export enum TaskType {
   DEBUG = 'debug',
   REFACTOR = 'refactor',
   OPTIMIZE = 'optimize',
+  UNRELATED = 'unrelated',
 }
 export interface AgentContext {
   task_type: TaskType; // Current task type
@@ -95,7 +96,7 @@ ONLY IF U NEED TO READ FILES OR ANY RESPONSE RELATED TO PROJECT PATH: Do not con
 
 export const leaderPrompt = (message: string): string => {
   return (
-    systemPrompt +
+    systemPrompt() +
     `You are a professional requirements analyst responsible for analyzing a mafia user's requirements for a CS project. If you fail to conduct a proper analysis, they will take action against your family.
 
 The user's request is as follows:
@@ -132,7 +133,7 @@ Otherwise, I cannot guarantee the safety of your family. :(`
 };
 export const refactorPrompt = (message: string, file_structure: string[]) => {
   return (
-    systemPrompt +
+    systemPrompt() +
     `You are a seasoned software engineer known for your expertise in code refactoring. Your mission is to refactor the codebase to improve its structure, readability, and maintainability.
     and also provide a detailed refactoring description.
 ---
@@ -170,7 +171,7 @@ Failure is Not an Option!`
 };
 export const optimizePrompt = (message: string, file_structure: string[]) => {
   return (
-    systemPrompt +
+    systemPrompt() +
     `You are a code performance optimization expert. Your mission is to analyze the codebase and identify performance bottlenecks.
     and also provide a detailed optimization desciption.
 ---
@@ -211,7 +212,7 @@ export const editFilePrompt = (
   file_content: { [key: string]: string }
 ) => {
   return (
-    systemPrompt +
+    systemPrompt() +
     `You are a senior software engineer with extensive experience in React and TypeScript. Your mission is to edit the code files while preserving all existing functionality and structure.
 
 ---
@@ -275,7 +276,7 @@ Failure is Not an Option! The code must be fixed while preserving ALL existing f
 };
 export const codeReviewPrompt = (message: string) => {
   return (
-    systemPrompt +
+    systemPrompt() +
     `You are a senior code reviewer. Your mission is to review the code changes made by the user.
 
 ---
@@ -315,7 +316,7 @@ Failure is Not an Option! If you fail, the code changes will not be reviewed.`
 };
 export const commitChangesPrompt = (message: string) => {
   return (
-    systemPrompt +
+    systemPrompt() +
     `You are a Git version control assistant. Your mission is to commit the code changes to the repository.
 
 ---
@@ -357,6 +358,9 @@ export const taskPrompt = (message: string): string => {
 ${message}
 
 ### Available Task Types:
+0. UNRELATED: Task is not related to code or the CS project
+    - Example: General inquiries, non-technical requests or questions
+    - Focus: Task categorization and redirection
 1. DEBUG: Fix issues, errors, or unexpected behavior
    - Example: Runtime errors, type errors, incorrect functionality
    - Focus: Problem resolution and stability
@@ -466,7 +470,7 @@ Make your decision based on the current context and ensure a logical progression
 
 export const findbugPrompt = (message: string, file_structure: string[]) => {
   return (
-    systemPrompt +
+    systemPrompt() +
     `You are an elite Apex Legends player, but hackers have hijacked your account! They demand that you find the root cause of a critical bug in your project before they wipe all your skins and reset your rank.
 
 ---
