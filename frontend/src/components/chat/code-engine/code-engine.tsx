@@ -20,7 +20,7 @@ export function CodeEngine({
   isProjectReady?: boolean;
   projectId?: string;
 }) {
-  const { curProject, projectLoading, pollChatProject } =
+  const { curProject, projectLoading, pollChatProject, editorRef } =
     useContext(ProjectContext);
   const [localProject, setLocalProject] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,8 +35,6 @@ export function CodeEngine({
   const [fileStructureData, setFileStructureData] = useState<
     Record<TreeItemIndex, TreeItem<any>>
   >({});
-
-  const editorRef = useRef(null);
   const projectPathRef = useRef(null);
 
   // Poll for project if needed using chatId

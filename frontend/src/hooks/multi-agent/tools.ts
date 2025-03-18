@@ -274,13 +274,45 @@ export async function editFileTool(
     new Set([...context.requiredFiles, ...validPaths])
   );
 
-  // Update file content in context
-  Object.entries(result.modified_files).forEach(([filePath, content]) => {
+  // Update file content in context with typewriter effect
+  for (const [filePath, content] of Object.entries(result.modified_files)) {
+    // Set current file in code-engine
+    context.setFilePath(filePath);
+    await new Promise((resolve) => setTimeout(resolve, 500)); // Wait for file to load
+
+    console.log(`Starting line-by-line changes for ${filePath}`);
+    const lines = (content as string).split('\n');
+    let accumulatedContent = '';
+
+    if (context.editorRef?.current) {
+      // Get current editor content as baseline
+      accumulatedContent = context.editorRef.current.getValue();
+
+      // Wait for file path change to take effect
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Show each line with animation
+      try {
+        for (let i = 0; i < lines.length; i++) {
+          accumulatedContent = lines.slice(0, i + 1).join('\n');
+          context.editorRef.current.setValue(accumulatedContent);
+          console.log(`Updated line ${i + 1}/${lines.length} in ${filePath}`);
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      } catch (error) {
+        console.error('Error updating editor content:', error);
+      }
+
+      // Sync final content
+      context.fileContents[filePath] = content as string;
+    }
+
+    // Store final content
     context.modifiedFiles[filePath] = content as string;
     context.fileContents[filePath] = content as string;
-  });
+  }
 
-  console.log('Updated context with modified files');
+  console.log('Updated files with line-by-line animation of changes');
 }
 
 /**

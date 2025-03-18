@@ -20,6 +20,8 @@ export interface AgentContext {
   reviewComments?: string[]; // Code review comments
   commitMessage?: string; // Commit message
   accumulatedThoughts: string[]; // Accumulated thinking processes
+  setFilePath: (path: string) => void; // Set current file path in editor
+  editorRef: React.MutableRefObject<any>; // Monaco editor reference for direct updates
   currentStep?: {
     // Current execution step
     tool?: string; // Tool being used
