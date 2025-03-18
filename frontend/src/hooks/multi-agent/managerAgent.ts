@@ -1,12 +1,7 @@
 import { ChatInputType } from '@/graphql/type';
 import { startChatStream } from '@/api/ChatStreamAPI';
 import { findToolNode } from './toolNodes';
-import {
-  taskPrompt,
-  confirmationPrompt,
-  AgentContext,
-  TaskType,
-} from './agentPrompt';
+import { confirmationPrompt, AgentContext, TaskType } from './agentPrompt';
 import path from 'path';
 import { parseXmlToJson } from '@/utils/parser';
 import { Message } from '@/const/MessageType';
@@ -53,7 +48,7 @@ export async function managerAgent(
   try {
     // Initialize context
     const context: AgentContext = {
-      task_type: TaskType.DEBUG, // Initial type, AI will update it later
+      task_type: undefined, // Will be set after task analysis
       request: input.message, // Store the original request
       projectPath,
       fileStructure: [],
@@ -163,6 +158,9 @@ export async function managerAgent(
 
       iteration++;
       console.log(`Task iteration ${iteration}/${MAX_ITERATIONS}`);
+      if (context.task_type == TaskType.UNRELATED) {
+        break;
+      }
     }
 
     // Check if task exceeded limits

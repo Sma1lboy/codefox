@@ -5,7 +5,7 @@ export enum TaskType {
   UNRELATED = 'unrelated',
 }
 export interface AgentContext {
-  task_type: TaskType; // Current task type
+  task_type: TaskType | null; // Current task type
   request: string; // Original request
   projectPath: string; // Project ID
   fileStructure: string[]; // Project file structure
@@ -117,14 +117,32 @@ When generating the JSON response, **ensure that the description in JSON is as d
 4. **How they expect the problem to be resolved**  
 
 ### **AI Thought Process:**
-To classify the task, I will first analyze the user's request for any mention of errors, crashes, or incorrect behavior. If the request contains error messages like "TypeError", "ReferenceError", or "module not found", I will categorize it as a **debugging task**.  
-If the request discusses improvements such as reducing redundancy, improving performance, or enhancing readability, I will categorize it as **optimization**.  
-If the request does not relate to code functionality or performance, I will classify it as **unrelated**.
+First, I will determine if the request is code-related by checking:
+
+1. Is this about development/programming?
+   - Contains technical terms (function, code, error, component, etc.)
+   - Mentions file paths or code elements
+   - Discusses software functionality
+
+2. Is this a general question?
+   - About weather, time, or general knowledge
+   - Personal inquiries or casual conversation
+   - Questions unrelated to development
+
+For code-related tasks:
+- If about errors/bugs -> DEBUG
+- If about improvements -> OPTIMIZE
+- If about code structure -> REFACTOR
+
+For non-code tasks:
+- Mark as UNRELATED
+- Explain why it's not a development task
+- Suggest using a general assistant instead
 
 ### **Output Format**
 <jsonResponse>{
     "task_type": "debug" | "optimize" | "unrelated",
-    "description": "In 'src/project/build-system-utils.ts', the user wants to use the module 'file-arch' for file management operations, but encountered error TS2307: Cannot find module 'src/build-system/handlers/file-manager/file-arch' or its corresponding type declarations. They need assistance in resolving this missing module issue by verifying module paths and dependencies.",
+    "description": "Examples:\n\n1. Code task: In 'src/project/utils.ts', the user encountered a TypeScript module error that needs debugging.\n\n2. Unrelated task: The user asked about weather in Madison. This is not a code or development related question, but rather a general weather inquiry that should be handled by a general assistant.",
     "thinking_process": "After analyzing the request, I identified that the issue involves a missing module import, which prevents compilation. This falls under debugging since it requires fixing a dependency resolution problem."
 }</jsonResponse>
 
@@ -349,51 +367,6 @@ The final commit message will follow **conventional commit standards** to ensure
 Failure is Not an Option! If you fail, the changes will not be committed.`
   );
 };
-export const taskPrompt = (message: string): string => {
-  return (
-    systemPrompt() +
-    `You are an expert task analyzer responsible for understanding user requirements and planning the development approach.
-
-### User Request:
-${message}
-
-### Available Task Types:
-0. UNRELATED: Task is not related to code or the CS project
-    - Example: General inquiries, non-technical requests or questions
-    - Focus: Task categorization and redirection
-1. DEBUG: Fix issues, errors, or unexpected behavior
-   - Example: Runtime errors, type errors, incorrect functionality
-   - Focus: Problem resolution and stability
-
-2. REFACTOR: Improve code structure without changing behavior
-   - Example: Code organization, modularity, readability
-   - Focus: Maintainability and code quality
-
-3. OPTIMIZE: Enhance performance or efficiency
-   - Example: Reduce render times, improve state management
-   - Focus: Performance and resource utilization
-
-### Analysis Requirements:
-1. Consider the problem description carefully
-2. Look for keywords indicating the task type
-3. Identify specific areas that need attention
-4. Plan the general approach to solving the issue
-
-### Output Format:
-<jsonResponse>{
-    "task_type": "debug" | "refactor" | "optimize",
-    "description": "Detailed description of what needs to be done",
-    "analysis": {
-        "problem_area": "Specific component or functionality affected",
-        "key_points": ["List of main issues or improvements needed"],
-        "approach": "General strategy for addressing the task"
-    }
-}</jsonResponse>
-
-Remember: Your analysis sets the direction for the entire development process. Be specific and thorough.`
-  );
-};
-
 import { Message } from '@/const/MessageType';
 import { getToolUsageMap } from './toolNodes';
 

@@ -1,92 +1,6 @@
-import { ChatInputType } from '@/graphql/type';
-
-/**
- * Helper function to save thinking process from AI response
- */
-const saveThinkingProcess = async (
-  result: any,
-  input: ChatInputType,
-  context: AgentContext
-) => {
-  if (result.thinking_process) {
-    // Accumulate for final save
-    context.accumulatedThoughts.push(result.thinking_process);
-
-    // Break text into chunks for typewriter effect
-    const breakText = (text: string) => {
-      return text.match(/(\S{1,3}|\s+)/g) || [];
-    };
-
-    // Display with typewriter effect
-    const typewriterEffect = async (
-      textArray: string[],
-      delay: number
-    ): Promise<void> => {
-      return new Promise((resolve) => {
-        let index = 0;
-
-        const updateMessage = () => {
-          if (index < textArray.length) {
-            context.setMessages((prev) => {
-              const lastMsg = prev[prev.length - 1];
-
-              if (
-                lastMsg?.role === 'assistant' &&
-                lastMsg.id === input.chatId
-              ) {
-                return [
-                  ...prev.slice(0, -1),
-                  {
-                    ...lastMsg,
-                    content: lastMsg.content + textArray[index],
-                  },
-                ];
-              } else {
-                return [
-                  ...prev,
-                  {
-                    id: input.chatId,
-                    role: 'assistant',
-                    content: textArray[index],
-                    createdAt: new Date().toISOString(),
-                  },
-                ];
-              }
-            });
-
-            index++;
-            setTimeout(updateMessage, delay);
-          } else {
-            resolve();
-          }
-        };
-
-        updateMessage();
-      });
-    };
-
-    // Apply typewriter effect for immediate display
-    const brokenText = breakText(result.thinking_process);
-    await typewriterEffect(brokenText, 10);
-
-    context.setMessages((prev) => {
-      const lastMsg = prev[prev.length - 1];
-      if (lastMsg?.role === 'assistant' && lastMsg.id === input.chatId) {
-        return [
-          ...prev.slice(0, -1),
-          {
-            ...lastMsg,
-            content: lastMsg.content + '\n\n', // 追加两个换行
-          },
-        ];
-      }
-      return prev;
-    });
-  }
-};
 import { toast } from 'sonner';
 import {
-  taskPrompt,
+  leaderPrompt,
   findbugPrompt,
   refactorPrompt,
   optimizePrompt,
@@ -98,12 +12,102 @@ import {
 } from './agentPrompt';
 import { startChatStream } from '@/api/ChatStreamAPI';
 import { parseXmlToJson } from '@/utils/parser';
+import { ChatInputType } from '@/graphql/type';
 
+/**
+ * Helper function to save and display a thinking process (or any provided text)
+ * with a typewriter effect.
+ *
+ * Usage:
+ *   await saveThinkingProcess("The thinking process text", input, context);
+ *
+ * This function stores the text in context.accumulatedThoughts and then gradually
+ * displays it using a typewriter effect. After the entire text is shown, it appends
+ * two newline characters.
+ */
+const saveThinkingProcess = async (
+  thinkingText: string,
+  input: ChatInputType,
+  context: AgentContext
+): Promise<void> => {
+  if (!thinkingText) return;
+
+  // Accumulate the thinking process text for historical record.
+  context.accumulatedThoughts.push(thinkingText);
+
+  // Function to break the text into small chunks for a smoother typewriter animation.
+  const breakText = (text: string): string[] => {
+    return text.match(/(\S{1,3}|\s+)/g) || [];
+  };
+
+  // Typewriter effect: gradually display the text chunks with a specified delay.
+  const typewriterEffect = async (
+    textArray: string[],
+    delay: number
+  ): Promise<void> => {
+    return new Promise((resolve) => {
+      let index = 0;
+
+      const updateMessage = () => {
+        if (index < textArray.length) {
+          context.setMessages((prev) => {
+            const lastMsg = prev[prev.length - 1];
+            if (lastMsg?.role === 'assistant' && lastMsg.id === input.chatId) {
+              return [
+                ...prev.slice(0, -1),
+                {
+                  ...lastMsg,
+                  content: lastMsg.content + textArray[index],
+                },
+              ];
+            } else {
+              return [
+                ...prev,
+                {
+                  id: input.chatId,
+                  role: 'assistant',
+                  content: textArray[index],
+                  createdAt: new Date().toISOString(),
+                },
+              ];
+            }
+          });
+
+          index++;
+          setTimeout(updateMessage, delay);
+        } else {
+          resolve();
+        }
+      };
+
+      updateMessage();
+    });
+  };
+
+  // Break the provided thinkingText into chunks and display them.
+  const brokenText = breakText(thinkingText);
+  await typewriterEffect(brokenText, 10);
+
+  // After displaying all chunks, append two newlines to the final message.
+  context.setMessages((prev) => {
+    const lastMsg = prev[prev.length - 1];
+    if (lastMsg?.role === 'assistant' && lastMsg.id === input.chatId) {
+      return [
+        ...prev.slice(0, -1),
+        {
+          ...lastMsg,
+          content: lastMsg.content + '\n\n',
+        },
+      ];
+    }
+    return prev;
+  });
+};
 /**
  * Get the corresponding prompt based on the task type.
  */
 function getPromptByTaskType(
-  task_type: TaskType,
+  task_type: TaskType | null,
   message: string,
   fileStructure: string[]
 ): string {
@@ -114,6 +118,8 @@ function getPromptByTaskType(
       return refactorPrompt(message, fileStructure);
     case TaskType.OPTIMIZE:
       return optimizePrompt(message, fileStructure);
+    case TaskType.UNRELATED:
+      return;
     default:
       throw new Error(`Unsupported task type: ${task_type}`);
   }
@@ -129,9 +135,44 @@ export async function taskTool(
 ): Promise<void> {
   console.log('taskTool called with input:', input);
 
-  // Select the appropriate prompt based on the task type from the context.
+  // First analyze the task
+  const taskAnalysisPrompt = leaderPrompt(input.message);
+  const taskResponse = await startChatStream(
+    {
+      chatId: input.chatId,
+      message: taskAnalysisPrompt,
+      model: input.model,
+      role: input.role,
+    },
+    context.token
+  );
+
+  // Parse and validate task analysis response
+  const taskResult = parseXmlToJson(taskResponse);
+  // Display AI's task analysis with typewriter effect
+  await saveThinkingProcess(
+    `Task Analysis: This is a ${taskResult.task_type} task.\n${taskResult.description || ''}`,
+    input,
+    context
+  );
+
+  // Update task type based on analysis
+  context.task_type = taskResult.task_type;
+
+  // Handle unrelated tasks early
+  if (taskResult.task_type === TaskType.UNRELATED) {
+    // Display AI's task analysis with typewriter effect
+    await saveThinkingProcess(
+      "I apologize, but this question isn't related to code or the project. I'm a code assistant focused on helping with programming tasks.",
+      input,
+      context
+    );
+    return;
+  }
+
+  // For code-related tasks, get the specific prompt
   const prompt = getPromptByTaskType(
-    context.task_type,
+    taskResult.task_type,
     input.message,
     context.fileStructure
   );
@@ -151,7 +192,7 @@ export async function taskTool(
 
   // Parse response using `parseXmlToJson`
   const result = parseXmlToJson(response);
-  await saveThinkingProcess(result, input, context);
+  await saveThinkingProcess(result.thinking_process, input, context);
 
   if (!result.files || !Array.isArray(result.files)) {
     throw new Error('Invalid response format: missing files array');
@@ -254,7 +295,11 @@ export async function editFileTool(
 
   // Parse response using `parseXmlToJson`
   const result = parseXmlToJson(response);
-  await saveThinkingProcess(result, input, context);
+  await saveThinkingProcess(
+    `Analyzing file changes...\nFiles to modify: ${Object.keys(result.modified_files || {}).join(', ')}`,
+    input,
+    context
+  );
 
   // Check for files that need to be read or modified
   if (result.files && Array.isArray(result.files)) {
@@ -384,7 +429,11 @@ export async function codeReviewTool(
 
   // Parse review results using `parseXmlToJson`
   const result = parseXmlToJson(response);
-  await saveThinkingProcess(result, input, context);
+  await saveThinkingProcess(
+    `Code Review:\n${result.review_result}\n\nComments:\n${result.comments?.join('\n')}`,
+    input,
+    context
+  );
 
   if (!result.review_result || !result.comments) {
     throw new Error('Invalid response format: missing review details');
