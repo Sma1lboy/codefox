@@ -31,6 +31,11 @@ import {
   PROJECT_DAILY_LIMIT,
   ProjectRateLimitException,
 } from './project-limits';
+import * as fs from 'fs';
+import * as path from 'path';
+import archiver from 'archiver';
+import { getProjectPath, getTempDir } from 'codefox-common';
+
 @Injectable()
 export class ProjectService {
   private readonly model: OpenAIModelProvider =
@@ -684,5 +689,89 @@ export class ProjectService {
     });
 
     return Math.max(0, PROJECT_DAILY_LIMIT - todayProjectCount);
+  }
+
+  /**
+   * Creates a ZIP file from a project's directory
+   * @param userId The user ID making the request
+   * @param projectId The project ID to download
+   * @returns The path to the created ZIP file and the suggested filename
+   */
+  async createProjectZip(
+    userId: string,
+    projectId: string,
+  ): Promise<{ zipPath: string; fileName: string }> {
+    
+    // Get the project
+    const project = await this.getProjectById(projectId);
+    
+    // Check ownership or if project is public
+    if (project.userId !== userId && !project.isPublic) {
+      throw new ForbiddenException(
+        'You do not have permission to download this project',
+      );
+    }
+    
+    // Ensure the project path exists
+    const projectPath = getProjectPath(project.projectPath);
+    this.logger.debug(`Project path: ${projectPath}`);
+    
+    if (!fs.existsSync(projectPath)) {
+      throw new NotFoundException(
+        `Project directory not found at ${projectPath}`,
+      );
+    }
+    
+    // Create a temporary directory for the zip file if it doesn't exist
+    const tempDir = getTempDir();
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    
+    // Generate a filename for the zip
+    const fileName = `${project.projectName.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.zip`;
+    const zipPath = path.join(tempDir, fileName);
+    
+    // Create a write stream for the zip file
+    const output = fs.createWriteStream(zipPath);
+    const archive = archiver('zip', {
+      zlib: { level: 9 }, // Set the compression level
+    });
+    
+    // Listen for errors
+    output.on('error', (err) => {
+      throw new InternalServerErrorException(
+        `Error creating zip file: ${err.message}`,
+      );
+    });
+    
+    // Pipe the archive to the output file
+    archive.pipe(output);
+
+    // Filter unwanted files/folders
+    const ignored = ['node_modules', '.git', '.gitignore', '.env'];
+    
+    // Add the project directory to the archive
+    archive.glob('**/*', {
+      cwd: projectPath,
+      ignore: ignored.map(pattern => `**/${pattern}/**`).concat(ignored),
+      dot: true
+    }, {});
+    
+    // Finalize the archive
+    await archive.finalize();
+    
+    // Wait for the output stream to finish
+    await new Promise<void>((resolve, reject) => {
+      output.on('close', () => {
+        this.logger.debug(`Created zip file: ${zipPath}, size: ${archive.pointer()} bytes`);
+        resolve();
+      });
+      output.on('error', (err) => {
+        reject(err);
+      });
+    });
+    
+    return { zipPath, fileName };
   }
 }

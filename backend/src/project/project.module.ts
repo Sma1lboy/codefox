@@ -11,6 +11,7 @@ import { User } from 'src/user/user.model';
 import { Chat } from 'src/chat/chat.model';
 import { AppConfigModule } from 'src/config/config.module';
 import { UploadModule } from 'src/upload/upload.module';
+import { DownloadController } from './DownloadController';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { UploadModule } from 'src/upload/upload.module';
     AppConfigModule,
     UploadModule,
   ],
+  controllers: [DownloadController],
   providers: [ChatService, ProjectService, ProjectsResolver, ProjectGuard],
   exports: [ProjectService, ProjectGuard],
 })
