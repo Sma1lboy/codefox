@@ -4,27 +4,33 @@ import { Button } from '@/components/ui/button';
 import {
   Code as CodeIcon,
   Copy,
+  Download,
   Eye,
   GitFork,
   Share2,
   Terminal,
 } from 'lucide-react';
+import { useAuthContext } from '@/providers/AuthProvider';
 
 interface ResponsiveToolbarProps {
   isLoading: boolean;
   activeTab: 'preview' | 'code' | 'console';
   setActiveTab: (tab: 'preview' | 'code' | 'console') => void;
+  projectId?: string;
 }
 
 const ResponsiveToolbar = ({
   isLoading,
   activeTab,
   setActiveTab,
+  projectId,
 }: ResponsiveToolbarProps) => {
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(700);
   const [visibleTabs, setVisibleTabs] = useState(3);
   const [compactIcons, setCompactIcons] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { token } = useAuthContext();
 
   // Observe container width changes
   useEffect(() => {
@@ -56,6 +62,70 @@ const ResponsiveToolbar = ({
       setCompactIcons(true);
     }
   }, [containerWidth]);
+
+  const handleDownload = async () => {
+    // If projectId is available, initiate download
+    if (projectId && !isDownloading) {
+      setIsDownloading(true);
+      try {
+        // Create a hidden anchor element for download
+        const a = document.createElement('a');
+        
+        // Set the download URL with credentials included
+        const downloadUrl = `http://localhost:8080/download/project/${projectId}`;
+
+
+        const headers = new Headers();
+        if (token) {
+          headers.append('Authorization', `Bearer ${token}`);
+        }
+        
+        // Fetch with credentials to ensure auth is included
+        const response = await fetch(downloadUrl, {
+          method: 'GET',
+          headers: headers,
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Download failed: ${response.status}`);
+        }
+        
+        // Get the blob from the response
+        const blob = await response.blob();
+        
+        // Create a URL for the blob
+        const url = window.URL.createObjectURL(blob);
+        
+        // Set the anchor's href to the blob URL
+        a.href = url;
+        
+        // Set download attribute with filename from Content-Disposition header or default
+        const contentDisposition = response.headers.get('Content-Disposition');
+        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+        const matches = filenameRegex.exec(contentDisposition || '');
+        const filename = matches && matches[1] 
+          ? matches[1].replace(/['"]/g, '') 
+          : `project-${projectId}.zip`;
+          
+        a.download = filename;
+        
+        // Append to the document
+        document.body.appendChild(a);
+        
+        // Click the anchor to start download
+        a.click();
+        
+        // Clean up
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } catch (error) {
+        console.error('Error downloading project:', error);
+        // Could add a toast notification here
+      } finally {
+        setIsDownloading(false);
+      }
+    }
+  };
 
   return (
     <div
@@ -137,12 +207,31 @@ const ResponsiveToolbar = ({
               >
                 Publish
               </Button>
+              <Button
+                variant="outline"
+                className="text-sm"
+                disabled={isLoading || !projectId}
+                onClick={handleDownload}
+              >
+                <Download className="w-4 h-4 mr-1" />
+                Download
+              </Button>
             </>
           )}
           {compactIcons && (
-            <Button variant="outline" className="p-2" disabled={isLoading}>
-              <Share2 className="w-4 h-4" />
-            </Button>
+            <>
+              <Button variant="outline" className="p-2" disabled={isLoading}>
+                <Share2 className="w-4 h-4" />
+              </Button>
+              <Button 
+                variant="outline" 
+                className="p-2" 
+                disabled={isLoading || !projectId}
+                onClick={handleDownload}
+              >
+                <Download className="w-4 h-4" />
+              </Button>
+            </>
           )}
         </div>
       </div>

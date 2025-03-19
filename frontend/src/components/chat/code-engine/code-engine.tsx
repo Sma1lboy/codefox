@@ -39,6 +39,8 @@ export function CodeEngine({
   const editorRef = useRef(null);
   const projectPathRef = useRef(null);
 
+  const [activeProjectId, setActiveProjectId] = useState<string | undefined>(projectId);
+
   // Poll for project if needed using chatId
   useEffect(() => {
     if (!curProject && chatId && !projectLoading) {
@@ -48,6 +50,10 @@ export function CodeEngine({
           const project = await pollChatProject(chatId);
           if (project) {
             setLocalProject(project);
+
+            if (project.id) {
+              setActiveProjectId(project.id);
+            }
           }
         } catch (error) {
           logger.error('Failed to load project from chat:', error);
@@ -59,6 +65,10 @@ export function CodeEngine({
       loadProjectFromChat();
     } else {
       setIsLoading(projectLoading);
+      // If we have a current project from context, use its ID
+      if (curProject?.id) {
+        setActiveProjectId(curProject.id);
+      }
     }
   }, [chatId, curProject, projectLoading, pollChatProject]);
 
@@ -289,6 +299,7 @@ export function CodeEngine({
         isLoading={showLoader}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        projectId={activeProjectId}
       />
 
       <div className="relative h-[calc(100vh-48px-4rem)]">
