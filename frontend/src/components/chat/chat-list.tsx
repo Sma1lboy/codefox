@@ -9,7 +9,17 @@ import remarkGfm from 'remark-gfm';
 import CodeDisplayBlock from '../code-display-block';
 import { Message } from '../../const/MessageType';
 import { Button } from '../ui/button';
-import { Check, Pencil, X, Code, Terminal } from 'lucide-react';
+import {
+  Check,
+  Pencil,
+  X,
+  Code,
+  Terminal,
+  Copy,
+  RotateCcw,
+  ThumbsUp,
+  ThumbsDown,
+} from 'lucide-react';
 import { useAuthContext } from '@/providers/AuthProvider';
 
 interface ChatListProps {
@@ -207,10 +217,10 @@ export default function ChatList({
                       className={cn(
                         'px-4 py-3 rounded-lg w-auto max-w-full',
                         isUser
-                          ? 'bg-muted text-foreground border border-border/50'
+                          ? 'bg-muted text-foreground border'
                           : isTool
-                            ? 'bg-slate-50 dark:bg-slate-900 border border-border/50'
-                            : 'bg-card text-card-foreground border border-border/50'
+                            ? 'bg-slate-50 dark:bg-slate-900'
+                            : 'bg-card text-card-foreground'
                       )}
                     >
                       <div className="whitespace-pre-wrap">
@@ -230,6 +240,24 @@ export default function ChatList({
                           </div>
                         )}
                       </div>
+                    </div>
+                  )}
+
+                  {/* Action buttons for assistant messages */}
+                  {!isUser && !isTool && (
+                    <div className="flex gap-2 mt-2">
+                      <Button size="sm" variant="ghost" className="h-7 px-2">
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2">
+                        <RotateCcw className="h-3 w-3" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2">
+                        <ThumbsUp className="h-3 w-3" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2">
+                        <ThumbsDown className="h-3 w-3" />
+                      </Button>
                     </div>
                   )}
 
