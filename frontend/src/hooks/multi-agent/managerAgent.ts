@@ -131,12 +131,14 @@ export async function managerAgent(
       };
 
       console.log('required Files:', decision.next_step.files);
-      context.requiredFiles = [
-        ...context.requiredFiles,
-        ...decision.next_step.files.filter(
-          (file) => !context.requiredFiles.includes(file)
-        ),
-      ];
+      if (decision.next_step.files) {
+        context.requiredFiles = [
+          ...context.requiredFiles,
+          ...decision.next_step.files.filter(
+            (file) => !context.requiredFiles.includes(file)
+          ),
+        ];
+      }
 
       // Find and execute the tool
       const toolNode = findToolNode(decision.next_step.tool);
@@ -199,18 +201,32 @@ export async function managerAgent(
       await refreshProjects();
     }
 
-    // Save all accumulated thoughts
+    // Generate summary and save message
     if (context.accumulatedThoughts.length > 0) {
-      context.saveMessage({
-        variables: {
-          input: {
-            chatId: input.chatId,
-            message: context.accumulatedThoughts.join('\n\n'),
-            model: input.model,
-            role: `assistant`,
+      // Create summary using summaryTool
+      const toolNode = findToolNode('summaryTool');
+      if (!toolNode) {
+        throw new Error('Summary tool not found');
+      }
+
+      await toolNode.behavior(input, context);
+
+      // Save the final summary message
+      if (context.final_response) {
+        context.saveMessage({
+          variables: {
+            input: {
+              chatId: input.chatId,
+              message: JSON.stringify({
+                final_response: context.final_response,
+                thinking_process: context.accumulatedThoughts.join('\n\n'),
+              }),
+              model: input.model,
+              role: 'assistant',
+            },
           },
-        },
-      });
+        });
+      }
     }
 
     console.log('Task completed successfully with updated files');

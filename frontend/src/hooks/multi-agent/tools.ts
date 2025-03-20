@@ -7,6 +7,7 @@ import {
   editFilePrompt,
   codeReviewPrompt,
   commitChangesPrompt,
+  summaryPrompt,
   AgentContext,
   TaskType,
 } from './agentPrompt';
@@ -540,4 +541,76 @@ export async function commitChangesTool(
 
   context.commitMessage = result.commit_message;
   console.log('Generated commit message:', result.commit_message);
+}
+
+/**
+ * Summary tool:
+ * Generates a final response and thinking process summary for the conversation.
+ */
+export async function summaryTool(
+  input: ChatInputType,
+  context: AgentContext
+): Promise<void> {
+  console.log('summaryTool called');
+
+  try {
+    // Prepare code changes analysis
+    const codeAnalysis = Object.entries(context.modifiedFiles)
+      .map(([filePath, newContent]) => {
+        const originalContent = context.fileContents[filePath] || '';
+        const fileExtension = filePath.split('.').pop() || '';
+
+        return `=== Modified File: ${filePath} ===
+
+Original Code:
+\`\`\`${fileExtension}
+${originalContent}
+\`\`\`
+
+Modified Code:
+\`\`\`${fileExtension}
+${newContent}
+\`\`\``;
+      })
+      .join('\n\n');
+
+    // Generate summary prompt with both thoughts and code changes
+    const promptContent = `
+${context.accumulatedThoughts.join('\n\n')}
+
+# Code Changes to Analyze
+${codeAnalysis || 'No code changes were made.'}
+
+Please analyze these changes and provide:
+1. What changed in each file (specific code modifications)
+2. Why these changes were necessary
+3. How the changes work together
+4. Technical implementation details
+`;
+
+    const prompt = summaryPrompt(promptContent);
+    const response = await startChatStream(
+      {
+        chatId: input.chatId,
+        message: prompt,
+        model: input.model,
+        role: input.role,
+      },
+      context.token
+    );
+
+    // Parse response
+    const result = parseXmlToJson(response);
+    if (!result.final_response) {
+      throw new Error('Invalid summary response format');
+    }
+
+    // Store both the AI's analysis and the code diffs
+    context.final_response = result.final_response;
+
+    console.log('Summary generated successfully');
+  } catch (error) {
+    console.error('Error in summaryTool:', error);
+    throw error;
+  }
 }

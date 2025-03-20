@@ -74,7 +74,36 @@ export default function ChatList({
     setEditContent('');
   };
 
-  const renderMessageContent = (content: string) => {
+  const renderMessageContent = (content: string, isAssistant: boolean) => {
+    // Try to parse JSON for assistant messages
+    if (isAssistant) {
+      try {
+        const parsed = JSON.parse(content);
+        if (parsed.final_response && parsed.thinking_process) {
+          return (
+            <>
+              <div>
+                <Markdown remarkPlugins={[remarkGfm]}>
+                  {parsed.final_response}
+                </Markdown>
+              </div>
+              <div className="mt-4 pt-4 border-t border-border/50">
+                <div className="text-xs text-muted-foreground mb-2">
+                  Thinking Process:
+                </div>
+                <Markdown remarkPlugins={[remarkGfm]}>
+                  {parsed.thinking_process}
+                </Markdown>
+              </div>
+            </>
+          );
+        }
+      } catch (e) {
+        // If parsing fails, treat as normal content
+      }
+    }
+
+    // Default rendering for non-JSON content
     return content.split('```').map((part, index) => {
       if (index % 2 === 0) {
         return (
@@ -215,12 +244,12 @@ export default function ChatList({
                   ) : (
                     <div
                       className={cn(
-                        'px-4 py-3 rounded-lg w-auto max-w-full',
-                        isUser
-                          ? 'bg-muted text-foreground border'
-                          : isTool
-                            ? 'bg-slate-50 dark:bg-slate-900'
-                            : 'bg-card text-card-foreground'
+                        'px-4 py-3 rounded-lg w-full break-words',
+                        isTool
+                          ? 'bg-slate-50 dark:bg-slate-900'
+                          : !isUser
+                            ? 'bg-card text-card-foreground'
+                            : 'text-foreground'
                       )}
                     >
                       <div className="whitespace-pre-wrap">
@@ -232,11 +261,11 @@ export default function ChatList({
                               <Terminal className="h-3.5 w-3.5" />
                               <span>Tool Execution</span>
                             </div>
-                            {renderMessageContent(message.content)}
+                            {renderMessageContent(message.content, !isUser)}
                           </div>
                         ) : (
                           <div className="prose dark:prose-invert prose-sm max-w-none">
-                            {renderMessageContent(message.content)}
+                            {renderMessageContent(message.content, !isUser)}
                           </div>
                         )}
                       </div>

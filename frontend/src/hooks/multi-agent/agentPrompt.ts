@@ -21,6 +21,7 @@ export interface AgentContext {
   reviewComments?: string[]; // Code review comments
   commitMessage?: string; // Commit message
   accumulatedThoughts: string[]; // Accumulated thinking processes
+  final_response?: string; // Final summarized response
   setFilePath: (path: string) => void; // Set current file path in editor
   editorRef: React.MutableRefObject<any>; // Monaco editor reference for direct updates
   currentStep?: {
@@ -438,6 +439,28 @@ IMPORTANT: If task_type is already specified (${context.task_type}), DO NOT use 
 }</jsonResponse>
 
 Make your decision based on the current context and ensure a logical progression through the development workflow.`
+  );
+};
+
+export const summaryPrompt = (message: string) => {
+  return (
+    systemPrompt() +
+    `You are a conversation summarizer. Your mission is to provide a clear, concise summary of the code changes made during this interaction.
+
+### **Mission Objective:**
+- Create a clear summary of code changes and technical decisions
+- Include before/after code comparisons where relevant
+- Highlight key modifications and their purposes
+
+### **User-Provided Information:**
+${message}
+
+### **Output Format**
+<jsonResponse>{
+    "final_response": "A clear summary including:\n1. The purpose of the changes\n2. Which files were modified\n3. What the changes accomplish\n4. Any important technical details or considerations"
+}</jsonResponse>
+
+Remember to include ALL code changes made during the conversation, formatted with proper markdown code blocks.`
   );
 };
 
