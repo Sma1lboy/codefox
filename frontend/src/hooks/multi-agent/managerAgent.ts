@@ -41,7 +41,8 @@ export async function managerAgent(
   token: string,
   refreshProjects: () => Promise<void>,
   setFilePath: (path: string) => void,
-  editorRef: React.MutableRefObject<any>
+  editorRef: React.MutableRefObject<any>,
+  setThinkingProcess: React.Dispatch<React.SetStateAction<Message[]>>
 ): Promise<void> {
   console.log('managerAgent called with input:', input);
 
@@ -66,6 +67,7 @@ export async function managerAgent(
       token,
       setFilePath,
       editorRef,
+      setThinkingProcess,
     };
 
     // Retrieve project file structure

@@ -33,6 +33,7 @@ export interface AgentContext {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   saveMessage: any;
   token?: string;
+  setThinkingProcess: React.Dispatch<React.SetStateAction<Message[]>>;
 }
 export const systemPrompt = (): string => {
   return `# System Instructions
@@ -457,7 +458,7 @@ ${message}
 
 ### **Output Format**
 <jsonResponse>{
-    "final_response": "A clear summary including:\n1. The purpose of the changes\n2. Which files were modified\n3. What the changes accomplish\n4. Any important technical details or considerations"
+    "final_response": "Here is a summary of the changes made:\\n\\n1. Purpose: [describe purpose]\\n2. Modified files: [list files]\\n3. Changes accomplished: [describe changes]\\n4. Technical details: [list important details]"
 }</jsonResponse>
 
 Remember to include ALL code changes made during the conversation, formatted with proper markdown code blocks.`

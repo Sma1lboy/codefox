@@ -23,6 +23,7 @@ export default function Chat() {
   const urlParams = new URLSearchParams(window.location.search);
   const [chatId, setChatId] = useState('');
   const [messages, setMessages] = useState([]);
+  const [thinkingProcess, setThinkingProcess] = useState([]);
   const [input, setInput] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
   const { models } = useModels();
@@ -54,6 +55,7 @@ export default function Chat() {
       input,
       setInput,
       setMessages,
+      setThinkingProcess,
       selectedModel,
     });
 
@@ -112,6 +114,7 @@ export default function Chat() {
             chatId={chatId}
             setSelectedModel={setSelectedModel}
             messages={messages}
+            thinkingProcess={thinkingProcess}
             input={input}
             handleInputChange={handleInputChange}
             handleSubmit={handleSubmit}
@@ -120,6 +123,7 @@ export default function Chat() {
             formRef={formRef}
             setInput={setInput}
             setMessages={setMessages}
+            setThinkingProcess={setThinkingProcess}
           />
         </div>
       </ResizablePanel>
@@ -147,6 +151,7 @@ export default function Chat() {
         chatId={chatId}
         setSelectedModel={setSelectedModel}
         messages={messages}
+        thinkingProcess={thinkingProcess}
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={handleSubmit}
@@ -155,6 +160,7 @@ export default function Chat() {
         formRef={formRef}
         setInput={setInput}
         setMessages={setMessages}
+        setThinkingProcess={setThinkingProcess}
       />
     </div>
   );

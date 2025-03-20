@@ -26,6 +26,7 @@ interface ChatListProps {
   messages: Message[];
   loadingSubmit?: boolean;
   onMessageEdit?: (messageId: string, newContent: string) => void;
+  thinkingProcess?: Message[];
 }
 
 const isUserMessage = (role: string) => role.toLowerCase() === 'user';
@@ -36,6 +37,7 @@ export default function ChatList({
   messages,
   loadingSubmit,
   onMessageEdit,
+  thinkingProcess,
 }: ChatListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const { user } = useAuthContext();

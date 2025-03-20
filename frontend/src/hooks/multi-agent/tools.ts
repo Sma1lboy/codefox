@@ -35,13 +35,57 @@ const saveThinkingProcess = async (
 
   // Accumulate the thinking process text for historical record.
   context.accumulatedThoughts.push(thinkingText);
+  const typewriterEffect = async (
+    textArray: string[],
+    delay: number
+  ): Promise<void> => {
+    return new Promise((resolve) => {
+      let index = 0;
 
-  // Function to break the text into small chunks for a smoother typewriter animation.
-  const breakText = (text: string): string[] => {
-    return text.match(/(\S{1,3}|\s+)/g) || [];
+      const updateMessage = () => {
+        if (index < textArray.length) {
+          context.setThinkingProcess((prev) => {
+            const lastMsg = prev[prev.length - 1];
+            if (lastMsg?.role === 'assistant' && lastMsg.id === input.chatId) {
+              return [
+                ...prev.slice(0, -1),
+                {
+                  ...lastMsg,
+                  content: lastMsg.content + textArray[index],
+                },
+              ];
+            } else {
+              return [
+                ...prev,
+                {
+                  id: input.chatId,
+                  role: 'assistant',
+                  content: textArray[index],
+                  createdAt: new Date().toISOString(),
+                },
+              ];
+            }
+          });
+
+          index++;
+          setTimeout(updateMessage, delay);
+        } else {
+          resolve();
+        }
+      };
+
+      updateMessage();
+    });
   };
+  const brokenText = breakText(thinkingText);
+  await typewriterEffect(brokenText, 10);
+};
 
-  // Typewriter effect: gradually display the text chunks with a specified delay.
+const saveFinalResponse = async (
+  final_response: string,
+  input: ChatInputType,
+  context: AgentContext
+): Promise<void> => {
   const typewriterEffect = async (
     textArray: string[],
     delay: number
@@ -84,26 +128,15 @@ const saveThinkingProcess = async (
       updateMessage();
     });
   };
-
-  // Break the provided thinkingText into chunks and display them.
-  const brokenText = breakText(thinkingText);
+  context.final_response = final_response;
+  const brokenText = breakText(final_response);
   await typewriterEffect(brokenText, 10);
-
-  // After displaying all chunks, append two newlines to the final message.
-  context.setMessages((prev) => {
-    const lastMsg = prev[prev.length - 1];
-    if (lastMsg?.role === 'assistant' && lastMsg.id === input.chatId) {
-      return [
-        ...prev.slice(0, -1),
-        {
-          ...lastMsg,
-          content: lastMsg.content + '\n\n',
-        },
-      ];
-    }
-    return prev;
-  });
 };
+
+const breakText = (text: string): string[] => {
+  return text.match(/(\S{1,3}|\s+)/g) || [];
+};
+
 /**
  * Get the corresponding prompt based on the task type.
  */
@@ -606,8 +639,7 @@ Please analyze these changes and provide:
     }
 
     // Store both the AI's analysis and the code diffs
-    context.final_response = result.final_response;
-
+    await saveFinalResponse(result.final_response, input, context);
     console.log('Summary generated successfully');
   } catch (error) {
     console.error('Error in summaryTool:', error);

@@ -11,6 +11,7 @@ export interface ChatProps {
   chatId?: string;
   setSelectedModel: React.Dispatch<React.SetStateAction<string>>;
   messages: Message[];
+  thinkingProcess: Message[];
   input: string;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: (
@@ -23,6 +24,7 @@ export interface ChatProps {
   isMobile?: boolean;
   setInput?: React.Dispatch<React.SetStateAction<string>>;
   setMessages: (messages: Message[]) => void;
+  setThinkingProcess: React.Dispatch<React.SetStateAction<Message[]>>;
 }
 
 export default function ChatContent({
@@ -38,6 +40,8 @@ export default function ChatContent({
   isMobile,
   setInput,
   setMessages,
+  thinkingProcess,
+  setThinkingProcess,
 }: ChatProps) {
   return (
     <motion.div
@@ -54,6 +58,7 @@ export default function ChatContent({
         <ChatList
           messages={messages}
           loadingSubmit={loadingSubmit}
+          thinkingProcess={thinkingProcess}
           onMessageEdit={(messageId, newContent) => {
             const updatedMessages = messages.map((msg) =>
               msg.id === messageId ? { ...msg, content: newContent } : msg
@@ -74,6 +79,8 @@ export default function ChatContent({
           formRef={formRef}
           setInput={setInput}
           setMessages={setMessages}
+          thinkingProcess={thinkingProcess}
+          setThinkingProcess={setThinkingProcess}
         />
       </div>
     </motion.div>

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useContext, use } from 'react';
+import { useState, useCallback, useEffect, useContext } from 'react';
 import { useMutation } from '@apollo/client';
 import { CREATE_CHAT, SAVE_MESSAGE } from '@/graphql/request';
 import { Message } from '@/const/MessageType';
@@ -15,6 +15,7 @@ export interface UseChatStreamProps {
   input: string;
   setInput: (input: string) => void;
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  setThinkingProcess: React.Dispatch<React.SetStateAction<Message[]>>;
   selectedModel: string;
 }
 
@@ -23,6 +24,7 @@ export const useChatStream = ({
   input,
   setInput,
   setMessages,
+  setThinkingProcess,
   selectedModel,
 }: UseChatStreamProps) => {
   const [loadingSubmit, setLoadingSubmit] = useState(false);
@@ -31,13 +33,14 @@ export const useChatStream = ({
   const { curProject, refreshProjects, setFilePath, editorRef } =
     useContext(ProjectContext);
   const [curProjectPath, setCurProjectPath] = useState('');
+
   useEffect(() => {
     console.log('curProject:', curProject);
     if (curProject) {
       setCurProjectPath(curProject.projectPath);
     }
   }, [curProject]);
-  // Use useEffect to handle new chat event and cleanup
+
   useEffect(() => {
     const updateChatId = () => {
       setCurrentChatId('');
@@ -90,6 +93,7 @@ export const useChatStream = ({
           input: userInput as ChatInputType,
         },
       });
+
       await managerAgent(
         userInput,
         setMessages,
@@ -98,7 +102,8 @@ export const useChatStream = ({
         token,
         refreshProjects,
         setFilePath,
-        editorRef
+        editorRef,
+        setThinkingProcess
       );
 
       setLoadingSubmit(false);
@@ -127,7 +132,6 @@ export const useChatStream = ({
     setMessages((prev) => [...prev, newMessage]);
 
     if (!currentChatId) {
-      console.log('currentChatId: ' + currentChatId);
       console.log('Creating new chat...');
       try {
         await createChat({
