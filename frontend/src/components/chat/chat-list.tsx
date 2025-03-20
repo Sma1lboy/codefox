@@ -14,11 +14,13 @@ import {
   Pencil,
   X,
   Code,
-  Terminal,
   Copy,
+  Trash2,
   RotateCcw,
   ThumbsUp,
   ThumbsDown,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { useAuthContext } from '@/providers/AuthProvider';
 
@@ -26,12 +28,11 @@ interface ChatListProps {
   messages: Message[];
   loadingSubmit?: boolean;
   onMessageEdit?: (messageId: string, newContent: string) => void;
-  thinkingProcess?: Message[];
+  thinkingProcess?: string[];
 }
 
 const isUserMessage = (role: string) => role.toLowerCase() === 'user';
-const isToolCall = (content: string) =>
-  content.includes('```') || content.includes('executing');
+const isToolCall = (content: string) => false; // No longer needed
 
 export default function ChatList({
   messages,
@@ -46,6 +47,28 @@ export default function ChatList({
     null
   );
   const [editContent, setEditContent] = React.useState('');
+  const [expandedThinking, setExpandedThinking] = React.useState<{
+    [key: string]: boolean;
+  }>({});
+
+  // Automatically expand thinking process for new AI messages
+  useEffect(() => {
+    const newMessages = messages.filter((m) => !m.id.includes('user-'));
+    if (newMessages.length > 0) {
+      const latestMessageId = newMessages[newMessages.length - 1].id;
+      setExpandedThinking((prev) => ({
+        ...prev,
+        [latestMessageId]: true,
+      }));
+    }
+  }, [messages]);
+
+  const toggleThinking = (messageId: string) => {
+    setExpandedThinking((prev) => ({
+      ...prev,
+      [messageId]: !prev[messageId],
+    }));
+  };
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -77,27 +100,14 @@ export default function ChatList({
   };
 
   const renderMessageContent = (content: string, isAssistant: boolean) => {
-    // Try to parse JSON for assistant messages
     if (isAssistant) {
       try {
         const parsed = JSON.parse(content);
-        if (parsed.final_response && parsed.thinking_process) {
+        if (parsed.final_response) {
           return (
-            <>
-              <div>
-                <Markdown remarkPlugins={[remarkGfm]}>
-                  {parsed.final_response}
-                </Markdown>
-              </div>
-              <div className="mt-4 pt-4 border-t border-border/50">
-                <div className="text-xs text-muted-foreground mb-2">
-                  Thinking Process:
-                </div>
-                <Markdown remarkPlugins={[remarkGfm]}>
-                  {parsed.thinking_process}
-                </Markdown>
-              </div>
-            </>
+            <Markdown remarkPlugins={[remarkGfm]}>
+              {parsed.final_response}
+            </Markdown>
           );
         }
       } catch (e) {
@@ -105,7 +115,6 @@ export default function ChatList({
       }
     }
 
-    // Default rendering for non-JSON content
     return content.split('```').map((part, index) => {
       if (index % 2 === 0) {
         return (
@@ -153,7 +162,6 @@ export default function ChatList({
           {messages.map((message, index) => {
             const isUser = isUserMessage(message.role);
             const isEditing = message.id === editingMessageId;
-            const isTool = !isUser && isToolCall(message.content);
 
             return (
               <motion.div
@@ -165,10 +173,9 @@ export default function ChatList({
                   opacity: { duration: 0.15 },
                   y: { duration: 0.15 },
                 }}
-                className="flex flex-col gap-1 w-full group"
+                className="flex gap-3 items-start"
               >
-                {/* Sender info - always on the left */}
-                <div className="flex items-center gap-2 ml-1">
+                <div className="flex-shrink-0 mt-1">
                   <Avatar
                     className={cn(
                       'h-6 w-6',
@@ -195,28 +202,11 @@ export default function ChatList({
                       </>
                     )}
                   </Avatar>
-                  <span className="text-xs text-muted-foreground">
-                    {isUser ? user.username || 'You' : 'CodeFox'}
-                  </span>
                 </div>
 
-                {/* Message content */}
-                <div className="flex flex-col gap-1 pl-8 relative">
-                  {/* Edit buttons for user messages */}
-                  {isUser && !isEditing && onMessageEdit && (
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="absolute -left-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6"
-                      onClick={() => handleEditStart(message)}
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                  )}
-
-                  {/* Message bubble */}
+                <div className="flex-grow flex flex-col gap-2">
                   {isEditing ? (
-                    <div className="flex flex-col gap-2 w-full pl-0">
+                    <div className="flex flex-col gap-2">
                       <textarea
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
@@ -244,58 +234,119 @@ export default function ChatList({
                       </div>
                     </div>
                   ) : (
-                    <div
-                      className={cn(
-                        'px-4 py-3 rounded-lg w-full break-words',
-                        isTool
-                          ? 'bg-slate-50 dark:bg-slate-900'
-                          : !isUser
+                    <div className="flex flex-col gap-2">
+                      <div
+                        className={cn(
+                          'px-4 py-1 rounded-lg break-words',
+                          !isUser
                             ? 'bg-card text-card-foreground'
                             : 'text-foreground'
-                      )}
-                    >
-                      <div className="whitespace-pre-wrap">
+                        )}
+                      >
                         {isUser ? (
                           message.content
-                        ) : isTool ? (
-                          <div className="prose dark:prose-invert prose-sm max-w-none">
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5">
-                              <Terminal className="h-3.5 w-3.5" />
-                              <span>Tool Execution</span>
-                            </div>
-                            {renderMessageContent(message.content, !isUser)}
-                          </div>
                         ) : (
-                          <div className="prose dark:prose-invert prose-sm max-w-none">
-                            {renderMessageContent(message.content, !isUser)}
-                          </div>
+                          <>
+                            <button
+                              onClick={() => toggleThinking(message.id)}
+                              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-muted-foreground/80 transition-colors"
+                            >
+                              {expandedThinking[message.id] ? (
+                                <ChevronDown className="h-3 w-3" />
+                              ) : (
+                                <ChevronRight className="h-3 w-3" />
+                              )}
+                              Thinking Process
+                            </button>
+                            {expandedThinking[message.id] && (
+                              <div className="mt-2 mb-4 pl-4 text-sm text-muted-foreground border-l-2 border-muted/20">
+                                {(() => {
+                                  try {
+                                    const parsedContent = JSON.parse(
+                                      message.content
+                                    );
+                                    if (parsedContent.thinking_process) {
+                                      return (
+                                        <Markdown remarkPlugins={[remarkGfm]}>
+                                          {parsedContent.thinking_process}
+                                        </Markdown>
+                                      );
+                                    }
+                                  } catch (e) {
+                                    return null;
+                                  }
+                                  return null;
+                                })()}
+                              </div>
+                            )}
+                            <div className="mt-4 prose dark:prose-invert prose-sm max-w-none">
+                              {renderMessageContent(message.content, !isUser)}
+                            </div>
+                          </>
                         )}
                       </div>
-                    </div>
-                  )}
-
-                  {/* Action buttons for assistant messages */}
-                  {!isUser && !isTool && (
-                    <div className="flex gap-2 mt-2">
-                      <Button size="sm" variant="ghost" className="h-7 px-2">
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-7 px-2">
-                        <RotateCcw className="h-3 w-3" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-7 px-2">
-                        <ThumbsUp className="h-3 w-3" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-7 px-2">
-                        <ThumbsDown className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Tool result or additional info could be added here */}
-                  {isTool && (
-                    <div className="text-xs text-muted-foreground mt-1 ml-2">
-                      <span>Tool output</span>
+                      {/* Action buttons */}
+                      <div className="px-2 flex gap-2">
+                        {isUser ? (
+                          <>
+                            {onMessageEdit && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 px-2"
+                                onClick={() => handleEditStart(message)}
+                              >
+                                <Pencil className="h-3 w-3 mr-1" />
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-2"
+                            >
+                              <Copy className="h-3 w-3 mr-1" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-2 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-3 w-3 mr-1" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-2"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-2"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-2"
+                            >
+                              <ThumbsUp className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-2"
+                            >
+                              <ThumbsDown className="h-3 w-3" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -308,9 +359,9 @@ export default function ChatList({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex flex-col gap-1 w-full"
+            className="flex gap-3 items-start"
           >
-            <div className="flex items-center gap-2 ml-1">
+            <div className="flex-shrink-0 mt-1">
               <Avatar className="h-6 w-6 bg-secondary/10">
                 <AvatarImage
                   src="/codefox.svg"
@@ -319,11 +370,10 @@ export default function ChatList({
                 />
                 <AvatarFallback>AI</AvatarFallback>
               </Avatar>
-              <span className="text-xs text-muted-foreground">CodeFox</span>
             </div>
 
-            <div className="flex pl-8">
-              <div className="px-3 py-2 flex items-center">
+            <div className="flex-grow">
+              <div className="px-4 py-2 flex items-center">
                 <div className="flex gap-1.5">
                   <span className="size-2 rounded-full bg-foreground/30 animate-bounce"></span>
                   <span
