@@ -203,35 +203,35 @@ const ResponsiveToolbar = ({
       try {
         // Create a hidden anchor element for download
         const a = document.createElement('a');
-        
+
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
         // Set the download URL with credentials included
-        const downloadUrl = `/download/project/${projectId}`;
+        const downloadUrl = `${backendUrl}/download/project/${projectId}`;
 
         const headers = new Headers();
         if (token) {
           headers.append('Authorization', `Bearer ${token}`);
         }
-        
+
         // Fetch with credentials to ensure auth is included
         const response = await fetch(downloadUrl, {
           method: 'GET',
           headers: headers,
-          credentials: 'include'
         });
-        
+
         if (!response.ok) {
           throw new Error(`Download failed: ${response.status}`);
         }
-        
+
         // Get the blob from the response
         const blob = await response.blob();
-        
+
         // Create a URL for the blob
         const url = window.URL.createObjectURL(blob);
-        
+
         // Set the anchor's href to the blob URL
         a.href = url;
-        
+
         // Set download attribute with filename from Content-Disposition header or default
         const contentDisposition = response.headers.get('Content-Disposition');
         const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
@@ -239,21 +239,21 @@ const ResponsiveToolbar = ({
         const filename = matches && matches[1] 
           ? matches[1].replace(/['"]/g, '') 
           : `project-${projectId}.zip`;
-          
+
         a.download = filename;
-        
+
         // Append to the document
         document.body.appendChild(a);
-        
+
         // Click the anchor to start download
         a.click();
-        
+
         // Clean up
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       } catch (error) {
-        logger.error('Error downloading project:', error);
-        alert('Error downloading project. Please try again.');
+        console.error('Error downloading project:', error);
+        // Could add a toast notification here
       } finally {
         setIsDownloading(false);
       }
