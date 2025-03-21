@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { FileUpload } from 'graphql-upload-minimal';
 import { UploadService } from '../upload/upload.service';
 import { validateAndBufferFile } from 'src/common/security/file_check';
+import { GitHubService } from 'src/github/github.service';
 
 @Injectable()
 export class UserService {
@@ -12,6 +13,7 @@ export class UserService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private readonly uploadService: UploadService,
+    private readonly gitHubService: GitHubService,
   ) {}
 
   // Method to get all chats of a user
@@ -72,8 +74,12 @@ export class UserService {
     }
 
     console.log(`Binding GitHub installation ID ${installationId} to user ${githubCode}`);
+
+    //First request to GitHub to exchange the code for an access token (Wont expire)
+    const accessToken = await this.gitHubService.exchangeOAuthCodeForToken(githubCode);
+
     user.githubInstallationId = installationId;
-    user.githubCode = githubCode;
+    user.githubAccessToken = accessToken;
 
     await this.userRepository.save(user);
 

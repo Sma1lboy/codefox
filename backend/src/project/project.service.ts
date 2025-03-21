@@ -808,8 +808,7 @@ export class ProjectService {
       user.githubInstallationId,
     );
 
-    const githubCode = user.githubCode;
-    const userOAuthToken = await this.gitHubService.exchangeOAuthCodeForToken(githubCode);
+    const userOAuthToken = user.githubAccessToken;
 
     // 4) Create the repo if the project doesn’t have it yet
     if (!project.githubRepoName || !project.githubOwner) {

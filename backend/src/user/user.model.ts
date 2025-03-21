@@ -84,7 +84,7 @@ export class User extends SystemBaseModel {
 
   @Field({ nullable: true })
   @Column({ nullable: true })
-  githubCode?: string;
+  githubAccessToken?: string;
 
   /**
    * This field is maintained for API compatibility but is no longer actively used.

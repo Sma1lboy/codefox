@@ -67,7 +67,7 @@ export class GitHubAppService {
       await this.userRepo.update(
         { githubInstallationId: installationId }, 
         { githubInstallationId: null,
-          githubCode: null
+          githubAccessToken: null
         }
       );
 

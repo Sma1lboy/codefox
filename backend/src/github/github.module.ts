@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { ProjectGuard } from '../guard/project.guard';
@@ -14,7 +14,7 @@ import { ProjectPackages } from 'src/project/project-packages.model';
 import { GitHuController } from './github.controller';
 import { ProjectService } from 'src/project/project.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { UserService } from 'src/user/user.service';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
   imports: [
@@ -22,10 +22,11 @@ import { UserService } from 'src/user/user.service';
     AuthModule,
     AppConfigModule,
     UploadModule,
-    ConfigModule
+    ConfigModule,
+    forwardRef(() => UserModule),
   ],
   controllers: [GitHuController],
-  providers: [ProjectService, ProjectGuard, GitHubAppService, GitHubService, ConfigService, ChatService, UserService],
+  providers: [ProjectService, ProjectGuard, GitHubAppService, GitHubService, ConfigService, ChatService],
   exports: [GitHubService],
 })
 export class GitHubModule {}

@@ -246,7 +246,7 @@ type User {
   chats: [Chat!]!
   createdAt: Date!
   email: String!
-  githubCode: String
+  githubAccessToken: String
   githubInstallationId: String
   id: ID!
   isActive: Boolean!
