@@ -37,7 +37,6 @@ const ResponsiveToolbar = ({
   const [compactIcons, setCompactIcons] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const { token, user, refreshUserInfo } = useAuthContext();
-  const [syncedProject, setSyncedProject] = useState(null);
   
   // Poll for GitHub installation status when needed
   const [isPollingGitHub, setIsPollingGitHub] = useState(false);
@@ -47,7 +46,6 @@ const ResponsiveToolbar = ({
     onCompleted: (data) => {
 
       const syncResult = data.syncProjectToGitHub;
-      setSyncedProject(syncResult);
 
       toast.success('Successfully published to GitHub!');
       
@@ -71,11 +69,13 @@ const ResponsiveToolbar = ({
   const { data: projectData } = useQuery(GET_PROJECT, {
     variables: { projectId },
     skip: !projectId,
+    fetchPolicy: 'cache-and-network',
   });
   
   // Determine if GitHub sync is complete based on query data
-  const isGithubSyncComplete = syncedProject?.isSyncedWithGitHub || projectData?.getProject?.isSyncedWithGitHub || false; 
-  const githubRepoUrl = syncedProject?.githubRepoUrl || projectData?.getProject?.githubRepoUrl || '';
+  const isGithubSyncComplete = projectData?.getProject?.isSyncedWithGitHub || false; 
+
+  const githubRepoUrl = projectData?.getProject?.githubRepoUrl || '';
 
   // Observe container width changes
   useEffect(() => {
@@ -136,9 +136,6 @@ const ResponsiveToolbar = ({
       if (pollInterval) clearInterval(pollInterval);
     };
   }, [isPollingGitHub, user?.githubInstallationId, refreshUserInfo]);
-  
-
-  // No need for a manual check function since we're using Apollo useQuery now
 
   const handlePublishToGitHub = async () => {
     // If already publishing, do nothing
