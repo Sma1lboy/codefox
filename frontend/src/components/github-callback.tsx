@@ -18,12 +18,12 @@ export default function GitHubCallback() {
   const hasCalledBackend = useRef(false); // Add guard flag here
   
   useEffect(() => {
-    if (hasCalledBackend.current) return; // Prevent multiple calls
-
     // Extract installation ID from search params
     const githubCode = searchParams.get('code');
     const installationId = searchParams.get('installation_id');
     const setupAction = searchParams.get('setup_action');
+
+    if (!token || hasCalledBackend.current) return; // Prevent multiple calls
 
     console.log('GitHub Callback:', { githubCode, installationId, setupAction });
     
@@ -84,7 +84,7 @@ export default function GitHubCallback() {
     };
     
     storeInstallation();
-  }, [searchParams, token]);
+  }, []);
   
   // Function to handle redirect back to projects
   const handleContinue = () => {
