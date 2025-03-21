@@ -26,6 +26,22 @@ import { ChatInputType } from '@/graphql/type';
  * displays it using a typewriter effect. After the entire text is shown, it appends
  * two newline characters.
  */
+const formatThinkingText = (text: string): string => {
+  // Format headers with simple separator
+  text = text.replace(
+    /^([A-Z][^:\n]+):$/gm,
+    (match) => `${match}\n-------------`
+  );
+
+  // Format bullet points
+  text = text.replace(/^[•-]\s/gm, '• ');
+
+  // Add extra newlines between sections
+  text = text.replace(/\n\n(?=[A-Z])/g, '\n\n\n');
+
+  return text;
+};
+
 const saveThinkingProcess = async (
   thinkingText: string,
   input: ChatInputType,
@@ -33,8 +49,8 @@ const saveThinkingProcess = async (
 ): Promise<void> => {
   if (!thinkingText) return;
 
-  // Accumulate the thinking process text for historical record.
-  context.accumulatedThoughts.push(thinkingText);
+  // Format and accumulate the thinking process text for historical record.
+  context.accumulatedThoughts.push(formatThinkingText(thinkingText));
   const typewriterEffect = async (
     textArray: string[],
     delay: number
@@ -221,7 +237,7 @@ export const taskTool = async (
     // Update context and display analysis
     context.task_type = taskType;
     await saveThinkingProcess(
-      `Task Analysis: This is a ${taskType} task.\n${result.description || ''}`,
+      `Task Analysis\n-------------\n\nType: ${taskType}\n\n${result.description ? `Description: ${result.description}\n` : ''}\n`,
       input,
       context
     );
@@ -282,7 +298,7 @@ export const taskTool = async (
 
     // Show analysis results
     await saveThinkingProcess(
-      `Found ${validFiles.length} relevant files:\n${validFiles.join('\n')}`,
+      `File Analysis\n-------------\n\nFound ${validFiles.length} relevant files:\n\n${validFiles.map((f) => `• ${f}`).join('\n\n')}`,
       input,
       context
     );
@@ -517,7 +533,7 @@ export async function codeReviewTool(
   // Parse review results using `parseXmlToJson`
   const result = parseXmlToJson(response);
   await saveThinkingProcess(
-    `Code Review:\n${result.review_result}\n\nComments:\n${result.comments?.join('\n')}`,
+    `Code Review\n-------------\n\nResult: ${result.review_result}\n\nComments:\n\n${result.comments?.map((c) => `• ${c}`).join('\n\n')}`,
     input,
     context
   );
@@ -570,7 +586,7 @@ export async function commitChangesTool(
   // Parse commit message using `parseXmlToJson`
   const result = parseXmlToJson(response);
   await saveThinkingProcess(
-    `Generated commit message:\n${result.commit_message}`,
+    `Generated Commit Message\n-------------\n\n${result.commit_message}`,
     input,
     context
   );
@@ -600,32 +616,49 @@ export async function summaryTool(
         const originalContent = context.fileContents[filePath] || '';
         const fileExtension = filePath.split('.').pop() || '';
 
-        return `=== Modified File: ${filePath} ===
+        return `
+File: ${filePath}
+-------------
 
-Original Code:
+[Original Code]
 \`\`\`${fileExtension}
 ${originalContent}
 \`\`\`
 
-Modified Code:
+[Modified Code]
 \`\`\`${fileExtension}
 ${newContent}
-\`\`\``;
+\`\`\`
+`;
       })
       .join('\n\n');
 
     // Generate summary prompt with both thoughts and code changes
     const promptContent = `
-${context.accumulatedThoughts.join('\n\n')}
+${context.accumulatedThoughts.map((thought, i) => `Step ${i + 1}:\n${thought}`).join('\n\n')}
 
-# Code Changes to Analyze
+Code Changes Analysis
+-------------
 ${codeAnalysis || 'No code changes were made.'}
 
-Please analyze these changes and provide:
-1. What changed in each file (specific code modifications)
-2. Why these changes were necessary
-3. How the changes work together
-4. Technical implementation details
+Analysis Requirements
+-------------
+1. File-specific Changes:
+   • What modifications were made to each file
+   • Impact of each change
+
+2. Change Justification:
+   • Why these changes were necessary
+   • Problems being solved
+
+3. Integration Analysis:
+   • How changes work together
+   • System-wide impact
+
+4. Technical Details:
+   • Implementation specifics
+   • Framework/library usage
+   • Performance considerations
 `;
 
     const prompt = summaryPrompt(promptContent);
@@ -649,7 +682,26 @@ Please analyze these changes and provide:
 
     context.setLoadingSubmit(false);
     context.setIsTPUpdating(false);
-    await saveFinalResponse(result.final_response, input, context);
+    // Format the final response with clear sections
+    const formattedResponse = `
+Changes Summary
+-------------
+
+${result.final_response
+  .split('\n\n')
+  .map((section) => {
+    // Add bullet points to list items and extra line breaks
+    if (section.match(/^\d\./m)) {
+      return section
+        .replace(/^(\d\.)/gm, '•')
+        .split('\n')
+        .join('\n\n');
+    }
+    return section;
+  })
+  .join('\n\n\n')}
+`;
+    await saveFinalResponse(formattedResponse, input, context);
     console.log('Summary generated successfully');
   } catch (error) {
     console.error('Error in summaryTool:', error);

@@ -81,20 +81,26 @@ export default function ChatList({
   };
 
   const renderMessageContent = (content: string) => {
-    return content.split('```').map((part, index) => {
-      if (index % 2 === 0) {
-        return (
-          <Markdown key={index} remarkPlugins={[remarkGfm]}>
-            {part}
-          </Markdown>
-        );
-      }
-      return (
-        <div className="my-2 w-full" key={index}>
-          <CodeDisplayBlock code={part} lang="" />
-        </div>
-      );
-    });
+    return (
+      <Markdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          code(props) {
+            const { children, className, node, ...rest } = props;
+            const match = /language-(\w+)/.exec(className || '');
+            return match ? (
+              <CodeDisplayBlock code={String(children)} lang={match[1]} />
+            ) : (
+              <code className={className} {...rest}>
+                {children}
+              </code>
+            );
+          },
+        }}
+      >
+        {content}
+      </Markdown>
+    );
   };
 
   if (messages.length === 0) {
@@ -172,13 +178,48 @@ export default function ChatList({
 
                 <div className="flex-grow flex flex-col gap-2">
                   {isEditing ? (
-                    <div className="flex flex-col gap-2">
-                      <textarea
-                        value={editContent}
-                        onChange={(e) => setEditContent(e.target.value)}
-                        className="min-h-[100px] w-full p-2 rounded bg-background border resize-none text-foreground"
-                        autoFocus
-                      />
+                    <div className="flex flex-col gap-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-2">
+                          <div className="text-xs text-muted-foreground">
+                            Edit
+                          </div>
+                          <textarea
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            className="min-h-[200px] w-full p-2 rounded bg-background border resize-none text-foreground font-mono"
+                            autoFocus
+                            placeholder="Support Markdown formatting..."
+                            onKeyDown={(e) => {
+                              if (e.key === 'Tab') {
+                                e.preventDefault();
+                                const start = e.currentTarget.selectionStart;
+                                const end = e.currentTarget.selectionEnd;
+                                setEditContent(
+                                  editContent.substring(0, start) +
+                                    '  ' +
+                                    editContent.substring(end)
+                                );
+                                // Set cursor position after timeout to ensure state is updated
+                                setTimeout(() => {
+                                  e.currentTarget.selectionStart =
+                                    e.currentTarget.selectionEnd = start + 2;
+                                }, 0);
+                              }
+                            }}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <div className="text-xs text-muted-foreground">
+                            Preview
+                          </div>
+                          <div className="min-h-[200px] w-full p-2 rounded bg-muted prose dark:prose-invert prose-sm max-w-none overflow-auto">
+                            <Markdown remarkPlugins={[remarkGfm]}>
+                              {editContent}
+                            </Markdown>
+                          </div>
+                        </div>
+                      </div>
                       <div className="flex justify-end gap-2">
                         <Button
                           size="sm"
@@ -210,7 +251,11 @@ export default function ChatList({
                         )}
                       >
                         {isUser ? (
-                          message.content
+                          <div className="prose dark:prose-invert prose-sm max-w-none">
+                            <div className="mt-4 prose dark:prose-invert prose-sm max-w-none">
+                              {renderMessageContent(message.content)}
+                            </div>
+                          </div>
                         ) : (
                           <>
                             {(() => {
