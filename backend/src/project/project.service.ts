@@ -798,6 +798,7 @@ export class ProjectService {
       throw new Error('Project not found');
     }
     
+    this.logger.log("check if the github project exist: " + project.isSyncedWithGitHub);
     // 2) Check user’s GitHub installation
     if (!user.githubInstallationId) {
       throw new Error('GitHub App not installed for this user');
@@ -812,6 +813,8 @@ export class ProjectService {
     // 4) Create the repo if the project doesn’t have it yet
     if (!project.githubRepoName || !project.githubOwner) {
       // Use project.projectName or generate a safe name
+
+      // TODO: WHEN REPO NAME EXIST
       const repoName = project.projectName
         .replace(/\s+/g, '-')
         .toLowerCase() // e.g. "my-project"
