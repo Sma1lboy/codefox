@@ -44,9 +44,13 @@ const saveThinkingProcess = async (
 
       const updateMessage = () => {
         if (index < textArray.length) {
+          context.setIsTPUpdating(true);
           context.setThinkingProcess((prev) => {
             const lastMsg = prev[prev.length - 1];
-            if (lastMsg?.role === 'assistant' && lastMsg.id === input.chatId) {
+            if (
+              lastMsg?.role === 'assistant' &&
+              lastMsg.id === context.tempId
+            ) {
               return [
                 ...prev.slice(0, -1),
                 {
@@ -58,7 +62,7 @@ const saveThinkingProcess = async (
               return [
                 ...prev,
                 {
-                  id: input.chatId,
+                  id: context.tempId,
                   role: 'assistant',
                   content: textArray[index],
                   createdAt: new Date().toISOString(),
@@ -97,7 +101,10 @@ const saveFinalResponse = async (
         if (index < textArray.length) {
           context.setMessages((prev) => {
             const lastMsg = prev[prev.length - 1];
-            if (lastMsg?.role === 'assistant' && lastMsg.id === input.chatId) {
+            if (
+              lastMsg?.role === 'assistant' &&
+              lastMsg.id === context.tempId
+            ) {
               return [
                 ...prev.slice(0, -1),
                 {
@@ -109,7 +116,7 @@ const saveFinalResponse = async (
               return [
                 ...prev,
                 {
-                  id: input.chatId,
+                  id: context.tempId,
                   role: 'assistant',
                   content: textArray[index],
                   createdAt: new Date().toISOString(),
@@ -639,6 +646,9 @@ Please analyze these changes and provide:
     }
 
     // Store both the AI's analysis and the code diffs
+
+    context.setLoadingSubmit(false);
+    context.setIsTPUpdating(false);
     await saveFinalResponse(result.final_response, input, context);
     console.log('Summary generated successfully');
   } catch (error) {

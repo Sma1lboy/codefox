@@ -5,6 +5,7 @@ import { confirmationPrompt, AgentContext, TaskType } from './agentPrompt';
 import path from 'path';
 import { parseXmlToJson } from '@/utils/parser';
 import { Message } from '@/const/MessageType';
+import { m } from 'framer-motion';
 
 /**
  * Normalize file paths.
@@ -34,6 +35,7 @@ function validateFiles(files: string[]): string[] {
  * 4. Repeating until AI determines the task is complete.
  */
 export async function managerAgent(
+  tempId: string,
   input: ChatInputType,
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
   projectPath: string,
@@ -42,13 +44,16 @@ export async function managerAgent(
   refreshProjects: () => Promise<void>,
   setFilePath: (path: string) => void,
   editorRef: React.MutableRefObject<any>,
-  setThinkingProcess: React.Dispatch<React.SetStateAction<Message[]>>
-): Promise<void> {
+  setThinkingProcess: React.Dispatch<React.SetStateAction<Message[]>>,
+  setIsTPUpdating: React.Dispatch<React.SetStateAction<boolean>>,
+  setLoadingSubmit: React.Dispatch<React.SetStateAction<boolean>>
+): Promise<string> {
   console.log('managerAgent called with input:', input);
 
   try {
     // Initialize context
     const context: AgentContext = {
+      tempId,
       task_type: undefined, // Will be set after task analysis
       request: input.message, // Store the original request
       projectPath,
@@ -68,6 +73,8 @@ export async function managerAgent(
       setFilePath,
       editorRef,
       setThinkingProcess,
+      setIsTPUpdating,
+      setLoadingSubmit,
     };
 
     // Retrieve project file structure
@@ -232,6 +239,7 @@ export async function managerAgent(
     }
 
     console.log('Task completed successfully with updated files');
+    return context.accumulatedThoughts.join('\n\n');
   } catch (error) {
     console.error('Error in managerAgent:', error);
     throw error;

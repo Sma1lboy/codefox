@@ -11,7 +11,7 @@ export interface ChatProps {
   chatId?: string;
   setSelectedModel: React.Dispatch<React.SetStateAction<string>>;
   messages: Message[];
-  thinkingProcess: string[];
+  thinkingProcess: Message[];
   input: string;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: (
@@ -25,6 +25,7 @@ export interface ChatProps {
   setInput?: React.Dispatch<React.SetStateAction<string>>;
   setMessages: (messages: Message[]) => void;
   setThinkingProcess: React.Dispatch<React.SetStateAction<string[]>>;
+  isTPUpdating: boolean;
 }
 
 export default function ChatContent({
@@ -42,6 +43,7 @@ export default function ChatContent({
   setMessages,
   thinkingProcess,
   setThinkingProcess,
+  isTPUpdating,
 }: ChatProps) {
   return (
     <motion.div
@@ -65,6 +67,7 @@ export default function ChatContent({
             setMessages(updatedMessages);
           }}
           thinkingProcess={thinkingProcess}
+          isTPUpdating={isTPUpdating}
         />
       </div>
 

@@ -19,27 +19,30 @@ import {
   RotateCcw,
   ThumbsUp,
   ThumbsDown,
-  ChevronDown,
-  ChevronRight,
 } from 'lucide-react';
 import { useAuthContext } from '@/providers/AuthProvider';
+import ThinkingProcessBlock from './thinking-process-block';
 
 interface ChatListProps {
   messages: Message[];
   loadingSubmit?: boolean;
   onMessageEdit?: (messageId: string, newContent: string) => void;
-  thinkingProcess?: string[];
+  thinkingProcess?: Message[];
+
+  isTPUpdating: boolean;
 }
 
 const isUserMessage = (role: string) => role.toLowerCase() === 'user';
-const isToolCall = (content: string) => false; // No longer needed
 
 export default function ChatList({
   messages,
   loadingSubmit,
   onMessageEdit,
   thinkingProcess,
+
+  isTPUpdating,
 }: ChatListProps) {
+  console.log(thinkingProcess);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { user } = useAuthContext();
 
@@ -47,28 +50,6 @@ export default function ChatList({
     null
   );
   const [editContent, setEditContent] = React.useState('');
-  const [expandedThinking, setExpandedThinking] = React.useState<{
-    [key: string]: boolean;
-  }>({});
-
-  // Automatically expand thinking process for new AI messages
-  useEffect(() => {
-    const newMessages = messages.filter((m) => !m.id.includes('user-'));
-    if (newMessages.length > 0) {
-      const latestMessageId = newMessages[newMessages.length - 1].id;
-      setExpandedThinking((prev) => ({
-        ...prev,
-        [latestMessageId]: true,
-      }));
-    }
-  }, [messages]);
-
-  const toggleThinking = (messageId: string) => {
-    setExpandedThinking((prev) => ({
-      ...prev,
-      [messageId]: !prev[messageId],
-    }));
-  };
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -99,22 +80,7 @@ export default function ChatList({
     setEditContent('');
   };
 
-  const renderMessageContent = (content: string, isAssistant: boolean) => {
-    if (isAssistant) {
-      try {
-        const parsed = JSON.parse(content);
-        if (parsed.final_response) {
-          return (
-            <Markdown remarkPlugins={[remarkGfm]}>
-              {parsed.final_response}
-            </Markdown>
-          );
-        }
-      } catch (e) {
-        // If parsing fails, treat as normal content
-      }
-    }
-
+  const renderMessageContent = (content: string) => {
     return content.split('```').map((part, index) => {
       if (index % 2 === 0) {
         return (
@@ -247,40 +213,23 @@ export default function ChatList({
                           message.content
                         ) : (
                           <>
-                            <button
-                              onClick={() => toggleThinking(message.id)}
-                              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-muted-foreground/80 transition-colors"
-                            >
-                              {expandedThinking[message.id] ? (
-                                <ChevronDown className="h-3 w-3" />
-                              ) : (
-                                <ChevronRight className="h-3 w-3" />
-                              )}
-                              Thinking Process
-                            </button>
-                            {expandedThinking[message.id] && (
-                              <div className="mt-2 mb-4 pl-4 text-sm text-muted-foreground border-l-2 border-muted/20">
-                                {(() => {
-                                  try {
-                                    const parsedContent = JSON.parse(
-                                      message.content
-                                    );
-                                    if (parsedContent.thinking_process) {
-                                      return (
-                                        <Markdown remarkPlugins={[remarkGfm]}>
-                                          {parsedContent.thinking_process}
-                                        </Markdown>
-                                      );
-                                    }
-                                  } catch (e) {
-                                    return null;
-                                  }
-                                  return null;
-                                })()}
-                              </div>
-                            )}
+                            {(() => {
+                              const tpMsg = thinkingProcess.find(
+                                (tp) => tp.id === message.id
+                              );
+                              if (tpMsg) {
+                                return (
+                                  <ThinkingProcessBlock
+                                    key={message.id}
+                                    thinking={tpMsg}
+                                  />
+                                );
+                              }
+                              return null;
+                            })()}
+
                             <div className="mt-4 prose dark:prose-invert prose-sm max-w-none">
-                              {renderMessageContent(message.content, !isUser)}
+                              {renderMessageContent(message.content)}
                             </div>
                           </>
                         )}
@@ -371,19 +320,30 @@ export default function ChatList({
                 <AvatarFallback>AI</AvatarFallback>
               </Avatar>
             </div>
-
             <div className="flex-grow">
-              <div className="px-4 py-2 flex items-center">
-                <div className="flex gap-1.5">
-                  <span className="size-2 rounded-full bg-foreground/30 animate-bounce"></span>
-                  <span
-                    className="size-2 rounded-full bg-foreground/30 animate-bounce"
-                    style={{ animationDelay: '0.2s' }}
-                  ></span>
-                  <span
-                    className="size-2 rounded-full bg-foreground/30 animate-bounce"
-                    style={{ animationDelay: '0.4s' }}
-                  ></span>
+              <div className="px-4 py-2 flex flex-col">
+                {/* 仅当 isTPUpdating 为 true 时显示最新的 ThinkingProcessBlock */}
+                {isTPUpdating &&
+                  thinkingProcess &&
+                  thinkingProcess.length > 0 && (
+                    <ThinkingProcessBlock
+                      key="loading-tp"
+                      thinking={thinkingProcess[thinkingProcess.length - 1]}
+                    />
+                  )}
+                {/* 始终显示加载动画 */}
+                <div className="flex items-center mt-2">
+                  <div className="flex gap-1.5">
+                    <span className="size-2 rounded-full bg-foreground/30 animate-bounce"></span>
+                    <span
+                      className="size-2 rounded-full bg-foreground/30 animate-bounce"
+                      style={{ animationDelay: '0.2s' }}
+                    ></span>
+                    <span
+                      className="size-2 rounded-full bg-foreground/30 animate-bounce"
+                      style={{ animationDelay: '0.4s' }}
+                    ></span>
+                  </div>
                 </div>
               </div>
             </div>

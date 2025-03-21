@@ -5,6 +5,7 @@ export enum TaskType {
   UNRELATED = 'unrelated',
 }
 export interface AgentContext {
+  tempId?: string; // Temporary ID for the conversation
   task_type: TaskType | null; // Current task type
   request: string; // Original request
   projectPath: string; // Project ID
@@ -34,6 +35,8 @@ export interface AgentContext {
   saveMessage: any;
   token?: string;
   setThinkingProcess: React.Dispatch<React.SetStateAction<Message[]>>;
+  setIsTPUpdating: React.Dispatch<React.SetStateAction<boolean>>;
+  setLoadingSubmit: React.Dispatch<React.SetStateAction<boolean>>;
 }
 export const systemPrompt = (): string => {
   return `# System Instructions

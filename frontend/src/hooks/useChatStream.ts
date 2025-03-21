@@ -17,6 +17,7 @@ export interface UseChatStreamProps {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   setThinkingProcess: React.Dispatch<React.SetStateAction<Message[]>>;
   selectedModel: string;
+  setIsTPUpdating: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const useChatStream = ({
@@ -26,6 +27,7 @@ export const useChatStream = ({
   setMessages,
   setThinkingProcess,
   selectedModel,
+  setIsTPUpdating,
 }: UseChatStreamProps) => {
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string>(chatId);
@@ -94,7 +96,10 @@ export const useChatStream = ({
         },
       });
 
+      const tempId = `${targetChatId}-${Date.now()}`;
+
       await managerAgent(
+        tempId,
         userInput,
         setMessages,
         curProjectPath,
@@ -103,10 +108,10 @@ export const useChatStream = ({
         refreshProjects,
         setFilePath,
         editorRef,
-        setThinkingProcess
+        setThinkingProcess,
+        setIsTPUpdating,
+        setLoadingSubmit
       );
-
-      setLoadingSubmit(false);
     } catch (err) {
       toast.error('Failed to get chat response' + err);
       setLoadingSubmit(false);
