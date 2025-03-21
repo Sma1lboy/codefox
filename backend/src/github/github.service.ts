@@ -82,35 +82,42 @@ export class GitHubService {
     const clientId = this.configService.get<string>('GITHUB_CLIENT_ID');
     const clientSecret = this.configService.get<string>('GITHUB_CLIENT_SECRET');
     
-    console.log('code', code);
-    const response = await axios.post(
-      'https://github.com/login/oauth/access_token',
-      {
-        client_id: clientId,
-        client_secret: clientSecret,
-        code: code,
-      },
-      {
-        headers: {
-          Accept: 'application/json',
+    console.log('Exchanging OAuth Code:', { code, clientId, clientSecretExists: !!clientSecret });
+  
+    try {
+      const response = await axios.post(
+        'https://github.com/login/oauth/access_token',
+        {
+          client_id: clientId,
+          client_secret: clientSecret,
+          code: code,
         },
-      },
-    );
-
-    if (response.data.error) {
-      console.error('GitHub OAuth error:', response.data);
-      throw new BadRequestException(`GitHub OAuth error: ${response.data.error_description}`);
-    }
+        {
+          headers: {
+            Accept: 'application/json',
+          },
+        },
+      );
   
-    const accessToken = response.data.access_token;
-    if (!accessToken) {
-      console.log(response.data);
-      throw new Error('Failed to exchange OAuth code for token');
-    }
+      console.log('GitHub Token Exchange Response:', response.data);
   
-    return accessToken;
+      if (response.data.error) {
+        console.error('GitHub OAuth error:', response.data);
+        throw new BadRequestException(`GitHub OAuth error: ${response.data.error_description}`);
+      }
+  
+      const accessToken = response.data.access_token;
+      if (!accessToken) {
+        throw new Error('GitHub token exchange failed: No access token returned.');
+      }
+  
+      return accessToken;
+    } catch (error: any) {
+      console.error('OAuth exchange failed:', error.response?.data || error.message);
+      // throw new Error(`GitHub OAuth exchange failed: ${error.response?.data?.error_description || error.message}`);
+    }
   }
-
+  
   /**
    * Create a new repository under the *user's* account.
    * If you need an org-level repo, use POST /orgs/{org}/repos.
