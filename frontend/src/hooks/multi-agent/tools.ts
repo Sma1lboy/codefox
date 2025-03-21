@@ -290,6 +290,7 @@ export async function readFileTool(
         const data = await response.json();
         context.fileContents[filePath] = data.content;
       } catch (error) {
+        toast.error(`Failed to read file: ${filePath}`);
         throw error;
       }
     })
@@ -363,6 +364,7 @@ export async function editFileTool(
         realContent = JSON.parse(realContent);
       }
     } catch (error) {
+      toast.error('Failed to parse file content');
       throw error;
     }
 
@@ -384,6 +386,7 @@ export async function editFileTool(
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
       } catch (error) {
+        toast.error('Failed to animate file content');
         throw error;
       }
 

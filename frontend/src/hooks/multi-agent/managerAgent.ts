@@ -5,6 +5,7 @@ import { confirmationPrompt, AgentContext, TaskType } from './agentPrompt';
 import path from 'path';
 import { parseXmlToJson } from '@/utils/parser';
 import { Message } from '@/const/MessageType';
+import { toast } from 'sonner';
 
 /**
  * Normalize file paths.
@@ -67,20 +68,16 @@ export async function managerAgent(
     };
 
     // Retrieve project file structure
-    try {
-      const response = await fetch(
-        `/api/filestructure?path=${encodeURIComponent(projectPath)}`,
-        {
-          method: 'GET',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-      const data = await response.json();
-      context.fileStructure = validateFiles(data.res);
-    } catch (error) {
-      throw error;
-    }
+    const response = await fetch(
+      `/api/filestructure?path=${encodeURIComponent(projectPath)}`,
+      {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+    const data = await response.json();
+    context.fileStructure = validateFiles(data.res);
 
     const MAX_ITERATIONS = 60;
     const TIMEOUT = 30 * 60 * 1000; // 30-minute timeout
@@ -109,6 +106,7 @@ export async function managerAgent(
       try {
         decision = parseXmlToJson(response);
       } catch (error) {
+        toast.error('Failed to parse AI response');
         throw error;
       }
 
@@ -179,6 +177,7 @@ export async function managerAgent(
                 }),
               });
             } catch (error) {
+              toast.error('Failed to save file');
               throw error;
             }
           }
@@ -203,6 +202,7 @@ export async function managerAgent(
       });
     }
   } catch (error) {
+    toast.error('Failed to complete task');
     throw error;
   }
 }
