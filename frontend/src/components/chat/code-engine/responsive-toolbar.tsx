@@ -37,18 +37,23 @@ const ResponsiveToolbar = ({
   const [compactIcons, setCompactIcons] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const { token, user, refreshUserInfo } = useAuthContext();
+  const [syncedProject, setSyncedProject] = useState(null);
   
   // Poll for GitHub installation status when needed
   const [isPollingGitHub, setIsPollingGitHub] = useState(false);
-  const [gitHubInstallationWindow, setGitHubInstallationWindow] = useState<Window | null>(null);
   
   // Apollo mutations and queries
   const [syncProject, { loading: isPublishingToGitHub }] = useMutation(SYNC_PROJECT_TO_GITHUB, {
     onCompleted: (data) => {
+
+      const syncResult = data.syncProjectToGitHub;
+      setSyncedProject(syncResult);
+
       toast.success('Successfully published to GitHub!');
       
       // Offer to open the repo in a new tab
-      const repoUrl = data.syncProject.githubRepoUrl;
+      const repoUrl = syncResult.githubRepoUrl;
+      console.log('GitHub repo URL:', repoUrl);
       if (repoUrl) {
         const shouldOpen = window.confirm('Would you like to open the GitHub repository?');
         if (shouldOpen) {
@@ -66,11 +71,11 @@ const ResponsiveToolbar = ({
   const { data: projectData } = useQuery(GET_PROJECT, {
     variables: { projectId },
     skip: !projectId,
-    fetchPolicy: 'cache-and-network'
   });
   
   // Determine if GitHub sync is complete based on query data
-  const isGithubSyncComplete = projectData?.getProject?.isSyncedWithGitHub;
+  const isGithubSyncComplete = syncedProject?.isSyncedWithGitHub || projectData?.getProject?.isSyncedWithGitHub || false; 
+  const githubRepoUrl = syncedProject?.githubRepoUrl || projectData?.getProject?.githubRepoUrl || '';
 
   // Observe container width changes
   useEffect(() => {
@@ -106,32 +111,32 @@ const ResponsiveToolbar = ({
   // Poll for GitHub installation completion
   useEffect(() => {
     let pollInterval: NodeJS.Timeout;
-    
+  
     if (isPollingGitHub) {
       pollInterval = setInterval(async () => {
+        console.log('Polling backend for GitHub installation status...');
         try {
-          // Check if the installation window is still open
-          if (gitHubInstallationWindow && gitHubInstallationWindow.closed) {
-            logger.info('GitHub installation window closed, checking installation status');
-            
-            // Refresh user data to get updated installation status
-            await refreshUserInfo();
-            
-            // Stop polling
+          // Call to refresh user info (from backend)
+          await refreshUserInfo();
+  
+          // Check if user now has installation ID
+          if (user?.githubInstallationId) {
+            console.log('GitHub installation complete!');
             setIsPollingGitHub(false);
-            setGitHubInstallationWindow(null);
+            clearInterval(pollInterval);
           }
         } catch (error) {
-          logger.error('Error polling for GitHub installation status:', error);
+          logger.error('Polling error:', error);
           setIsPollingGitHub(false);
         }
-      }, 2000); // Poll every 2 seconds
+      }, 3000); // Poll every 3s
     }
-    
+  
     return () => {
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [isPollingGitHub, gitHubInstallationWindow, refreshUserInfo]);
+  }, [isPollingGitHub, user?.githubInstallationId, refreshUserInfo]);
+  
 
   // No need for a manual check function since we're using Apollo useQuery now
 
@@ -153,11 +158,7 @@ const ResponsiveToolbar = ({
           
           // This format ensures GitHub will prompt the user to choose where to install
           const installUrl = `https://github.com/apps/codefox-project-fork/installations/new`;
-          const installWindow = window.open(installUrl, '_blank');
-          
-          if (installWindow) {
-            setGitHubInstallationWindow(installWindow);
-          }
+          window.open(installUrl, '_blank');
         }
         return;
       } catch (error) {
@@ -175,7 +176,7 @@ const ResponsiveToolbar = ({
     }
     
     // If already synced and we have the URL, offer to open it
-    if (isGithubSyncComplete && projectData?.getProject?.githubRepoUrl) {
+    if (isGithubSyncComplete && githubRepoUrl) {
       const shouldOpen = window.confirm('This project is already published to GitHub. Would you like to open the repository?');
       if (shouldOpen) {
         window.open(projectData.getProject.githubRepoUrl, '_blank');
