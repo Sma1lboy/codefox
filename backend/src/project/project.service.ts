@@ -808,19 +808,21 @@ export class ProjectService {
       user.githubInstallationId,
     );
 
+    const githubCode = user.githubCode;
+    const userOAuthToken = await this.gitHubService.exchangeOAuthCodeForToken(githubCode);
+
     // 4) Create the repo if the project doesn’t have it yet
     if (!project.githubRepoName || !project.githubOwner) {
       // Use project.projectName or generate a safe name
       const repoName = project.projectName
         .replace(/\s+/g, '-')
         .toLowerCase() // e.g. "my-project"
-        + '-' + Date.now(); // to make it unique if needed
+        + '-' + project.githubOwner; // to make it unique if needed
 
       const { owner, repo, htmlUrl } = await this.gitHubService.createUserRepo(
-        installationToken,
         repoName,
         isPublic,
-        user.githubCode
+        userOAuthToken
       );
 
       project.githubRepoName = repo;
@@ -832,6 +834,8 @@ export class ProjectService {
     //    If your projectPath is something like "/path/to/myProject",
     //    we'll just push everything inside it, ignoring .git, node_modules, etc.
     const projectPath = getProjectPath(project.projectPath);
+
+    // delete await for now, To make it background running
     await this.gitHubService.pushFolderContent(
       installationToken,
       project.githubOwner,

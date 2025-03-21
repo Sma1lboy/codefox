@@ -63,16 +63,15 @@ export class GitHubAppService {
 
       this.logger.log(`uninstall Created: installationId=${installationId}, GitHub Login=`);
 
+      // remove user github code and installationId 
       await this.userRepo.update(
         { githubInstallationId: installationId }, 
         { githubInstallationId: null,
           githubCode: null
         }
       );
-      this.logger.log(`Cleared installationId for user: ${installationId}`);
-      
 
-      // e.g. clear the installation ID in your DB
+      this.logger.log(`Cleared installationId for user: ${installationId}`);
     });
 
     // Handle errors
@@ -84,11 +83,10 @@ export class GitHubAppService {
       }
     });
 
+    // only for webhooks debugging 
     this.app.webhooks.onAny(async (event) => {
-      this.logger.log(`🔥 onAny: Received event='${event.name}' action='${event.payload}'`);
+      this.logger.log(`onAny: Received event='${event.name}' action='${event.payload}'`);
     });
-    
-    
   }
 
   /**

@@ -6,15 +6,24 @@ import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
+import { Project } from 'src/project/project.model';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class GitHubService {
   private readonly logger = new Logger(GitHubService.name);
-
+  
   private readonly appId: string;
   private privateKey: string;
+  private ignored = ['node_modules', '.git', '.gitignore', '.env'];
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,     
+    @InjectRepository(Project)
+    private projectsRepository: Repository<Project>,) 
+  {
+
     this.appId = this.configService.get<string>('GITHUB_APP_ID');
   
     const privateKeyPath = this.configService.get<string>('GITHUB_PRIVATE_KEY_PATH');
@@ -102,18 +111,15 @@ export class GitHubService {
    * If you need an org-level repo, use POST /orgs/{org}/repos.
   */
   async createUserRepo(
-    installationToken: string,
     repoName: string,
     isPublic: boolean,
-    githubCode: string,
+    userOAuthToken: string,
   ): Promise<{
     owner: string;
     repo: string;
     htmlUrl: string;
   }> {
     const url = `https://api.github.com/user/repos`;
-
-    const userOAuthToken = await this.exchangeOAuthCodeForToken(githubCode);
 
     const response = await axios.post(
       url,
@@ -128,6 +134,7 @@ export class GitHubService {
         },
       },
     );
+
     // The response will have data about the new repo
     const data = response.data;
     return {
@@ -151,7 +158,7 @@ export class GitHubService {
     }
   }
 
-    /**
+  /**
    * Push a single file to the given path in the repo using GitHub Contents API.
    * 
    * @param relativePathInRepo e.g. "backend/index.js" or "frontend/package.json"
@@ -200,6 +207,12 @@ export class GitHubService {
       const entries = fs.readdirSync(folderPath, { withFileTypes: true });
   
       for (const entry of entries) {
+
+        // Skip unwanted files
+        if (this.ignored.includes(entry.name)) {
+          continue;
+        }
+
         const entryPath = path.join(folderPath, entry.name);
         if (entry.isDirectory()) {
           // Skip unwanted directories

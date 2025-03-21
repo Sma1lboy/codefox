@@ -8,7 +8,7 @@ import { GetUserIdFromToken } from 'src/decorator/get-auth-token.decorator';
 import { UserService } from 'src/user/user.service';
 
 @Controller('github')
-export class GitHubWebhookController {
+export class GitHuController {
   private readonly webhookMiddleware;
 
   constructor(private readonly gitHubAppService: GitHubAppService, private readonly userService: UserService) {
@@ -27,10 +27,10 @@ export class GitHubWebhookController {
   
     return this.webhookMiddleware(req, res, (error?: any) => {
       if (error) {
-        console.error('⚠️ Webhook middleware error:', error);
+        console.error('Webhook middleware error:', error);
         return res.status(500).send('Internal Server Error');
       } else {
-        console.log('✅ Middleware processed request');
+        console.log('Middleware processed request');
         return res.sendStatus(200);
       }
     });

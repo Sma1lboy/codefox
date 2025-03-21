@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Code as CodeIcon,
@@ -10,8 +10,13 @@ import {
   Github,
   Share2,
   Terminal,
+  Loader,
 } from 'lucide-react';
 import { useAuthContext } from '@/providers/AuthProvider';
+import { logger } from '@/app/log/logger';
+import { useMutation, useQuery, gql } from '@apollo/client';
+import { toast } from 'sonner';
+import { SYNC_PROJECT_TO_GITHUB, GET_PROJECT } from '../../../graphql/request';
 
 interface ResponsiveToolbarProps {
   isLoading: boolean;
@@ -31,9 +36,41 @@ const ResponsiveToolbar = ({
   const [visibleTabs, setVisibleTabs] = useState(3);
   const [compactIcons, setCompactIcons] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const { token, user } = useAuthContext();
-  const [isPublishingToGitHub, setIsPublishingToGitHub] = useState(false);
-  const [isGithubSyncComplete, setIsGithubSyncComplete] = useState(false);
+  const { token, user, refreshUserInfo } = useAuthContext();
+  
+  // Poll for GitHub installation status when needed
+  const [isPollingGitHub, setIsPollingGitHub] = useState(false);
+  const [gitHubInstallationWindow, setGitHubInstallationWindow] = useState<Window | null>(null);
+  
+  // Apollo mutations and queries
+  const [syncProject, { loading: isPublishingToGitHub }] = useMutation(SYNC_PROJECT_TO_GITHUB, {
+    onCompleted: (data) => {
+      toast.success('Successfully published to GitHub!');
+      
+      // Offer to open the repo in a new tab
+      const repoUrl = data.syncProject.githubRepoUrl;
+      if (repoUrl) {
+        const shouldOpen = window.confirm('Would you like to open the GitHub repository?');
+        if (shouldOpen) {
+          window.open(repoUrl, '_blank');
+        }
+      }
+    },
+    onError: (error) => {
+      logger.error('Error publishing to GitHub:', error);
+      toast.error(`Error publishing to GitHub: ${error.message}`);
+    }
+  });
+  
+  // Query to check if the project is already synced
+  const { data: projectData } = useQuery(GET_PROJECT, {
+    variables: { projectId },
+    skip: !projectId,
+    fetchPolicy: 'cache-and-network'
+  });
+  
+  // Determine if GitHub sync is complete based on query data
+  const isGithubSyncComplete = projectData?.getProject?.isSyncedWithGitHub;
 
   // Observe container width changes
   useEffect(() => {
@@ -66,94 +103,96 @@ const ResponsiveToolbar = ({
     }
   }, [containerWidth]);
 
+  // Poll for GitHub installation completion
+  useEffect(() => {
+    let pollInterval: NodeJS.Timeout;
+    
+    if (isPollingGitHub) {
+      pollInterval = setInterval(async () => {
+        try {
+          // Check if the installation window is still open
+          if (gitHubInstallationWindow && gitHubInstallationWindow.closed) {
+            logger.info('GitHub installation window closed, checking installation status');
+            
+            // Refresh user data to get updated installation status
+            await refreshUserInfo();
+            
+            // Stop polling
+            setIsPollingGitHub(false);
+            setGitHubInstallationWindow(null);
+          }
+        } catch (error) {
+          logger.error('Error polling for GitHub installation status:', error);
+          setIsPollingGitHub(false);
+        }
+      }, 2000); // Poll every 2 seconds
+    }
+    
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [isPollingGitHub, gitHubInstallationWindow, refreshUserInfo]);
+
+  // No need for a manual check function since we're using Apollo useQuery now
+
   const handlePublishToGitHub = async () => {
-    // Check if GitHub App is installed
-    // Check if GitHub App is installed
+    // If already publishing, do nothing
+    if (isPublishingToGitHub) return;
+    
+    // If the user hasn't installed the GitHub App yet
     if (!user?.githubInstallationId) {
-      // Prompt the user to install the GitHub App
-      const shouldInstall = window.confirm(
-        'You need to install the GitHub App to publish your project. Would you like to do this now?'
-      );
-      
-      if (shouldInstall) {
-        // This format ensures GitHub will prompt the user to choose where to install
-        // Replace APP_ID with your actual GitHub App ID
-        const installUrl = `https://github.com/apps/codefox-project-fork/installations/new`;
-        window.open(installUrl);
+      try {
+        // Prompt the user to install the GitHub App
+        const shouldInstall = window.confirm(
+          'You need to install the GitHub App to publish your project. Would you like to do this now?'
+        );
         
-        // Optionally inform the user what to do after installation
-        alert('After installing the GitHub App, please return to this page and try publishing again.');
+        if (shouldInstall) {
+          // Start polling for installation completion
+          setIsPollingGitHub(true);
+          
+          // This format ensures GitHub will prompt the user to choose where to install
+          const installUrl = `https://github.com/apps/codefox-project-fork/installations/new`;
+          const installWindow = window.open(installUrl, '_blank');
+          
+          if (installWindow) {
+            setGitHubInstallationWindow(installWindow);
+          }
+        }
+        return;
+      } catch (error) {
+        logger.error('Error opening GitHub installation:', error);
+        setIsPollingGitHub(false);
+        toast.error('Error opening GitHub installation page. Please try again.');
+        return;
       }
-      return;
     }
     
     // Ensure we have a project ID
     if (!projectId) {
-      alert('Cannot publish: No project ID available');
+      toast.error('Cannot publish: No project ID available');
       return;
     }
     
-    // Set loading state
-    setIsPublishingToGitHub(true);
+    // If already synced and we have the URL, offer to open it
+    if (isGithubSyncComplete && projectData?.getProject?.githubRepoUrl) {
+      const shouldOpen = window.confirm('This project is already published to GitHub. Would you like to open the repository?');
+      if (shouldOpen) {
+        window.open(projectData.getProject.githubRepoUrl, '_blank');
+      }
+      return;
+    }
     
+    // Execute the mutation
     try {
-      // Call the syncProject mutation with GraphQL
-      const response = await fetch('/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          query: `
-            mutation SyncProject($projectId: String!) {
-            syncProject(projectId: $projectId) {
-              id
-              projectName
-              isSyncedWithGitHub
-              githubOwner
-              githubRepoName
-              githubRepoUrl
-            }
-          }
-
-          `,
-          variables: {
-            projectId
-          }
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.errors) {
-        throw new Error(result.errors[0].message || 'GraphQL error');
-      }
-      
-      // Get the repo URL from the response
-      const repoUrl = result.data.syncProject.githubRepoUrl;
-      
-      // Success!
-      setIsGithubSyncComplete(true);
-      
-      alert('Successfully published to GitHub!');
-      
-      // Open the repo in a new tab
-      if (repoUrl) {
-        const shouldOpen = window.confirm('Would you like to open the GitHub repository?');
-        if (shouldOpen) {
-          window.open(repoUrl, '_blank');
+      await syncProject({
+        variables: {
+          projectId
         }
-      }
+      });
     } catch (error) {
-      console.error('Error publishing to GitHub:', error);
-      alert(`Error publishing to GitHub: ${error.message || 'Unknown error'}`);
-    } finally {
-      setIsPublishingToGitHub(false);
+      // Error is handled by the mutation's onError callback
+      logger.error('Error in handlePublishToGitHub:', error);
     }
   };
 
@@ -166,8 +205,7 @@ const ResponsiveToolbar = ({
         const a = document.createElement('a');
         
         // Set the download URL with credentials included
-        const downloadUrl = `http://localhost:8080/download/project/${projectId}`;
-
+        const downloadUrl = `/download/project/${projectId}`;
 
         const headers = new Headers();
         if (token) {
@@ -178,6 +216,7 @@ const ResponsiveToolbar = ({
         const response = await fetch(downloadUrl, {
           method: 'GET',
           headers: headers,
+          credentials: 'include'
         });
         
         if (!response.ok) {
@@ -213,8 +252,8 @@ const ResponsiveToolbar = ({
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       } catch (error) {
-        console.error('Error downloading project:', error);
-        // Could add a toast notification here
+        logger.error('Error downloading project:', error);
+        alert('Error downloading project. Please try again.');
       } finally {
         setIsDownloading(false);
       }
@@ -304,20 +343,28 @@ const ResponsiveToolbar = ({
               <Button
                 variant="outline"
                 className="text-sm"
-                disabled={isLoading || !projectId}
+                disabled={isLoading || !projectId || isDownloading}
                 onClick={handleDownload}
               >
-                <Download className="w-4 h-4 mr-1" />
+                {isDownloading ? (
+                  <Loader className="w-4 h-4 mr-1 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 mr-1" />
+                )}
                 Download
               </Button>
               <Button
-                variant="outline"
+                variant={isGithubSyncComplete ? "secondary" : "outline"}
                 className="text-sm"
-                disabled={isLoading || !projectId}
+                disabled={isLoading || !projectId || isPublishingToGitHub || isPollingGitHub}
                 onClick={handlePublishToGitHub}
               >
-                <Github className="w-4 h-4 mr-1" />
-                Github
+                {isPublishingToGitHub ? (
+                  <Loader className="w-4 h-4 mr-1 animate-spin" />
+                ) : (
+                  <Github className="w-4 h-4 mr-1" />
+                )}
+                {isGithubSyncComplete ? "View on GitHub" : "GitHub"}
               </Button>
             </>
           )}
@@ -329,10 +376,26 @@ const ResponsiveToolbar = ({
               <Button 
                 variant="outline" 
                 className="p-2" 
-                disabled={isLoading || !projectId}
+                disabled={isLoading || !projectId || isDownloading}
                 onClick={handleDownload}
               >
-                <Download className="w-4 h-4" />
+                {isDownloading ? (
+                  <Loader className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+              </Button>
+              <Button 
+                variant={isGithubSyncComplete ? "secondary" : "outline"}
+                className="p-2" 
+                disabled={isLoading || !projectId || isPublishingToGitHub || isPollingGitHub}
+                onClick={handlePublishToGitHub}
+              >
+                {isPublishingToGitHub ? (
+                  <Loader className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Github className="w-4 h-4" />
+                )}
               </Button>
             </>
           )}

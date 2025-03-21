@@ -11,7 +11,7 @@ import { GitHubAppService } from './githubApp.service';
 import { GitHubService } from './github.service';
 import { Project } from 'src/project/project.model';
 import { ProjectPackages } from 'src/project/project-packages.model';
-import { GitHubWebhookController } from './githubWebhook.controller';
+import { GitHuController } from './github.controller';
 import { ProjectService } from 'src/project/project.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
@@ -24,7 +24,7 @@ import { UserService } from 'src/user/user.service';
     UploadModule,
     ConfigModule
   ],
-  controllers: [GitHubWebhookController],
+  controllers: [GitHuController],
   providers: [ProjectService, ProjectGuard, GitHubAppService, GitHubService, ConfigService, ChatService, UserService],
   exports: [GitHubService],
 })
