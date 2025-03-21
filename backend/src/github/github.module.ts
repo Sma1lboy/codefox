@@ -1,9 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Project } from './project.model';
-import { ProjectPackages } from './project-packages.model';
-import { ProjectService } from './project.service';
-import { ProjectsResolver } from './project.resolver';
 import { AuthModule } from '../auth/auth.module';
 import { ProjectGuard } from '../guard/project.guard';
 import { ChatService } from 'src/chat/chat.service';
@@ -11,8 +7,13 @@ import { User } from 'src/user/user.model';
 import { Chat } from 'src/chat/chat.model';
 import { AppConfigModule } from 'src/config/config.module';
 import { UploadModule } from 'src/upload/upload.module';
-import { DownloadController } from './DownloadController';
-import { GitHubService } from 'src/github/github.service';
+import { GitHubAppService } from './githubApp.service';
+import { GitHubService } from './github.service';
+import { Project } from 'src/project/project.model';
+import { ProjectPackages } from 'src/project/project-packages.model';
+import { GitHubWebhookController } from './githubWebhook.controller';
+import { ProjectService } from 'src/project/project.service';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
 
 @Module({
@@ -21,9 +22,10 @@ import { UserService } from 'src/user/user.service';
     AuthModule,
     AppConfigModule,
     UploadModule,
+    ConfigModule
   ],
-  controllers: [DownloadController],
-  providers: [ChatService, ProjectService, ProjectsResolver, ProjectGuard, GitHubService, UserService],
-  exports: [ProjectService, ProjectGuard],
+  controllers: [GitHubWebhookController],
+  providers: [ProjectService, ProjectGuard, GitHubAppService, GitHubService, ConfigService, ChatService, UserService],
+  exports: [GitHubService],
 })
-export class ProjectModule {}
+export class GitHubModule {}

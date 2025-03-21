@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { User } from './user.model';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -59,5 +59,24 @@ export class UserService {
     // Update the user's avatar URL
     user.avatarUrl = result.url;
     return this.userRepository.save(user);
+  }
+
+  async bindUserIdAndInstallId(userId: string, installationId: string, githubCode: string): Promise<boolean> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.githubInstallationId) {
+      throw new BadRequestException('User already linked to a GitHub installation.');
+    }
+
+    console.log(`Binding GitHub installation ID ${installationId} to user ${githubCode}`);
+    user.githubInstallationId = installationId;
+    user.githubCode = githubCode;
+
+    await this.userRepository.save(user);
+
+    return true;
   }
 }
