@@ -207,8 +207,6 @@ export const taskTool = async (
   }
 
   try {
-    console.log('Starting task analysis...');
-    console.log('Current input.message:', input.message);
     const prompt = leaderPrompt(input.message);
 
     // Get task analysis response
@@ -311,7 +309,6 @@ export const taskTool = async (
       description: `Reading ${validFiles.length} identified files`,
     };
   } catch (error) {
-    console.error('Task analysis error:', error);
     await saveThinkingProcess(
       `Error during task analysis: ${error.message}`,
       input,
@@ -329,8 +326,6 @@ export async function readFileTool(
   input: ChatInputType,
   context: AgentContext
 ): Promise<void> {
-  console.log('readFileTool called with input:', input);
-
   if (!context.requiredFiles || context.requiredFiles.length === 0) {
     throw new Error(
       'No files specified to read. Make sure requiredFiles is set.'
@@ -338,7 +333,6 @@ export async function readFileTool(
   }
 
   // Read file content for each required file
-  console.log('Reading files:', context.requiredFiles);
   await Promise.all(
     context.requiredFiles.map(async (filePath: string) => {
       try {
@@ -353,14 +347,11 @@ export async function readFileTool(
         const data = await response.json();
         context.fileContents[filePath] = data.content;
       } catch (error) {
-        console.error(`Error reading file ${filePath}:`, error);
         throw error;
       }
     })
   );
 
-  console.log('Files read:', context.requiredFiles);
-  console.log('File contents loaded:', context.fileContents);
   toast.success(`${context.requiredFiles.length} files loaded successfully`);
 }
 
@@ -372,9 +363,6 @@ export async function editFileTool(
   input: ChatInputType,
   context: AgentContext
 ): Promise<void> {
-  console.log('editFileTool called with input:', input);
-  console.log('Current file contents:', context.fileContents);
-
   if (Object.keys(context.fileContents).length === 0) {
     throw new Error(
       'No file contents available. Make sure readFileTool was called first.'
@@ -383,7 +371,6 @@ export async function editFileTool(
 
   // Generate edit prompt
   const prompt = editFilePrompt(input.message, context.fileContents);
-  console.log('Generated prompt with file contents for editing');
 
   // Get AI response
   const response = await startChatStream(
@@ -407,7 +394,6 @@ export async function editFileTool(
   // Check for files that need to be read or modified
   if (result.files && Array.isArray(result.files)) {
     context.requiredFiles = result.files;
-    console.log('New files identified:', result.files);
   }
 
   if (!result.modified_files || typeof result.modified_files !== 'object') {
@@ -417,7 +403,6 @@ export async function editFileTool(
   // Update required files and content in context
   const modifiedPaths = Object.keys(result.modified_files);
   const validPaths = modifiedPaths.filter((path) => !!path);
-  console.log('Adding new paths to required files:', validPaths);
   context.requiredFiles = Array.from(
     new Set([...context.requiredFiles, ...validPaths])
   );
@@ -435,10 +420,9 @@ export async function editFileTool(
         realContent = JSON.parse(realContent);
       }
     } catch (error) {
-      console.error('Error parsing code content:', error);
+      throw error;
     }
 
-    console.log(`Starting line-by-line changes for ${filePath}`);
     const lines = realContent.split('\n');
     let accumulatedContent = '';
 
@@ -454,11 +438,10 @@ export async function editFileTool(
         for (let i = 0; i < lines.length; i++) {
           accumulatedContent = lines.slice(0, i + 1).join('\n');
           context.editorRef.current.setValue(accumulatedContent);
-          console.log(`Updated line ${i + 1}/${lines.length} in ${filePath}`);
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
       } catch (error) {
-        console.error('Error updating editor content:', error);
+        throw error;
       }
 
       // Sync final content
@@ -469,8 +452,6 @@ export async function editFileTool(
     context.modifiedFiles[filePath] = realContent;
     context.fileContents[filePath] = realContent;
   }
-
-  console.log('Updated files with line-by-line animation of changes');
 }
 
 /**
@@ -481,8 +462,6 @@ export async function applyChangesTool(
   input: ChatInputType,
   context: AgentContext
 ): Promise<void> {
-  console.log('applyChangesTool called with input:', input);
-
   // Validate modification content
   Object.entries(context.modifiedFiles).forEach(([filePath, content]) => {
     if (!content || typeof content !== 'string') {
@@ -495,7 +474,6 @@ export async function applyChangesTool(
     context.fileContents[filePath] = content;
   });
 
-  console.log('Updated context with confirmed changes');
   toast.success('Changes applied successfully');
 }
 
@@ -507,8 +485,6 @@ export async function codeReviewTool(
   input: ChatInputType,
   context: AgentContext
 ): Promise<void> {
-  console.log('codeReviewTool called with input:', input);
-
   // Generate review prompt
   const formattedMessage = Object.entries(context.modifiedFiles)
     .map(
@@ -551,8 +527,6 @@ export async function codeReviewTool(
       description: 'Address review comments',
     };
   }
-
-  console.log('Code review completed');
 }
 
 /**
@@ -563,8 +537,6 @@ export async function commitChangesTool(
   input: ChatInputType,
   context: AgentContext
 ): Promise<void> {
-  console.log('commitChangesTool called with input:', input);
-
   // Generate commit message prompt
   const formattedChanges = Object.entries(context.modifiedFiles)
     .map(([filePath, content]) => `Modified file: ${filePath}: ${content}`)
@@ -596,7 +568,6 @@ export async function commitChangesTool(
   }
 
   context.commitMessage = result.commit_message;
-  console.log('Generated commit message:', result.commit_message);
 }
 
 /**

@@ -88,8 +88,6 @@ export class FileReader {
 
     try {
       const content = newContent.trim();
-      console.log(content);
-      console.log('log content');
       await fs.writeFile(fullPath, content, 'utf-8');
 
       logger.info('[FileReader] File updated successfully');

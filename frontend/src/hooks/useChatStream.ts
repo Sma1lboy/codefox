@@ -37,12 +37,12 @@ export const useChatStream = ({
   const [curProjectPath, setCurProjectPath] = useState('');
 
   useEffect(() => {
-    console.log('curProject:', curProject);
     if (curProject) {
       setCurProjectPath(curProject.projectPath);
     }
   }, [curProject]);
 
+  // Use useEffect to handle new chat event and cleanup
   useEffect(() => {
     const updateChatId = () => {
       setCurrentChatId('');
@@ -137,7 +137,6 @@ export const useChatStream = ({
     setMessages((prev) => [...prev, newMessage]);
 
     if (!currentChatId) {
-      console.log('Creating new chat...');
       try {
         await createChat({
           variables: {

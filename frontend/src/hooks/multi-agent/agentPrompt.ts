@@ -1,3 +1,5 @@
+import { Message } from '@/const/MessageType';
+import { getToolUsageMap } from './toolNodes';
 export enum TaskType {
   DEBUG = 'debug',
   REFACTOR = 'refactor',
@@ -372,8 +374,6 @@ The final commit message will follow **conventional commit standards** to ensure
 Failure is Not an Option! If you fail, the changes will not be committed.`
   );
 };
-import { Message } from '@/const/MessageType';
-import { getToolUsageMap } from './toolNodes';
 
 export const confirmationPrompt = (
   taskType: string,
