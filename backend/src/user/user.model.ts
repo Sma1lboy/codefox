@@ -82,7 +82,6 @@ export class User extends SystemBaseModel {
   @Column({ nullable: true })
   githubInstallationId?: string;
 
-  @Field({ nullable: true })
   @Column({ nullable: true })
   githubAccessToken?: string;
 
