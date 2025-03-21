@@ -123,6 +123,7 @@ type Mutation {
   registerUser(input: RegisterUserInput!): User!
   resendConfirmationEmail(input: ResendEmailInput!): EmailConfirmationResponse!
   subscribeToProject(projectId: ID!): Project!
+  syncProjectToGitHub(projectId: String!): Project!
   triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
   updateProjectPhoto(input: UpdateProjectPhotoInput!): Project!
@@ -140,10 +141,14 @@ type Project {
   forkedFrom: Project
   forkedFromId: String
   forks: [Project!]
+  githubOwner: String
+  githubRepoName: String
+  githubRepoUrl: String
   id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
   isPublic: Boolean!
+  isSyncedWithGitHub: Boolean!
   photoUrl: String
   projectName: String!
   projectPackages: [ProjectPackages!]
@@ -198,6 +203,7 @@ type RefreshTokenResponse {
 }
 
 input RegisterUserInput {
+  confirmPassword: String!
   email: String!
   password: String!
   username: String!
@@ -240,6 +246,8 @@ type User {
   chats: [Chat!]!
   createdAt: Date!
   email: String!
+  githubCode: String
+  githubInstallationId: String
   id: ID!
   isActive: Boolean!
   isDeleted: Boolean!

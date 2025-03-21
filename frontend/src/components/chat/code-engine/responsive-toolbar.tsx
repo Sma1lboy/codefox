@@ -7,6 +7,7 @@ import {
   Download,
   Eye,
   GitFork,
+  Github,
   Share2,
   Terminal,
 } from 'lucide-react';
@@ -30,7 +31,9 @@ const ResponsiveToolbar = ({
   const [visibleTabs, setVisibleTabs] = useState(3);
   const [compactIcons, setCompactIcons] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const { token } = useAuthContext();
+  const { token, user } = useAuthContext();
+  const [isPublishingToGitHub, setIsPublishingToGitHub] = useState(false);
+  const [isGithubSyncComplete, setIsGithubSyncComplete] = useState(false);
 
   // Observe container width changes
   useEffect(() => {
@@ -62,6 +65,97 @@ const ResponsiveToolbar = ({
       setCompactIcons(true);
     }
   }, [containerWidth]);
+
+  const handlePublishToGitHub = async () => {
+    // Check if GitHub App is installed
+    // Check if GitHub App is installed
+    if (!user?.githubInstallationId) {
+      // Prompt the user to install the GitHub App
+      const shouldInstall = window.confirm(
+        'You need to install the GitHub App to publish your project. Would you like to do this now?'
+      );
+      
+      if (shouldInstall) {
+        // This format ensures GitHub will prompt the user to choose where to install
+        // Replace APP_ID with your actual GitHub App ID
+        const installUrl = `https://github.com/apps/codefox-project-fork/installations/new`;
+        window.open(installUrl);
+        
+        // Optionally inform the user what to do after installation
+        alert('After installing the GitHub App, please return to this page and try publishing again.');
+      }
+      return;
+    }
+    
+    // Ensure we have a project ID
+    if (!projectId) {
+      alert('Cannot publish: No project ID available');
+      return;
+    }
+    
+    // Set loading state
+    setIsPublishingToGitHub(true);
+    
+    try {
+      // Call the syncProject mutation with GraphQL
+      const response = await fetch('/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          query: `
+            mutation SyncProject($projectId: String!) {
+            syncProject(projectId: $projectId) {
+              id
+              projectName
+              isSyncedWithGitHub
+              githubOwner
+              githubRepoName
+              githubRepoUrl
+            }
+          }
+
+          `,
+          variables: {
+            projectId
+          }
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.errors) {
+        throw new Error(result.errors[0].message || 'GraphQL error');
+      }
+      
+      // Get the repo URL from the response
+      const repoUrl = result.data.syncProject.githubRepoUrl;
+      
+      // Success!
+      setIsGithubSyncComplete(true);
+      
+      alert('Successfully published to GitHub!');
+      
+      // Open the repo in a new tab
+      if (repoUrl) {
+        const shouldOpen = window.confirm('Would you like to open the GitHub repository?');
+        if (shouldOpen) {
+          window.open(repoUrl, '_blank');
+        }
+      }
+    } catch (error) {
+      console.error('Error publishing to GitHub:', error);
+      alert(`Error publishing to GitHub: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsPublishingToGitHub(false);
+    }
+  };
 
   const handleDownload = async () => {
     // If projectId is available, initiate download
@@ -215,6 +309,15 @@ const ResponsiveToolbar = ({
               >
                 <Download className="w-4 h-4 mr-1" />
                 Download
+              </Button>
+              <Button
+                variant="outline"
+                className="text-sm"
+                disabled={isLoading || !projectId}
+                onClick={handlePublishToGitHub}
+              >
+                <Github className="w-4 h-4 mr-1" />
+                Github
               </Button>
             </>
           )}
