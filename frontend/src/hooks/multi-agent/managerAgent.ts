@@ -43,8 +43,6 @@ export async function managerAgent(
   setFilePath: (path: string) => void,
   editorRef: React.MutableRefObject<any>
 ): Promise<void> {
-  console.log('managerAgent called with input:', input);
-
   try {
     // Initialize context
     const context: AgentContext = {
@@ -80,9 +78,7 @@ export async function managerAgent(
       );
       const data = await response.json();
       context.fileStructure = validateFiles(data.res);
-      console.log('Initialized file structure:', context.fileStructure);
     } catch (error) {
-      console.error('Error fetching file structure:', error);
       throw error;
     }
 
@@ -112,9 +108,7 @@ export async function managerAgent(
       let decision;
       try {
         decision = parseXmlToJson(response);
-        console.log('Parsed AI Decision:', decision);
       } catch (error) {
-        console.error('Error parsing AI response:', error);
         throw error;
       }
 
@@ -130,7 +124,6 @@ export async function managerAgent(
         description: decision.next_step.description,
       };
 
-      console.log('required Files:', decision.next_step.files);
       context.requiredFiles = [
         ...context.requiredFiles,
         ...decision.next_step.files.filter(
@@ -157,7 +150,6 @@ export async function managerAgent(
       context.currentStep.status = 'completed';
 
       iteration++;
-      console.log(`Task iteration ${iteration}/${MAX_ITERATIONS}`);
       if (context.task_type == TaskType.UNRELATED) {
         break;
       }
@@ -186,9 +178,7 @@ export async function managerAgent(
                   newContent: content,
                 }),
               });
-              console.log(`File updated: ${filePath}`);
             } catch (error) {
-              console.error(`Error updating file ${filePath}:`, error);
               throw error;
             }
           }
@@ -212,10 +202,7 @@ export async function managerAgent(
         },
       });
     }
-
-    console.log('Task completed successfully with updated files');
   } catch (error) {
-    console.error('Error in managerAgent:', error);
     throw error;
   }
 }
