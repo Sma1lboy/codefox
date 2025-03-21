@@ -803,11 +803,10 @@ export class ProjectService {
       throw new Error('GitHub App not installed for this user');
     }
 
-    // 3) Get the installation token
+    // 3) Get the installation and OAUTH token
     const installationToken = await this.gitHubService.getInstallationToken(
       user.githubInstallationId,
     );
-
     const userOAuthToken = user.githubAccessToken;
 
     // 4) Create the repo if the project doesn’t have it yet
@@ -816,7 +815,7 @@ export class ProjectService {
       const repoName = project.projectName
         .replace(/\s+/g, '-')
         .toLowerCase() // e.g. "my-project"
-        + '-' + project.githubOwner; // to make it unique if needed
+        + '-' + "ChangeME"; // to make it unique if needed
 
       const { owner, repo, htmlUrl } = await this.gitHubService.createUserRepo(
         repoName,

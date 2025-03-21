@@ -73,7 +73,11 @@ export class UserService {
       throw new BadRequestException('User already linked to a GitHub installation.');
     }
 
-    console.log(`Binding GitHub installation ID ${installationId} to user ${githubCode}`);
+    if (!githubCode) {
+      throw new BadRequestException('Missing GitHub OAuth code');
+    }
+
+    console.log(`Binding GitHub installation ID ${installationId} to user code ${githubCode}`);
 
     //First request to GitHub to exchange the code for an access token (Wont expire)
     const accessToken = await this.gitHubService.exchangeOAuthCodeForToken(githubCode);
@@ -81,7 +85,12 @@ export class UserService {
     user.githubInstallationId = installationId;
     user.githubAccessToken = accessToken;
 
-    await this.userRepository.save(user);
+    try {
+      await this.userRepository.save(user);
+    } catch (error) {
+      console.error('Error saving user:', error);
+      throw new Error('Failed to save user with installation ID');
+    }    
 
     return true;
   }

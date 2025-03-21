@@ -1,6 +1,6 @@
 // src/github/github.service.ts
 
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import axios from 'axios';
 import * as fs from 'fs';
@@ -96,6 +96,11 @@ export class GitHubService {
         },
       },
     );
+
+    if (response.data.error) {
+      console.error('GitHub OAuth error:', response.data);
+      throw new BadRequestException(`GitHub OAuth error: ${response.data.error_description}`);
+    }
   
     const accessToken = response.data.access_token;
     if (!accessToken) {

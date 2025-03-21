@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,8 +14,12 @@ export default function GitHubCallback() {
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const hasCalledBackend = useRef(false); // Add guard flag here
   
   useEffect(() => {
+    if (hasCalledBackend.current) return; // Prevent multiple calls
+
     // Extract installation ID from search params
     const githubCode = searchParams.get('code');
     const installationId = searchParams.get('installation_id');
@@ -43,6 +47,8 @@ export default function GitHubCallback() {
       setErrorMessage('No installation ID was provided.');
       return;
     }
+
+    hasCalledBackend.current = true;
     
     // Call the backend directly to store the installation ID
     const storeInstallation = async () => {
@@ -82,7 +88,7 @@ export default function GitHubCallback() {
   
   // Function to handle redirect back to projects
   const handleContinue = () => {
-    router.push('/projects'); // Change this to your desired redirect path
+    router.push('/'); // Change this to your desired redirect path
   };
   
   return (

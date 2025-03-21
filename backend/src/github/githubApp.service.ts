@@ -83,10 +83,10 @@ export class GitHubAppService {
       }
     });
 
-    // only for webhooks debugging 
-    this.app.webhooks.onAny(async (event) => {
-      this.logger.log(`onAny: Received event='${event.name}' action='${event.payload}'`);
-    });
+    // // only for webhooks debugging 
+    // this.app.webhooks.onAny(async (event) => {
+    //   this.logger.log(`onAny: Received event='${event.name}' action='${event.payload}'`);
+    // });
   }
 
   /**
