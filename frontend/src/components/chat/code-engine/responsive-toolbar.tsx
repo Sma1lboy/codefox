@@ -314,7 +314,9 @@ const ResponsiveToolbar = ({
         <div className="flex items-center space-x-2">
           {!compactIcons && (
             <>
-              {/* <Button
+              {/* 
+              //TODO: FIX ME (ALLEN)
+              <Button
                 variant="outline"
                 size="sm"
                 className="text-sm"
@@ -362,7 +364,9 @@ const ResponsiveToolbar = ({
           )}
           {compactIcons && (
             <>
-              {/* <Button variant="outline" className="p-2" disabled={isLoading}>
+              {/* 
+              //TODO: FIX ME (ALLEN)
+              <Button variant="outline" className="p-2" disabled={isLoading}>
                 <Share2 className="w-4 h-4" />
               </Button> */}
               <Button 
