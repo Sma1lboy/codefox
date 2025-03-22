@@ -20,7 +20,7 @@ export function CodeEngine({
   isProjectReady?: boolean;
   projectId?: string;
 }) {
-  const { curProject, projectLoading, pollChatProject } =
+  const { curProject, projectLoading, pollChatProject, editorRef } =
     useContext(ProjectContext);
   const [localProject, setLocalProject] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,8 +35,6 @@ export function CodeEngine({
   const [fileStructureData, setFileStructureData] = useState<
     Record<TreeItemIndex, TreeItem<any>>
   >({});
-
-  const editorRef = useRef(null);
   const projectPathRef = useRef(null);
 
   // Poll for project if needed using chatId
@@ -198,7 +196,7 @@ export function CodeEngine({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           filePath: `${projectPath}/${filePath}`,
-          newContent: JSON.stringify(value),
+          newContent: value,
         }),
       });
 
@@ -289,6 +287,7 @@ export function CodeEngine({
         isLoading={showLoader}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        projectId={curProject?.id || projectId}
       />
 
       <div className="relative h-[calc(100vh-48px-4rem)]">

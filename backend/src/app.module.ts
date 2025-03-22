@@ -16,6 +16,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from 'src/interceptor/LoggingInterceptor';
 import { PromptToolModule } from './prompt-tool/prompt-tool.module';
 import { MailModule } from './mail/mail.module';
+import { GitHubModule } from './github/github.module';
 
 // TODO(Sma1lboy): move to a separate file
 function isProduction(): boolean {
@@ -50,6 +51,7 @@ function isProduction(): boolean {
     PromptToolModule,
     MailModule,
     TypeOrmModule.forFeature([User]),
+    GitHubModule
   ],
   providers: [
     AppResolver,

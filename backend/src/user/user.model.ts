@@ -76,6 +76,16 @@ export class User extends SystemBaseModel {
   roles: Role[];
 
   /**
+   * The GitHub App installation ID for this user (if they have installed the app).
+   */
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  githubInstallationId?: string;
+
+  @Column({ nullable: true })
+  githubAccessToken?: string;
+
+  /**
    * This field is maintained for API compatibility but is no longer actively used.
    * With the new design, a user's "subscribed projects" are just their own projects
    * that have a forkedFromId (meaning they are copies of other projects).

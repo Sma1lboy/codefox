@@ -53,6 +53,7 @@ export interface ProjectContextType {
   ) => Promise<{ domain: string; containerId: string }>;
   takeProjectScreenshot: (projectId: string, url: string) => Promise<void>;
   refreshProjects: () => Promise<void>;
+  editorRef?: React.MutableRefObject<any>;
 }
 
 export const ProjectContext = createContext<ProjectContextType | undefined>(
@@ -109,6 +110,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const rateLimitReachedRef = useRef(false);
   const rateLimitValueRef = useRef<number | undefined>(undefined);
+  const editorRef = useRef<any>(null);
 
   interface ChatProjectCacheEntry {
     project: Project | null;
@@ -331,7 +333,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     onCompleted: (data) => {
       if (!isMounted.current) return;
 
-      setProjects(data.getUserProjects);
+      setProjects([...data.getUserProjects]);
 
       // Trigger state sync after data update
       const now = Date.now();
@@ -950,6 +952,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       getWebUrl,
       takeProjectScreenshot,
       refreshProjects,
+      editorRef,
     }),
     [
       projects,
@@ -965,6 +968,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       getWebUrl,
       takeProjectScreenshot,
       refreshProjects,
+      editorRef,
     ]
   );
 
