@@ -287,6 +287,7 @@ export function CodeEngine({
         isLoading={showLoader}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        projectId={curProject?.id || projectId}
       />
 
       <div className="relative h-[calc(100vh-48px-4rem)]">

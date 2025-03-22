@@ -125,6 +125,7 @@ type Mutation {
   resendConfirmationEmail(input: ResendEmailInput!): EmailConfirmationResponse!
   saveMessage(input: ChatInputType!): Boolean!
   subscribeToProject(projectId: ID!): Project!
+  syncProjectToGitHub(projectId: String!): Project!
   triggerChatStream(input: ChatInputType!): Boolean!
   updateChatTitle(updateChatTitleInput: UpdateChatTitleInput!): Chat
   updateProjectPhoto(input: UpdateProjectPhotoInput!): Project!
@@ -142,10 +143,14 @@ type Project {
   forkedFrom: Project
   forkedFromId: String
   forks: [Project!]
+  githubOwner: String
+  githubRepoName: String
+  githubRepoUrl: String
   id: ID!
   isActive: Boolean!
   isDeleted: Boolean!
   isPublic: Boolean!
+  isSyncedWithGitHub: Boolean!
   photoUrl: String
   projectName: String!
   projectPackages: [ProjectPackages!]
@@ -244,6 +249,7 @@ type User {
   chats: [Chat!]!
   createdAt: Date!
   email: String!
+  githubInstallationId: String
   id: ID!
   isActive: Boolean!
   isDeleted: Boolean!

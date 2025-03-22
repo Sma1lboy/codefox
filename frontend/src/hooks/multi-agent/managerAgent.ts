@@ -129,8 +129,6 @@ export async function managerAgent(
         status: 'executing',
         description: decision.next_step.description,
       };
-
-      console.log('required Files:', decision.next_step.files);
       if (decision.next_step.files) {
         context.requiredFiles = [
           ...context.requiredFiles,
@@ -139,7 +137,12 @@ export async function managerAgent(
           ),
         ];
       }
-
+      context.requiredFiles = [
+        ...context.requiredFiles,
+        ...decision.next_step.files.filter(
+          (file) => !context.requiredFiles.includes(file)
+        ),
+      ];
       // Find and execute the tool
       const toolNode = findToolNode(decision.next_step.tool);
       if (!toolNode) {

@@ -467,7 +467,6 @@ ${message}
 Remember to include ALL code changes made during the conversation, formatted with proper markdown code blocks.`
   );
 };
-
 export const findbugPrompt = (message: string, file_structure: string[]) => {
   return (
     systemPrompt() +
