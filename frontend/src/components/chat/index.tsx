@@ -23,12 +23,14 @@ export default function Chat() {
   const urlParams = new URLSearchParams(window.location.search);
   const [chatId, setChatId] = useState('');
   const [messages, setMessages] = useState([]);
+  const [thinkingProcess, setThinkingProcess] = useState([]);
   const [input, setInput] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
   const { models } = useModels();
   const [selectedModel, setSelectedModel] = useState(models[0] || 'gpt-4o');
   const { refetchChats } = useChatList();
 
+  const [isTPUpdating, setIsTPUpdating] = useState(false);
   // Project status monitoring for the current chat
   const { isReady, projectId, projectName, error } =
     useProjectStatusMonitor(chatId);
@@ -39,7 +41,42 @@ export default function Chat() {
     skip: !isAuthorized || !chatId,
     onCompleted: (data) => {
       if (data?.getChatHistory) {
-        setMessages(data.getChatHistory);
+        // 解析 chatHistory 中的每条消息
+        const processedMessages = data.getChatHistory.map((msg) => {
+          try {
+            // 这里假设 msg.content 是 JSON 字符串
+            const content = JSON.parse(msg.content);
+            return {
+              id: msg.id,
+              role: msg.role,
+              // Message 内容为 final_response
+              content: content.final_response,
+              createdAt: msg.createdAt,
+              // 附加字段，后续用来提取 thinking process
+              thinking_process: content.thinking_process,
+            };
+          } catch (e) {
+            // 如果解析失败，则原样返回（注意：这种情况可能无法展示 tp）
+            return msg;
+          }
+        });
+
+        // 设置 messages，消息的 content 为最终消息
+        setMessages(processedMessages);
+
+        // 从 processedMessages 中筛选出含有 thinking_process 的消息
+        // 构造新的数组，Message 的 content 为 thinking_process
+        const tpMessages = processedMessages
+          .filter((msg) => msg.thinking_process)
+          .map((msg) => ({
+            id: msg.id,
+            role: msg.role,
+            content: msg.thinking_process,
+            createdAt: msg.createdAt,
+          }));
+
+        // 设置 thinking process 数组
+        setThinkingProcess(tpMessages);
       }
     },
     onError: () => {
@@ -54,7 +91,9 @@ export default function Chat() {
       input,
       setInput,
       setMessages,
+      setThinkingProcess,
       selectedModel,
+      setIsTPUpdating,
     });
 
   // Callback to clear the chat ID
@@ -112,6 +151,7 @@ export default function Chat() {
             chatId={chatId}
             setSelectedModel={setSelectedModel}
             messages={messages}
+            thinkingProcess={thinkingProcess}
             input={input}
             handleInputChange={handleInputChange}
             handleSubmit={handleSubmit}
@@ -120,6 +160,8 @@ export default function Chat() {
             formRef={formRef}
             setInput={setInput}
             setMessages={setMessages}
+            setThinkingProcess={setThinkingProcess}
+            isTPUpdating={isTPUpdating}
           />
         </div>
       </ResizablePanel>
@@ -147,6 +189,7 @@ export default function Chat() {
         chatId={chatId}
         setSelectedModel={setSelectedModel}
         messages={messages}
+        thinkingProcess={thinkingProcess}
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={handleSubmit}
@@ -155,6 +198,8 @@ export default function Chat() {
         formRef={formRef}
         setInput={setInput}
         setMessages={setMessages}
+        setThinkingProcess={setThinkingProcess}
+        isTPUpdating={isTPUpdating}
       />
     </div>
   );
