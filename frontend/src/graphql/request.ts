@@ -102,6 +102,7 @@ export const GET_USER_INFO = gql`
       username
       email
       avatarUrl
+      githubInstallationId
     }
   }
 `;
@@ -283,5 +284,29 @@ export const UPLOAD_AVATAR = gql`
 export const GET_USER_AVATAR = gql`
   query GetUserAvatar($userId: String!) {
     getUserAvatar(userId: $userId)
+  }
+`;
+
+// sync project with github
+export const SYNC_PROJECT_TO_GITHUB = gql`
+  mutation SyncProjectToGitHub($projectId: String!) {
+    syncProjectToGitHub(projectId: $projectId) {
+      id
+      projectName
+      isSyncedWithGitHub
+      githubOwner
+      githubRepoName
+      githubRepoUrl
+    }
+  }
+`;
+
+export const GET_PROJECT = gql`
+  query GetProject($projectId: String!) {
+    getProject(projectId: $projectId) {
+      id
+      isSyncedWithGitHub
+      githubRepoUrl
+    }
   }
 `;

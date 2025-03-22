@@ -170,6 +170,7 @@ export type Mutation = {
   resendConfirmationEmail: EmailConfirmationResponse;
   saveMessage: Scalars['Boolean']['output'];
   subscribeToProject: Project;
+  syncProjectToGitHub: Project;
   triggerChatStream: Scalars['Boolean']['output'];
   updateChatTitle?: Maybe<Chat>;
   updateProjectPhoto: Project;
@@ -233,6 +234,10 @@ export type MutationSubscribeToProjectArgs = {
   projectId: Scalars['ID']['input'];
 };
 
+export type MutationSyncProjectToGitHubArgs = {
+  projectId: Scalars['String']['input'];
+};
+
 export type MutationTriggerChatStreamArgs = {
   input: ChatInputType;
 };
@@ -265,10 +270,14 @@ export type Project = {
   forkedFrom?: Maybe<Project>;
   forkedFromId?: Maybe<Scalars['String']['output']>;
   forks?: Maybe<Array<Project>>;
+  githubOwner?: Maybe<Scalars['String']['output']>;
+  githubRepoName?: Maybe<Scalars['String']['output']>;
+  githubRepoUrl?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   isActive: Scalars['Boolean']['output'];
   isDeleted: Scalars['Boolean']['output'];
   isPublic: Scalars['Boolean']['output'];
+  isSyncedWithGitHub: Scalars['Boolean']['output'];
   photoUrl?: Maybe<Scalars['String']['output']>;
   projectName: Scalars['String']['output'];
   projectPackages?: Maybe<Array<ProjectPackages>>;
@@ -397,6 +406,8 @@ export type User = {
   chats: Array<Chat>;
   createdAt: Scalars['Date']['output'];
   email: Scalars['String']['output'];
+  githubCode?: Maybe<Scalars['String']['output']>;
+  githubInstallationId?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   isActive: Scalars['Boolean']['output'];
   isDeleted: Scalars['Boolean']['output'];
@@ -826,6 +837,12 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationSubscribeToProjectArgs, 'projectId'>
   >;
+  syncProjectToGitHub?: Resolver<
+    ResolversTypes['Project'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationSyncProjectToGitHubArgs, 'projectId'>
+  >;
   triggerChatStream?: Resolver<
     ResolversTypes['Boolean'],
     ParentType,
@@ -883,10 +900,30 @@ export type ProjectResolvers<
     ParentType,
     ContextType
   >;
+  githubOwner?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
+  githubRepoName?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
+  githubRepoUrl?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   isActive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   isDeleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   isPublic?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  isSyncedWithGitHub?: Resolver<
+    ResolversTypes['Boolean'],
+    ParentType,
+    ContextType
+  >;
   photoUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   projectName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   projectPackages?: Resolver<
@@ -1049,6 +1086,16 @@ export type UserResolvers<
   chats?: Resolver<Array<ResolversTypes['Chat']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['Date'], ParentType, ContextType>;
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  githubCode?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
+  githubInstallationId?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   isActive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   isDeleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
