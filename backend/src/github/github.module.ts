@@ -11,7 +11,7 @@ import { GitHubAppService } from './githubApp.service';
 import { GitHubService } from './github.service';
 import { Project } from 'src/project/project.model';
 import { ProjectPackages } from 'src/project/project-packages.model';
-import { GitHuController } from './github.controller';
+import { GitHubController } from './github.controller';
 import { ProjectService } from 'src/project/project.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from 'src/user/user.module';
@@ -25,7 +25,7 @@ import { UserModule } from 'src/user/user.module';
     ConfigModule,
     forwardRef(() => UserModule),
   ],
-  controllers: [GitHuController],
+  controllers: [GitHubController],
   providers: [ProjectService, ProjectGuard, GitHubAppService, GitHubService, ConfigService, ChatService],
   exports: [GitHubService],
 })
